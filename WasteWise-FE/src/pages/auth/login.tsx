@@ -19,8 +19,6 @@ import {
     faArrowRight 
 } from '@fortawesome/free-solid-svg-icons';
 import { faGoogle, faFacebook, faApple } from '@fortawesome/free-brands-svg-icons';
-import { loginStart, loginSuccess, loginFailure } from '../../store/authSlice';
-import { api } from '../../services/api';
 import toast from 'react-hot-toast';
 
 const Login = () => {
@@ -71,43 +69,14 @@ const Login = () => {
         if (!validateForm()) {
             return;
         }
-        
-        dispatch(loginStart());
-        
-        try {
-            const response = await api.post('/auth/login', {
-                ...formData,
-                userType,
-            });
-            
-            const { token, user } = response.data;
-            
-            // Store token and user data
-            localStorage.setItem('token', token);
-            localStorage.setItem('user', JSON.stringify(user));
-            if (formData.rememberMe) {
-                localStorage.setItem('rememberMe', 'true');
-            }
-            
-            dispatch(loginSuccess({ token, user }));
-            toast.success('Login successful! Welcome to WasteWise');
-            
-            // Redirect based on user type
-            if (userType === 'provider') {
-                navigate('/provider/dashboard');
-            } else {
-                navigate('/dashboard');
-            }
-        } catch (err: any) {
-            const errorMessage = err.response?.data?.message || 'Login failed. Please try again.';
-            dispatch(loginFailure(errorMessage));
-            toast.error(errorMessage);
-        }
+
+        console.log('Form submitted:', formData, userType);
+                
+
     };
 
     const handleSocialLogin = (provider: string) => {
         toast.info(`${provider} login coming soon!`);
-        // Implement social login logic
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
