@@ -136,6 +136,9 @@ module.exports = {
                     700: '#b0bec5',
                     800: '#cfd8dc',
                     900: '#eceff1', // Tech Gray
+                    // Provide a proper "light" shade so classes like bg-dark-light work
+                    light: 'rgba(38, 50, 56, 0.15)',
+                    // Keep legacy key for backward compatibility (generates bg-dark-dark-light)
                     'dark-light': 'rgba(38, 50, 56, 0.15)',
                 },
 
@@ -176,6 +179,11 @@ module.exports = {
                 // Legacy colors (for gradual migration)
                 black: '#263238',
                 white: '#ffffff',
+                // Custom white variants used across styles
+                // "white-light" is a very light off-white for borders/background accents
+                'white-light': '#f6f6f6',
+                // "white-dark" is a soft light gray used as text on dark surfaces
+                'white-dark': '#cfd8dc',
                 transparent: 'transparent',
             },
             
