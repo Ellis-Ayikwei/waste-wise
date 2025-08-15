@@ -1,0 +1,16 @@
+Django>=4.2
+djangorestframework
+djangorestframework-simplejwt
+psycopg2-binary
+gunicorn
+python-dotenv
+requests==2.31.0
+Pillow
+django-cors-headers
+channels
+django-fsm
+holidays
+stripe
+django-otp
+sendgrid==6.11.0
+django-sendgrid-v5==1.2.3

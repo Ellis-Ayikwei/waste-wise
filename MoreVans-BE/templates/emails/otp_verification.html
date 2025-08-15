@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ subject }}</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        .header {
+            background: linear-gradient(135deg, #2E2787 0%, #4A3F9C 100%);
+            color: white;
+            padding: 40px 20px 30px;
+            text-align: center;
+            border-radius: 12px 12px 0 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.1)"/><circle cx="10" cy="60" r="0.5" fill="rgba(255,255,255,0.1)"/><circle cx="90" cy="40" r="0.5" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+        .logo { margin: 0 auto 16px; background: #ffffff; display: inline-block; padding: 8px 12px; border-radius: 8px; }
+        .logo img { height: 40px; display: block; }
+        .header h1 {
+            margin: 0;
+            font-size: 32px;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .header p {
+            margin: 10px 0 0;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 40px 20px;
+            background-color: white;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 4px 20px rgba(46, 39, 135, 0.1);
+        }
+        .otp-box {
+            background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%);
+            border: 2px solid #2E2787;
+            border-radius: 12px;
+            padding: 30px 20px;
+            margin: 30px 0;
+            text-align: center;
+            position: relative;
+        }
+        .otp-box::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(135deg, #2E2787, #4A3F9C);
+            border-radius: 12px;
+            z-index: -1;
+        }
+        .otp-code {
+            font-size: 42px;
+            font-weight: bold;
+            color: #2E2787;
+            letter-spacing: 12px;
+            margin: 15px 0;
+            text-shadow: 0 2px 4px rgba(46, 39, 135, 0.2);
+        }
+        .button {
+            display: inline-block;
+            padding: 16px 40px;
+            background: linear-gradient(135deg, #2E2787 0%, #4A3F9C 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(46, 39, 135, 0.3);
+            transition: all 0.3s ease;
+        }
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(46, 39, 135, 0.4);
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #f0f2ff;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        .warning {
+            background: linear-gradient(135deg, #fff8e1 0%, #fff3cd 100%);
+            border: 1px solid #ffd54f;
+            color: #856404;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 25px;
+            font-size: 14px;
+            position: relative;
+        }
+        .warning::before {
+            content: '🔒';
+            margin-right: 8px;
+        }
+        .brand-color {
+            color: #2E2787;
+        }
+        @media only screen and (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            .content {
+                padding: 25px 15px;
+            }
+            .otp-code {
+                font-size: 32px;
+                letter-spacing: 8px;
+            }
+            .header h1 {
+                font-size: 28px;
+            }
+            .logo {
+                width: 60px;
+                height: 60px;
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <img src="https://morevans.sfo3.cdn.digitaloceanspaces.com/email%20images%20/morevanstextdark.png" alt="{{ app_name|default:'MoreVans' }}" />
+                </div>
+                <h1>{{ app_name|default:"MoreVans" }}</h1>
+                <p>Secure Verification</p>
+            </div>
+        </div>
+        <div class="content">
+            <h2 style="color: #2E2787; margin-bottom: 20px;">Hello {{ user_name|default:"there" }}! 👋</h2>
+            
+            <p style="font-size: 16px; line-height: 1.7; color: #555;">{{ message }}</p>
+            
+            <div class="otp-box">
+                <p style="margin: 0; color: #666; font-size: 16px; font-weight: 500;">Your verification code is:</p>
+                <div class="otp-code">{{ otp_code }}</div>
+                <p style="margin: 0; color: #666; font-size: 14px;">⏰ Valid for {{ validity_minutes }} minutes</p>
+            </div>
+            
+            {% if action_url %}
+            <p style="text-align: center;">
+                <a href="{{ action_url }}" class="button">{{ action_text|default:"Verify Now" }}</a>
+            </p>
+            {% endif %}
+            
+            <div class="warning">
+                <strong>Security Notice:</strong> This code is confidential and should not be shared with anyone. 
+                We will never ask for this code over phone or email.
+            </div>
+            
+            <div class="footer">
+                <p>This is an automated message, please do not reply to this email.</p>
+                <p>If you didn't request this code, please ignore this email or contact our support team.</p>
+                <p style="margin-top: 20px; font-weight: 600; color: #2E2787;">&copy; {{ current_year }} {{ app_name|default:"MoreVans" }}. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
