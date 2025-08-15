@@ -1,9 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { IconMenu2, IconX, IconHome, IconBriefcase, IconInfoCircle, IconUsers, IconLogin } from '@tabler/icons-react';
+import { 
+    IconMenu2, 
+    IconX, 
+    IconHome, 
+    IconBriefcase, 
+    IconInfoCircle, 
+    IconUsers, 
+    IconLogin,
+    IconRecycle,
+    IconLeaf,
+    IconPhone,
+    IconMapPin,
+} from '@tabler/icons-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBars, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { 
+    faBars, 
+    faTimes, 
+    faRecycle,
+    faLeaf,
+    faPhone,
+    faUser,
+    faSignInAlt,
+    faSignOutAlt,
+} from '@fortawesome/free-solid-svg-icons';
 import useIsAuthenticated from 'react-auth-kit/hooks/useIsAuthenticated';
 import useSignOut from 'react-auth-kit/hooks/useSignOut';
 import { LogOut } from 'lucide-react';
@@ -12,25 +33,36 @@ import { AppDispatch } from '../../store';
 import { LogoutUser } from '../../store/authSlice';
 
 interface NavbarProps {
-    isScrolled: boolean;
+    isScrolled?: boolean;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ isScrolled }) => {
+const Navbar: React.FC<NavbarProps> = ({ isScrolled: propIsScrolled }) => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
     const isAuthenticated = useIsAuthenticated();
     const signOut = useSignOut();
 
+    // Monitor scroll position
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 20);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    // Use prop if provided, otherwise use local state
+    const scrolled = propIsScrolled !== undefined ? propIsScrolled : isScrolled;
+
     const navLinks = [
-        { to: '/', label: 'Home', icon: IconHome },
-        { to: '/services', label: 'Services', icon: IconBriefcase },
-        // { to: '/how-it-works', label: 'How it Works', icon: IconInfoCircle },
-        // { to: '/blog', label: 'Blog', icon: IconInfoCircle },
-        { to: '/about', label: 'About', icon: IconInfoCircle },
-        // { to: '/contact', label: 'Contact', icon: IconInfoCircle },
+        { to: '/', label: 'Home', icon: faRecycle },
+        { to: '/services', label: 'Services', icon: faLeaf },
+        { to: '/about', label: 'About Us', icon: faUser },
+        { to: '/contact', label: 'Contact', icon: faPhone },
     ];
 
     const isActive = (path: string) => {
@@ -45,33 +77,24 @@ const Navbar: React.FC<NavbarProps> = ({ isScrolled }) => {
     };
 
     const handleLogout = async () => {
-        if (isLoggingOut) return; // Prevent multiple clicks
+        if (isLoggingOut) return;
 
         setIsLoggingOut(true);
         try {
-            // Call logout action with signOut hook
             const logoutResponse = await dispatch(LogoutUser({ signOut }) as any);
 
             if (logoutResponse.meta?.requestStatus === 'fulfilled' || logoutResponse.type?.endsWith('/fulfilled')) {
-                // Clear all local storage
                 localStorage.clear();
                 sessionStorage.clear();
-
-                // Show success message (optional)
                 console.log('Logout successful');
             } else {
-                // Handle logout failure
                 console.error('Logout failed:', logoutResponse.error || 'Unknown error');
-
-                // Force logout on client side even if server call fails
                 signOut();
                 localStorage.clear();
                 sessionStorage.clear();
             }
         } catch (error) {
             console.error('Logout error:', error);
-
-            // Force logout on client side even if there's an error
             try {
                 signOut();
                 localStorage.clear();
@@ -85,182 +108,282 @@ const Navbar: React.FC<NavbarProps> = ({ isScrolled }) => {
     };
 
     return (
-        <div className="fixed top-0 left-0 w-full z-50">
-            <nav className={`w-full transition-all duration-300 ${isScrolled ? 'bg-white dark:bg-gray-900 shadow-md' : 'bg-transparent'}`}>
-                <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-16 sm:h-20">
-                    {/* Logo */}
-                        <Link to="/" className="flex items-center flex-shrink-0">
-                       {!isScrolled ? <img
-                                className={`w-[120px] sm:w-[160px] transition-all duration-300`}
-                            src="/assets/images/morevanstext.png"
-                            alt="MoreVans"
-                        /> :
-                        <img
-                                className={`w-[120px] sm:w-[160px] transition-all duration-300`}
-                            src="/assets/images/morevanstextdark.png"
-                            alt="MoreVans"
-                        />}
-                    </Link>
+        <>
+            {/* Main Navbar */}
+            <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
+                scrolled 
+                    ? 'bg-white/95 backdrop-blur-md shadow-lg' 
+                    : 'bg-gradient-to-b from-black/30 to-transparent backdrop-blur-sm'
+            }`}>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex items-center justify-between h-20">
+                        {/* Logo */}
+                        <Link to="/" className="flex items-center gap-3 group">
+                            <motion.div
+                                whileHover={{ rotate: 360 }}
+                                transition={{ duration: 0.5 }}
+                                className={`w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg`}
+                            >
+                                <FontAwesomeIcon 
+                                    icon={faRecycle} 
+                                    className="text-white text-xl"
+                                />
+                            </motion.div>
+                            <div>
+                                <h1 className={`text-2xl font-bold transition-colors duration-300 ${
+                                    scrolled ? 'text-gray-900' : 'text-white'
+                                }`}>
+                                    WasteWise
+                                </h1>
+                                <p className={`text-xs transition-colors duration-300 ${
+                                    scrolled ? 'text-gray-600' : 'text-green-100'
+                                }`}>
+                                    Smart Waste Management
+                                </p>
+                            </div>
+                        </Link>
 
-                    {/* Desktop Navigation */}
-                        <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
-                        {navLinks.map(({ to, label, icon: Icon }) => {
-                            const active = isActive(to);
-                            return (
+                        {/* Desktop Navigation */}
+                        <div className="hidden lg:flex items-center gap-8">
+                            {navLinks.map((link) => (
                                 <Link
-                                    key={to}
-                                    to={to}
-                                    className={`flex items-center transition-colors duration-200 ${
-                                        active
-                                            ? 'text-blue-600 text-xl font-bold drop-shadow-lg border-b-4 border-blue-600'
-                                            : isScrolled
-                                            ? 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
-                                            : 'text-white hover:text-blue-200'
+                                    key={link.to}
+                                    to={link.to}
+                                    className={`relative group flex items-center gap-2 font-medium transition-all duration-300 ${
+                                        isActive(link.to)
+                                            ? scrolled 
+                                                ? 'text-green-600' 
+                                                : 'text-green-300'
+                                            : scrolled
+                                                ? 'text-gray-700 hover:text-green-600'
+                                                : 'text-white/90 hover:text-white'
                                     }`}
                                 >
-                                    <Icon className={`w-5 h-5 lg:w-6 lg:h-6 mr-2 ${active ? 'text-blue-600' : ''}`} />
-                                    {label}
+                                    <FontAwesomeIcon icon={link.icon} className="text-sm" />
+                                    <span>{link.label}</span>
+                                    {isActive(link.to) && (
+                                        <motion.div
+                                            layoutId="navbar-indicator"
+                                            className="absolute -bottom-2 left-0 right-0 h-0.5 bg-gradient-to-r from-green-500 to-emerald-600"
+                                            initial={false}
+                                            transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                                        />
+                                    )}
                                 </Link>
-                            );
-                        })}
-                    </div>
+                            ))}
+                        </div>
 
-                    {/* Auth Buttons */}
-                    <div className="hidden md:flex items-center space-x-4">
-                        {!isAuthenticated ? (
-                            <Link
-                                to="/login"
-                                className={`flex items-center text-base lg:text-lg font-medium transition-colors duration-200 ${
-                                    isScrolled ? 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400' : 'text-white hover:text-blue-200'
-                                }`}
+                        {/* Right Side Actions */}
+                        <div className="hidden lg:flex items-center gap-4">
+                            {/* Emergency Contact */}
+                            <a 
+                                href="tel:+233201234567" 
+                                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
+                                    scrolled
+                                        ? 'bg-green-50 text-green-700 hover:bg-green-100'
+                                        : 'bg-white/10 text-white hover:bg-white/20'
+                                } backdrop-blur-sm`}
                             >
-                                <IconLogin className="w-5 h-5 lg:w-6 lg:h-6 mr-2" />
-                                Log In
-                            </Link>
-                        ) : (
-                            <button
-                                onClick={handleLogout}
-                                disabled={isLoggingOut}
-                                className={`flex items-center text-base lg:text-lg font-medium transition-colors duration-200 ${
-                                    isScrolled ? 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400' : 'text-white hover:text-blue-200'
-                                } ${isLoggingOut ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            >
-                                {isLoggingOut ? (
-                                    <div className="animate-spin w-5 h-5 lg:w-6 lg:h-6 mr-2 border-2 border-current border-t-transparent rounded-full"></div>
-                                ) : (
-                                    <LogOut className="w-5 h-5 lg:w-6 lg:h-6 mr-2" />
-                                )}
-                                {isLoggingOut ? 'Signing Out...' : 'Log Out'}
-                            </button>
-                        )}
-                        <Link
-                            to="/service-request"
-                                className={`px-3 py-1 rounded-lg text-base lg:text-lg font-medium transition-all duration-200 ${
-                                isScrolled ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg' : 'bg-white text-blue-600 hover:bg-blue-50 shadow-md hover:shadow-lg'
+                                <IconPhone size={18} />
+                                <span className="text-sm font-medium">Emergency</span>
+                            </a>
+
+                            {/* Auth Buttons */}
+                            {isAuthenticated ? (
+                                <div className="flex items-center gap-3">
+                                    <Link
+                                        to="/dashboard"
+                                        className={`px-5 py-2.5 rounded-full font-medium transition-all duration-300 ${
+                                            scrolled
+                                                ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                : 'bg-white/10 text-white hover:bg-white/20'
+                                        } backdrop-blur-sm`}
+                                    >
+                                        Dashboard
+                                    </Link>
+                                    <motion.button
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        onClick={handleLogout}
+                                        disabled={isLoggingOut}
+                                        className={`px-5 py-2.5 rounded-full font-medium transition-all duration-300 flex items-center gap-2 ${
+                                            scrolled
+                                                ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                                                : 'bg-red-500/20 text-white hover:bg-red-500/30'
+                                        } backdrop-blur-sm disabled:opacity-50`}
+                                    >
+                                        <FontAwesomeIcon icon={faSignOutAlt} />
+                                        {isLoggingOut ? 'Logging out...' : 'Logout'}
+                                    </motion.button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-3">
+                                    <Link
+                                        to="/login"
+                                        className={`px-5 py-2.5 rounded-full font-medium transition-all duration-300 ${
+                                            scrolled
+                                                ? 'text-gray-700 hover:text-green-600'
+                                                : 'text-white hover:text-green-300'
+                                        }`}
+                                    >
+                                        Login
+                                    </Link>
+                                    <motion.div
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                    >
+                                        <Link
+                                            to="/register"
+                                            className="px-6 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-full font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+                                        >
+                                            Get Started
+                                        </Link>
+                                    </motion.div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Mobile Menu Button */}
+                        <button
+                            onClick={toggleMobileMenu}
+                            className={`lg:hidden p-2 rounded-lg transition-colors duration-300 ${
+                                scrolled
+                                    ? 'text-gray-700 hover:bg-gray-100'
+                                    : 'text-white hover:bg-white/10'
                             }`}
                         >
-                            Request a Move
-                        </Link>
-                        <Link
-                            to={isAuthenticated ? "/dashboard" : "/become-transport-partner"}
-                                className={`btn ${isScrolled ? 'btn-outline-primary' : 'btn-outline-secondary'} px-2 py-1 rounded-lg font-medium text-lg inline-block transition-colors`}
-                            >
-                                {isAuthenticated ? "Dashboard" : "Become a Partner"}
-                        </Link>
+                            <FontAwesomeIcon 
+                                icon={mobileMenuOpen ? faTimes : faBars} 
+                                className="text-2xl"
+                            />
+                        </button>
                     </div>
-
-                    {/* Mobile Menu Button */}
-                        <button 
-                            onClick={toggleMobileMenu} 
-                            className={`md:hidden p-2 rounded-lg transition-colors duration-200 ${
-                                isScrolled ? 'text-gray-700 hover:bg-gray-100' : 'text-white hover:bg-white/10'
-                            }`}
-                        >
-                            <FontAwesomeIcon icon={mobileMenuOpen ? faTimes : faBars} className="text-xl" />
-                    </button>
                 </div>
-            </div>
             </nav>
 
             {/* Mobile Menu */}
             <AnimatePresence>
                 {mobileMenuOpen && (
-                    <motion.div 
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        transition={{ duration: 0.15, ease: "easeOut" }}
-                        className="md:hidden bg-white dark:bg-gray-900 shadow-lg"
-                    >
-                        <div className="px-4 py-2 space-y-1">
-                                {navLinks.map(({ to, label, icon: Icon }) => {
-                                    const active = isActive(to);
-                                    return (
-                                        <Link
-                                            key={to}
-                                            to={to}
-                                        className={`flex items-center px-4 py-2.5 rounded-lg text-base font-medium transition-colors duration-200 ${
-                                            active 
-                                                ? 'bg-secondary-50 dark:bg-secondary-900/20 text-secondary dark:text-secondary-400 font-bold' 
-                                                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-                                            }`}
-                                            onClick={() => setMobileMenuOpen(false)}
-                                        >
-                                        <Icon className={`w-5 h-5 mr-3 ${active ? 'text-secondary-600 dark:text-secondary-400' : ''}`} />
-                                            {label}
-                                        </Link>
-                                    );
-                                })}
+                    <>
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={toggleMobileMenu}
+                            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+                        />
 
-                            <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-700">
-                                {!isAuthenticated ? (
-                                    <Link
-                                        to="/login"
-                                        className="flex items-center px-4 py-2.5 text-base text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
-                                        onClick={() => setMobileMenuOpen(false)}
-                                    >
-                                        <IconLogin className="w-5 h-5 mr-3" />
-                                        Log In
-                                    </Link>
-                                ) : (
+                        {/* Mobile Menu Panel */}
+                        <motion.div
+                            initial={{ x: '100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '100%' }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                            className="fixed right-0 top-0 h-full w-80 bg-white shadow-2xl z-50 lg:hidden"
+                        >
+                            <div className="p-6">
+                                {/* Mobile Menu Header */}
+                                <div className="flex items-center justify-between mb-8">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+                                            <FontAwesomeIcon icon={faRecycle} className="text-white" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-xl font-bold text-gray-900">WasteWise</h2>
+                                            <p className="text-xs text-gray-600">Menu</p>
+                                        </div>
+                                    </div>
                                     <button
-                                        onClick={() => {
-                                            handleLogout();
-                                            setMobileMenuOpen(false);
-                                        }}
-                                        disabled={isLoggingOut}
-                                        className={`flex items-center w-full px-4 py-2.5 text-base text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 ${
-                                            isLoggingOut ? 'opacity-50 cursor-not-allowed' : ''
-                                        }`}
+                                        onClick={toggleMobileMenu}
+                                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
                                     >
-                                        {isLoggingOut ? (
-                                            <div className="animate-spin w-5 h-5 mr-3 border-2 border-current border-t-transparent rounded-full"></div>
-                                        ) : (
-                                            <LogOut className="w-5 h-5 mr-3" />
-                                        )}
-                                        {isLoggingOut ? 'Signing Out...' : 'Log Out'}
+                                        <FontAwesomeIcon icon={faTimes} className="text-gray-700 text-xl" />
                                     </button>
+                                </div>
+
+                                {/* Mobile Navigation Links */}
+                                <nav className="space-y-2">
+                                    {navLinks.map((link) => (
+                                        <Link
+                                            key={link.to}
+                                            to={link.to}
+                                            onClick={toggleMobileMenu}
+                                            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 ${
+                                                isActive(link.to)
+                                                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
+                                                    : 'text-gray-700 hover:bg-green-50 hover:text-green-600'
+                                            }`}
+                                        >
+                                            <FontAwesomeIcon icon={link.icon} className="text-lg" />
+                                            <span className="font-medium">{link.label}</span>
+                                        </Link>
+                                    ))}
+                                </nav>
+
+                                {/* Divider */}
+                                <div className="my-6 border-t border-gray-200"></div>
+
+                                {/* Mobile Auth Section */}
+                                {isAuthenticated ? (
+                                    <div className="space-y-3">
+                                        <Link
+                                            to="/dashboard"
+                                            onClick={toggleMobileMenu}
+                                            className="flex items-center gap-3 px-4 py-3 rounded-lg bg-gray-50 text-gray-700 hover:bg-gray-100 transition-colors"
+                                        >
+                                            <IconHome size={20} />
+                                            <span className="font-medium">Dashboard</span>
+                                        </Link>
+                                        <button
+                                            onClick={() => {
+                                                handleLogout();
+                                                toggleMobileMenu();
+                                            }}
+                                            disabled={isLoggingOut}
+                                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50"
+                                        >
+                                            <FontAwesomeIcon icon={faSignOutAlt} />
+                                            <span className="font-medium">
+                                                {isLoggingOut ? 'Logging out...' : 'Logout'}
+                                            </span>
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        <Link
+                                            to="/login"
+                                            onClick={toggleMobileMenu}
+                                            className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                                        >
+                                            <FontAwesomeIcon icon={faSignInAlt} />
+                                            <span className="font-medium">Login</span>
+                                        </Link>
+                                        <Link
+                                            to="/register"
+                                            onClick={toggleMobileMenu}
+                                            className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg hover:shadow-xl transition-all"
+                                        >
+                                            <FontAwesomeIcon icon={faRecycle} />
+                                            <span className="font-medium">Get Started</span>
+                                        </Link>
+                                    </div>
                                 )}
-                                    <Link
-                                        to="/service-request"
-                                    className="block mt-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 text-center text-base font-medium"
-                                        onClick={() => setMobileMenuOpen(false)}
-                                    >
-                                        Request a Move
-                                    </Link>
-                                    <Link
-                                to={isAuthenticated ? "/dashboard" : "/become-transport-partner"}
-                                className="btn btn-outline-secondary px-8  rounded-lg font-medium text-lg inline-block transition-colors !w-full mt-2  text-center"
-                            >
-                                {isAuthenticated ? "Dashboard" : "Become a  Partner"}
-                            </Link>
+
+                                {/* Contact Info */}
+                                <div className="mt-8 p-4 bg-green-50 rounded-lg">
+                                    <p className="text-sm font-semibold text-green-700 mb-2">Need Help?</p>
+                                    <a href="tel:+233201234567" className="flex items-center gap-2 text-green-600 hover:text-green-700">
+                                        <IconPhone size={16} />
+                                        <span className="text-sm">+233 20 123 4567</span>
+                                    </a>
+                                </div>
                             </div>
-                        </div>
-                    </motion.div>
+                        </motion.div>
+                    </>
                 )}
             </AnimatePresence>
-        </div>
+        </>
     );
 };
 
