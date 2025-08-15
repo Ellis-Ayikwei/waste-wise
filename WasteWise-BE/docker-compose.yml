@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  # PostgreSQL with PostGIS for geospatial features
+  db:
+    image: postgis/postgis:14-3.2
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=wastewise
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=@Toshib123
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and WebSockets
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Django backend
+  web:
+    build: .
+    command: >
+      sh -c "
+        python manage.py migrate &&
+        python manage.py runserver 0.0.0.0:8000
+      "
+    volumes:
+      - .:/code
+      - media_volume:/code/uploads
+      - static_volume:/code/static
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgis://postgres:@Toshib123@db:5432/wastewise
+      - REDIS_URL=redis://redis:6379/0
+      - DEBUG=True
+      - DJANGO_SECRET_KEY=dev-secret-key-change-in-production
+    env_file:
+      - .env
+
+  # Celery worker for background tasks
+  celery:
+    build: .
+    command: celery -A backend worker -l info
+    volumes:
+      - .:/code
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DATABASE_URL=postgis://postgres:@Toshib123@db:5432/wastewise
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
+
+  # Celery beat for scheduled tasks
+  celery-beat:
+    build: .
+    command: celery -A backend beat -l info
+    volumes:
+      - .:/code
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DATABASE_URL=postgis://postgres:@Toshib123@db:5432/wastewise
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
+
+volumes:
+  postgres_data:
+  redis_data:
+  media_volume:
+  static_volume:
