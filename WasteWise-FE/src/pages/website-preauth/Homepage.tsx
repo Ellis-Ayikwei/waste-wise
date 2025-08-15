@@ -36,6 +36,8 @@ import {
     faRoute,
     faQrcode,
     faSeedling,
+    faGlobe,
+    faChevronDown,
 } from '@fortawesome/free-solid-svg-icons';
 import Navbar from '../../components/homepage/Navbar';
 import Hero from '../../components/homepage/Hero';
@@ -298,61 +300,294 @@ const Homepage: React.FC = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
+        <div className="min-h-screen bg-white">
             <Navbar />
             
-            {/* Hero Section */}
-            <section className="relative pt-20 pb-32 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-green-600 to-green-800 opacity-90"></div>
-                <div className="absolute inset-0 bg-pattern opacity-10"></div>
+            {/* Enhanced Hero Section */}
+            <section className="relative min-h-screen flex items-center overflow-hidden">
+                {/* Multi-layer Animated Background */}
+                <div className="absolute inset-0">
+                    {/* Primary Gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-900 via-green-800 to-teal-900"></div>
+                    
+                    {/* Animated Mesh Gradient */}
+                    <div className="absolute inset-0 opacity-30">
+                        <div className="absolute inset-0 bg-gradient-to-tr from-green-600/30 via-transparent to-emerald-600/30 animate-gradient-shift"></div>
+                    </div>
+                    
+                    {/* Particle Effect Background */}
+                    <div className="absolute inset-0">
+                        <div className="absolute top-20 left-10 w-72 h-72 bg-green-500 rounded-full filter blur-[128px] opacity-20 animate-pulse"></div>
+                        <div className="absolute top-40 right-20 w-96 h-96 bg-emerald-500 rounded-full filter blur-[128px] opacity-20 animate-pulse delay-1000"></div>
+                        <div className="absolute bottom-20 left-1/3 w-80 h-80 bg-teal-500 rounded-full filter blur-[128px] opacity-20 animate-pulse delay-2000"></div>
+                    </div>
+                    
+                    {/* Floating Eco Icons */}
+                    <div className="absolute inset-0 overflow-hidden">
+                        <motion.div
+                            animate={{
+                                y: [0, -30, 0],
+                                x: [0, 20, 0],
+                                rotate: [0, 10, 0],
+                            }}
+                            transition={{
+                                duration: 8,
+                                repeat: Infinity,
+                                ease: "easeInOut"
+                            }}
+                            className="absolute top-20 left-[10%] text-white/10"
+                        >
+                            <FontAwesomeIcon icon={faRecycle} size="6x" />
+                        </motion.div>
+                        
+                        <motion.div
+                            animate={{
+                                y: [0, 30, 0],
+                                x: [0, -20, 0],
+                                rotate: [0, -10, 0],
+                            }}
+                            transition={{
+                                duration: 10,
+                                repeat: Infinity,
+                                ease: "easeInOut"
+                            }}
+                            className="absolute bottom-40 right-[15%] text-white/10"
+                        >
+                            <FontAwesomeIcon icon={faLeaf} size="5x" />
+                        </motion.div>
+                        
+                        <motion.div
+                            animate={{
+                                y: [0, -20, 0],
+                                rotate: [0, 360],
+                            }}
+                            transition={{
+                                duration: 15,
+                                repeat: Infinity,
+                                ease: "linear"
+                            }}
+                            className="absolute top-1/2 right-[10%] text-white/5"
+                        >
+                            <FontAwesomeIcon icon={faGlobe} size="8x" />
+                        </motion.div>
+                    </div>
+                    
+                    {/* Animated Dots Pattern */}
+                    <div className="absolute inset-0 opacity-20">
+                        <div className="absolute inset-0" style={{
+                            backgroundImage: `radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 1px)`,
+                            backgroundSize: '40px 40px'
+                        }}></div>
+                    </div>
+                </div>
                 
-                <div className="relative container mx-auto px-4">
-                    <div className="max-w-4xl mx-auto text-center text-white">
-                        <motion.h1 
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="text-5xl md:text-6xl font-bold mb-6"
-                        >
-                            Smart Waste Management for Ghana's Urban Future
-                        </motion.h1>
-                        <motion.p 
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 }}
-                            className="text-xl mb-8 text-green-50"
-                        >
-                            IoT-powered waste collection, real-time tracking, and on-demand pickup services. 
-                            Join the revolution in making Ghana cleaner and greener.
-                        </motion.p>
-                        <motion.div 
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 }}
-                            className="flex flex-col sm:flex-row gap-4 justify-center"
-                        >
-                            <Link 
-                                to="/register" 
-                                className="bg-white text-green-600 px-8 py-4 rounded-lg font-semibold hover:bg-green-50 transition-colors"
+                {/* Hero Content */}
+                <div className="relative z-10 container mx-auto px-4 py-20">
+                    <div className="grid lg:grid-cols-2 gap-12 items-center">
+                        {/* Left Content */}
+                        <div className="text-white">
+                            {/* Badge */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.6 }}
+                                className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full mb-8 border border-white/20"
                             >
-                                Request Pickup Now
-                            </Link>
-                            <Link 
-                                to="/become-provider" 
-                                className="bg-green-700 text-white px-8 py-4 rounded-lg font-semibold hover:bg-green-800 transition-colors border-2 border-green-500"
+                                <span className="relative flex h-3 w-3">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                                </span>
+                                <span className="text-sm font-medium">Eco-Friendly • Sustainable • Smart</span>
+                            </motion.div>
+                            
+                            {/* Main Heading */}
+                            <motion.h1 
+                                initial={{ opacity: 0, y: 30 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.7, delay: 0.1 }}
+                                className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight"
                             >
-                                Become a Provider
-                            </Link>
+                                Transform
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400"> Waste </span>
+                                Into
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400"> Resources</span>
+                            </motion.h1>
+                            
+                            {/* Subtitle */}
+                            <motion.p 
+                                initial={{ opacity: 0, y: 30 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.7, delay: 0.2 }}
+                                className="text-xl md:text-2xl mb-8 text-green-100 leading-relaxed"
+                            >
+                                Ghana's premier smart waste management platform powered by IoT sensors, 
+                                AI optimization, and sustainable practices for a cleaner tomorrow.
+                            </motion.p>
+                            
+                            {/* Features List */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 30 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.7, delay: 0.3 }}
+                                className="grid grid-cols-2 gap-4 mb-8"
+                            >
+                                {[
+                                    { icon: faQrcode, text: 'Smart Bin Technology' },
+                                    { icon: faRoute, text: 'Optimized Collection' },
+                                    { icon: faRecycle, text: '95% Recycling Rate' },
+                                    { icon: faMobileAlt, text: 'Mobile App Access' },
+                                ].map((feature, index) => (
+                                    <div key={index} className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                                            <FontAwesomeIcon icon={feature.icon} className="text-green-400" />
+                                        </div>
+                                        <span className="text-sm font-medium">{feature.text}</span>
+                                    </div>
+                                ))}
+                            </motion.div>
+                            
+                            {/* CTA Buttons */}
+                            <motion.div 
+                                initial={{ opacity: 0, y: 30 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.7, delay: 0.4 }}
+                                className="flex flex-col sm:flex-row gap-4"
+                            >
+                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                    <Link 
+                                        to="/service-request" 
+                                        className="group relative inline-flex items-center justify-center gap-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-8 py-4 rounded-full font-semibold text-lg shadow-2xl hover:shadow-green-500/25 transition-all duration-300 overflow-hidden"
+                                    >
+                                        <span className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity"></span>
+                                        <FontAwesomeIcon icon={faTruck} className="text-xl" />
+                                        <span>Request Pickup</span>
+                                        <FontAwesomeIcon icon={faArrowRight} className="text-sm group-hover:translate-x-1 transition-transform" />
+                                    </Link>
+                                </motion.div>
+                                
+                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                    <Link 
+                                        to="/how-it-works" 
+                                        className="group inline-flex items-center justify-center gap-3 bg-white/10 backdrop-blur-md text-white px-8 py-4 rounded-full font-semibold text-lg border-2 border-white/30 hover:bg-white/20 hover:border-white/50 transition-all duration-300"
+                                    >
+                                        <FontAwesomeIcon icon={faLeaf} />
+                                        <span>Learn More</span>
+                                        <FontAwesomeIcon icon={faChevronRight} className="text-sm group-hover:translate-x-1 transition-transform" />
+                                    </Link>
+                                </motion.div>
+                            </motion.div>
+                            
+                            {/* Trust Indicators */}
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.7, delay: 0.5 }}
+                                className="mt-12 pt-8 border-t border-white/20"
+                            >
+                                <div className="flex flex-wrap items-center gap-8">
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex -space-x-2">
+                                            {[1, 2, 3, 4].map((i) => (
+                                                <img
+                                                    key={i}
+                                                    src={`https://i.pravatar.cc/40?img=${i}`}
+                                                    alt=""
+                                                    className="w-8 h-8 rounded-full border-2 border-white"
+                                                />
+                                            ))}
+                                        </div>
+                                        <span className="text-sm">
+                                            <span className="font-bold">100K+</span> Happy Users
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        {[1, 2, 3, 4, 5].map((i) => (
+                                            <FontAwesomeIcon key={i} icon={faStar} className="text-yellow-400 text-sm" />
+                                        ))}
+                                        <span className="ml-2 text-sm font-medium">4.9/5 Rating</span>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </div>
+                        
+                        {/* Right Content - Interactive Visual */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.8, delay: 0.3 }}
+                            className="relative hidden lg:block"
+                        >
+                            {/* Main Image Container */}
+                            <div className="relative">
+                                {/* Glow Effect */}
+                                <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-500 rounded-3xl filter blur-3xl opacity-30 animate-pulse"></div>
+                                
+                                {/* Main Image */}
+                                <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md rounded-3xl p-8 border border-white/20">
+                                    <img 
+                                        src="https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+                                        alt="Smart Waste Management"
+                                        className="rounded-2xl shadow-2xl"
+                                    />
+                                    
+                                    {/* Floating Stats Cards */}
+                                    <motion.div
+                                        animate={{ y: [0, -10, 0] }}
+                                        transition={{ duration: 3, repeat: Infinity }}
+                                        className="absolute -top-4 -right-4 bg-white rounded-xl shadow-xl p-4"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                                <FontAwesomeIcon icon={faRecycle} className="text-green-600 text-xl" />
+                                            </div>
+                                            <div>
+                                                <p className="text-2xl font-bold text-gray-900">95%</p>
+                                                <p className="text-sm text-gray-600">Recycled</p>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                    
+                                    <motion.div
+                                        animate={{ y: [0, 10, 0] }}
+                                        transition={{ duration: 3, repeat: Infinity, delay: 1 }}
+                                        className="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-xl p-4"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
+                                                <FontAwesomeIcon icon={faLeaf} className="text-emerald-600 text-xl" />
+                                            </div>
+                                            <div>
+                                                <p className="text-2xl font-bold text-gray-900">50K</p>
+                                                <p className="text-sm text-gray-600">Tons CO₂ Saved</p>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                </div>
+                            </div>
                         </motion.div>
                     </div>
                 </div>
-
-                {/* Floating Elements */}
-                <div className="absolute top-20 right-10 w-20 h-20 bg-green-400 rounded-full opacity-20 animate-pulse"></div>
-                <div className="absolute bottom-20 left-10 w-32 h-32 bg-green-300 rounded-full opacity-20 animate-pulse delay-1000"></div>
+                
+                {/* Scroll Indicator */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1 }}
+                    className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
+                >
+                    <motion.div
+                        animate={{ y: [0, 10, 0] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className="flex flex-col items-center gap-2 text-white/60"
+                    >
+                        <span className="text-sm font-medium">Scroll to Explore</span>
+                        <FontAwesomeIcon icon={faChevronDown} />
+                    </motion.div>
+                </motion.div>
             </section>
 
-            {/* Stats Section */}
-            <section className="py-16 bg-white">
+            {/* Animated Stats Bar */}
+            <section className="relative bg-white py-8 shadow-lg">
                 <div className="container mx-auto px-4">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                         {stats.map((stat, index) => (
@@ -361,11 +596,16 @@ const Homepage: React.FC = () => {
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.1 }}
-                                className="text-center"
+                                viewport={{ once: true }}
+                                className="relative group"
                             >
-                                <FontAwesomeIcon icon={stat.icon} className="text-4xl text-green-600 mb-4" />
-                                <h3 className="text-3xl font-bold text-gray-800">{stat.value}</h3>
-                                <p className="text-gray-600">{stat.label}</p>
+                                <div className="text-center">
+                                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-2xl mb-3 group-hover:scale-110 transition-transform">
+                                        <FontAwesomeIcon icon={stat.icon} className="text-2xl text-green-600" />
+                                    </div>
+                                    <h3 className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</h3>
+                                    <p className="text-sm text-gray-600">{stat.label}</p>
+                                </div>
                             </motion.div>
                         ))}
                     </div>

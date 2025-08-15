@@ -702,3 +702,49 @@ pre.hljs {
         transform: translateY(0);
     }
 }
+
+/* Custom animations for enhanced hero section */
+@keyframes gradient-shift {
+    0%, 100% {
+        transform: translateX(-100%) translateY(0);
+    }
+    50% {
+        transform: translateX(100%) translateY(-100%);
+    }
+}
+
+.animate-gradient-shift {
+    animation: gradient-shift 15s ease infinite;
+}
+
+/* Pulse delay classes */
+.delay-1000 {
+    animation-delay: 1s;
+}
+
+.delay-2000 {
+    animation-delay: 2s;
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+    @apply bg-green-500 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    @apply bg-green-600;
+}
+
+/* Smooth scroll behavior */
+html {
+    scroll-behavior: smooth;
+}
