@@ -47,7 +47,7 @@ urlpatterns = [
     # Geocoding endpoints outside API path to bypass authentication issues
     # API routes with prefix
     path(
-        "morevans/api/v1/",
+        "wastewise/api/v1/",
         include(
             [
                 path(
@@ -122,6 +122,8 @@ urlpatterns = [
                 path("", include("apps.Services.urls")),
                 path("", include("apps.Vehicle.urls")),
                 path("", include("apps.Notification.urls")),
+                # WasteWise IoT endpoints
+                path("waste/", include("apps.WasteBin.urls")),
                 # Media files under API prefix
                 *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
             ]

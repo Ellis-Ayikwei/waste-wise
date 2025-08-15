@@ -1,8 +1,10 @@
 {
-    "name": "vristo-react-vite",
+    "name": "wastewise-frontend",
     "private": true,
-    "version": "0.0.0",
+    "version": "1.0.0",
     "type": "module",
+    "description": "WasteWise - Smart Waste Management System Frontend",
+    "author": "WasteWise Team",
     "scripts": {
         "dev": "vite --host",
         "build": "vite build",

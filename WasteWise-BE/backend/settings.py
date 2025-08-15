@@ -80,6 +80,7 @@ INSTALLED_APPS = [
     "apps.RequestItems",
     "apps.JourneyStop",
     "apps.Chat",
+    "apps.WasteBin",  # WasteWise IoT bin management
 ]
 
 MIDDLEWARE = [
@@ -118,7 +119,7 @@ ASGI_APPLICATION = "backend.asgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.contrib.gis.db.backends.postgis",
-        "NAME": "morevans",  # database name
+        "NAME": "wastewise",  # database name
         "USER": "postgres",  # database user
         "PASSWORD": "@Toshib123",  # database password
         "HOST": "localhost",  # database host
@@ -351,7 +352,7 @@ EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
 # Use SendGrid Web API instead of SMTP for better reliability
 EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@morevans.com")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@wastewise.com")
 SENDGRID_TRACK_CLICKS_PLAIN = False
 SENDGRID_TRACK_CLICKS_HTML = False
 SENDGRID_TRACK_OPENS = False

@@ -1,8 +1,10 @@
 {
-    "name": "vristo-react-vite",
+    "name": "wastewise-admin",
     "private": true,
-    "version": "0.0.0",
+    "version": "1.0.0",
     "type": "module",
+    "description": "WasteWise - Smart Waste Management System Admin Dashboard",
+    "author": "WasteWise Team",
     "scripts": {
         "dev": "vite --host",
         "build": "vite build",
