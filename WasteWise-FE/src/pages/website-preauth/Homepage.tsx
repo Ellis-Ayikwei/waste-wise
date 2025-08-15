@@ -28,6 +28,14 @@ import {
     faTools,
     faBell,
     faLock,
+    faRecycle,
+    faTrash,
+    faLeaf,
+    faMobileAlt,
+    faChartLine,
+    faRoute,
+    faQrcode,
+    faSeedling,
 } from '@fortawesome/free-solid-svg-icons';
 import Navbar from '../../components/homepage/Navbar';
 import Hero from '../../components/homepage/Hero';
@@ -93,198 +101,271 @@ const Homepage: React.FC = () => {
         return () => clearInterval(interval);
     }, []);
 
-    // Service types - more detailed data for production
+    // WasteWise Service types - Ghana waste management focused
     const serviceTypes: ServiceType[] = [
         {
             id: 1,
-            title: 'Home Moves',
-            icon: 'https://images.unsplash.com/photo-1600585152220-90363fe7e115?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
-            description: 'Full house or apartment relocations with professional packing services and setup assistance',
-            serviceId: 'home-removals',
+            title: 'Smart Bin Monitoring',
+            icon: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
+            description: 'IoT-enabled bins with real-time fill level monitoring and automated collection alerts',
+            serviceId: 'smart-bins',
         },
         {
             id: 2,
-            title: 'Office Relocations',
-            icon: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
-            description: 'Minimize downtime with our efficient commercial moves including IT equipment and furniture',
-            serviceId: 'office-removals',
+            title: 'Residential Waste Collection',
+            icon: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
+            description: 'Regular household waste pickup with flexible scheduling and recycling options',
+            serviceId: 'residential-collection',
         },
         {
             id: 3,
-            title: 'Furniture Delivery',
-            icon: 'https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
-            description: 'Safe delivery, assembly, and placement of furniture pieces from stores or between locations',
-            serviceId: 'furniture-appliance-delivery',
+            title: 'Commercial Waste Management',
+            icon: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
+            description: 'Tailored waste solutions for businesses, offices, and commercial establishments',
+            serviceId: 'commercial-waste',
         },
         {
             id: 4,
-            title: 'International Moves',
-            icon: 'https://images.unsplash.com/photo-1531237570470-1b48560f2c99?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
-            description: 'Cross-border relocations with customs handling, paperwork assistance, and international logistics',
-            serviceId: 'international-removals',
+            title: 'Recycling Services',
+            icon: 'https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
+            description: 'Comprehensive recycling programs for plastic, paper, glass, and metal waste',
+            serviceId: 'recycling',
         },
         {
             id: 5,
-            title: 'Specialty Items',
-            icon: 'https://images.unsplash.com/photo-1452860606245-08befc0ff44b?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
-            description: 'Expert handling of pianos, antiques, artwork, and other high-value or fragile possessions',
-            serviceId: 'specialized-services',
+            title: 'E-Waste Collection',
+            icon: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
+            description: 'Safe disposal and recycling of electronic waste including computers and phones',
+            serviceId: 'e-waste',
         },
         {
             id: 6,
-            title: 'Storage Solutions',
-            icon: 'https://images.unsplash.com/photo-1600566752355-35792bedcfea?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
-            description: 'Secure short and long-term storage facilities with climate control and 24/7 security options',
-            serviceId: 'storage-services',
+            title: 'Organic Waste Composting',
+            icon: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
+            description: 'Convert organic waste into nutrient-rich compost for agricultural use',
+            serviceId: 'composting',
         },
         {
             id: 7,
-            title: 'Man & Van Services',
-            icon: 'https://images.unsplash.com/photo-1586864387789-628af9feed72?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
-            description: 'Flexible and affordable transport solutions for smaller moves and single item deliveries',
-            serviceId: 'man-van-services',
+            title: 'Construction Debris Removal',
+            icon: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
+            description: 'Efficient removal of construction and demolition waste with proper disposal',
+            serviceId: 'construction-waste',
         },
         {
             id: 8,
-            title: 'Student Moves',
-            icon: 'https://images.unsplash.com/photo-1519070994522-88c6b756330e?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
-            description: 'Specialized services for university moves with affordable rates and flexible scheduling',
-            serviceId: 'student-moves',
+            title: 'Medical Waste Management',
+            icon: 'https://images.unsplash.com/photo-1579154204601-01588f351e67?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
+            description: 'Specialized handling and disposal of medical and hazardous waste materials',
+            serviceId: 'medical-waste',
         },
         {
             id: 9,
-            title: 'Vehicle Transport',
-            icon: 'https://images.unsplash.com/photo-1563720223523-499a02716184?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
-            description: 'Safe transportation of cars, motorcycles, and other vehicles nationwide or internationally',
-            serviceId: 'vehicle-transport',
+            title: 'On-Demand Pickup',
+            icon: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
+            description: 'Request immediate waste pickup through our mobile app - Uber for Waste',
+            serviceId: 'on-demand',
         },
         {
             id: 10,
-            title: 'Waste Removal',
-            icon: 'https://images.unsplash.com/photo-1613578723827-0d8f1ef2ad25?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
-            description: 'Environmentally responsible disposal and recycling services for household and commercial waste',
-            serviceId: 'waste-removal',
+            title: 'Bulk Waste Collection',
+            icon: 'https://images.unsplash.com/photo-1567093485884-3bc944114929?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
+            description: 'Large-scale waste removal for events, cleanups, and special occasions',
+            serviceId: 'bulk-waste',
         },
         {
             id: 11,
-            title: 'Courier Services',
-            icon: 'https://images.unsplash.com/photo-1561169653-c8f5beef564d?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
-            description: 'Same-day and next-day delivery options for packages, documents, and time-sensitive items',
-            serviceId: 'courier-services',
+            title: 'Plastic Recovery Program',
+            icon: 'https://images.unsplash.com/photo-1536939459926-301728717817?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
+            description: 'Dedicated plastic waste collection and recycling to combat pollution',
+            serviceId: 'plastic-recovery',
         },
         {
             id: 12,
-            title: 'IKEA Delivery',
-            icon: 'https://images.unsplash.com/photo-1605371924599-2d0365da1ae0?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
-            description: 'Specialized pickup, delivery, and assembly services for IKEA and other flat-pack furniture',
-            serviceId: 'ikea-delivery',
+            title: 'Community Education',
+            icon: 'https://images.unsplash.com/photo-1509909756405-be0199881695?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
+            description: 'Waste management education and awareness programs for communities',
+            serviceId: 'education',
         },
     ];
 
-    // Enhanced featured providers with more realistic data
+    // WasteWise featured providers - Ghana-based waste management companies
     const featuredProviders: FeaturedProvider[] = [
         {
             id: 1,
-            name: 'Express Movers Ltd',
+            name: 'Accra Waste Solutions',
             image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80',
-            backgroundImage: 'https://images.unsplash.com/photo-1609599006353-e629aaabfeae?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+            backgroundImage: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
             rating: 4.8,
             reviewCount: 1246,
-            description: 'Award-winning residential moving specialists with over 10 years of experience and 50+ trained staff',
-            services: ['Residential Moves', 'Packing & Unpacking', 'Furniture Assembly', 'Piano Moving'],
-            location: 'London, UK',
+            description: 'Leading waste management provider in Greater Accra with 100+ collection vehicles',
+            services: ['Residential Collection', 'Recycling', 'Smart Bins', 'Composting'],
+            location: 'Accra, Ghana',
         },
         {
             id: 2,
-            name: 'City Logistics Solutions',
+            name: 'Green Ghana Recyclers',
             image: 'https://images.unsplash.com/photo-1618077360395-f6a9ce8a19e5?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80',
-            backgroundImage: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-            rating: 4.7,
-            reviewCount: 983,
-            description: 'Fast and reliable commercial moving services with national coverage and specialized equipment',
-            services: ['Office Relocations', 'IT Infrastructure', 'Commercial Equipment', 'Storage'],
-            location: 'Manchester, UK',
+            backgroundImage: 'https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+            rating: 4.9,
+            reviewCount: 892,
+            description: 'Specialized in plastic and e-waste recycling with state-of-the-art facilities',
+            services: ['Plastic Recovery', 'E-Waste', 'Corporate Solutions', 'Education'],
+            location: 'Tema, Ghana',
         },
         {
             id: 3,
-            name: 'Safe Transport & Delivery',
-            image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80',
-            backgroundImage: 'https://images.unsplash.com/photo-1584535236953-40a52eb2fe76?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-            rating: 4.9,
-            reviewCount: 1567,
-            description: 'Specialized in fragile item transportation with comprehensive insurance coverage and expert handling',
-            services: ['Fine Electronics', 'Antiques', 'Artwork', 'Grand Pianos', 'Luxury Items'],
-            location: 'Birmingham, UK',
+            name: 'Kumasi Clean Services',
+            image: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80',
+            backgroundImage: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+            rating: 4.7,
+            reviewCount: 567,
+            description: 'Comprehensive waste management serving Ashanti Region with eco-friendly practices',
+            services: ['Commercial Waste', 'Medical Waste', 'Bulk Collection', 'Composting'],
+            location: 'Kumasi, Ghana',
         },
     ];
 
-    // Enhanced testimonials with more realistic content
+    // WasteWise testimonials - Ghana customers
     const testimonials: Testimonial[] = [
         {
             id: 1,
-            name: 'Sarah Johnson',
-            image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80',
-            text: 'MoreVans transformed what could have been a stressful house move into a seamless experience. The provider arrived punctually, handled all our belongings with care, and even helped arrange furniture in our new home. The transparent pricing meant no surprises, and the app let me track everything in real-time.',
+            name: 'Kwame Asante',
+            image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80',
+            text: 'WasteWise has transformed waste management in our neighborhood. The smart bins alert collectors when full, ensuring our streets stay clean. The mobile app makes it so easy to request pickups!',
             rating: 5,
-            date: '12 Mar 2025',
-            service: 'Home Relocation',
+            date: '2 weeks ago',
+            service: 'Smart Bin Service',
         },
         {
             id: 2,
-            name: 'Michael Brown',
-            image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80',
-            text: 'As a small business owner, I needed our office relocation to happen with minimal disruption. The team at MoreVans found us a provider that worked overnight and weekend hours to ensure we were operational by Monday morning. Their business moving checklist was invaluable for our planning process.',
+            name: 'Ama Mensah',
+            image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80',
+            text: 'As a restaurant owner, proper waste disposal is crucial. WasteWise provides reliable commercial collection and helps us separate organic waste for composting. Excellent service!',
             rating: 5,
-            date: '2 Apr 2025',
-            service: 'Office Relocation',
+            date: '1 month ago',
+            service: 'Commercial Collection',
         },
         {
             id: 3,
-            name: 'Jennifer Lee',
-            image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80',
-            text: "I needed to transport my grandmother's antique piano that's been in our family for generations. The specialist provider MoreVans matched me with arrived with custom equipment, thoroughly wrapped and secured the piano, and delivered it without a scratch. The insurance coverage gave me complete peace of mind throughout.",
+            name: 'Kofi Adjei',
+            image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80',
+            text: 'The on-demand pickup feature is amazing! Just like Uber, I can request waste collection with a few taps. The providers arrive quickly and handle everything professionally.',
             rating: 5,
-            date: '18 Mar 2025',
-            service: 'Specialty Moving',
+            date: '3 weeks ago',
+            service: 'On-Demand Pickup',
         },
     ];
 
-    // Enhanced stats with more specific metrics
     const stats = [
-        { value: '15,742', label: 'Happy Customers', icon: Users },
-        { value: '5,612', label: 'Verified Providers', icon: ShieldCheck },
-        { value: '98.3%', label: 'Satisfaction Rate', icon: Star },
-        { value: '£10M+', label: 'Insurance Coverage', icon: PoundSterling },
+        { icon: faTrash, value: '50,000+', label: 'Tons Collected Monthly' },
+        { icon: faRecycle, value: '35%', label: 'Waste Recycled' },
+        { icon: faUsers, value: '100,000+', label: 'Households Served' },
+        { icon: faTruck, value: '500+', label: 'Collection Vehicles' },
+    ];
+
+    const benefits = [
+        {
+            icon: faQrcode,
+            title: 'Smart IoT Bins',
+            description: 'Real-time monitoring of waste levels with automated collection alerts',
+        },
+        {
+            icon: faMobileAlt,
+            title: 'Mobile App Access',
+            description: 'Request pickups, track collections, and manage payments on your phone',
+        },
+        {
+            icon: faRoute,
+            title: 'Optimized Routes',
+            description: 'AI-powered route optimization reduces emissions and improves efficiency',
+        },
+        {
+            icon: faRecycle,
+            title: 'Recycling Programs',
+            description: 'Comprehensive recycling initiatives to reduce environmental impact',
+        },
+        {
+            icon: faChartLine,
+            title: 'Analytics Dashboard',
+            description: 'Track waste generation patterns and environmental impact metrics',
+        },
+        {
+            icon: faSeedling,
+            title: 'Eco-Friendly',
+            description: 'Committed to sustainable practices and circular economy principles',
+        },
     ];
 
     return (
-        <div className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 overflow-hidden">
-            <Navbar isScrolled={isScrolled} />
-
+        <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
+            <Navbar />
+            
             {/* Hero Section */}
-            <Hero />
+            <section className="relative pt-20 pb-32 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-green-600 to-green-800 opacity-90"></div>
+                <div className="absolute inset-0 bg-pattern opacity-10"></div>
+                
+                <div className="relative container mx-auto px-4">
+                    <div className="max-w-4xl mx-auto text-center text-white">
+                        <motion.h1 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-5xl md:text-6xl font-bold mb-6"
+                        >
+                            Smart Waste Management for Ghana's Urban Future
+                        </motion.h1>
+                        <motion.p 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 }}
+                            className="text-xl mb-8 text-green-50"
+                        >
+                            IoT-powered waste collection, real-time tracking, and on-demand pickup services. 
+                            Join the revolution in making Ghana cleaner and greener.
+                        </motion.p>
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="flex flex-col sm:flex-row gap-4 justify-center"
+                        >
+                            <Link 
+                                to="/register" 
+                                className="bg-white text-green-600 px-8 py-4 rounded-lg font-semibold hover:bg-green-50 transition-colors"
+                            >
+                                Request Pickup Now
+                            </Link>
+                            <Link 
+                                to="/become-provider" 
+                                className="bg-green-700 text-white px-8 py-4 rounded-lg font-semibold hover:bg-green-800 transition-colors border-2 border-green-500"
+                            >
+                                Become a Provider
+                            </Link>
+                        </motion.div>
+                    </div>
+                </div>
 
-            {/* Benefits */}
-            <section className="py-16">
+                {/* Floating Elements */}
+                <div className="absolute top-20 right-10 w-20 h-20 bg-green-400 rounded-full opacity-20 animate-pulse"></div>
+                <div className="absolute bottom-20 left-10 w-32 h-32 bg-green-300 rounded-full opacity-20 animate-pulse delay-1000"></div>
+            </section>
+
+            {/* Stats Section */}
+            <section className="py-16 bg-white">
                 <div className="container mx-auto px-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                         {stats.map((stat, index) => (
                             <motion.div
                                 key={index}
-                                className="bg-white/10 backdrop-blur-md p-4 sm:p-6 rounded-xl border border-white/10"
                                 initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.2 + index * 0.1 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.1 }}
+                                className="text-center"
                             >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center">
-                                        <stat.icon className="w-5 h-5 text-secondary" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-2xl sm:text-3xl font-bold text-primary dark:text-blue-400">{stat.value}</h3>
-                                        <p className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</p>
-                                    </div>
-                                </div>
+                                <FontAwesomeIcon icon={stat.icon} className="text-4xl text-green-600 mb-4" />
+                                <h3 className="text-3xl font-bold text-gray-800">{stat.value}</h3>
+                                <p className="text-gray-600">{stat.label}</p>
                             </motion.div>
                         ))}
                     </div>
@@ -292,351 +373,222 @@ const Homepage: React.FC = () => {
             </section>
 
             {/* Services Section */}
-            <section ref={servicesRef} className="py-16 bg-gray-50 dark:bg-gray-800">
+            <section className="py-20 bg-gray-50" ref={servicesRef}>
                 <div className="container mx-auto px-4">
-                    <div className="text-center mb-16">
-                        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">Our Moving Services</h2>
-                        <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-                            From single items to full house moves, we connect you with the right van operators for any transport need.
+                    <div className="text-center mb-12">
+                        <h2 className="text-4xl font-bold text-gray-800 mb-4">Our Services</h2>
+                        <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                            Comprehensive waste management solutions powered by technology and sustainability
                         </p>
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {serviceTypes.slice(0, 6).map((service, index) => (
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        {serviceTypes.map((service) => (
                             <motion.div
                                 key={service.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                transition={{
-                                    duration: 0.5,
-                                    delay: index * 0.1,
-                                    type: 'spring',
-                                    stiffness: 100,
-                                    damping: 20,
-                                }}
-                                viewport={{ once: true }}
-                                className="service-card bg-white dark:bg-gray-700 rounded-xl overflow-hidden shadow-lg group hover:shadow-2xl transition-all duration-300 flex flex-col h-full"
+                                whileHover={{ scale: 1.05 }}
+                                className="bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer"
+                                onClick={() => navigate(`/services/${service.serviceId}`)}
                             >
-                                <div className="relative h-56 overflow-hidden">
-                                    <motion.img
-                                        src={service.icon}
-                                        alt={service.title}
-                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-50 group-hover:opacity-70 transition-opacity duration-300"></div>
-                                    <div className="absolute top-4 right-4">
-                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                            {index % 3 === 0 ? 'Popular' : index % 3 === 1 ? 'Best Value' : 'Premium'}
-                                        </span>
-                                    </div>
-                                    <div className="absolute bottom-0 left-0 w-full p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                                        <h3 className="text-xl md:text-2xl font-bold text-white group-hover:text-blue-200 transition-colors">{service.title}</h3>
-                                    </div>
-                                </div>
-                                <div className="p-6 flex-grow flex flex-col justify-between">
-                                    <div>
-                                        <p className="text-gray-600 dark:text-gray-300 mb-4 text-sm md:text-base">{service.description}</p>
-                                        <div className="flex flex-wrap gap-2 mb-4">
-                                            <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-full">Fast Service</span>
-                                            <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-full">Insured</span>
-                                            <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-full">Rated {4 + (index % 2) / 10}/5</span>
-                                        </div>
-                                    </div>
-                                    <Link to={`/services/${service.serviceId}`}>
-                                        <motion.div
-                                            className="inline-flex items-center justify-center w-full px-4 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg font-medium group-hover:bg-blue-600 group-hover:text-white transition-all duration-300"
-                                            whileHover={{ scale: 1.02 }}
-                                            transition={{ type: 'spring', stiffness: 400, damping: 10 }}
-                                        >
-                                            <span>Explore {service.title}</span>
-                                            <FontAwesomeIcon icon={faChevronRight} className="ml-2 text-sm transition-transform duration-300 group-hover:translate-x-1" />
-                                        </motion.div>
-                                    </Link>
+                                <div className="h-48 bg-cover bg-center" style={{ backgroundImage: `url(${service.icon})` }}></div>
+                                <div className="p-6">
+                                    <h3 className="text-xl font-semibold text-gray-800 mb-2">{service.title}</h3>
+                                    <p className="text-gray-600 text-sm">{service.description}</p>
                                 </div>
                             </motion.div>
                         ))}
-                    </div>
-                    
-                    <div className="mt-12 text-center">
-                        <motion.div
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="inline-block"
-                        >
-                            <Link to="/services" className="px-8 py-3 bg-primary hover:bg-blue-700 text-white text-lg font-semibold rounded-lg shadow-lg transition-all duration-300 flex items-center gap-2 mx-auto">
-                                View All Services
-                                <FontAwesomeIcon icon={faArrowRight} className="ml-2" />
-                            </Link>
-                        </motion.div>
                     </div>
                 </div>
             </section>
 
             {/* How It Works */}
-            <HowItWorks />
+            <section className="py-20 bg-white">
+                <div className="container mx-auto px-4">
+                    <div className="text-center mb-12">
+                        <h2 className="text-4xl font-bold text-gray-800 mb-4">How WasteWise Works</h2>
+                        <p className="text-xl text-gray-600">Simple, efficient, and eco-friendly waste management</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                        {[
+                            { icon: faMobileAlt, title: 'Download App', description: 'Get the WasteWise app on your smartphone' },
+                            { icon: faMapMarkerAlt, title: 'Set Location', description: 'Mark your pickup location and waste type' },
+                            { icon: faTruck, title: 'Schedule Pickup', description: 'Choose immediate or scheduled collection' },
+                            { icon: faRecycle, title: 'Track & Recycle', description: 'Monitor collection and earn recycling rewards' },
+                        ].map((step, index) => (
+                            <motion.div
+                                key={index}
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.1 }}
+                                className="text-center"
+                            >
+                                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <FontAwesomeIcon icon={step.icon} className="text-3xl text-green-600" />
+                                </div>
+                                <h3 className="text-xl font-semibold mb-2">{step.title}</h3>
+                                <p className="text-gray-600">{step.description}</p>
+                            </motion.div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Benefits Section */}
+            <section className="py-20 bg-green-50">
+                <div className="container mx-auto px-4">
+                    <div className="text-center mb-12">
+                        <h2 className="text-4xl font-bold text-gray-800 mb-4">Why Choose WasteWise?</h2>
+                        <p className="text-xl text-gray-600">Leading the transformation of waste management in Ghana</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {benefits.map((benefit, index) => (
+                            <motion.div
+                                key={index}
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                whileInView={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: index * 0.1 }}
+                                className="bg-white p-6 rounded-xl shadow-lg"
+                            >
+                                <FontAwesomeIcon icon={benefit.icon} className="text-3xl text-green-600 mb-4" />
+                                <h3 className="text-xl font-semibold mb-2">{benefit.title}</h3>
+                                <p className="text-gray-600">{benefit.description}</p>
+                            </motion.div>
+                        ))}
+                    </div>
+                </div>
+            </section>
 
             {/* Featured Providers */}
-            <FeaturedProviders providers={featuredProviders} />
-
-            {/* Testimonials */}
-            <section className="py-20 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-full bg-blue-600 opacity-5 dark:opacity-[0.03]">
-                    <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
-                        <path d="M25,30 Q35,30 40,20 T65,20 T90,40 T100,60" stroke="currentColor" strokeWidth="2" fill="none" />
-                        <path d="M0,50 Q20,40 40,50 T80,50 T100,40" stroke="currentColor" strokeWidth="2" fill="none" />
-                        <path d="M0,70 Q25,60 50,70 T100,70" stroke="currentColor" strokeWidth="2" fill="none" />
-                    </svg>
-                </div>
-
-                <div className="container mx-auto px-4 relative">
-                    <div className="text-center mb-16">
-                        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Customer Stories</h2>
-                        <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">Hear what our customers have to say about their moving experiences.</p>
+            <section className="py-20 bg-white">
+                <div className="container mx-auto px-4">
+                    <div className="text-center mb-12">
+                        <h2 className="text-4xl font-bold text-gray-800 mb-4">Top Waste Collection Providers</h2>
+                        <p className="text-xl text-gray-600">Certified and reliable waste management partners</p>
                     </div>
-
-                    <div className="relative">
-                        <AnimatePresence mode="wait">
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {featuredProviders.map((provider) => (
                             <motion.div
-                                key={currentSlide}
-                                initial={{ opacity: 0, x: 100 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -100 }}
-                                transition={{ duration: 0.5 }}
-                                className="max-w-4xl mx-auto"
+                                key={provider.id}
+                                whileHover={{ y: -10 }}
+                                className="bg-white rounded-xl shadow-xl overflow-hidden"
                             >
-                                <div className="bg-white dark:bg-gray-700 rounded-xl shadow-xl p-8 mb-6 relative">
-                                    <div className="absolute top-4 right-5 text-5xl text-blue-100 dark:text-blue-900/30">
-                                        <FontAwesomeIcon icon={faQuoteRight} />
-                                    </div>
-                                    <div className="mb-6">
-                                        <div className="flex text-yellow-500 mb-2">
-                                            {[...Array(5)].map((_, i) => (
-                                                <FontAwesomeIcon key={i} icon={faStar} className={i < testimonials[currentSlide].rating ? 'text-yellow-500' : 'text-gray-300 dark:text-gray-600'} />
-                                            ))}
-                                        </div>
-                                        <p className="text-xl text-gray-700 dark:text-gray-200 italic">"{testimonials[currentSlide].text}"</p>
-                                    </div>
-                                    <div className="flex items-center">
-                                        <img src={testimonials[currentSlide].image} alt={testimonials[currentSlide].name} className="w-14 h-14 rounded-full object-cover" />
-                                        <div className="ml-4">
-                                            <p className="font-semibold text-gray-900 dark:text-white">{testimonials[currentSlide].name}</p>
-                                            <div className="flex text-sm text-gray-500 dark:text-gray-400 items-center">
-                                                <span>{testimonials[currentSlide].service}</span>
-                                                <span className="mx-2">•</span>
-                                                <span>{testimonials[currentSlide].date}</span>
+                                <div className="h-48 bg-cover bg-center" style={{ backgroundImage: `url(${provider.backgroundImage})` }}></div>
+                                <div className="p-6">
+                                    <div className="flex items-center mb-4">
+                                        <img src={provider.image} alt={provider.name} className="w-16 h-16 rounded-full mr-4" />
+                                        <div>
+                                            <h3 className="text-xl font-semibold">{provider.name}</h3>
+                                            <div className="flex items-center">
+                                                <div className="flex text-yellow-400">
+                                                    {[...Array(5)].map((_, i) => (
+                                                        <FontAwesomeIcon key={i} icon={i < Math.floor(provider.rating) ? faStar : faStarHalf} />
+                                                    ))}
+                                                </div>
+                                                <span className="ml-2 text-gray-600">({provider.reviewCount})</span>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-
-                                {/* Testimonial controls */}
-                                <div className="flex items-center justify-center space-x-3">
-                                    <button
-                                        onClick={() => setCurrentSlide((prev) => (prev - 1 + testimonials.length) % testimonials.length)}
-                                        className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900/30"
-                                        aria-label="Previous testimonial"
-                                    >
-                                        <FontAwesomeIcon icon={faChevronLeft} className="text-gray-600 dark:text-gray-300" />
-                                    </button>
-
-                                    <div className="flex space-x-2">
-                                        {testimonials.map((_, index) => (
-                                            <button
-                                                key={index}
-                                                onClick={() => setCurrentSlide(index)}
-                                                className={`w-3 h-3 rounded-full ${index === currentSlide ? 'bg-blue-600 dark:bg-blue-400' : 'bg-gray-300 dark:bg-gray-600'}`}
-                                                aria-label={`Go to testimonial ${index + 1}`}
-                                            />
+                                    <p className="text-gray-600 mb-4">{provider.description}</p>
+                                    <div className="flex flex-wrap gap-2 mb-4">
+                                        {provider.services.map((service, idx) => (
+                                            <span key={idx} className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+                                                {service}
+                                            </span>
                                         ))}
                                     </div>
+                                    <div className="flex items-center text-gray-600">
+                                        <FontAwesomeIcon icon={faMapMarkerAlt} className="mr-2" />
+                                        {provider.location}
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                </div>
+            </section>
 
-                                    <button
-                                        onClick={() => setCurrentSlide((prev) => (prev + 1) % testimonials.length)}
-                                        className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900/30"
-                                        aria-label="Next testimonial"
-                                    >
-                                        <FontAwesomeIcon icon={faChevronRight} className="text-gray-600 dark:text-gray-300" />
-                                    </button>
+            {/* Testimonials */}
+            <section className="py-20 bg-gray-50">
+                <div className="container mx-auto px-4">
+                    <div className="text-center mb-12">
+                        <h2 className="text-4xl font-bold text-gray-800 mb-4">What Our Users Say</h2>
+                        <p className="text-xl text-gray-600">Real experiences from real Ghanaians</p>
+                    </div>
+                    
+                    <div className="max-w-4xl mx-auto">
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={currentSlide}
+                                initial={{ opacity: 0, x: 50 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -50 }}
+                                className="bg-white p-8 rounded-xl shadow-xl"
+                            >
+                                <FontAwesomeIcon icon={faQuoteRight} className="text-4xl text-green-200 mb-4" />
+                                <p className="text-lg text-gray-700 mb-6 italic">{testimonials[currentSlide].text}</p>
+                                <div className="flex items-center">
+                                    <img 
+                                        src={testimonials[currentSlide].image} 
+                                        alt={testimonials[currentSlide].name}
+                                        className="w-16 h-16 rounded-full mr-4"
+                                    />
+                                    <div>
+                                        <h4 className="font-semibold">{testimonials[currentSlide].name}</h4>
+                                        <p className="text-gray-600">{testimonials[currentSlide].service}</p>
+                                        <div className="flex text-yellow-400 mt-1">
+                                            {[...Array(testimonials[currentSlide].rating)].map((_, i) => (
+                                                <FontAwesomeIcon key={i} icon={faStar} />
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
                             </motion.div>
                         </AnimatePresence>
-                    </div>
-                </div>
-            </section>
-
-            {/* Trust & Safety */}
-            <section className="py-16 bg-gray-50 dark:bg-gray-800">
-                <div className="container mx-auto px-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-                        <motion.div initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }} viewport={{ once: true }}>
-                            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Your Peace of Mind is Our Priority</h2>
-                            <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
-                                We thoroughly vet all providers on our platform to ensure they meet our high standards for reliability and professionalism.
-                            </p>
-
-                            <div className="space-y-6">
-                                <div className="flex">
-                                    <div className="flex-shrink-0 bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full">
-                                        <FontAwesomeIcon icon={faShieldAlt} className="text-blue-600 dark:text-blue-400 text-xl" />
-                                    </div>
-                                    <div className="ml-4">
-                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Insurance Coverage</h3>
-                                        <p className="text-gray-600 dark:text-gray-400">All moves are covered by our comprehensive insurance policy for added protection.</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex">
-                                    <div className="flex-shrink-0 bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full">
-                                        <FontAwesomeIcon icon={faUsers} className="text-blue-600 dark:text-blue-400 text-xl" />
-                                    </div>
-                                    <div className="ml-4">
-                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Verified Providers</h3>
-                                        <p className="text-gray-600 dark:text-gray-400">We check credentials, licenses, and reviews before approving any provider on our platform.</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex">
-                                    <div className="flex-shrink-0 bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full">
-                                        <FontAwesomeIcon icon={faClock} className="text-blue-600 dark:text-blue-400 text-xl" />
-                                    </div>
-                                    <div className="ml-4">
-                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Reliable Service</h3>
-                                        <p className="text-gray-600 dark:text-gray-400">Our providers maintain a 98% on-time arrival rate and excellent service standards.</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="mt-8">
-                                <Link to="/safety" className="inline-flex items-center font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
-                                    Learn more about our safety measures
-                                    <FontAwesomeIcon icon={faChevronRight} className="ml-2 text-sm" />
-                                </Link>
-                            </div>
-                        </motion.div>
-
-                        <motion.div initial={{ opacity: 0, y: 50 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }} viewport={{ once: true }}>
-                            <div className="relative">
-                                <img
-                                    src="https://images.unsplash.com/photo-1606112219348-204d7d8b94ee?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
-                                    alt="Safe moving"
-                                    className="w-full rounded-xl shadow-xl"
-                                />
-
-                                <div className="absolute -bottom-10 -right-10 bg-white dark:bg-gray-700 p-6 rounded-lg shadow-xl max-w-xs">
-                                    <div className="flex items-center mb-4">
-                                        <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-                                            <FontAwesomeIcon icon={faShieldAlt} className="text-green-600 dark:text-green-400 text-xl" />
-                                        </div>
-                                        <div className="ml-4">
-                                            <h3 className="font-semibold text-gray-900 dark:text-white text-lg">Protected Moves</h3>
-                                            <p className="text-green-600 dark:text-green-400 font-medium">Goods in Transit Insurance</p>
-                                        </div>
-                                    </div>
-                                    <p className="text-gray-600 dark:text-gray-300 text-sm">Every booking includes coverage up to £50,000 for added peace of mind.</p>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Transport Partner Section */}
-            <section className="py-20 bg-gray-50 dark:bg-gray-900">
-                <div className="container mx-auto px-4">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                        <motion.div initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }} viewport={{ once: true }}>
-                            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
-                                Drive Your Business Forward with MoreVans
-                            </h2>
-                            <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
-                                Join our network of professional transport partners and access thousands of delivery and removal jobs across the UK. Earn up to £800 per week with flexible scheduling.
-                            </p>
-                            
-                            <div className="space-y-4 mb-8">
-                                <div className="flex items-center">
-                                    <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0">
-                                        <FontAwesomeIcon icon={faCheck} className="text-green-600 dark:text-green-400 text-sm" />
-                                    </div>
-                                    <span className="ml-3 text-gray-700 dark:text-gray-300">7,000+ jobs available weekly</span>
-                                </div>
-                                <div className="flex items-center">
-                                    <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0">
-                                        <FontAwesomeIcon icon={faCheck} className="text-green-600 dark:text-green-400 text-sm" />
-                                    </div>
-                                    <span className="ml-3 text-gray-700 dark:text-gray-300">Fast payments with Express Pay option</span>
-                                </div>
-                                <div className="flex items-center">
-                                    <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0">
-                                        <FontAwesomeIcon icon={faCheck} className="text-green-600 dark:text-green-400 text-sm" />
-                                    </div>
-                                    <span className="ml-3 text-gray-700 dark:text-gray-300">Work on your own schedule</span>
-                                </div>
-                                <div className="flex items-center">
-                                    <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0">
-                                        <FontAwesomeIcon icon={faCheck} className="text-green-600 dark:text-green-400 text-sm" />
-                                    </div>
-                                    <span className="ml-3 text-gray-700 dark:text-gray-300">Join in minutes, start earning in 24 hours</span>
-                                </div>
-                            </div>
-                            
-                            <Link
-                                to="/become-transport-partner"
-                                className="bg-blue-600 text-white hover:bg-blue-700 px-8 py-3 rounded-lg font-medium text-lg inline-flex items-center shadow-lg hover:shadow-xl transition-all"
-                            >
-                                Become a Transport Partner
-                                <FontAwesomeIcon icon={faArrowRight} className="ml-2" />
-                            </Link>
-                        </motion.div>
                         
-                        <motion.div initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.2 }} viewport={{ once: true }}>
-                            <div className="relative">
-                                <img
-                                    src="https://images.unsplash.com/photo-1519003722824-194d4455a60c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
-                                    alt="Transport Partner"
-                                    className="w-full rounded-xl shadow-xl"
+                        <div className="flex justify-center mt-6 gap-2">
+                            {testimonials.map((_, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => setCurrentSlide(index)}
+                                    className={`w-3 h-3 rounded-full transition-colors ${
+                                        index === currentSlide ? 'bg-green-600' : 'bg-gray-300'
+                                    }`}
                                 />
-                                
-                                <div className="absolute -bottom-10 -left-10 bg-white dark:bg-gray-700 p-6 rounded-lg shadow-xl max-w-xs">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <h3 className="font-semibold text-gray-900 dark:text-white text-lg">Average Weekly Earnings</h3>
-                                    </div>
-                                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">£800</p>
-                                    <p className="text-gray-600 dark:text-gray-300 text-sm">Top partners earn up to £20k/week</p>
-                                </div>
-                            </div>
-                        </motion.div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </section>
 
             {/* CTA Section */}
-            <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+            <section className="py-20 bg-gradient-to-r from-green-600 to-green-800">
                 <div className="container mx-auto px-4 text-center">
-                    <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} viewport={{ once: true }}>
-                        <h2 className="text-4xl font-bold mb-6">
-                            Ready to <span className="text-6xl md:text-7xl lg:text-8xl">Simple</span> Your Move?
-                        </h2>
-                        <p className="text-xl mb-8 max-w-2xl mx-auto text-blue-100">Join thousands of satisfied customers who have transformed their moving experience with MoreVans.</p>
-
-                        <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
-                            <Link
-                                to="/service-request"
-                                className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 rounded-lg font-medium text-lg inline-block shadow-lg hover:shadow-xl transition-all"
-                            >
-                                Request a Move
-                            </Link>
-                            <Link
-                                to="/become-transport-partner"
-                                className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-3 rounded-lg font-medium text-lg inline-block transition-colors"
-                            >
-                                Become a Transport Partner
-                            </Link>
-                        </div>
-                    </motion.div>
+                    <h2 className="text-4xl font-bold text-white mb-4">
+                        Ready to Make Ghana Cleaner?
+                    </h2>
+                    <p className="text-xl text-green-50 mb-8 max-w-2xl mx-auto">
+                        Join thousands of Ghanaians using WasteWise for efficient, eco-friendly waste management
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                        <Link 
+                            to="/register" 
+                            className="bg-white text-green-600 px-8 py-4 rounded-lg font-semibold hover:bg-green-50 transition-colors"
+                        >
+                            Get Started Today
+                        </Link>
+                        <Link 
+                            to="/contact" 
+                            className="bg-transparent text-white px-8 py-4 rounded-lg font-semibold hover:bg-green-700 transition-colors border-2 border-white"
+                        >
+                            Contact Us
+                        </Link>
+                    </div>
                 </div>
             </section>
 
-            {/* Footer */}
             <Footer />
         </div>
     );
