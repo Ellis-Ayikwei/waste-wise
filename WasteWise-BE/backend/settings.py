@@ -81,6 +81,7 @@ INSTALLED_APPS = [
     "apps.JourneyStop",
     "apps.Chat",
     "apps.WasteBin",  # WasteWise IoT bin management
+    "apps.WasteProvider",  # Uber for Waste provider system
 ]
 
 MIDDLEWARE = [

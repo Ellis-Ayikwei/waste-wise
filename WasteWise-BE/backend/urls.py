@@ -124,6 +124,8 @@ urlpatterns = [
                 path("", include("apps.Notification.urls")),
                 # WasteWise IoT endpoints
                 path("waste/", include("apps.WasteBin.urls")),
+                # WasteWise Provider (Uber for Waste) endpoints
+                path("provider/", include("apps.WasteProvider.urls")),
                 # Media files under API prefix
                 *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
             ]
