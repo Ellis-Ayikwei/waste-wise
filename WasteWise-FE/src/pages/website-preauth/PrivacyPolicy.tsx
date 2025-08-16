@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import Navbar from '../../components/homepage/Navbar';
 import Footer from '../../components/homepage/Footer';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faShieldAlt, faLock, faUserShield, faDatabase, faEnvelope, faGlobe, faFileAlt, faCookie, faChild } from '@fortawesome/free-solid-svg-icons';
+import { faShieldAlt, faLock, faUserShield, faDatabase, faEnvelope, faGlobe, faFileAlt, faCookie, faChild, faRecycle, faMapMarkerAlt, faCamera } from '@fortawesome/free-solid-svg-icons';
 
 const PrivacyPolicy: React.FC = () => {
     const [isScrolled, setIsScrolled] = useState(false);
@@ -24,15 +24,19 @@ const PrivacyPolicy: React.FC = () => {
             content: [
                 {
                     subtitle: '1.1 Information You Provide',
-                    text: 'We collect information you provide directly to us, such as when you create an account, request a service, make a payment, or contact us. This includes: name, email address, phone number, postal address, payment information, and any other information you choose to provide.',
+                    text: 'We collect information you provide directly to us, such as when you create an account, schedule waste collection, report an issue, or contact us. This includes: name, email address, phone number, physical address, payment information, waste disposal preferences, and any photos or descriptions of waste-related issues.',
                 },
                 {
-                    subtitle: '1.2 Information We Collect Automatically',
-                    text: 'When you use our services, we automatically collect certain information including: device information, log information, location information (with your consent), and usage information.',
+                    subtitle: '1.2 IoT and Sensor Data',
+                    text: 'Our smart bins collect: fill level data, weight measurements, temperature readings, collection frequency, GPS location of bins, and sensor health metrics. This data is used to optimize collection routes and prevent overflow.',
                 },
                 {
-                    subtitle: '1.3 Information From Third Parties',
-                    text: 'We may collect information about you from third parties, such as: social media platforms (if you link your account), payment processors, and identity verification services.',
+                    subtitle: '1.3 Location Information',
+                    text: 'With your consent, we collect location data to: show nearby bins on the map, provide accurate collection scheduling, track service vehicles for real-time updates, and respond to reported issues in your area.',
+                },
+                {
+                    subtitle: '1.4 Environmental Impact Data',
+                    text: 'We track: recycling volumes, carbon footprint calculations, waste diversion metrics, and community participation rates to provide you with environmental impact reports.',
                 },
             ],
         },
@@ -41,16 +45,16 @@ const PrivacyPolicy: React.FC = () => {
             icon: faUserShield,
             content: [
                 {
-                    subtitle: '2.1 Provide and Improve Services',
-                    text: 'We use your information to: process your bookings, connect you with transport partners, process payments, provide customer support, and improve our services.',
+                    subtitle: '2.1 Waste Management Services',
+                    text: 'We use your information to: schedule and manage waste collection, optimize collection routes, send collection reminders, process recycling rewards, track environmental impact, and provide customer support.',
                 },
                 {
                     subtitle: '2.2 Communications',
-                    text: 'We may send you: booking confirmations and updates, service-related announcements, promotional offers (with your consent), and respond to your inquiries.',
+                    text: 'We may send you: collection schedule notifications, bin overflow alerts, service updates and changes, environmental impact reports, recycling tips and education, and community program invitations.',
                 },
                 {
-                    subtitle: '2.3 Safety and Security',
-                    text: 'We use information to: verify identities, detect and prevent fraud, monitor for security threats, and comply with legal obligations.',
+                    subtitle: '2.3 Service Improvement',
+                    text: 'We analyze data to: improve collection efficiency, identify high-waste areas, develop new recycling programs, enhance user experience, and support municipal planning.',
                 },
             ],
         },
@@ -59,16 +63,20 @@ const PrivacyPolicy: React.FC = () => {
             icon: faGlobe,
             content: [
                 {
-                    subtitle: '3.1 With Transport Partners',
-                    text: 'We share necessary information with transport partners to facilitate your booking, including: your name, pickup/delivery addresses, contact information, and special instructions.',
+                    subtitle: '3.1 Service Providers',
+                    text: 'We share information with: waste collection partners, recycling facilities, composting centers, payment processors, and technology service providers who help us operate our platform.',
                 },
                 {
-                    subtitle: '3.2 Service Providers',
-                    text: 'We share information with third-party service providers who help us operate our platform, including: payment processors, cloud storage providers, analytics services, and customer support tools.',
+                    subtitle: '3.2 Municipal Authorities',
+                    text: 'We may share aggregated data with local governments to: support waste management planning, comply with environmental regulations, improve public health initiatives, and enhance community services.',
                 },
                 {
-                    subtitle: '3.3 Legal Requirements',
-                    text: 'We may disclose information if required by law or if we believe disclosure is necessary to: comply with legal process, protect our rights or property, protect public safety, or respond to government requests.',
+                    subtitle: '3.3 Environmental Reporting',
+                    text: 'We share anonymized data for: carbon offset verification, sustainability reporting, academic research, and environmental impact studies.',
+                },
+                {
+                    subtitle: '3.4 Legal Requirements',
+                    text: 'We may disclose information when required by law, to protect public health and safety, or to comply with environmental regulations.',
                 },
             ],
         },
@@ -78,113 +86,163 @@ const PrivacyPolicy: React.FC = () => {
             content: [
                 {
                     subtitle: '4.1 Security Measures',
-                    text: 'We implement appropriate technical and organizational measures to protect your information, including: encryption of sensitive data, secure servers, regular security assessments, and employee training.',
+                    text: 'We implement industry-standard security measures including: encryption of data in transit and at rest, secure IoT communication protocols, regular security audits, access controls and authentication, and secure data centers.',
                 },
                 {
                     subtitle: '4.2 Data Breach Response',
-                    text: 'In the event of a data breach, we will notify affected users in accordance with applicable law and take steps to minimize harm.',
+                    text: 'In case of a data breach, we will: notify affected users within 72 hours, provide details of compromised information, offer guidance on protective measures, and work with authorities as required.',
                 },
             ],
         },
         {
             title: '5. Your Rights and Choices',
-            icon: faFileAlt,
+            icon: faUserShield,
             content: [
                 {
-                    subtitle: '5.1 Access and Update',
-                    text: 'You can access and update your personal information through your account settings or by contacting us.',
+                    subtitle: '5.1 Access and Control',
+                    text: 'You have the right to: access your personal data, correct inaccurate information, delete your account and data, export your data, opt-out of marketing communications, and control location sharing.',
                 },
                 {
-                    subtitle: '5.2 Delete Your Account',
-                    text: 'You can request deletion of your account and personal information, subject to certain legal requirements.',
-                },
-                {
-                    subtitle: '5.3 Marketing Communications',
-                    text: 'You can opt-out of promotional emails by clicking the unsubscribe link or updating your preferences in account settings.',
-                },
-                {
-                    subtitle: '5.4 Cookies',
-                    text: 'You can manage cookie preferences through your browser settings. See our Cookie Policy for more information.',
+                    subtitle: '5.2 Environmental Data',
+                    text: 'You can: view your environmental impact dashboard, download recycling certificates, access waste reduction reports, and share achievements on social media.',
                 },
             ],
         },
         {
-            title: '6. Children\'s Privacy',
+            title: '6. Cookies and Tracking',
+            icon: faCookie,
+            content: [
+                {
+                    subtitle: '6.1 Cookie Usage',
+                    text: 'We use cookies to: remember your preferences, analyze platform usage, improve user experience, and provide targeted information about waste management services.',
+                },
+                {
+                    subtitle: '6.2 Third-Party Analytics',
+                    text: 'We use analytics services to understand how users interact with our platform and improve our services.',
+                },
+            ],
+        },
+        {
+            title: '7. Children\'s Privacy',
             icon: faChild,
             content: [
                 {
-                    subtitle: '6.1 Age Restrictions',
-                    text: 'Our services are not directed to children under 18. We do not knowingly collect personal information from children under 18.',
+                    subtitle: '7.1 Age Restrictions',
+                    text: 'Our services are not directed to children under 13. School programs are managed by educational institutions with appropriate parental consent.',
+                },
+                {
+                    subtitle: '7.2 Educational Programs',
+                    text: 'For school recycling programs, we work directly with schools who obtain necessary permissions from parents or guardians.',
                 },
             ],
         },
         {
-            title: '7. International Data Transfers',
+            title: '8. International Data Transfers',
             icon: faGlobe,
             content: [
                 {
-                    subtitle: '7.1 Data Location',
-                    text: 'Your information may be transferred to and processed in countries other than your country of residence. We ensure appropriate safeguards are in place for such transfers.',
+                    subtitle: '8.1 Data Location',
+                    text: 'Your data is primarily stored in Ghana. Any international transfers comply with applicable data protection laws.',
                 },
             ],
         },
         {
-            title: '8. Changes to This Policy',
-            icon: faFileAlt,
+            title: '9. Contact Information',
+            icon: faEnvelope,
             content: [
                 {
-                    subtitle: '8.1 Updates',
-                    text: 'We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new policy on this page and updating the "Last updated" date.',
+                    subtitle: '9.1 Data Protection Officer',
+                    text: 'For privacy concerns, contact our Data Protection Officer at: privacy@wastewise.com.gh, +233 20 123 4567, or WasteWise Ghana, P.O. Box 123, Accra, Ghana.',
+                },
+                {
+                    subtitle: '9.2 Regulatory Authority',
+                    text: 'You may also contact the Data Protection Commission of Ghana for privacy-related complaints.',
                 },
             ],
         },
     ];
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <Navbar isScrolled={isScrolled} />
-
-            {/* Hero Section */}
-            <section className="bg-gradient-to-br from-blue-600 to-blue-800 text-white pt-24 pb-16">
-                <div className="container mx-auto px-4">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6 }}
-                        className="max-w-4xl mx-auto text-center"
-                    >
-                        <div className="flex justify-center mb-6">
-                            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center">
-                                <FontAwesomeIcon icon={faShieldAlt} className="text-4xl" />
+        <>
+            <Navbar />
+            <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+                {/* Hero Section with Environmental Theme */}
+                <section className="relative bg-gradient-to-br from-emerald-900 via-green-800 to-teal-900 text-white py-20 overflow-hidden">
+                    {/* Animated Background Elements */}
+                    <div className="absolute inset-0">
+                        <div className="absolute top-20 left-10 w-72 h-72 bg-green-500 rounded-full filter blur-[128px] opacity-20 animate-pulse"></div>
+                        <div className="absolute bottom-10 right-20 w-96 h-96 bg-emerald-500 rounded-full filter blur-[128px] opacity-20 animate-pulse delay-1000"></div>
+                    </div>
+                    
+                    <div className="relative container mx-auto px-4">
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6 }}
+                            className="text-center max-w-4xl mx-auto"
+                        >
+                            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full mb-6 border border-white/20">
+                                <FontAwesomeIcon icon={faShieldAlt} className="text-green-400" />
+                                <span className="text-sm font-medium">Your Privacy Matters</span>
                             </div>
-                        </div>
-                        <h1 className="text-4xl md:text-5xl font-bold mb-6">Privacy Policy</h1>
-                        <p className="text-xl text-blue-100">
-                            We are committed to protecting your privacy and ensuring the security of your personal information.
-                        </p>
-                        <p className="text-sm text-blue-200 mt-4">Last updated: January 2024</p>
-                    </motion.div>
-                </div>
-            </section>
+                            
+                            <h1 className="text-5xl md:text-6xl font-bold mb-6">
+                                Privacy
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400"> Policy</span>
+                            </h1>
+                            
+                            <p className="text-xl text-green-100 mb-8">
+                                At WasteWise, we are committed to protecting your privacy while helping Ghana achieve its environmental goals.
+                            </p>
+                            
+                            <div className="flex items-center justify-center gap-4 text-sm">
+                                <span className="bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full">
+                                    <FontAwesomeIcon icon={faRecycle} className="mr-2 text-green-400" />
+                                    Eco-Friendly
+                                </span>
+                                <span className="bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full">
+                                    <FontAwesomeIcon icon={faLock} className="mr-2 text-green-400" />
+                                    Secure
+                                </span>
+                                <span className="bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full">
+                                    <FontAwesomeIcon icon={faShieldAlt} className="mr-2 text-green-400" />
+                                    GDPR Compliant
+                                </span>
+                            </div>
+                        </motion.div>
+                    </div>
+                </section>
 
-            {/* Content Section */}
-            <section className="py-16">
-                <div className="container mx-auto px-4">
+                {/* Last Updated */}
+                <div className="bg-green-50 border-b border-green-200">
+                    <div className="container mx-auto px-4 py-4">
+                        <p className="text-center text-gray-700">
+                            <FontAwesomeIcon icon={faFileAlt} className="mr-2 text-green-600" />
+                            Last Updated: January 15, 2024 | Effective Date: January 1, 2024
+                        </p>
+                    </div>
+                </div>
+
+                {/* Content */}
+                <div className="container mx-auto px-4 py-12">
                     <div className="max-w-4xl mx-auto">
                         {/* Introduction */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.6 }}
-                            className="bg-white rounded-lg shadow-md p-8 mb-8"
+                            className="mb-12 bg-white rounded-xl shadow-lg p-8"
                         >
-                            <p className="text-gray-700 leading-relaxed mb-4">
-                                MoreVans ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, 
-                                use, disclose, and safeguard your information when you use our website and services.
-                            </p>
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">Introduction</h2>
                             <p className="text-gray-700 leading-relaxed">
-                                By using our services, you consent to the data practices described in this policy. If you do not agree with the 
-                                terms of this privacy policy, please do not access the site or use our services.
+                                WasteWise ("we," "our," or "us") operates Ghana's leading smart waste management platform. 
+                                This Privacy Policy explains how we collect, use, share, and protect your personal information 
+                                when you use our website, mobile applications, IoT devices, and services (collectively, the "Services").
+                            </p>
+                            <p className="text-gray-700 leading-relaxed mt-4">
+                                By using our Services, you agree to the collection and use of information in accordance with this policy. 
+                                We are committed to protecting your privacy and ensuring the security of your personal data while 
+                                working together to create a cleaner, more sustainable Ghana.
                             </p>
                         </motion.div>
 
@@ -195,56 +253,50 @@ const PrivacyPolicy: React.FC = () => {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.6, delay: index * 0.1 }}
-                                className="bg-white rounded-lg shadow-md p-8 mb-8"
+                                className="mb-8 bg-white rounded-xl shadow-lg p-8"
                             >
-                                <div className="flex items-center mb-6">
-                                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-                                        <FontAwesomeIcon icon={section.icon} className="text-blue-600 text-xl" />
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+                                        <FontAwesomeIcon icon={section.icon} className="text-white text-xl" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-gray-900">{section.title}</h2>
                                 </div>
                                 
-                                <div className="space-y-4">
-                                    {section.content.map((item, itemIndex) => (
-                                        <div key={itemIndex}>
-                                            <h3 className="text-lg font-semibold text-gray-800 mb-2">{item.subtitle}</h3>
-                                            <p className="text-gray-600 leading-relaxed">{item.text}</p>
-                                        </div>
-                                    ))}
-                                </div>
+                                {section.content.map((item, itemIndex) => (
+                                    <div key={itemIndex} className="mb-6 last:mb-0">
+                                        <h3 className="text-lg font-semibold text-gray-800 mb-2">{item.subtitle}</h3>
+                                        <p className="text-gray-700 leading-relaxed">{item.text}</p>
+                                    </div>
+                                ))}
                             </motion.div>
                         ))}
 
-                        {/* Contact Section */}
+                        {/* Updates Section */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 0.8 }}
-                            className="bg-blue-50 rounded-lg p-8 text-center"
+                            transition={{ duration: 0.6, delay: 0.9 }}
+                            className="mb-8 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-8 border border-green-200"
                         >
-                            <FontAwesomeIcon icon={faEnvelope} className="text-4xl text-blue-600 mb-4" />
-                            <h3 className="text-xl font-bold text-gray-900 mb-4">Contact Us</h3>
-                            <p className="text-gray-700 mb-6">
-                                If you have any questions about this Privacy Policy or our data practices, please contact us:
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                                <FontAwesomeIcon icon={faFileAlt} className="mr-3 text-green-600" />
+                                Policy Updates
+                            </h2>
+                            <p className="text-gray-700 leading-relaxed">
+                                We may update this Privacy Policy from time to time to reflect changes in our practices, 
+                                technology, legal requirements, or for other operational reasons. We will notify you of any 
+                                material changes by posting the new Privacy Policy on this page and updating the "Last Updated" date.
                             </p>
-                            <div className="space-y-2">
-                                <p className="text-gray-700">
-                                    Email: <a href="mailto:privacy@morevans.com" className="text-blue-600 hover:underline">privacy@morevans.com</a>
-                                </p>
-                                <p className="text-gray-700">
-                                    Phone: <a href="tel:+441234567890" className="text-blue-600 hover:underline">+44 123 456 7890</a>
-                                </p>
-                                <p className="text-gray-700">
-                                    Address: MoreVans Ltd, 123 Transport Street, London, UK
-                                </p>
-                            </div>
+                            <p className="text-gray-700 leading-relaxed mt-4">
+                                We encourage you to review this Privacy Policy periodically to stay informed about how we are 
+                                protecting your information and supporting Ghana's environmental goals.
+                            </p>
                         </motion.div>
                     </div>
                 </div>
-            </section>
-
+            </div>
             <Footer />
-        </div>
+        </>
     );
 };
 

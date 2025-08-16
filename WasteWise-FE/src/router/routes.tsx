@@ -3,10 +3,11 @@ import Homepage from '../pages/website-preauth/Homepage';
 import HowItWorks from '../pages/website-preauth/HowItWorks';
 import About from '../pages/website-preauth/About';
 import Contact from '../pages/website-preauth/Contact';
-import BecomeTransportPartner from '../pages/website-preauth/BecomeTransportPartner';
-import PartnerPrivacyPolicy from '../pages/website-preauth/PartnerPrivacyPolicy';
 import PrivacyPolicy from '../pages/website-preauth/PrivacyPolicy';
 import TermsAndConditions from '../pages/website-preauth/TermsAndConditions';
+import BinMap from '../pages/website-preauth/BinMap';
+import ReportIssue from '../pages/website-preauth/ReportIssue';
+import CollectionSchedule from '../pages/website-preauth/CollectionSchedule';
 import ProtectedRoute from '../components/Auth/ProtectedRoute';
 import AuthRedirect from '../components/Auth/AuthRedirect';
 
@@ -29,7 +30,6 @@ import UserSettings from '../pages/user/userAccoutSettings/UserSettings';
 import MyBookings from '../pages/user/UserBookings/MyBookings';
 import CustomerPayments from '../pages/user/MyPayments';
 import ProviderPayments from '../pages/provider/ProviderPayments';
-import InstantQuoteCalculator from '../pages/website-preauth/InstantQuoteCalculator';
 import NotificationsPage from '../pages/Notifications/NotificationsPage';
 import NotificationDetail from '../pages/Notifications/NotificationDetail';
 import BookingDetail from '../pages/user/UserBookings/BookingDetail';
@@ -65,7 +65,6 @@ import BlogPostDetail from '../pages/website-preauth/BlogPostDetail';
 import Blog from '../pages/website-preauth/Blog';
 import Services from '../pages/website-preauth/services/Services';
 import ForgotPassword from '../pages/auth/forgot-password';
-import TestMapApi from '../pages/testMapApi';
 import ResetPassword from '../pages/auth/reset-password';
 import ServiceDetailPage from '../pages/website-preauth/service-details/ServiceDetailPage';
 import OTPVerification from '../pages/auth/otp-verification';
@@ -127,18 +126,18 @@ const routes = [
         layout: 'blank',
     },
     {
-        path: '/instant-quote',
-        element: <InstantQuoteCalculator />,
+        path: '/bin-map',
+        element: <BinMap />,
         layout: 'blank',
     },
     {
-        path: '/become-transport-partner',
-        element: <BecomeTransportPartner />,
+        path: '/report-issue',
+        element: <ReportIssue />,
         layout: 'blank',
     },
     {
-        path: '/partner-privacy-policy',
-        element: <PartnerPrivacyPolicy />,
+        path: '/collection-schedule',
+        element: <CollectionSchedule />,
         layout: 'blank',
     },
     {
@@ -232,15 +231,6 @@ const routes = [
         element: (
             <ProtectedRoute>
                 <DisputesPage />
-            </ProtectedRoute>
-        ),
-        layout: 'default',
-    },
-    {
-        path: '/testmap-api',
-        element: (
-            <ProtectedRoute>
-                <TestMapApi />
             </ProtectedRoute>
         ),
         layout: 'default',

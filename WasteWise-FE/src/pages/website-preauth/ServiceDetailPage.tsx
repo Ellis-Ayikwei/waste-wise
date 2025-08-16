@@ -548,6 +548,244 @@ const serviceDetails: Record<string, ServiceDetail> = {
             { value: '24/7', label: 'Availability' },
         ],
     },
+    'community-programs': {
+        id: 'community-programs',
+        title: 'Community Programs',
+        subtitle: 'Empowering communities for sustainable waste management',
+        description: 'Engage your community in environmental initiatives through education, recycling drives, and waste reduction programs.',
+        icon: faUsers,
+        color: 'from-orange-500 to-red-600',
+        features: [
+            'Educational workshops and seminars',
+            'School recycling programs',
+            'Community cleanup drives',
+            'Waste reduction challenges',
+            'Environmental awareness campaigns',
+            'Youth engagement initiatives',
+        ],
+        benefits: [
+            {
+                title: 'Community Impact',
+                description: 'Unite your community towards a common environmental goal.',
+                icon: faHandshake,
+            },
+            {
+                title: 'Education',
+                description: 'Learn best practices for waste management and recycling.',
+                icon: faLightbulb,
+            },
+            {
+                title: 'Recognition',
+                description: 'Earn community awards and environmental certifications.',
+                icon: faAward,
+            },
+        ],
+        process: [
+            {
+                step: 1,
+                title: 'Register',
+                description: 'Register your community or organization.',
+            },
+            {
+                step: 2,
+                title: 'Plan',
+                description: 'Work with our team to plan activities.',
+            },
+            {
+                step: 3,
+                title: 'Implement',
+                description: 'Launch programs with our support.',
+            },
+            {
+                step: 4,
+                title: 'Engage',
+                description: 'Involve community members in activities.',
+            },
+            {
+                step: 5,
+                title: 'Celebrate',
+                description: 'Track progress and celebrate achievements.',
+            },
+        ],
+        pricing: [
+            {
+                plan: 'Community',
+                price: 'Free',
+                period: 'forever',
+                features: [
+                    'Basic workshops',
+                    'Educational materials',
+                    'Online resources',
+                    'Community forum access',
+                ],
+            },
+            {
+                plan: 'School',
+                price: 'GHS 200',
+                period: 'month',
+                features: [
+                    'Monthly workshops',
+                    'Student programs',
+                    'Teacher training',
+                    'Recycling bins',
+                    'Progress tracking',
+                ],
+                recommended: true,
+            },
+            {
+                plan: 'Corporate',
+                price: 'Custom',
+                period: 'month',
+                features: [
+                    'Custom programs',
+                    'Employee engagement',
+                    'CSR reporting',
+                    'Brand visibility',
+                    'Impact certificates',
+                ],
+            },
+        ],
+        faqs: [
+            {
+                question: 'How can my community get involved?',
+                answer: 'Register your community group, school, or organization through our website. We\'ll provide resources and support to launch environmental programs.',
+            },
+            {
+                question: 'What age groups can participate?',
+                answer: 'Our programs are designed for all ages, from kindergarten students to senior citizens, with age-appropriate activities.',
+            },
+            {
+                question: 'Do you provide materials?',
+                answer: 'Yes, we provide educational materials, recycling bins, and promotional items for registered community programs.',
+            },
+        ],
+        targetAudience: ['Schools', 'Communities', 'NGOs', 'Corporate CSR'],
+        stats: [
+            { value: '500+', label: 'Communities' },
+            { value: '50K+', label: 'Participants' },
+            { value: '200+', label: 'Schools' },
+            { value: '1000+', label: 'Events Held' },
+        ],
+    },
+    'carbon-offset': {
+        id: 'carbon-offset',
+        title: 'Carbon Offset Programs',
+        subtitle: 'Neutralize your carbon footprint',
+        description: 'Track, reduce, and offset your carbon emissions through verified environmental projects and sustainable waste management practices.',
+        icon: faGlobe,
+        color: 'from-teal-500 to-cyan-600',
+        features: [
+            'Carbon footprint calculation',
+            'Verified offset projects',
+            'Real-time emission tracking',
+            'Sustainability reporting',
+            'Green certification',
+            'Tree planting initiatives',
+        ],
+        benefits: [
+            {
+                title: 'Carbon Neutral',
+                description: 'Achieve carbon neutrality through verified offset programs.',
+                icon: faLeaf,
+            },
+            {
+                title: 'Transparency',
+                description: 'Track your environmental impact with detailed reports.',
+                icon: faChartLine,
+            },
+            {
+                title: 'Certification',
+                description: 'Receive recognized environmental certifications.',
+                icon: faShieldAlt,
+            },
+        ],
+        process: [
+            {
+                step: 1,
+                title: 'Assessment',
+                description: 'Calculate your carbon footprint.',
+            },
+            {
+                step: 2,
+                title: 'Strategy',
+                description: 'Develop reduction and offset strategy.',
+            },
+            {
+                step: 3,
+                title: 'Implementation',
+                description: 'Implement reduction measures.',
+            },
+            {
+                step: 4,
+                title: 'Offset',
+                description: 'Purchase verified carbon credits.',
+            },
+            {
+                step: 5,
+                title: 'Certification',
+                description: 'Receive carbon neutral certification.',
+            },
+        ],
+        pricing: [
+            {
+                plan: 'Individual',
+                price: 'GHS 10',
+                period: 'ton CO₂',
+                features: [
+                    'Personal calculator',
+                    'Basic offset options',
+                    'Digital certificate',
+                    'Monthly reports',
+                ],
+            },
+            {
+                plan: 'Business',
+                price: 'GHS 8',
+                period: 'ton CO₂',
+                features: [
+                    'Business calculator',
+                    'Premium projects',
+                    'Branded certificates',
+                    'Quarterly reports',
+                    'Marketing materials',
+                ],
+                recommended: true,
+            },
+            {
+                plan: 'Enterprise',
+                price: 'Custom',
+                period: 'year',
+                features: [
+                    'Full assessment',
+                    'Custom projects',
+                    'Compliance support',
+                    'Real-time dashboard',
+                    'API integration',
+                ],
+            },
+        ],
+        faqs: [
+            {
+                question: 'How are carbon offsets verified?',
+                answer: 'All our offset projects are verified by international standards including Gold Standard and Verified Carbon Standard (VCS).',
+            },
+            {
+                question: 'What projects do you support?',
+                answer: 'We support reforestation, renewable energy, waste-to-energy, and community development projects across Ghana and Africa.',
+            },
+            {
+                question: 'Can I track my impact?',
+                answer: 'Yes, our dashboard provides real-time tracking of your carbon reduction and offset impact with detailed analytics.',
+            },
+        ],
+        targetAudience: ['Individuals', 'Businesses', 'Events', 'Organizations'],
+        stats: [
+            { value: '100K', label: 'Tons CO₂ Offset' },
+            { value: '1M+', label: 'Trees Planted' },
+            { value: '500+', label: 'Companies' },
+            { value: '50+', label: 'Projects' },
+        ],
+    },
 };
 
 const ServiceDetailPage: React.FC = () => {
