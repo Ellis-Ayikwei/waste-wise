@@ -42,6 +42,25 @@ const Services: React.FC = () => {
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [isScrolled, setIsScrolled] = useState(false);
 
+    // Function to map service titles to service IDs
+    const getServiceIdFromTitle = (title: string): string => {
+        const serviceMapping: { [key: string]: string } = {
+            'Smart Bin Monitoring': 'smart-bins',
+            'Residential Waste Collection': 'residential-collection',
+            'Commercial Waste Management': 'commercial-waste',
+            'Recycling Services': 'recycling',
+            'E-Waste Collection': 'e-waste',
+            'Organic Waste Composting': 'composting',
+            'Construction Debris Removal': 'construction-waste',
+            'Medical Waste Management': 'medical-waste',
+            'On-Demand Pickup': 'on-demand',
+            'Bulk Waste Collection': 'bulk-waste',
+            'Plastic Recovery Program': 'plastic-recovery',
+            'Community Education': 'education',
+        };
+        return serviceMapping[title] || 'smart-bins';
+    };
+
     // Monitor scroll position for navbar styling
     useEffect(() => {
         const handleScroll = () => {
@@ -431,7 +450,7 @@ const Services: React.FC = () => {
 
                                     {/* CTA Button */}
                                     <Link 
-                                        to={`/services/${service.id}`}
+                                        to={`/services/${getServiceIdFromTitle(service.title)}`}
                                         className={`w-full py-3 rounded-lg font-medium bg-gradient-to-r ${service.color} text-white opacity-90 hover:opacity-100 transition-opacity flex items-center justify-center gap-2 group`}
                                     >
                                         Learn More
