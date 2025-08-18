@@ -293,7 +293,7 @@ export const serviceDetails = [
         }
     },
     {
-        id: 'construction-debris',
+        id: 'construction-waste',
         title: 'Construction Debris Removal',
         description: 'Efficient removal of construction and demolition waste with proper disposal, material sorting, and debris recycling services. Our specialized equipment and experienced teams handle everything from small renovation projects to large-scale construction sites while ensuring environmental compliance and cost-effective solutions.',
         category: 'Construction Services',
@@ -385,7 +385,7 @@ export const serviceDetails = [
         }
     },
     {
-        id: 'on-demand-pickup',
+        id: 'on-demand',
         title: 'On-Demand Pickup',
         description: 'Request immediate waste pickup through our mobile app - the Uber for waste management. Our innovative on-demand service provides instant booking, live tracking, transparent pricing, and quick response for all types of waste collection needs across Ghana\'s major cities.',
         category: 'Digital Services',
@@ -523,7 +523,7 @@ export const serviceDetails = [
         }
     },
     {
-        id: 'community-education',
+        id: 'education',
         title: 'Community Education',
         description: 'Waste management education and awareness programs for communities, schools, and organizations with interactive workshops, training sessions, awareness campaigns, and green ambassador programs. Building environmental consciousness and sustainable practices across Ghana.',
         category: 'Education & Awareness',

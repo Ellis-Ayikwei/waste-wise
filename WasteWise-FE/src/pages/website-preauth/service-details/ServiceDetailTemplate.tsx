@@ -1,12 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { Formik } from 'formik';
+import { Link } from 'react-router-dom';
 import ContactDetailsStep from './ServiceRequest/ContactDetailsStep/ContactDetailsStep';
 import showMessage from '../../../helper/showMessage';
 import ServiceRequestForm from './ServiceRequest/ServiceRequestPage/ServiceRequestForm';
 import Header from '../../../components/Layouts/Header/Header';
 import Navbar from '../../../components/homepage/Navbar';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faStar, faCheckCircle, faArrowRight, faClock, faMapMarkerAlt, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { 
+    faStar, 
+    faCheckCircle, 
+    faArrowRight, 
+    faClock, 
+    faMapMarkerAlt, 
+    faUsers,
+    faTruck,
+    faCalendarAlt,
+    faClipboardList
+} from '@fortawesome/free-solid-svg-icons';
 import { useDispatch } from 'react-redux';
 import { resetForm } from '../../../store/slices/createRequestSlice';
 
@@ -334,11 +345,36 @@ const ServiceDetailTemplate: React.FC<{ service: ServiceDetail }> = ({ service }
             <section className="bg-gradient-to-r from-green-600 to-emerald-700 py-16">
                 <div className="max-w-4xl mx-auto text-center px-4">
                     <h2 className="text-4xl font-bold text-white mb-4">Ready to Make Ghana Cleaner?</h2>
-                    <p className="text-xl text-green-100 mb-8">Join thousands of satisfied customers who trust us with their waste management needs</p>
-                    <button className="inline-flex items-center px-8 py-4 bg-white text-green-600 font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
-                        <span>Get Your Free Quote</span>
-                        <FontAwesomeIcon icon={faArrowRight} className="ml-2 w-4 h-4" />
-                    </button>
+                    <p className="text-xl text-green-100 mb-8">Choose your preferred service option below to get started with your waste management solution</p>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
+                        <Link 
+                            to="/customer/request-pickup"
+                            className="bg-white text-green-600 px-6 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex flex-col items-center space-y-2"
+                        >
+                            <FontAwesomeIcon icon={faTruck} className="w-6 h-6" />
+                            <span>Instant Pickup</span>
+                            <span className="text-sm font-normal opacity-80">Book immediate pickup</span>
+                        </Link>
+                        
+                        <Link 
+                            to="/customer/schedule-pickup"
+                            className="border-2 border-white text-white px-6 py-4 rounded-xl font-bold hover:bg-white hover:text-green-600 transition-all duration-300 flex flex-col items-center space-y-2"
+                        >
+                            <FontAwesomeIcon icon={faCalendarAlt} className="w-6 h-6" />
+                            <span>Schedule Service</span>
+                            <span className="text-sm font-normal opacity-80">Set up recurring pickups</span>
+                        </Link>
+                        
+                        <Link 
+                            to="/service-request"
+                            className="bg-green-800 text-white px-6 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-green-900 transform hover:scale-105 transition-all duration-300 flex flex-col items-center space-y-2"
+                        >
+                            <FontAwesomeIcon icon={faClipboardList} className="w-6 h-6" />
+                            <span>Full Service</span>
+                            <span className="text-sm font-normal opacity-80">Comprehensive solution</span>
+                        </Link>
+                    </div>
                 </div>
             </section>
         </div>
