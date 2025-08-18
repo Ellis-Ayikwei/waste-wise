@@ -43,46 +43,52 @@ const BlogPostDetail: React.FC = () => {
                 // Mock data - replace with actual API call
                 const mockPost: BlogPostData = {
                     id: Number(id),
-                    title: 'Top Tips for a Stress-Free House Move',
+                    title: 'Smart Waste Management: How IoT is Revolutionizing Ghana\'s Cities',
                     content: `
-                        <p>Moving house can be one of the most stressful experiences in life, but with the right preparation and mindset, it can be a smooth and even enjoyable process. Here are our top tips for a stress-free move:</p>
+                        <p>Ghana is experiencing a waste management revolution, driven by cutting-edge Internet of Things (IoT) technology. As urbanization accelerates across cities like Accra, Kumasi, and Takoradi, innovative smart waste management solutions are emerging to address the growing challenges of waste collection and disposal.</p>
                         
-                        <h2>1. Start Planning Early</h2>
-                        <p>Begin your moving preparations at least 8 weeks before your move date. Create a detailed checklist and timeline to keep track of all tasks.</p>
+                        <h2>The Challenge of Urban Waste in Ghana</h2>
+                        <p>With over 60% of Ghana's population expected to live in urban areas by 2030, cities are grappling with increasing volumes of waste. Traditional collection methods often prove inadequate, leading to overflowing bins, missed collections, and environmental health concerns.</p>
                         
-                        <h2>2. Declutter Before Packing</h2>
-                        <p>Take this opportunity to sort through your belongings. Donate, sell, or discard items you no longer need. This will reduce your moving costs and make unpacking easier.</p>
+                        <h2>Enter Smart IoT Technology</h2>
+                        <p>WasteWise's smart bin technology represents a paradigm shift in waste management. These intelligent containers are equipped with sensors that monitor fill levels, temperature, and even detect different types of waste materials.</p>
                         
-                        <h2>3. Pack Room by Room</h2>
-                        <p>Pack one room at a time, clearly labeling each box with its contents and destination room. This will make unpacking much more organized.</p>
+                        <h2>Real-Time Monitoring and Optimization</h2>
+                        <p>IoT sensors provide real-time data on waste levels, enabling collection teams to optimize routes and schedules. This means bins are emptied before they overflow, reducing odors, pest problems, and environmental contamination.</p>
                         
-                        <h2>4. Create an Essentials Box</h2>
-                        <p>Pack a box with items you'll need immediately upon arrival: toiletries, a change of clothes, basic kitchen items, and important documents.</p>
+                        <h2>Benefits for Ghanaian Cities</h2>
+                        <p>Smart waste management systems offer numerous advantages:</p>
+                        <ul>
+                            <li><strong>Reduced Collection Costs:</strong> Optimized routes can reduce fuel consumption by up to 40%</li>
+                            <li><strong>Improved Hygiene:</strong> Proactive collection prevents overflow and associated health risks</li>
+                            <li><strong>Environmental Protection:</strong> Better waste management reduces pollution and improves air quality</li>
+                            <li><strong>Data-Driven Decisions:</strong> Analytics help city planners make informed infrastructure decisions</li>
+                        </ul>
                         
-                        <h2>5. Take Photos of Electronics</h2>
-                        <p>Before unplugging any electronics, take photos of the cable setup. This will make reconnecting everything much easier in your new home.</p>
+                        <h2>Success Stories from Accra</h2>
+                        <p>The Greater Accra Metropolitan Area has seen remarkable improvements since implementing smart waste management systems. Collection efficiency has increased by 35%, and citizen satisfaction with waste services has risen significantly.</p>
                         
-                        <h2>6. Keep Important Documents Safe</h2>
-                        <p>Keep all important documents, such as contracts, insurance papers, and personal records, in a separate, secure folder that you'll transport personally.</p>
+                        <h2>Mobile App Integration</h2>
+                        <p>Citizens can now request on-demand waste collection through mobile apps, similar to ride-hailing services. This democratizes access to waste management services and ensures no community is left behind.</p>
                         
-                        <h2>7. Measure Your New Space</h2>
-                        <p>Take measurements of your new home's rooms and doorways to ensure your furniture will fit. This will help you plan the layout and identify any potential issues.</p>
+                        <h2>Supporting Local Economy</h2>
+                        <p>Smart waste management creates employment opportunities for local youth as collection agents, maintenance technicians, and data analysts. The technology also supports the growth of recycling businesses through better waste sorting and material recovery.</p>
                         
-                        <h2>8. Update Your Address</h2>
-                        <p>Don't forget to update your address with important institutions: banks, insurance companies, utility providers, and the post office.</p>
+                        <h2>Environmental Impact</h2>
+                        <p>By 2025, smart waste management systems in Ghana are projected to divert over 200,000 tons of waste from landfills annually, contributing to the country's climate change mitigation goals.</p>
                         
-                        <h2>9. Take Care of Yourself</h2>
-                        <p>Moving is physically and mentally demanding. Remember to stay hydrated, take breaks, and get enough rest during the process.</p>
+                        <h2>The Future of Waste Management</h2>
+                        <p>As Ghana continues to embrace digital transformation, smart waste management represents just the beginning. Future innovations may include AI-powered waste sorting, blockchain-based recycling incentives, and integration with smart city infrastructure.</p>
                         
-                        <h2>10. Celebrate Your Move</h2>
-                        <p>Once you're settled in, take time to celebrate your new beginning. Order takeout, invite friends over, or simply enjoy your new space.</p>
+                        <h2>Getting Involved</h2>
+                        <p>Citizens, businesses, and waste management providers can all participate in this transformation. Whether through adopting smart collection services, becoming a certified waste provider, or simply practicing better waste segregation, everyone has a role to play in making Ghana cleaner and more sustainable.</p>
                     `,
-                    author: 'Sarah Johnson',
-                    date: '2024-03-15',
-                    category: 'Moving Tips',
-                    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+                    author: 'Dr. Kwame Asante',
+                    date: '2025-08-15',
+                    category: 'Smart Technology',
+                    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
                     readTime: '8 min read',
-                    tags: ['Moving Tips', 'Organization', 'Planning', 'Home Moving', 'Packing'],
+                    tags: ['IoT', 'Smart Bins', 'Technology', 'Ghana', 'Urban Planning', 'Environment'],
                 };
 
                 setPost(mockPost);
