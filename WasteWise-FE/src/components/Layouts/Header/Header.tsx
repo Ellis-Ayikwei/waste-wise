@@ -44,7 +44,7 @@ const Header = () => {
     return (
         <header className={`z-40 ${themeConfig.semidark && themeConfig.menu === 'horizontal' ? 'dark' : ''}`}>
             <div className="shadow-lg border-b border-white/20">
-                <div className="relative bg-gradient-to-r from-white via-blue-50 to-white dark:from-black dark:via-blue-900/20 dark:to-black flex w-full items-center px-4 sm:px-6 py-3 backdrop-blur-sm overflow-visible">
+                <div className="relative bg-gradient-to-r from-white via-green-50 to-white dark:from-black dark:via-green-900/20 dark:to-black flex w-full items-center px-4 sm:px-6 py-3 backdrop-blur-sm overflow-visible">
                     {/* Logo and Mobile Menu Toggle */}
                     <Logo />
 
@@ -60,7 +60,7 @@ const Header = () => {
                         {/* Home Quick Action */}
                         <Link
                             to="/"
-                            className="p-2 rounded-xl bg-white/60 backdrop-blur-sm dark:bg-gray-800/60 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-all duration-300"
+                            className="p-2 rounded-xl bg-white/60 backdrop-blur-sm dark:bg-gray-800/60 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-300"
                         >
                             <IconHome className="w-5 h-5" />
                         </Link>
@@ -81,7 +81,7 @@ const Header = () => {
                     </div>
                 </div>
 
-                {/* Enhanced Horizontal Menu - Logistics Focused */}
+                {/* Enhanced Horizontal Menu - Waste Management Focused */}
                 <HorizontalMenu />
             </div>
         </header>

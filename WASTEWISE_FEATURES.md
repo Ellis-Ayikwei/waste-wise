@@ -1,4 +1,4 @@
-# WasteWise IoT & Geospatial Features Documentation
+# Wasgo IoT & Geospatial Features Documentation
 
 ## Table of Contents
 1. [IoT Smart Bin System](#iot-smart-bin-system)
@@ -287,9 +287,9 @@ device = IoTDevice.objects.create(
 #### 2. Configure MQTT
 ```python
 # Device configuration
-MQTT_BROKER = "mqtt.wastewise.com"
+MQTT_BROKER = "mqtt.Wasgo.com"
 MQTT_PORT = 8883  # TLS
-MQTT_TOPIC = f"wastewise/bins/{device_id}/data"
+MQTT_TOPIC = f"Wasgo/bins/{device_id}/data"
 ```
 
 #### 3. Data Format
@@ -311,14 +311,14 @@ MQTT_TOPIC = f"wastewise/bins/{device_id}/data"
 
 #### Map Component
 ```jsx
-import { WasteBinMap } from '@wastewise/maps';
+import { WasteBinMap } from '@Wasgo/maps';
 
 function BinMonitor() {
     const [bins, setBins] = useState([]);
     
     useEffect(() => {
         // Connect to WebSocket
-        const ws = new WebSocket('wss://api.wastewise.com/ws/bins');
+        const ws = new WebSocket('wss://api.Wasgo.com/ws/bins');
         
         ws.onmessage = (event) => {
             const update = JSON.parse(event.data);
@@ -367,13 +367,13 @@ function BinStatusIcon({ fillLevel }) {
 from prometheus_client import Gauge, Counter
 
 bin_fill_level = Gauge(
-    'wastewise_bin_fill_level',
+    'Wasgo_bin_fill_level',
     'Current fill level of waste bin',
     ['bin_id', 'area']
 )
 
 collection_counter = Counter(
-    'wastewise_collections_total',
+    'Wasgo_collections_total',
     'Total number of collections',
     ['area', 'bin_type']
 )
@@ -383,18 +383,18 @@ collection_counter = Counter(
 ```json
 {
     "dashboard": {
-        "title": "WasteWise Operations",
+        "title": "Wasgo Operations",
         "panels": [
             {
                 "title": "Average Fill Levels",
                 "targets": [{
-                    "expr": "avg(wastewise_bin_fill_level) by (area)"
+                    "expr": "avg(Wasgo_bin_fill_level) by (area)"
                 }]
             },
             {
                 "title": "Collection Rate",
                 "targets": [{
-                    "expr": "rate(wastewise_collections_total[1h])"
+                    "expr": "rate(Wasgo_collections_total[1h])"
                 }]
             }
         ]
@@ -484,4 +484,4 @@ python manage.py validate_locations --fix-invalid
 
 ---
 
-**For technical support, contact: tech@wastewise.com**
+**For technical support, contact: tech@Wasgo.com**

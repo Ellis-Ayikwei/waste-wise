@@ -1,10 +1,10 @@
 {
-    "name": "wastewise-admin",
+    "name": "Wasgo-admin",
     "private": true,
     "version": "1.0.0",
     "type": "module",
-    "description": "WasteWise - Smart Waste Management System Admin Dashboard",
-    "author": "WasteWise Team",
+    "description": "Wasgo - Smart Waste Management System Admin Dashboard",
+    "author": "Wasgo Team",
     "scripts": {
         "dev": "vite --host",
         "build": "vite build",

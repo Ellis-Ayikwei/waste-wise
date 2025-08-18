@@ -1,4 +1,4 @@
-# 🚀 WasteWise Complete Setup Guide
+# 🚀 Wasgo Complete Setup Guide
 
 ## 📋 Table of Contents
 1. [Prerequisites](#prerequisites)
@@ -44,7 +44,7 @@
 
 ### 1. Clone and Navigate
 ```bash
-cd /workspace/WasteWise-BE
+cd /workspace/Wasgo-BE
 ```
 
 ### 2. Create Virtual Environment
@@ -111,10 +111,10 @@ sudo apt-get install postgresql postgresql-contrib postgis
 sudo -u postgres psql
 
 # Create database and enable PostGIS
-CREATE DATABASE wastewise;
-CREATE USER wastewise_user WITH PASSWORD 'your_secure_password';
-GRANT ALL PRIVILEGES ON DATABASE wastewise TO wastewise_user;
-\c wastewise
+CREATE DATABASE Wasgo;
+CREATE USER Wasgo_user WITH PASSWORD 'your_secure_password';
+GRANT ALL PRIVILEGES ON DATABASE Wasgo TO Wasgo_user;
+\c Wasgo
 CREATE EXTENSION postgis;
 CREATE EXTENSION postgis_topology;
 \q
@@ -134,16 +134,16 @@ redis-cli ping  # Should return PONG
 ```
 
 ### 7. Environment Configuration
-Create `.env` file in `/workspace/WasteWise-BE/`:
+Create `.env` file in `/workspace/Wasgo-BE/`:
 ```env
 # Django Settings
 DJANGO_SECRET_KEY=your-very-secure-secret-key-change-in-production
 DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1,wastewise.com
+ALLOWED_HOSTS=localhost,127.0.0.1,Wasgo.com
 
 # Database
-DB_NAME=wastewise
-DB_USER=wastewise_user
+DB_NAME=Wasgo
+DB_USER=Wasgo_user
 DB_PASSWORD=your_secure_password
 DB_HOST=localhost
 DB_PORT=5432
@@ -158,7 +158,7 @@ GOOGLE_MAPS_API_KEY=your-google-maps-api-key
 
 # SendGrid
 SENDGRID_API_KEY=your-sendgrid-api-key
-DEFAULT_FROM_EMAIL=noreply@wastewise.com
+DEFAULT_FROM_EMAIL=noreply@Wasgo.com
 
 # Payment Gateways
 PAYSTACK_PUBLIC_KEY=pk_test_xxxxx
@@ -181,7 +181,7 @@ AIRTELTIGO_API_KEY=your-airteltigo-api-key
 # AWS S3 (optional)
 AWS_ACCESS_KEY_ID=your-aws-access-key
 AWS_SECRET_ACCESS_KEY=your-aws-secret-key
-AWS_STORAGE_BUCKET_NAME=wastewise-uploads
+AWS_STORAGE_BUCKET_NAME=Wasgo-uploads
 AWS_S3_REGION_NAME=us-east-1
 
 # Twilio (for SMS)
@@ -193,7 +193,7 @@ TWILIO_PHONE_NUMBER=+1234567890
 SENTRY_DSN=https://xxxxx@sentry.io/xxxxx
 
 # Admin
-ADMIN_EMAIL=admin@wastewise.com
+ADMIN_EMAIL=admin@Wasgo.com
 ```
 
 ### 8. Database Migrations
@@ -236,7 +236,7 @@ daphne -b 0.0.0.0 -p 8001 backend.asgi:application
 
 ### 1. Navigate to Frontend Directory
 ```bash
-cd /workspace/WasteWise-FE
+cd /workspace/Wasgo-FE
 ```
 
 ### 2. Install Dependencies
@@ -247,7 +247,7 @@ npm install
 ### 3. Environment Configuration
 Create `.env` file:
 ```env
-REACT_APP_API_URL=http://localhost:8000/wastewise/api/v1
+REACT_APP_API_URL=http://localhost:8000/Wasgo/api/v1
 REACT_APP_WS_URL=ws://localhost:8001/ws
 REACT_APP_GOOGLE_MAPS_API_KEY=your-google-maps-api-key
 REACT_APP_ENV=development
@@ -279,7 +279,7 @@ flutter doctor
 
 ### 2. Navigate to Mobile App Directory
 ```bash
-cd /workspace/wastewise_mobile
+cd /workspace/Wasgo_mobile
 ```
 
 ### 3. Install Dependencies
@@ -313,8 +313,8 @@ flutterfire configure
 Create `lib/config/app_config.dart`:
 ```dart
 class AppConfig {
-  static const String appName = 'WasteWise';
-  static const String apiUrl = 'http://localhost:8000/wastewise/api/v1';
+  static const String appName = 'Wasgo';
+  static const String apiUrl = 'http://localhost:8000/Wasgo/api/v1';
   static const String wsUrl = 'ws://localhost:8001/ws';
   
   // Payment Keys
@@ -507,10 +507,10 @@ docker-compose logs -f
 pip install awsebcli
 
 # Initialize Elastic Beanstalk
-eb init -p python-3.9 wastewise
+eb init -p python-3.9 Wasgo
 
 # Create environment
-eb create wastewise-prod
+eb create Wasgo-prod
 
 # Deploy
 eb deploy
@@ -526,7 +526,7 @@ gcloud app deploy
 #### Heroku
 ```bash
 # Install Heroku CLI
-heroku create wastewise-app
+heroku create Wasgo-app
 heroku addons:create heroku-postgresql:hobby-dev
 heroku addons:create heroku-redis:hobby-dev
 git push heroku main
@@ -590,7 +590,7 @@ sudo systemctl status postgresql
 sudo systemctl restart postgresql
 
 # Check PostGIS installation
-psql -d wastewise -c "SELECT PostGIS_version();"
+psql -d Wasgo -c "SELECT PostGIS_version();"
 ```
 
 #### Redis Connection Error
@@ -648,20 +648,20 @@ pod install
 - PostGIS: https://postgis.net/documentation
 
 ### Community
-- GitHub Issues: https://github.com/wastewise/issues
-- Discord: https://discord.gg/wastewise
-- Stack Overflow: Tag with `wastewise`
+- GitHub Issues: https://github.com/Wasgo/issues
+- Discord: https://discord.gg/Wasgo
+- Stack Overflow: Tag with `Wasgo`
 
 ### Contact
-- Email: support@wastewise.com
+- Email: support@Wasgo.com
 - Phone: +233 XX XXX XXXX
-- Twitter: @WasteWiseGH
+- Twitter: @WasgoGH
 
 ---
 
 ## 🎉 Congratulations!
 
-You've successfully set up the WasteWise platform! 
+You've successfully set up the Wasgo platform! 
 
 ### Next Steps:
 1. Configure payment gateways with production credentials

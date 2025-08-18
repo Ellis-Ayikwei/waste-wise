@@ -374,19 +374,19 @@ const UserManagement: React.FC = () => {
         },
     ];
 
-    if (error) {
-        return (
-            <div className="min-h-[400px] flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                    <IconAlertTriangle className="w-12 h-12 text-red-500" />
-                    <p className="text-red-600 dark:text-red-400">{error}</p>
-                    <button onClick={fetchUsers} className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors">
-                        Try Again
-                    </button>
-                </div>
-            </div>
-        );
-    }
+    // if (error) {
+    //     return (
+    //         <div className="min-h-[400px] flex items-center justify-center">
+    //             <div className="flex flex-col items-center gap-4">
+    //                 <IconAlertTriangle className="w-12 h-12 text-red-500" />
+    //                 <p className="text-red-600 dark:text-red-400">{error}</p>
+    //                 <button onClick={fetchUsers} className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors">
+    //                     Try Again
+    //                 </button>
+    //             </div>
+    //         </div>
+    //     );
+    // }
 
     if (loading) {
         return (

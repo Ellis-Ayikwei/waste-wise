@@ -188,7 +188,7 @@ export const WasteDashboard: React.FC = () => {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-primary-700 dark:text-primary-400 mb-2">
-          WasteWise Operations Dashboard
+          wasgo Operations Dashboard
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
           Real-time monitoring and analytics for smart waste management

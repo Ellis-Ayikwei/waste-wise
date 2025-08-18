@@ -83,17 +83,17 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles,
     // }
 
     // Redirect to login if not authenticated
-    if (!isAuthenticated) {
-        return <Navigate to={`/login?from=${encodeURIComponent(location.pathname + location.search)}`} replace />;
-    }
+    // if (!isAuthenticated) {
+    //     return <Navigate to={`/login?from=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+    // }
 
     // If authenticated but no user data, show loadng
-    if (!authUser?.user) {
-        console.log("theres no user data");
-        return <LoadingScreen />;
-    }
+    // if (!authUser?.user) {
+    //     console.log("theres no user data");
+    //     return <LoadingScreen />;
+    // }
 
-    const userType = authUser.user.user_type?.toLowerCase();
+    const userType = authUser?.user?.user_type?.toLowerCase();
 
     // // Check role-based access
     // if (adminOnly) {

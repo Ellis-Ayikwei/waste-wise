@@ -20,7 +20,11 @@ import {
     faRedo,
     faExclamationCircle,
     faUserShield,
-    faLock
+    faLock,
+    faRecycle,
+    faLeaf,
+    faGlobe,
+    faCheck,
 } from '@fortawesome/free-solid-svg-icons';
 import useSignIn from 'react-auth-kit/hooks/useSignIn';
 
@@ -238,277 +242,289 @@ export default function LoginOTPVerification() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex">
-            {/* Left Side - Hero Section */}
-            <div className="hidden lg:flex lg:flex-1 relative overflow-hidden">
-                {/* Background Elements */}
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-800/90 via-blue-900/95 to-slate-900/90"></div>
+        <div className="min-h-screen relative flex">
+            {/* Left Side - Form */}
+            <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
+                <motion.div 
+                    initial={{ opacity: 0, x: -50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="w-full max-w-md"
+                >
+                    {/* Back to Home */}
+                    <Link 
+                        to="/" 
+                        className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 mb-8 transition-colors"
+                    >
+                        <FontAwesomeIcon icon={faArrowLeft} />
+                        <span>Back to Home</span>
+                    </Link>
 
-                {/* Logistics Pattern Overlay */}
-                <div className="absolute inset-0 opacity-10">
-                    <div
-                        className="w-full h-full"
-                        style={{
-                            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.3'%3E%3Cpath d='M15 30c8.284 0 15-6.716 15-15 0 8.284 6.716 15 15 15-8.284 0-15 6.716-15 15 0-8.284-6.716-15-15-15z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-                        }}
-                    ></div>
-                </div>
+                    {/* Logo */}
+                    <div className="flex items-center gap-3 mb-8">
+                        <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
+                            <FontAwesomeIcon icon={faRecycle} className="text-white text-xl" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900">wasgo</h1>
+                            <p className="text-xs text-gray-600">Smart Waste Management</p>
+                        </div>
+                    </div>
 
-                {/* Content */}
-                <div className="relative z-10 flex flex-col justify-center px-12 py-12 text-white">
-                    <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} className="max-w-lg">
-                        {/* Logo */}
-                        <Link to="/" className="flex items-center mb-8">
-                            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-1 rounded-2xl shadow-lg mr-4">
-                            <img className="w-16 ml-[5px] flex-none brightness-0 invert" src="/assets/images/morevans.png" alt="logo" />
+                    {/* Title */}
+                    <div className="mb-8">
+                        <h2 className="text-3xl font-bold text-gray-900 mb-2">Two-Factor Authentication</h2>
+                        <p className="text-gray-600">Enter the verification code sent to your email</p>
+                        <p className="text-green-600 font-semibold text-sm mt-2">{userEmail}</p>
+                    </div>
 
+                    {/* OTP Form */}
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-4 text-center">
+                                6-Digit Security Code
+                            </label>
+                            <div className="flex space-x-2 justify-center max-w-xs mx-auto">
+                                {otp.map((digit, index) => (
+                                    <input
+                                        key={index}
+                                        ref={(el) => (inputRefs.current[index] = el)}
+                                        type="text"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        maxLength={1}
+                                        value={digit}
+                                        onChange={(e) => handleOtpChange(index, e.target.value)}
+                                        onKeyDown={(e) => handleKeyDown(index, e)}
+                                        onPaste={(e) => {
+                                            e.preventDefault();
+                                            handlePaste(e);
+                                        }}
+                                        className="w-12 h-12 text-center text-lg font-bold border border-gray-300 transition-all duration-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent hover:border-gray-400"
+                                        autoComplete="off"
+                                    />
+                                ))}
                             </div>
-                            <div>
-                                <h1 className="text-3xl font-bold text-white">MoreVans</h1>
-                                <p className="text-slate-300 text-sm">Administrative Control Center</p>
-                            </div>
-                        </Link>
-
-                        {/* Main Content */}
-                        <h2 className="text-4xl font-bold mb-6 leading-tight">
-                            Secure <span className="text-orange-400">Login</span> Verification
-                        </h2>
-                        <p className="text-xl text-blue-100 mb-8 leading-relaxed">
-                            We've sent a verification code to your registered email address. This extra layer of security ensures that only you can access your account and sensitive logistics data.
-                        </p>
-
-                        {/* Security Features */}
-                        <div className="space-y-4 mb-8">
-                            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }} className="flex items-center">
-                                <div className="bg-white/20 rounded-full p-2 mr-4">
-                                    <FontAwesomeIcon icon={faShieldAlt} className="h-5 w-5 text-orange-400" />
-                                </div>
-                                <span className="text-white">Two-factor authentication enabled</span>
-                            </motion.div>
-                            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 }} className="flex items-center">
-                                <div className="bg-white/20 rounded-full p-2 mr-4">
-                                    <FontAwesomeIcon icon={faClock} className="h-5 w-5 text-orange-400" />
-                                </div>
-                                <span className="text-white">Code expires in 5 minutes</span>
-                            </motion.div>
-                            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.7 }} className="flex items-center">
-                                <div className="bg-white/20 rounded-full p-2 mr-4">
-                                    <FontAwesomeIcon icon={faUserShield} className="h-5 w-5 text-orange-400" />
-                                </div>
-                                <span className="text-white">Protected against unauthorized access</span>
-                            </motion.div>
                         </div>
 
-                        {/* Welcome Message */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.8 }}
-                            className="bg-gradient-to-r from-orange-500/20 to-orange-600/20 backdrop-blur-sm rounded-2xl p-6 border border-orange-500/30"
+                        {/* Error Message */}
+                        {localError && (
+                            <motion.div 
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="text-red-500 text-sm text-center bg-red-50 border border-red-200 rounded-lg p-3 flex items-center justify-center"
+                            >
+                                <FontAwesomeIcon icon={faExclamationCircle} className="mr-2" />
+                                {localError}
+                            </motion.div>
+                        )}
+
+                        <motion.button
+                            type="submit"
+                            disabled={loading || otp.join('').length !== 6}
+                            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 rounded-lg font-semibold hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
                         >
-                            <div className="text-center">
-                                <FontAwesomeIcon icon={faUserShield} className="h-8 w-8 text-orange-400 mb-3" />
-                                <p className="text-white font-semibold text-lg mb-2">Welcome back, {userName}!</p>
-                                <p className="text-orange-200 text-sm">Complete verification to access your dashboard</p>
-                            </div>
-                        </motion.div>
+                            {loading ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    <span>Authenticating...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span>Complete Login</span>
+                                    <FontAwesomeIcon icon={faShield} />
+                                </>
+                            )}
+                        </motion.button>
+
+                        {/* Resend Code */}
+                        <div className="text-center">
+                            <p className="text-gray-600 text-sm mb-2">Didn't receive the code?</p>
+                            <button
+                                type="button"
+                                onClick={handleResendOtp}
+                                disabled={loading || resendCooldown > 0 || disabledResend}
+                                className="text-green-600 hover:text-green-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                {loading ? (
+                                    <div className="flex items-center justify-center">
+                                        <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                                        Sending...
+                                    </div>
+                                ) : resendCooldown > 0 ? (
+                                    `Resend in ${resendCooldown}s`
+                                ) : (
+                                    <div className="flex items-center justify-center">
+                                        <FontAwesomeIcon icon={faRedo} className="mr-2" />
+                                        Resend Code
+                                    </div>
+                                )}
+                            </button>
+                        </div>
+
+                        {/* Trust this device */}
+                        <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
+                            <input
+                                id="trust-device"
+                                type="checkbox"
+                                checked={trustDevice}
+                                onChange={(e) => setTrustDevice(e.target.checked)}
+                                className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                            />
+                            <label htmlFor="trust-device" className="select-none">
+                                Trust this device for 30 days
+                            </label>
+                        </div>
+                    </form>
+
+                    {/* Alternative Actions */}
+                    <div className="space-y-4 mt-8">
+                        <div className="border-t border-gray-200 pt-6">
+                            <button
+                                onClick={handleBackToLogin}
+                                className="w-full text-center text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                            >
+                                <FontAwesomeIcon icon={faArrowLeft} className="mr-2" />
+                                Start Over - Back to Login
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Success state */}
+                    <AnimatePresence>
+                        {isSubmitted && (
+                            <motion.div 
+                                initial={{ opacity: 0 }} 
+                                animate={{ opacity: 1 }} 
+                                exit={{ opacity: 0 }} 
+                                className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4 text-green-700"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <FontAwesomeIcon icon={faCheckCircle} className="text-green-600" />
+                                    <span>Authentication successful! Welcome back, {userName}!</span>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </motion.div>
+            </div>
+
+            {/* Right Side - Visual */}
+            <div className="hidden lg:block lg:w-1/2 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-green-600 via-emerald-600 to-teal-700"></div>
+                
+                {/* Animated Background Elements */}
+                <div className="absolute inset-0">
+                    <motion.div
+                        animate={{
+                            scale: [1, 1.2, 1],
+                            rotate: [0, 180, 360],
+                        }}
+                        transition={{
+                            duration: 20,
+                            repeat: Infinity,
+                            ease: "linear"
+                        }}
+                        className="absolute top-20 left-20 w-64 h-64 bg-green-400 rounded-full filter blur-3xl opacity-20"
+                    />
+                    <motion.div
+                        animate={{
+                            scale: [1, 1.3, 1],
+                            rotate: [360, 180, 0],
+                        }}
+                        transition={{
+                            duration: 25,
+                            repeat: Infinity,
+                            ease: "linear"
+                        }}
+                        className="absolute bottom-20 right-20 w-96 h-96 bg-emerald-400 rounded-full filter blur-3xl opacity-20"
+                    />
+                </div>
+
+                {/* Floating Icons */}
+                <div className="absolute inset-0 overflow-hidden">
+                    <motion.div
+                        animate={{ y: [0, -20, 0], rotate: [0, 10, 0] }}
+                        transition={{ duration: 6, repeat: Infinity }}
+                        className="absolute top-1/4 left-1/4 text-white/20"
+                    >
+                        <FontAwesomeIcon icon={faRecycle} size="4x" />
+                    </motion.div>
+                    <motion.div
+                        animate={{ y: [0, 20, 0], rotate: [0, -10, 0] }}
+                        transition={{ duration: 8, repeat: Infinity }}
+                        className="absolute bottom-1/3 right-1/4 text-white/20"
+                    >
+                        <FontAwesomeIcon icon={faLeaf} size="3x" />
+                    </motion.div>
+                    <motion.div
+                        animate={{ y: [0, -15, 0] }}
+                        transition={{ duration: 7, repeat: Infinity }}
+                        className="absolute top-1/2 right-1/3 text-white/15"
+                    >
+                        <FontAwesomeIcon icon={faGlobe} size="5x" />
                     </motion.div>
                 </div>
 
-                {/* Floating Elements */}
-                <motion.div
-                    animate={{ y: [0, -10, 0] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                    className="absolute top-1/4 right-12 w-20 h-20 bg-orange-500/20 rounded-full backdrop-blur-sm"
-                ></motion.div>
-                <motion.div
-                    animate={{ y: [0, 15, 0] }}
-                    transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-                    className="absolute bottom-1/4 right-24 w-12 h-12 bg-blue-500/30 rounded-full backdrop-blur-sm"
-                ></motion.div>
-            </div>
-
-            {/* Right Side - OTP Form */}
-            <div className="flex-1 flex items-center justify-center p-2 sm:p-4 lg:p-8">
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="w-full max-w-md px-2 sm:px-0">
-                    {/* Mobile Logo */}
-                    <div className="flex items-center mb-8 mx-auto lg:hidden justify-center">
-                            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-1 rounded-2xl shadow-lg mr-4">
-                            <img className="w-14 ml-[5px] flex-none brightness-0 invert" src="/assets/images/morevans.png" alt="logo" />
-
-                            </div>
-                            <div>
-                                <h1 className="text-3xl font-bold text-white">MoreVans</h1>
-                                <p className="text-slate-300 text-sm">Logistics Management Platform</p>
-                            </div>
-                        </div>
-
-                    {/* Main Card */}
-                    <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl p-4 sm:p-6 lg:p-8 w-full mx-0 lg:mx-2">
-                        <AnimatePresence mode="wait">
-                            {!isSubmitted ? (
-                                <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                                    {/* Header */}
-                                    <div className="text-center mb-8">
-                                        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2 }}>
-                                            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-r from-orange-500/20 to-orange-600/20 mb-4 border border-orange-500/30">
-                                                <FontAwesomeIcon icon={faLock} className="h-8 w-8 text-orange-400" />
-                                            </div>
-                                            <h2 className="text-3xl font-bold text-white mb-2">Two-Factor Authentication</h2>
-                                            <p className="text-gray-300 text-sm mb-2">Enter the verification code sent to:</p>
-                                            <p className="text-orange-400 font-semibold text-sm">{userEmail}</p>
-                                        </motion.div>
-                                    </div>
-
-                                    {/* OTP Form */}
-                                    <form onSubmit={handleSubmit} className="space-y-6">
-                                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-                                            <label className="block text-sm font-semibold text-gray-200 mb-4 text-center">
-                                                6-Digit Security Code
-                                            </label>
-                                            <div className="flex space-x-2 justify-center max-w-xs mx-auto">
-                                                {otp.map((digit, index) => (
-                                                    <input
-                                                        key={index}
-                                                        ref={(el) => (inputRefs.current[index] = el)}
-                                                        type="text"
-                                                        inputMode="numeric"
-                                                        pattern="[0-9]*"
-                                                        maxLength={1}
-                                                        value={digit}
-                                                        onChange={(e) => handleOtpChange(index, e.target.value)}
-                                                        onKeyDown={(e) => handleKeyDown(index, e)}
-                                                        onPaste={(e) => {
-                                                            e.preventDefault();
-                                                            handlePaste(e);
-                                                        }}
-                                                        className="w-12 h-12 sm:w-12 sm:h-12 text-center text-lg sm:text-xl font-bold bg-white/5 backdrop-blur-sm border border-white/20 transition-all duration-300 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 hover:border-white/30 flex-shrink-0"
-                                                        autoComplete="off"
-                                                    />
-                                                ))}
-                                            </div>
-                                        </motion.div>
-
-                                        {/* Error Message */}
-                                        {localError && (
-                                            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-red-400 text-sm text-center bg-red-500/10 backdrop-blur-sm rounded-lg p-3 border border-red-500/20 flex items-center justify-center">
-                                                <FontAwesomeIcon icon={faExclamationCircle} className="mr-2" />
-                                                {localError}
-                                            </motion.div>
-                                        )}
-
-                                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-                                            <motion.button
-                                                type="submit"
-                                                disabled={loading || otp.join('').length !== 6}
-                                                className="w-full bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20 shadow-lg hover:shadow-xl"
-                                                whileHover={{ scale: loading ? 1 : 1.02 }}
-                                                whileTap={{ scale: loading ? 1 : 0.98 }}
-                                            >
-                                                {loading ? (
-                                                    <div className="flex items-center justify-center">
-                                                        <motion.div
-                                                            animate={{ rotate: 360 }}
-                                                            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                                                            className="w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-3"
-                                                        />
-                                                        Authenticating...
-                                                    </div>
-                                                ) : (
-                                                    'Complete Login'
-                                                )}
-                                            </motion.button>
-                                        </motion.div>
-
-                                        {/* Resend Code */}
-                                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-center">
-                                            <p className="text-gray-300 text-sm mb-2">Didn't receive the code?</p>
-                                            <button
-                                                type="button"
-                                                onClick={handleResendOtp}
-                                                disabled={loading || resendCooldown > 0 || disabledResend}
-                                                className="text-orange-400 hover:text-orange-300 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                            >
-                                                {loading ? (
-                                                    <div className="flex items-center justify-center">
-                                                        <motion.div
-                                                            animate={{ rotate: 360 }}
-                                                            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                                                            className="w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full mr-2"
-                                                        />
-                                                        Sending...
-                                                    </div>
-                                                ) : resendCooldown > 0 ? (
-                                                    `Resend in ${resendCooldown}s`
-                                                ) : (
-                                                    <div className="flex items-center justify-center">
-                                                        <FontAwesomeIcon icon={faRedo} className="mr-2" />
-                                                        Resend Code
-                                                    </div>
-                                                )}
-                                            </button>
-                                        </motion.div>
-
-                                        {/* Trust this device */}
-                                        <div className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-200">
-                                            <input
-                                                id="trust-device"
-                                                type="checkbox"
-                                                checked={trustDevice}
-                                                onChange={(e) => setTrustDevice(e.target.checked)}
-                                                className="h-4 w-4 rounded border-white/30 bg-white/10 text-orange-500 focus:ring-orange-500/30"
-                                            />
-                                            <label htmlFor="trust-device" className="select-none">
-                                                Trust this device for 30 days
-                                            </label>
-                                        </div>
-                                    </form>
-
-                                    {/* Alternative Actions */}
-                                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="space-y-4 mt-8">
-                                        <div className="border-t border-white/20 pt-6">
-                                            <button
-                                                onClick={handleBackToLogin}
-                                                className="w-full text-center text-sm text-gray-400 hover:text-gray-300 transition-colors"
-                                            >
-                                                <FontAwesomeIcon icon={faArrowLeft} className="mr-2" />
-                                                Start Over - Back to Login
-                                            </button>
-                                        </div>
-                                    </motion.div>
-                                </motion.div>
-                            ) : (
-                                <motion.div key="success" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} className="text-center">
-                                    {/* Success Icon */}
+                {/* Content */}
+                <div className="relative z-10 h-full flex items-center justify-center p-12">
+                    <div className="text-center text-white max-w-md">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5 }}
+                        >
+                            <h2 className="text-4xl font-bold mb-6">
+                                Secure Login Verification
+                            </h2>
+                            <p className="text-xl text-green-100 mb-8">
+                                We've sent a verification code to your registered email address. This extra layer of security ensures that only you can access your account.
+                            </p>
+                            
+                            {/* Security Features */}
+                            <div className="space-y-4">
+                                {[
+                                    'Two-factor authentication enabled',
+                                    'Code expires in 5 minutes',
+                                    'Protected against unauthorized access',
+                                    'Real-time security monitoring',
+                                    'Access from verified devices only',
+                                ].map((feature, index) => (
                                     <motion.div
-                                        initial={{ scale: 0 }}
-                                        animate={{ scale: 1 }}
-                                        transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-                                        className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-500/20 mb-6"
+                                        key={index}
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: 0.7 + index * 0.1 }}
+                                        className="flex items-center gap-3 text-left"
                                     >
-                                        <FontAwesomeIcon icon={faCheckCircle} className="h-8 w-8 text-green-400" />
-                                    </motion.div>
-
-                                    {/* Success Message */}
-                                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-                                        <h3 className="text-2xl font-bold text-white mb-4">Authentication Successful!</h3>
-                                        <p className="text-gray-300 mb-2">Welcome back, {userName}!</p>
-                                        <p className="text-gray-300 mb-6">You have been successfully authenticated and will be redirected to your dashboard.</p>
-                                        
-                                        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                                            <motion.div
-                                                animate={{ rotate: 360 }}
-                                                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                                                className="w-6 h-6 border-2 border-orange-400 border-t-transparent rounded-full mx-auto mb-2"
-                                            />
-                                            <p className="text-gray-300 text-sm">Redirecting to dashboard...</p>
+                                        <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                                            <FontAwesomeIcon icon={faCheck} className="text-sm" />
                                         </div>
+                                        <span className="text-green-50">{feature}</span>
                                     </motion.div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                                ))}
+                            </div>
+
+                            {/* Welcome Message */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 1.2 }}
+                                className="mt-12 pt-8 border-t border-white/20"
+                            >
+                                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                                    <div className="text-center">
+                                        <FontAwesomeIcon icon={faUserShield} className="h-8 w-8 text-green-400 mb-3" />
+                                        <p className="text-white font-semibold text-lg mb-2">Welcome back, {userName}!</p>
+                                        <p className="text-green-200 text-sm">Complete verification to access your dashboard</p>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </motion.div>
                     </div>
-                </motion.div>
+                </div>
             </div>
         </div>
     );
