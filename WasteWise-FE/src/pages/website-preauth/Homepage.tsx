@@ -616,27 +616,55 @@ const Homepage: React.FC = () => {
             <section className="py-20 bg-gray-50" ref={servicesRef}>
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-12">
-                        <h2 className="text-4xl font-bold text-gray-800 mb-4">Our Services</h2>
+                        <h2 className="text-4xl font-bold text-gray-800 mb-4">Our Top Services</h2>
                         <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                            Comprehensive waste management solutions powered by technology and sustainability
+                            Discover our most popular waste management solutions powered by technology and sustainability
                         </p>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        {serviceTypes.map((service) => (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                        {serviceTypes.slice(0, 3).map((service) => (
                             <motion.div
                                 key={service.id}
-                                whileHover={{ scale: 1.05 }}
-                                className="bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer"
+                                whileHover={{ scale: 1.05, y: -10 }}
+                                className="bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer hover:shadow-2xl transition-all duration-300"
                                 onClick={() => navigate(`/services/${service.serviceId}`)}
                             >
-                                <div className="h-48 bg-cover bg-center" style={{ backgroundImage: `url(${service.icon})` }}></div>
+                                <div className="h-48 bg-cover bg-center relative" style={{ backgroundImage: `url(${service.icon})` }}>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                                    <div className="absolute bottom-4 left-4 text-white">
+                                        <span className="bg-green-600 px-3 py-1 rounded-full text-sm font-semibold">Popular</span>
+                                    </div>
+                                </div>
                                 <div className="p-6">
-                                    <h3 className="text-xl font-semibold text-gray-800 mb-2">{service.title}</h3>
-                                    <p className="text-gray-600 text-sm">{service.description}</p>
+                                    <h3 className="text-xl font-semibold text-gray-800 mb-3">{service.title}</h3>
+                                    <p className="text-gray-600 text-sm mb-4 leading-relaxed">{service.description}</p>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-green-600 font-medium text-sm">Learn More</span>
+                                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                            <FontAwesomeIcon icon={faArrowRight} className="text-green-600 text-sm" />
+                                        </div>
+                                    </div>
                                 </div>
                             </motion.div>
                         ))}
+                    </div>
+
+                    {/* View All Services Button */}
+                    <div className="text-center">
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => navigate('/services')}
+                            className="group bg-gradient-to-r from-green-600 to-emerald-600 text-white px-8 py-4 rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-3 mx-auto"
+                        >
+                            <FontAwesomeIcon icon={faRecycle} className="group-hover:rotate-180 transition-transform duration-500" />
+                            View All {serviceTypes.length} Services
+                            <FontAwesomeIcon icon={faArrowRight} className="group-hover:translate-x-1 transition-transform" />
+                        </motion.button>
+                        <p className="text-gray-500 text-sm mt-3">
+                            Explore our complete range of waste management solutions
+                        </p>
                     </div>
                 </div>
             </section>
