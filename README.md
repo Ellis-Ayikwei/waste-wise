@@ -1,10 +1,10 @@
-# WasteWise - Smart Waste Management System 🌱
+# Wasgo - Smart Waste Management System 🌱
 
 ## Smarter Waste Management for a Cleaner Ghana
 
-WasteWise is an innovative IoT-powered waste management platform that revolutionizes urban waste collection in Ghana. By integrating smart sensors, real-time tracking, and AI-driven route optimization, we help cities reduce collection costs by up to 40% while improving environmental sustainability.
+Wasgo is an innovative IoT-powered waste management platform that revolutionizes urban waste collection in Ghana. By integrating smart sensors, real-time tracking, and AI-driven route optimization, we help cities reduce collection costs by up to 40% while improving environmental sustainability.
 
-![WasteWise Dashboard](https://img.shields.io/badge/Version-2.0.0-green)
+![Wasgo Dashboard](https://img.shields.io/badge/Version-2.0.0-green)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 ![Status](https://img.shields.io/badge/Status-Production_Ready-success)
 
@@ -68,13 +68,13 @@ WasteWise is an innovative IoT-powered waste management platform that revolution
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/wastewise/wastewise.git
-cd wastewise
+git clone https://github.com/Wasgo/Wasgo.git
+cd Wasgo
 ```
 
 2. **Backend Setup**
 ```bash
-cd WasteWise-BE
+cd Wasgo-BE
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py createsuperuser
@@ -83,14 +83,14 @@ python manage.py runserver
 
 3. **Frontend Setup**
 ```bash
-cd WasteWise-FE
+cd Wasgo-FE
 npm install
 npm run dev
 ```
 
 4. **Admin Dashboard Setup**
 ```bash
-cd WasteWise-Admin
+cd Wasgo-Admin
 npm install
 npm run dev
 ```
@@ -98,8 +98,8 @@ npm run dev
 ## 📁 Project Structure
 
 ```
-WasteWise/
-├── WasteWise-FE/           # Frontend React Application
+Wasgo/
+├── Wasgo-FE/           # Frontend React Application
 │   ├── src/
 │   │   ├── pages/
 │   │   │   ├── website-preauth/
@@ -126,9 +126,9 @@ WasteWise/
 │   │   ├── router/                     # Routing configuration
 │   │   └── styles/                     # Global styles
 │   └── package.json
-├── WasteWise-Admin/        # Admin Dashboard
+├── Wasgo-Admin/        # Admin Dashboard
 │   └── ...
-└── WasteWise-BE/           # Django Backend
+└── Wasgo-BE/           # Django Backend
     └── ...
 ```
 
@@ -150,7 +150,7 @@ WasteWise/
 
 ## 🌍 Environmental Impact
 
-Since launch, WasteWise has helped Ghana achieve:
+Since launch, Wasgo has helped Ghana achieve:
 - **500,000+ tons** of waste recycled
 - **50,000 tons** of CO₂ emissions reduced
 - **100,000+ households** served
@@ -186,7 +186,7 @@ Since launch, WasteWise has helped Ghana achieve:
 
 ### IoT Sensor Data Endpoint
 ```http
-POST /wastewise/api/v1/waste/sensor-data/upload/
+POST /Wasgo/api/v1/waste/sensor-data/upload/
 Content-Type: application/json
 
 {
@@ -201,12 +201,12 @@ Content-Type: application/json
 
 ### Find Nearest Bins
 ```http
-GET /wastewise/api/v1/waste/bins/nearest/?latitude=5.6037&longitude=-0.1870&radius_km=2
+GET /Wasgo/api/v1/waste/bins/nearest/?latitude=5.6037&longitude=-0.1870&radius_km=2
 ```
 
 ### Citizen Report
 ```http
-POST /wastewise/api/v1/waste/reports/
+POST /Wasgo/api/v1/waste/reports/
 Content-Type: application/json
 
 {
@@ -229,7 +229,7 @@ DJANGO_SECRET_KEY=your-secret-key
 DEBUG=False
 
 # Database
-DB_NAME=wastewise
+DB_NAME=Wasgo
 DB_USER=postgres
 DB_PASSWORD=your-password
 DB_HOST=localhost
@@ -240,7 +240,7 @@ GOOGLE_MAPS_API_KEY=your-google-maps-key
 
 # SendGrid Email
 SENDGRID_API_KEY=your-sendgrid-key
-DEFAULT_FROM_EMAIL=noreply@wastewise.com
+DEFAULT_FROM_EMAIL=noreply@Wasgo.com
 
 # Redis
 REDIS_HOST=localhost
@@ -280,10 +280,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Documentation**: [docs.wastewise.com](https://docs.wastewise.com)
-- **Email**: support@wastewise.com
+- **Documentation**: [docs.Wasgo.com](https://docs.Wasgo.com)
+- **Email**: support@Wasgo.com
 - **Phone**: +233 20 123 4567
-- **Twitter**: [@WasteWiseGH](https://twitter.com/WasteWiseGH)
+- **Twitter**: [@WasgoGH](https://twitter.com/WasgoGH)
 
 ## 🙏 Acknowledgments
 

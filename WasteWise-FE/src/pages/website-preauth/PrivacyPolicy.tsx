@@ -152,7 +152,7 @@ const PrivacyPolicy: React.FC = () => {
             content: [
                 {
                     subtitle: '9.1 Data Protection Officer',
-                    text: 'For privacy concerns, contact our Data Protection Officer at: privacy@wastewise.com.gh, +233 20 123 4567, or WasteWise Ghana, P.O. Box 123, Accra, Ghana.',
+                    text: 'For privacy concerns, contact our Data Protection Officer at: privacy@wasgo.com.gh, +233 20 123 4567, or wasgo Ghana, P.O. Box 123, Accra, Ghana.',
                 },
                 {
                     subtitle: '9.2 Regulatory Authority',
@@ -192,7 +192,7 @@ const PrivacyPolicy: React.FC = () => {
                             </h1>
                             
                             <p className="text-xl text-green-100 mb-8">
-                                At WasteWise, we are committed to protecting your privacy while helping Ghana achieve its environmental goals.
+                                At wasgo, we are committed to protecting your privacy while helping Ghana achieve its environmental goals.
                             </p>
                             
                             <div className="flex items-center justify-center gap-4 text-sm">
@@ -235,7 +235,7 @@ const PrivacyPolicy: React.FC = () => {
                         >
                             <h2 className="text-2xl font-bold text-gray-900 mb-4">Introduction</h2>
                             <p className="text-gray-700 leading-relaxed">
-                                WasteWise ("we," "our," or "us") operates Ghana's leading smart waste management platform. 
+                                wasgo ("we," "our," or "us") operates Ghana's leading smart waste management platform. 
                                 This Privacy Policy explains how we collect, use, share, and protect your personal information 
                                 when you use our website, mobile applications, IoT devices, and services (collectively, the "Services").
                             </p>

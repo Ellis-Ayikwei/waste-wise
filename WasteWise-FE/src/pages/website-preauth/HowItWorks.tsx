@@ -223,7 +223,7 @@ const HowItWorks: React.FC = () => {
                         </motion.div>
 
                         <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
-                            How WasteWise Works
+                            How wasgo Works
                         </h1>
                         <p className="text-xl md:text-2xl text-green-100 max-w-4xl mx-auto">
                             Join Ghana's smartest waste management ecosystem in just a few simple steps
@@ -286,7 +286,7 @@ const HowItWorks: React.FC = () => {
                         <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                             {activeTab === 'customer' 
                                 ? 'Follow these simple steps to manage your waste sustainably'
-                                : 'Become a WasteWise partner and grow your business'}
+                                : 'Become a wasgo partner and grow your business'}
                         </p>
                     </motion.div>
 
@@ -425,7 +425,7 @@ const HowItWorks: React.FC = () => {
                         className="text-center mb-16"
                     >
                         <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                            Why Choose WasteWise?
+                            Why Choose wasgo?
                         </h2>
                         <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                             Join thousands making a real environmental impact
@@ -475,7 +475,7 @@ const HowItWorks: React.FC = () => {
                             Ready to Make a Difference?
                         </h2>
                         <p className="text-xl text-green-100 max-w-3xl mx-auto mb-8">
-                            Join WasteWise today and be part of Ghana's environmental transformation
+                            Join wasgo today and be part of Ghana's environmental transformation
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <motion.button

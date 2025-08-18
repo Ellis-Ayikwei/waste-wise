@@ -238,7 +238,7 @@ const About: React.FC = () => {
                             transition={{ delay: 0.4 }}
                             className="text-xl md:text-2xl text-green-50 max-w-4xl mx-auto"
                         >
-                            WasteWise is Ghana's pioneering force in sustainable waste management, 
+                            wasgo is Ghana's pioneering force in sustainable waste management, 
                             transforming how communities handle waste through technology, innovation, and environmental stewardship.
                         </motion.p>
                     </motion.div>
@@ -296,7 +296,7 @@ const About: React.FC = () => {
                                 From Local Initiative to National Impact
                             </h2>
                             <p className="text-lg text-gray-600 mb-4">
-                                WasteWise began in 2014 as a response to Ghana's growing waste management crisis. 
+                                wasgo began in 2014 as a response to Ghana's growing waste management crisis. 
                                 What started as a community-driven initiative in Accra has evolved into West Africa's 
                                 most innovative waste management platform.
                             </p>
@@ -320,7 +320,7 @@ const About: React.FC = () => {
                             <div className="relative rounded-2xl overflow-hidden shadow-2xl">
                                 <img 
                                     src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" 
-                                    alt="WasteWise Operations" 
+                                    alt="wasgo Operations" 
                                     className="w-full h-full object-cover"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-green-900/60 to-transparent"></div>

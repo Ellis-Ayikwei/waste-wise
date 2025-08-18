@@ -8,7 +8,7 @@ module.exports = {
         },
         extend: {
             colors: {
-                // WasteWise Brand Colors with full scale
+                // wasgo Brand Colors with full scale
                 primary: {
                     50: '#e8f5e9',  // Lightest eco green
                     100: '#c8e6c9', // Very light green
@@ -59,7 +59,7 @@ module.exports = {
                     },
                 },
 
-                // Semantic colors with WasteWise theme
+                // Semantic colors with wasgo theme
                 success: {
                     50: '#e8f5e9',
                     100: '#c8e6c9',
@@ -136,10 +136,13 @@ module.exports = {
                     700: '#b0bec5',
                     800: '#cfd8dc',
                     900: '#eceff1', // Tech Gray
+                    // Provide a proper "light" shade so classes like bg-dark-light work
+                    light: 'rgba(38, 50, 56, 0.15)',
+                    // Keep legacy key for backward compatibility (generates bg-dark-dark-light)
                     'dark-light': 'rgba(38, 50, 56, 0.15)',
                 },
 
-                // WasteWise specific status colors
+                // wasgo specific status colors
                 waste: {
                     empty: '#4caf50',     // Green - empty bin
                     low: '#8bc34a',       // Light green - low fill
@@ -176,13 +179,18 @@ module.exports = {
                 // Legacy colors (for gradual migration)
                 black: '#263238',
                 white: '#ffffff',
+                // Custom white variants used across styles
+                // "white-light" is a very light off-white for borders/background accents
+                'white-light': '#f6f6f6',
+                // "white-dark" is a soft light gray used as text on dark surfaces
+                'white-dark': '#cfd8dc',
                 transparent: 'transparent',
             },
             
             fontFamily: {
                 satoshi: ['Satoshi', 'sans-serif'],
                 inter: ['Inter', 'sans-serif'],
-                // Add professional fonts for WasteWise
+                // Add professional fonts for wasgo
                 poppins: ['Poppins', 'sans-serif'],
                 roboto: ['Roboto', 'sans-serif'],
             },

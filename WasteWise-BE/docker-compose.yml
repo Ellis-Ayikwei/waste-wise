@@ -7,7 +7,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DB=wastewise
+      - POSTGRES_DB=Wasgo
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=@Toshib123
     ports:
@@ -52,7 +52,7 @@ services:
       redis:
         condition: service_healthy
     environment:
-      - DATABASE_URL=postgis://postgres:@Toshib123@db:5432/wastewise
+      - DATABASE_URL=postgis://postgres:@Toshib123@db:5432/Wasgo
       - REDIS_URL=redis://redis:6379/0
       - DEBUG=True
       - DJANGO_SECRET_KEY=dev-secret-key-change-in-production
@@ -69,7 +69,7 @@ services:
       - db
       - redis
     environment:
-      - DATABASE_URL=postgis://postgres:@Toshib123@db:5432/wastewise
+      - DATABASE_URL=postgis://postgres:@Toshib123@db:5432/Wasgo
       - REDIS_URL=redis://redis:6379/0
     env_file:
       - .env
@@ -84,7 +84,7 @@ services:
       - db
       - redis
     environment:
-      - DATABASE_URL=postgis://postgres:@Toshib123@db:5432/wastewise
+      - DATABASE_URL=postgis://postgres:@Toshib123@db:5432/Wasgo
       - REDIS_URL=redis://redis:6379/0
     env_file:
       - .env

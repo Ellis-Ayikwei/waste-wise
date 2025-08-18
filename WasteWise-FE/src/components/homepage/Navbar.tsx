@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import logo from '/assets/images/wasgologo/wasgonormal.png';
 import { 
     IconMenu2, 
     IconX, 
@@ -118,22 +119,14 @@ const Navbar: React.FC<NavbarProps> = ({ isScrolled: propIsScrolled }) => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-20">
                         {/* Logo */}
-                        <Link to="/" className="flex items-center gap-3 group">
-                            <motion.div
-                                whileHover={{ rotate: 360 }}
-                                transition={{ duration: 0.5 }}
-                                className={`w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg`}
-                            >
-                                <FontAwesomeIcon 
-                                    icon={faRecycle} 
-                                    className="text-white text-xl"
-                                />
-                            </motion.div>
+                        <Link to="/" className="flex items-center gap-1 group">
+                           
+                                <img src={logo} alt="wasgo" className="w-12 h-12" />
                             <div>
                                 <h1 className={`text-2xl font-bold transition-colors duration-300 ${
                                     scrolled ? 'text-gray-900' : 'text-white'
                                 }`}>
-                                    WasteWise
+                                    wasgo
                                 </h1>
                                 <p className={`text-xs transition-colors duration-300 ${
                                     scrolled ? 'text-gray-600' : 'text-green-100'
@@ -286,11 +279,11 @@ const Navbar: React.FC<NavbarProps> = ({ isScrolled: propIsScrolled }) => {
                                 {/* Mobile Menu Header */}
                                 <div className="flex items-center justify-between mb-8">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                                            <FontAwesomeIcon icon={faRecycle} className="text-white" />
-                                        </div>
+                                       
+                                            <img src={logo} alt="wasgo" className="w-12 h-12" />
+                                        
                                         <div>
-                                            <h2 className="text-xl font-bold text-gray-900">WasteWise</h2>
+                                            <h2 className="text-xl font-bold text-gray-900">wasgo</h2>
                                             <p className="text-xs text-gray-600">Menu</p>
                                         </div>
                                     </div>

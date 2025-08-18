@@ -103,7 +103,7 @@ const Homepage: React.FC = () => {
         return () => clearInterval(interval);
     }, []);
 
-    // WasteWise Service types - Ghana waste management focused
+    // wasgo Service types - Ghana waste management focused
     const serviceTypes: ServiceType[] = [
         {
             id: 1,
@@ -191,7 +191,7 @@ const Homepage: React.FC = () => {
         },
     ];
 
-    // WasteWise featured providers - Ghana-based waste management companies
+    // wasgo featured providers - Ghana-based waste management companies
     const featuredProviders: FeaturedProvider[] = [
         {
             id: 1,
@@ -228,13 +228,13 @@ const Homepage: React.FC = () => {
         },
     ];
 
-    // WasteWise testimonials - Ghana customers
+    // wasgo testimonials - Ghana customers
     const testimonials: Testimonial[] = [
         {
             id: 1,
             name: 'Kwame Asante',
             image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80',
-            text: 'WasteWise has transformed waste management in our neighborhood. The smart bins alert collectors when full, ensuring our streets stay clean. The mobile app makes it so easy to request pickups!',
+            text: 'wasgo has transformed waste management in our neighborhood. The smart bins alert collectors when full, ensuring our streets stay clean. The mobile app makes it so easy to request pickups!',
             rating: 5,
             date: '2 weeks ago',
             service: 'Smart Bin Service',
@@ -243,7 +243,7 @@ const Homepage: React.FC = () => {
             id: 2,
             name: 'Ama Mensah',
             image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80',
-            text: 'As a restaurant owner, proper waste disposal is crucial. WasteWise provides reliable commercial collection and helps us separate organic waste for composting. Excellent service!',
+            text: 'As a restaurant owner, proper waste disposal is crucial. wasgo provides reliable commercial collection and helps us separate organic waste for composting. Excellent service!',
             rating: 5,
             date: '1 month ago',
             service: 'Commercial Collection',
@@ -645,13 +645,13 @@ const Homepage: React.FC = () => {
             <section className="py-20 bg-white">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-12">
-                        <h2 className="text-4xl font-bold text-gray-800 mb-4">How WasteWise Works</h2>
+                        <h2 className="text-4xl font-bold text-gray-800 mb-4">How wasgo Works</h2>
                         <p className="text-xl text-gray-600">Simple, efficient, and eco-friendly waste management</p>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                         {[
-                            { icon: faMobileAlt, title: 'Download App', description: 'Get the WasteWise app on your smartphone' },
+                            { icon: faMobileAlt, title: 'Download App', description: 'Get the wasgo app on your smartphone' },
                             { icon: faMapMarkerAlt, title: 'Set Location', description: 'Mark your pickup location and waste type' },
                             { icon: faTruck, title: 'Schedule Pickup', description: 'Choose immediate or scheduled collection' },
                             { icon: faRecycle, title: 'Track & Recycle', description: 'Monitor collection and earn recycling rewards' },
@@ -678,7 +678,7 @@ const Homepage: React.FC = () => {
             <section className="py-20 bg-green-50">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-12">
-                        <h2 className="text-4xl font-bold text-gray-800 mb-4">Why Choose WasteWise?</h2>
+                        <h2 className="text-4xl font-bold text-gray-800 mb-4">Why Choose wasgo?</h2>
                         <p className="text-xl text-gray-600">Leading the transformation of waste management in Ghana</p>
                     </div>
                     
@@ -810,7 +810,7 @@ const Homepage: React.FC = () => {
                         Ready to Make Ghana Cleaner?
                     </h2>
                     <p className="text-xl text-green-50 mb-8 max-w-2xl mx-auto">
-                        Join thousands of Ghanaians using WasteWise for efficient, eco-friendly waste management
+                        Join thousands of Ghanaians using wasgo for efficient, eco-friendly waste management
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Link 

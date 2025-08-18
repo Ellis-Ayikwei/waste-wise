@@ -9,7 +9,7 @@ const Footer: React.FC = () => {
 
     const footerLinks = {
         company: [
-            { name: 'About WasteWise', href: '/about' },
+            { name: 'About wasgo', href: '/about' },
             { name: 'Careers', href: '/careers' },
             { name: 'Press', href: '/press' },
             { name: 'Blog', href: '/blog' },
@@ -39,11 +39,11 @@ const Footer: React.FC = () => {
     };
 
     const socialLinks = [
-        { icon: faFacebook, href: 'https://facebook.com/wastewise', label: 'Facebook' },
-        { icon: faTwitter, href: 'https://twitter.com/wastewise', label: 'Twitter' },
-        { icon: faInstagram, href: 'https://instagram.com/wastewise', label: 'Instagram' },
-        { icon: faLinkedin, href: 'https://linkedin.com/company/wastewise', label: 'LinkedIn' },
-        { icon: faYoutube, href: 'https://youtube.com/wastewise', label: 'YouTube' },
+        { icon: faFacebook, href: 'https://facebook.com/wasgo', label: 'Facebook' },
+        { icon: faTwitter, href: 'https://twitter.com/wasgo', label: 'Twitter' },
+        { icon: faInstagram, href: 'https://instagram.com/wasgo', label: 'Instagram' },
+        { icon: faLinkedin, href: 'https://linkedin.com/company/wasgo', label: 'LinkedIn' },
+        { icon: faYoutube, href: 'https://youtube.com/wasgo', label: 'YouTube' },
     ];
 
     return (
@@ -55,7 +55,7 @@ const Footer: React.FC = () => {
                         <div className="text-center md:text-left mb-6 md:mb-0">
                             <h3 className="text-2xl font-bold text-white mb-2">
                                 <FontAwesomeIcon icon={faMobileAlt} className="mr-3" />
-                                Get the WasteWise App
+                                Get the wasgo App
                             </h3>
                             <p className="text-green-100">
                                 Track bins, request pickups, and manage waste on the go!
@@ -64,7 +64,7 @@ const Footer: React.FC = () => {
                         <div className="flex flex-col sm:flex-row gap-4">
                             {/* Google Play Store Button */}
                             <a
-                                href="https://play.google.com/store/apps/details?id=com.wastewise.app"
+                                href="https://play.google.com/store/apps/details?id=com.wasgo.app"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="bg-black hover:bg-gray-800 transition-colors rounded-lg px-6 py-3 flex items-center space-x-3 group"
@@ -81,7 +81,7 @@ const Footer: React.FC = () => {
                             
                             {/* Apple App Store Button */}
                             <a
-                                href="https://apps.apple.com/app/wastewise/id123456789"
+                                href="https://apps.apple.com/app/wasgo/id123456789"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="bg-black hover:bg-gray-800 transition-colors rounded-lg px-6 py-3 flex items-center space-x-3 group"
@@ -109,10 +109,10 @@ const Footer: React.FC = () => {
                             <div className="bg-green-600 p-2 rounded-lg mr-3">
                                 <FontAwesomeIcon icon={faRecycle} className="text-2xl text-white" />
                             </div>
-                            <span className="text-2xl font-bold text-white">WasteWise</span>
+                            <span className="text-2xl font-bold text-white">wasgo</span>
                         </Link>
                         <p className="text-gray-400 mb-6 max-w-md">
-                            WasteWise is Ghana's leading smart waste management platform, connecting citizens with IoT-enabled bins and reliable waste collection providers for cleaner, greener cities.
+                            wasgo is Ghana's leading smart waste management platform, connecting citizens with IoT-enabled bins and reliable waste collection providers for cleaner, greener cities.
                         </p>
                         <div className="space-y-3">
                             <div className="flex items-center">
@@ -121,7 +121,7 @@ const Footer: React.FC = () => {
                             </div>
                             <div className="flex items-center">
                                 <FontAwesomeIcon icon={faEnvelope} className="w-5 h-5 text-green-500 mr-3" />
-                                <span>support@wastewise.com.gh</span>
+                                <span>support@wasgo.com.gh</span>
                             </div>
                             <div className="flex items-center">
                                 <FontAwesomeIcon icon={faMapMarkerAlt} className="w-5 h-5 text-green-500 mr-3" />
@@ -224,7 +224,7 @@ const Footer: React.FC = () => {
                             ))}
                         </div>
                         <div className="text-gray-400 text-sm">
-                            © {currentYear} WasteWise Ghana. All rights reserved. | Powered by smart technology for cleaner cities
+                            © {currentYear} wasgo Ghana. All rights reserved. | Powered by smart technology for cleaner cities
                         </div>
                     </div>
                 </div>

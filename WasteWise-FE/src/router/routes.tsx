@@ -17,7 +17,7 @@ import Register from '../pages/auth/register';
 import FAQPage from '../pages/help and support/faq';
 import JobBoard from '../pages/provider/JobBoard/JobBoard';
 import JobDetail from '../pages/provider/JobdDeatail/JobDetail';
-import ProviderDashboard from '../pages/provider/providerDashboard/ProviderDashboard';
+
 import ProviderOnboarding from '../pages/provider/providerOnboarding/ProviderOnboarding';
 import ProviderVerifyAccount from '../pages/provider/providerOnboarding/ProviderVerifyAccount';
 import ServiceDetail from '../pages/service/ServiceDetail';
@@ -52,15 +52,13 @@ import ServiceRequestDetailPage from '../pages/ServiceRequestDetailPage';
 import ProviderJobDetailPage from '../pages/ProviderJobDetailPage';
 import PaymentDetail from '../components/Payment/PaymentDetail';
 import UserBookingDetail from '../pages/user/UserBookingDetail';
-import MyJobs from '../pages/provider/MyJobs/MyJobs';
 import PaymentSuccess from '../pages/user/PaymentSuccess';
 import PaymentCancel from '../pages/user/PaymentCancel';
 
 // Import vehicle components
 import VehicleList from '../components/vehicle/VehicleList';
 import VehicleDetail from '../components/vehicle/VehicleDetail';
-import BiddingJobs from '../pages/provider/MyJobs/BiddingJobs';
-import WatchingJobs from '../pages/provider/MyJobs/WatchingJobs';
+
 import BlogPostDetail from '../pages/website-preauth/BlogPostDetail';
 import Blog from '../pages/website-preauth/Blog';
 import Services from '../pages/website-preauth/services/Services';
@@ -75,6 +73,34 @@ import AddEditVehiclePage from '../pages/provider/ProviderDetail/tabs/vehiclesTa
 import ViewVehiclePage from '../pages/provider/ProviderDetail/tabs/vehiclesTab/ViewVehiclePage';
 import DriverDetail from '../pages/provider/ProviderDetail/tabs/driversTab/DriverDetail';
 import EditDriver from '../pages/provider/ProviderDetail/tabs/driversTab/EditDriver';
+import CustomerDashboard from '../pages/Dasboard/Index';
+import ProviderDashboard from '../pages/provider/providerDashboard';
+import SmartBins from '../pages/SmartBins';
+import SmartBinAlerts from '../pages/provider/SmartBinAlerts';
+import Rewards from '../pages/customer/Rewards';
+import ImpactReports from '../pages/customer/ImpactReports';
+import Analytics from '../pages/provider/Analytics';
+import Performance from '../pages/provider/Performance';
+import Training from '../pages/provider/Training';
+
+// Import new customer dashboard pages
+import CustomerDashboardNew from '../pages/customer/Dashboard';
+import RequestPickup from '../pages/customer/RequestPickup';
+import SchedulePickup from '../pages/customer/SchedulePickup';
+import ActivePickups from '../pages/customer/ActivePickups';
+import PickupHistory from '../pages/customer/PickupHistory';
+import RecyclingCenters from '../pages/customer/RecyclingCenters';
+import Wallet from '../pages/customer/Wallet';
+import Messages from '../pages/customer/Messages';
+import HelpCenter from '../pages/customer/HelpCenter';
+import LiveChat from '../pages/customer/LiveChat';
+import DisputeResolution from '../pages/customer/DisputeResolution';
+import CustomerAccountSettings from '../pages/customer/AccountSettings';
+import ProviderAccountSettings from '../pages/provider/AccountSettings';
+import JobRequests from '../pages/provider/JobRequests';
+import ActiveJobs from '../pages/provider/ActiveJobs';
+import FleetManagement from '../pages/provider/FleetManagement';
+import Earnings from '../pages/provider/Earnings';
 
 
 
@@ -212,7 +238,16 @@ const routes = [
         path: '/dashboard',
         element: (
             <ProtectedRoute customerOnly>
-                <UserDashboard />
+                <CustomerDashboard />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/smart-bins',
+        element: (
+            <ProtectedRoute customerOnly>
+                <SmartBins />
             </ProtectedRoute>
         ),
         layout: 'default',
@@ -241,6 +276,250 @@ const routes = [
         path: '/service-request',
         element: <ServiceRequestForm />,
         layout: 'flexible',
+    },
+    {
+        path: '/customer/dashboard',
+        element: (
+            <ProtectedRoute customerOnly>
+                <CustomerDashboardNew />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/customer/request-pickup',
+        element: (
+            <ProtectedRoute customerOnly>
+                <RequestPickup />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/customer/schedule-pickup',
+        element: (
+            <ProtectedRoute customerOnly>
+                <SchedulePickup />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/customer/active-pickups',
+        element: (
+            <ProtectedRoute customerOnly>
+                <ActivePickups />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/customer/pickup-history',
+        element: (
+            <ProtectedRoute customerOnly>
+                <PickupHistory />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/customer/recycling-centers',
+        element: (
+            <ProtectedRoute customerOnly>
+                <RecyclingCenters />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/customer/wallet',
+        element: (
+            <ProtectedRoute customerOnly>
+                <Wallet />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/customer/messages',
+        element: (
+            <ProtectedRoute customerOnly>
+                <Messages />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/customer/help-center',
+        element: (
+            <ProtectedRoute customerOnly>
+                <HelpCenter />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/customer/live-chat',
+        element: (
+            <ProtectedRoute customerOnly>
+                <LiveChat />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/customer/disputes',
+        element: (
+            <ProtectedRoute customerOnly>
+                <DisputeResolution />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/customer/account-settings',
+        element: (
+            <ProtectedRoute customerOnly>
+                <CustomerAccountSettings />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/provider/account-settings',
+        element: (
+            <ProtectedRoute providerOnly>
+                <ProviderAccountSettings />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/provider/job-requests',
+        element: (
+            <ProtectedRoute providerOnly>
+                <JobRequests />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/provider/active-jobs',
+        element: (
+            <ProtectedRoute providerOnly>
+                <ActiveJobs />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/provider/fleet',
+        element: (
+            <ProtectedRoute providerOnly>
+                <FleetManagement />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/provider/earnings',
+        element: (
+            <ProtectedRoute providerOnly>
+                <Earnings />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    // Legacy customer routes (keeping for backward compatibility)
+    {
+        path: '/request-pickup',
+        element: (
+            <ProtectedRoute customerOnly>
+                <ServiceRequestForm />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/schedule-pickup',
+        element: (
+            <ProtectedRoute customerOnly>
+                <ServiceRequestForm />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/active-pickups',
+        element: (
+            <ProtectedRoute customerOnly>
+                <BookingTracking />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/pickup-history',
+        element: (
+            <ProtectedRoute customerOnly>
+                <MyBookings />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/recycling-centers',
+        element: (
+            <ProtectedRoute customerOnly>
+                <ProviderListings />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/wallet',
+        element: (
+            <ProtectedRoute customerOnly>
+                <CustomerPayments />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/rewards',
+        element: (
+            <ProtectedRoute customerOnly>
+                <Rewards />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/smart-bins',
+        element: (
+            <ProtectedRoute customerOnly>
+                <SmartBins />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/impact-reports',
+        element: (
+            <ProtectedRoute customerOnly>
+                <ImpactReports />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/smart-bin-alerts',
+        element: (
+            <ProtectedRoute customerOnly>
+                <SmartBinAlerts />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
     },
     {
         path: '/service-request2',
@@ -445,6 +724,125 @@ const routes = [
         layout: 'default',
     },
     {
+        path: '/provider/job-requests',
+        element: (
+            <ProtectedRoute providerOnly>
+                <JobBoard />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    
+    {
+        path: '/provider/fleet',
+        element: (
+            <ProtectedRoute providerOnly>
+                <VehicleManagement />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/provider/routes',
+        element: (
+            <ProtectedRoute providerOnly>
+                <BookingTracking />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+  
+    {
+        path: '/provider/analytics',
+        element: (
+            <ProtectedRoute providerOnly>
+                <Analytics />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/provider/earnings',
+        element: (
+            <ProtectedRoute providerOnly>
+                <ProviderPayments />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/provider/ratings',
+        element: (
+            <ProtectedRoute providerOnly>
+                <ProviderReviews />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/provider/performance',
+        element: (
+            <ProtectedRoute providerOnly>
+                <Performance />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/provider/messages',
+        element: (
+            <ProtectedRoute providerOnly>
+                <ChatPage />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/provider/help-center',
+        element: (
+            <ProtectedRoute providerOnly>
+                <FAQPage />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/provider/live-chat',
+        element: (
+            <ProtectedRoute providerOnly>
+                <ChatPage />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/provider/report-issue',
+        element: (
+            <ProtectedRoute providerOnly>
+                <DisputesPage />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/provider/smart-bin-alerts',
+        element: (
+            <ProtectedRoute providerOnly>
+                <SmartBinAlerts />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/provider/training',
+        element: (
+            <ProtectedRoute providerOnly>
+                <Training />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
         path: '/provider/jobs',
         element: (
             <ProtectedRoute providerOnly>
@@ -453,33 +851,8 @@ const routes = [
         ),
         layout: 'default',
     },
-    {
-        path: '/provider/my-jobs',
-        element: (
-            <ProtectedRoute providerOnly>
-                <MyJobs />
-            </ProtectedRoute>
-        ),
-        layout: 'default',
-    },
-    {
-        path: '/provider/my-jobs-bidding',
-        element: (
-            <ProtectedRoute providerOnly>
-                <BiddingJobs />
-            </ProtectedRoute>
-        ),
-        layout: 'default',
-    },
-    {
-        path: '/provider/my-jobs-watching',
-        element: (
-            <ProtectedRoute providerOnly>
-                <WatchingJobs />
-            </ProtectedRoute>
-        ),
-        layout: 'default',
-    },
+    
+    
     {
         path: '/provider/job/:id',
         element: (
@@ -617,3 +990,4 @@ const routes = [
 ];
 
 export { routes };
+

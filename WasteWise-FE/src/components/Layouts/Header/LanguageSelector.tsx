@@ -25,7 +25,7 @@ const LanguageSelector: React.FC = () => {
             <Dropdown
                 offset={[0, 8]}
                 placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`}
-                btnClassName="block p-2 rounded-xl bg-white/60 backdrop-blur-sm dark:bg-gray-800/60 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-all duration-300 touch-manipulation"
+                btnClassName="block p-2 rounded-xl bg-white/60 backdrop-blur-sm dark:bg-gray-800/60 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-300 touch-manipulation"
                 closeOnOutsideClick={true}
                 closeOnScroll={true}
                 closeOnTouch={true}
@@ -37,8 +37,8 @@ const LanguageSelector: React.FC = () => {
                             <li key={item.code}>
                                 <button
                                     type="button"
-                                    className={`flex w-full hover:text-orange-500 hover:bg-orange-50 rounded-lg p-3 transition-all duration-300 touch-manipulation min-h-[48px] ${
-                                        i18next.language === item.code ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' : ''
+                                    className={`flex w-full hover:text-green-500 hover:bg-green-50 rounded-lg p-3 transition-all duration-300 touch-manipulation min-h-[48px] ${
+                                        i18next.language === item.code ? 'bg-green-100 text-green-600 dark:bg-green-900/30' : ''
                                     }`}
                                     onClick={() => {
                                         i18next.changeLanguage(item.code);

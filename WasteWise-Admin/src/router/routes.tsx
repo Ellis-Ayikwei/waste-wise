@@ -1,5 +1,8 @@
 import { lazy, useEffect, useState } from 'react';
 import AdminDashboard from '../pages/admin/AdminDashboard';
+import EnhancedAdminDashboard from '../pages/admin/EnhancedAdminDashboard';
+import SmartBinManagement from '../pages/admin/SmartBinManagement';
+import AnalyticsReporting from '../pages/admin/AnalyticsReporting';
 // import Homepage from '../pages/website-preauth/Homepage';
 // import HowItWorks from '../pages/website-preauth/HowItWorks';
 // import About from '../pages/website-preauth/About';
@@ -84,6 +87,22 @@ import DriverDetail from '../pages/admin/DriverDetail';
 import EditDriver from '../pages/admin/EditDriver';
 import CommonItems from '../pages/admin/CommonItems/index'
 
+// Import new service request pages
+import NewRequests from '../pages/admin/ServiceRequests/NewRequests';
+import ScheduledRequests from '../pages/admin/ServiceRequests/ScheduledRequests';
+import ActiveRequests from '../pages/admin/ServiceRequests/ActiveRequests';
+import RequestHistory from '../pages/admin/ServiceRequests/RequestHistory';
+
+// Import new rewards pages
+import RewardPrograms from '../pages/admin/RewardsLoyalty/RewardPrograms';
+import BadgeManagement from '../pages/admin/RewardsLoyalty/BadgeManagement';
+import PointsSystem from '../pages/admin/RewardsLoyalty/PointsSystem';
+import Redemptions from '../pages/admin/RewardsLoyalty/Redemptions';
+
+// Import new smart bins pages
+import BinOverview from '../pages/admin/SmartBins/BinOverview';
+import BinAlerts from '../pages/admin/SmartBins/BinAlerts';
+
 import CreateUser from '../pages/admin/usermanagment/createUser';
 import CreateJob from '../pages/admin/CreateJob';
 import SystemConfigurations from '../pages/admin/configurations';
@@ -120,12 +139,12 @@ const ConditionalDashboard = () => {
 };
 
 const routes = [
-    // Default route - Admin Dashboard
+    // Default route - Enhanced Admin Dashboard
     {
         path: '/',
         element: (
             <ProtectedRoute adminOnly>
-                <AdminDashboard />
+                <EnhancedAdminDashboard />
             </ProtectedRoute>
         ),
         layout: 'admin',
@@ -492,7 +511,7 @@ const routes = [
     // Admin routes
     {
         path: '/admin/dashboard',
-        element: <AdminDashboard />,
+        element: <EnhancedAdminDashboard />,
         layout: 'default',
     },
     {
@@ -700,6 +719,24 @@ const routes = [
         layout: 'default',
     },
     {
+        path: '/admin/smart-bins',
+        element: (
+            <ProtectedRoute adminOnly>
+                <SmartBinManagement />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/analytics',
+        element: (
+            <ProtectedRoute adminOnly>
+                <AnalyticsReporting />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
         path: '/admin/support-tickets/:ticketId',
         element: <SupportTickets />,
         layout: 'default',
@@ -767,6 +804,502 @@ const routes = [
         element: (
             <ProtectedRoute adminOnly>
                 <MessagingDashboard />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/messaging/customer-support',
+        element: (
+            <ProtectedRoute adminOnly>
+                <MessagingDashboard />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+
+    // Smart Bins Routes
+    {
+        path: '/admin/smart-bins/overview',
+        element: (
+            <ProtectedRoute adminOnly>
+                <BinOverview />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/smart-bins/alerts',
+        element: (
+            <ProtectedRoute adminOnly>
+                <BinAlerts />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/smart-bins/analytics',
+        element: (
+            <ProtectedRoute adminOnly>
+                <SmartBinManagement />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/smart-bins/maintenance',
+        element: (
+            <ProtectedRoute adminOnly>
+                <SmartBinManagement />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+
+    // Service Requests Routes
+    {
+        path: '/admin/requests/new',
+        element: (
+            <ProtectedRoute adminOnly>
+                <NewRequests />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/requests/scheduled',
+        element: (
+            <ProtectedRoute adminOnly>
+                <ScheduledRequests />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/requests/active',
+        element: (
+            <ProtectedRoute adminOnly>
+                <ActiveRequests />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/requests/history',
+        element: (
+            <ProtectedRoute adminOnly>
+                <RequestHistory />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+
+    // Revenue Routes
+    {
+        path: '/admin/revenue/overview',
+        element: (
+            <ProtectedRoute adminOnly>
+                <RevenueManagement />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/revenue/payments',
+        element: (
+            <ProtectedRoute adminOnly>
+                <RevenueManagement />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/revenue/transactions',
+        element: (
+            <ProtectedRoute adminOnly>
+                <RevenueManagement />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/revenue/analytics',
+        element: (
+            <ProtectedRoute adminOnly>
+                <RevenueManagement />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+
+    // Analytics Routes
+    {
+        path: '/admin/analytics/dashboard',
+        element: (
+            <ProtectedRoute adminOnly>
+                <AnalyticsReporting />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/analytics/performance',
+        element: (
+            <ProtectedRoute adminOnly>
+                <AnalyticsReporting />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/analytics/impact',
+        element: (
+            <ProtectedRoute adminOnly>
+                <AnalyticsReporting />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/analytics/export',
+        element: (
+            <ProtectedRoute adminOnly>
+                <AnalyticsReporting />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+
+    // Support Routes
+    {
+        path: '/admin/support/tickets',
+        element: (
+            <ProtectedRoute adminOnly>
+                <SupportTickets />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/support/disputes',
+        element: (
+            <ProtectedRoute adminOnly>
+                <DisputeManagement />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/support/faq',
+        element: (
+            <ProtectedRoute adminOnly>
+                <FAQPage />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/support/live-chat',
+        element: (
+            <ProtectedRoute adminOnly>
+                <MessagingDashboard />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+
+    // Fleet Management Routes
+    {
+        path: '/admin/fleet/vehicles',
+        element: (
+            <ProtectedRoute adminOnly>
+                <VehicleList />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/fleet/drivers',
+        element: (
+            <ProtectedRoute adminOnly>
+                <DriversManagement />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/fleet/routes',
+        element: (
+            <ProtectedRoute adminOnly>
+                <BookingManagement />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/fleet/tracking',
+        element: (
+            <ProtectedRoute adminOnly>
+                <BookingManagement />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+
+    // Rewards Routes
+    {
+        path: '/admin/rewards/programs',
+        element: (
+            <ProtectedRoute adminOnly>
+                <RewardPrograms />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/rewards/badges',
+        element: (
+            <ProtectedRoute adminOnly>
+                <BadgeManagement />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/rewards/points',
+        element: (
+            <ProtectedRoute adminOnly>
+                <PointsSystem />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/rewards/redemptions',
+        element: (
+            <ProtectedRoute adminOnly>
+                <Redemptions />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+
+    // Recycling Centers Routes
+    {
+        path: '/admin/recycling/centers',
+        element: (
+            <ProtectedRoute adminOnly>
+                <EnhancedAdminDashboard />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/recycling/materials',
+        element: (
+            <ProtectedRoute adminOnly>
+                <EnhancedAdminDashboard />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/recycling/rates',
+        element: (
+            <ProtectedRoute adminOnly>
+                <EnhancedAdminDashboard />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/recycling/impact',
+        element: (
+            <ProtectedRoute adminOnly>
+                <EnhancedAdminDashboard />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+
+    // Wallet Routes
+    {
+        path: '/admin/wallet/overview',
+        element: (
+            <ProtectedRoute adminOnly>
+                <RevenueManagement />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/wallet/transactions',
+        element: (
+            <ProtectedRoute adminOnly>
+                <RevenueManagement />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/wallet/credits',
+        element: (
+            <ProtectedRoute adminOnly>
+                <RevenueManagement />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/wallet/refunds',
+        element: (
+            <ProtectedRoute adminOnly>
+                <RevenueManagement />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+
+    // Configurations Routes
+    {
+        path: '/admin/configurations/system',
+        element: (
+            <ProtectedRoute adminOnly>
+                <SystemConfigurations />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/configurations/business',
+        element: (
+            <ProtectedRoute adminOnly>
+                <SystemConfigurations />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/configurations/integrations',
+        element: (
+            <ProtectedRoute adminOnly>
+                <SystemConfigurations />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/configurations/backup',
+        element: (
+            <ProtectedRoute adminOnly>
+                <SystemConfigurations />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+
+    // System Maintenance Routes
+    {
+        path: '/admin/maintenance/overview',
+        element: (
+            <ProtectedRoute adminOnly>
+                <SystemMaintenance />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/maintenance/logs',
+        element: (
+            <ProtectedRoute adminOnly>
+                <SystemMaintenance />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/maintenance/updates',
+        element: (
+            <ProtectedRoute adminOnly>
+                <SystemMaintenance />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/maintenance/health',
+        element: (
+            <ProtectedRoute adminOnly>
+                <SystemMaintenance />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+
+    // Notification History Route
+    {
+        path: '/admin/notifications/history',
+        element: (
+            <ProtectedRoute adminOnly>
+                <NotificationManagement />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+
+    // Provider Management Sub-routes
+    {
+        path: '/admin/providers/verification',
+        element: (
+            <ProtectedRoute adminOnly>
+                <ProviderManagement />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/providers/fleet',
+        element: (
+            <ProtectedRoute adminOnly>
+                <VehicleList />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/providers/earnings',
+        element: (
+            <ProtectedRoute adminOnly>
+                <RevenueManagement />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+
+    // User Management Sub-routes
+    {
+        path: '/admin/users/customers',
+        element: (
+            <ProtectedRoute adminOnly>
+                <UserManagement />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/users/providers',
+        element: (
+            <ProtectedRoute adminOnly>
+                <UserManagement />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/users/drivers',
+        element: (
+            <ProtectedRoute adminOnly>
+                <UserManagement />
             </ProtectedRoute>
         ),
         layout: 'admin',

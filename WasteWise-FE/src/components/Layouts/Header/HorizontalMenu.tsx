@@ -21,7 +21,13 @@ import {
     Inbox,
     Eye,
     CheckSquare,
-    Send
+    Send,
+    Trash2,
+    Leaf,
+    Recycle,
+    MapPin,
+    Clock,
+    Award
 } from 'lucide-react';
 
 interface NavItem {
@@ -46,7 +52,7 @@ const HorizontalMenu: React.FC = () => {
         return '/dashboard';
     };
 
-    // Customer navigation items
+    // Customer navigation items - Waste Management focused
     const customerNavItems: NavItem[] = [
         {
             path: getDashboardPath(),
@@ -55,13 +61,18 @@ const HorizontalMenu: React.FC = () => {
         },
         {
             path: '/service-request',
-            label: 'Book a Move',
-            icon: <Truck className="w-4 h-4" />,
+            label: 'Request Collection',
+            icon: <Trash2 className="w-4 h-4" />,
         },
         {
             path: '/my-bookings',
-            label: 'My Moves',
+            label: 'My Collections',
             icon: <Package className="w-4 h-4" />,
+        },
+        {
+            path: '/recycling-centers',
+            label: 'Recycling Centers',
+            icon: <Recycle className="w-4 h-4" />,
         },
         {
             path: '/chat',
@@ -72,6 +83,11 @@ const HorizontalMenu: React.FC = () => {
             path: '/payments',
             label: 'Payments',
             icon: <CreditCard className="w-4 h-4" />,
+        },
+        {
+            path: '/rewards',
+            label: 'Rewards',
+            icon: <Award className="w-4 h-4" />,
         },
         {
             path: '/profile',
@@ -85,7 +101,7 @@ const HorizontalMenu: React.FC = () => {
         },
     ];
 
-    // Provider navigation items
+    // Provider navigation items - Waste Management focused
     const providerNavItems: NavItem[] = [
         {
             path: '/provider/dashboard',
@@ -94,17 +110,17 @@ const HorizontalMenu: React.FC = () => {
         },
         {
             path: '/provider/jobs',
-            label: 'Find Jobs',
-            icon: <Truck className="w-4 h-4" />,
+            label: 'Find Collections',
+            icon: <Trash2 className="w-4 h-4" />,
         },
         {
             path: '/provider/my-jobs',
-            label: 'Job Management',
+            label: 'Collection Management',
             icon: <Calendar className="w-4 h-4" />,
             children: [
                 {
                     path: '/provider/my-jobs',
-                    label: 'My Jobs',
+                    label: 'My Collections',
                     icon: <Inbox className="w-4 h-4" />,
                 },
                 {
@@ -118,6 +134,21 @@ const HorizontalMenu: React.FC = () => {
                     icon: <Eye className="w-4 h-4" />,
                 },
             ],
+        },
+        {
+            path: '/provider/fleet',
+            label: 'Fleet Management',
+            icon: <Truck className="w-4 h-4" />,
+        },
+        {
+            path: '/provider/routes',
+            label: 'Route Planning',
+            icon: <MapPin className="w-4 h-4" />,
+        },
+        {
+            path: '/provider/schedule',
+            label: 'Schedule',
+            icon: <Clock className="w-4 h-4" />,
         },
         {
             path: '/chat',
@@ -137,9 +168,9 @@ const HorizontalMenu: React.FC = () => {
             ],
         },
         {
-            path: '/provider/profile',
-            label: 'Fleet',
-            icon: <Car className="w-4 h-4" />,
+            path: '/provider/analytics',
+            label: 'Analytics',
+            icon: <BarChart3 className="w-4 h-4" />,
         },
         {
             path: '/provider/payouts',

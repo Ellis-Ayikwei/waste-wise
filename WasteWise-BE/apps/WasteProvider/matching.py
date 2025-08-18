@@ -1,5 +1,5 @@
 """
-Job Matching Service for WasteWise Uber-like waste collection
+Job Matching Service for Wasgo Uber-like waste collection
 Implements intelligent matching between pickup requests and providers
 """
 

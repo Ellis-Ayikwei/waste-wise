@@ -47,7 +47,7 @@ urlpatterns = [
     # Geocoding endpoints outside API path to bypass authentication issues
     # API routes with prefix
     path(
-        "wastewise/api/v1/",
+        "Wasgo/api/v1/",
         include(
             [
                 path(
@@ -122,9 +122,9 @@ urlpatterns = [
                 path("", include("apps.Services.urls")),
                 path("", include("apps.Vehicle.urls")),
                 path("", include("apps.Notification.urls")),
-                # WasteWise IoT endpoints
+                # Wasgo IoT endpoints
                 path("waste/", include("apps.WasteBin.urls")),
-                # WasteWise Provider (Uber for Waste) endpoints
+                # Wasgo Provider (Uber for Waste) endpoints
                 path("provider/", include("apps.WasteProvider.urls")),
                 # Media files under API prefix
                 *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),

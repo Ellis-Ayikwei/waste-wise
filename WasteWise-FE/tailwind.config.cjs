@@ -8,7 +8,7 @@ module.exports = {
         },
         extend: {
             colors: {
-                // WasteWise Brand Colors with full scale
+                // wasgo Brand Colors with full scale
                 primary: {
                     50: '#e8f5e9',  // Lightest eco green
                     100: '#c8e6c9', // Very light green
@@ -59,7 +59,7 @@ module.exports = {
                     },
                 },
 
-                // Semantic colors with WasteWise theme
+                // Semantic colors with wasgo theme
                 success: {
                     50: '#e8f5e9',
                     100: '#c8e6c9',
@@ -142,7 +142,7 @@ module.exports = {
                     'dark-light': 'rgba(38, 50, 56, 0.15)',
                 },
 
-                // WasteWise specific status colors
+                // wasgo specific status colors
                 waste: {
                     empty: '#4caf50',     // Green - empty bin
                     low: '#8bc34a',       // Light green - low fill
@@ -190,7 +190,7 @@ module.exports = {
             fontFamily: {
                 satoshi: ['Satoshi', 'sans-serif'],
                 inter: ['Inter', 'sans-serif'],
-                // Add professional fonts for WasteWise
+                // Add professional fonts for wasgo
                 poppins: ['Poppins', 'sans-serif'],
                 roboto: ['Roboto', 'sans-serif'],
             },

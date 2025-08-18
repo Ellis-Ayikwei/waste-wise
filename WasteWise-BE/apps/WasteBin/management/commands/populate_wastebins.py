@@ -10,7 +10,7 @@ from apps.WasteBin.models import (
 
 
 class Command(BaseCommand):
-    help = 'Populate database with sample WasteWise data for Ghana'
+    help = 'Populate database with sample Wasgo data for Ghana'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -53,7 +53,7 @@ class Command(BaseCommand):
         self.stdout.write('Creating analytics data...')
         self.create_analytics()
         
-        self.stdout.write(self.style.SUCCESS('Successfully populated WasteWise data'))
+        self.stdout.write(self.style.SUCCESS('Successfully populated Wasgo data'))
 
     def create_bin_types(self):
         bin_types_data = [

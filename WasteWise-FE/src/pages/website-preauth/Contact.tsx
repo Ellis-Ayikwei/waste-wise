@@ -65,7 +65,7 @@ const Contact: React.FC = () => {
         {
             icon: faEnvelope,
             title: 'Email',
-            details: ['info@wastewise.com.gh', 'support@wastewise.com.gh'],
+            details: ['info@wasgo.com.gh', 'support@wasgo.com.gh'],
             color: 'from-blue-500 to-cyan-600',
             action: 'Email Us',
         },
@@ -90,25 +90,25 @@ const Contact: React.FC = () => {
             city: 'Accra',
             address: '123 Independence Avenue, Osu',
             phone: '+233 20 123 4567',
-            email: 'accra@wastewise.com.gh',
+            email: 'accra@wasgo.com.gh',
         },
         {
             city: 'Kumasi',
             address: '456 Prempeh II Street, Adum',
             phone: '+233 32 234 5678',
-            email: 'kumasi@wastewise.com.gh',
+            email: 'kumasi@wasgo.com.gh',
         },
         {
             city: 'Takoradi',
             address: '789 Beach Road, Sekondi',
             phone: '+233 31 345 6789',
-            email: 'takoradi@wastewise.com.gh',
+            email: 'takoradi@wasgo.com.gh',
         },
         {
             city: 'Tamale',
             address: '321 Bolgatanga Road',
             phone: '+233 37 456 7890',
-            email: 'tamale@wastewise.com.gh',
+            email: 'tamale@wasgo.com.gh',
         },
     ];
 

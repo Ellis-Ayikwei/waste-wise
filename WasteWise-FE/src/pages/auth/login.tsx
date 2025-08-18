@@ -25,7 +25,7 @@ import {
 import { faGoogle, faFacebook, faApple } from '@fortawesome/free-brands-svg-icons';
 import toast from 'react-hot-toast';
 import useSignIn from 'react-auth-kit/hooks/useSignIn';
-import { loginUser } from '../../store/authSlice';
+// import { loginUser } from '../../store/authSlice';
 import { AppDispatch, IRootState } from '../../store';
 
 const Login = () => {
@@ -78,22 +78,22 @@ const Login = () => {
             return;
         }
 
-        try {
-            const result = await dispatch(loginUser({
-                email: formData.email,
-                password: formData.password,
-                signIn,
-            })).unwrap();
+        // try {
+        //     const result = await dispatch(loginUser({
+        //         email: formData.email,
+        //         password: formData.password,
+        //         signIn,
+        //     })).unwrap();
 
-            toast.success('Login successful! Redirecting...');
+        //     toast.success('Login successful! Redirecting...');
             
-            // Redirect based on user type
-            setTimeout(() => {
-                navigate(userType === 'provider' ? '/provider/dashboard' : '/dashboard');
-            }, 1000);
-        } catch (err: any) {
-            toast.error(err.message || 'Login failed. Please try again.');
-        }
+        //     // Redirect based on user type
+        //     setTimeout(() => {
+        //         navigate(userType === 'provider' ? '/provider/dashboard' : '/dashboard');
+        //     }, 1000);
+        // } catch (err: any) {
+        //     toast.error(err.message || 'Login failed. Please try again.');
+        // }
     };
 
     const handleSocialLogin = (provider: string) => {
@@ -137,7 +137,7 @@ const Login = () => {
                             <FontAwesomeIcon icon={faRecycle} className="text-white text-xl" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">WasteWise</h1>
+                            <h1 className="text-2xl font-bold text-gray-900">wasgo</h1>
                             <p className="text-xs text-gray-600">Smart Waste Management</p>
                         </div>
                     </div>

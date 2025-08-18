@@ -36,7 +36,7 @@ const TermsAndConditions: React.FC = () => {
             content: [
                 {
                     subtitle: '1.1 Acceptance',
-                    text: 'By accessing or using WasteWise services, including our website, mobile applications, IoT devices, and waste management services, you agree to be bound by these Terms and Conditions. If you disagree with any part of these terms, you may not access our services.',
+                    text: 'By accessing or using wasgo services, including our website, mobile applications, IoT devices, and waste management services, you agree to be bound by these Terms and Conditions. If you disagree with any part of these terms, you may not access our services.',
                 },
                 {
                     subtitle: '1.2 Eligibility',
@@ -54,7 +54,7 @@ const TermsAndConditions: React.FC = () => {
             content: [
                 {
                     subtitle: '2.1 Service Description',
-                    text: 'WasteWise provides smart waste management services including: waste collection scheduling, recycling programs, composting services, IoT-enabled bin monitoring, environmental impact tracking, and community education programs.',
+                    text: 'wasgo provides smart waste management services including: waste collection scheduling, recycling programs, composting services, IoT-enabled bin monitoring, environmental impact tracking, and community education programs.',
                 },
                 {
                     subtitle: '2.2 Service Areas',
@@ -84,11 +84,11 @@ const TermsAndConditions: React.FC = () => {
                 },
                 {
                     subtitle: '3.3 Prohibited Materials',
-                    text: 'The following materials are prohibited: medical waste, radioactive materials, explosives, industrial chemicals, and other hazardous materials not approved by WasteWise.',
+                    text: 'The following materials are prohibited: medical waste, radioactive materials, explosives, industrial chemicals, and other hazardous materials not approved by wasgo.',
                 },
                 {
                     subtitle: '3.4 Bin Usage',
-                    text: 'Smart bins remain the property of WasteWise. You are responsible for their proper use and must report any damage immediately.',
+                    text: 'Smart bins remain the property of wasgo. You are responsible for their proper use and must report any damage immediately.',
                 },
             ],
         },
@@ -156,11 +156,11 @@ const TermsAndConditions: React.FC = () => {
             content: [
                 {
                     subtitle: '7.1 Service Limitations',
-                    text: 'WasteWise is not liable for: service delays due to weather or traffic, damage from improper waste disposal, loss of improperly disposed items, or third-party recycling facility operations.',
+                    text: 'wasgo is not liable for: service delays due to weather or traffic, damage from improper waste disposal, loss of improperly disposed items, or third-party recycling facility operations.',
                 },
                 {
                     subtitle: '7.2 Indemnification',
-                    text: 'You agree to indemnify WasteWise against claims arising from: your violation of these terms, improper waste disposal, damage to our equipment, or violation of environmental regulations.',
+                    text: 'You agree to indemnify wasgo against claims arising from: your violation of these terms, improper waste disposal, damage to our equipment, or violation of environmental regulations.',
                 },
                 {
                     subtitle: '7.3 Force Majeure',
@@ -174,7 +174,7 @@ const TermsAndConditions: React.FC = () => {
             content: [
                 {
                     subtitle: '8.1 Ownership',
-                    text: 'All content, technology, and intellectual property related to WasteWise services remain our property. This includes our IoT technology, algorithms, and environmental data models.',
+                    text: 'All content, technology, and intellectual property related to wasgo services remain our property. This includes our IoT technology, algorithms, and environmental data models.',
                 },
                 {
                     subtitle: '8.2 User Content',
@@ -191,7 +191,7 @@ const TermsAndConditions: React.FC = () => {
                     text: 'You may terminate services with 30 days notice. Outstanding fees must be paid, and our equipment must be returned in good condition.',
                 },
                 {
-                    subtitle: '9.2 Termination by WasteWise',
+                    subtitle: '9.2 Termination by wasgo',
                     text: 'We may terminate services for: non-payment, violation of terms, improper waste disposal, damage to equipment, or fraudulent activity.',
                 },
                 {
@@ -250,7 +250,7 @@ const TermsAndConditions: React.FC = () => {
                             </h1>
                             
                             <p className="text-xl text-green-100 mb-8">
-                                Please read these terms carefully before using WasteWise services.
+                                Please read these terms carefully before using wasgo services.
                                 Your use of our platform indicates acceptance of these terms.
                             </p>
                             
@@ -294,9 +294,9 @@ const TermsAndConditions: React.FC = () => {
                         >
                             <h2 className="text-2xl font-bold text-gray-900 mb-4">Introduction</h2>
                             <p className="text-gray-700 leading-relaxed">
-                                Welcome to WasteWise! These Terms and Conditions ("Terms") govern your use of our smart waste 
+                                Welcome to wasgo! These Terms and Conditions ("Terms") govern your use of our smart waste 
                                 management services, website, mobile applications, IoT devices, and related services (collectively, 
-                                the "Services") operated by WasteWise Ghana Limited ("WasteWise," "we," "us," or "our").
+                                the "Services") operated by wasgo Ghana Limited ("wasgo," "we," "us," or "our").
                             </p>
                             <p className="text-gray-700 leading-relaxed mt-4">
                                 By accessing or using our Services, you agree to be bound by these Terms. If you do not agree 
@@ -351,14 +351,14 @@ const TermsAndConditions: React.FC = () => {
                             <div className="grid md:grid-cols-2 gap-6">
                                 <div>
                                     <h3 className="font-semibold text-gray-800 mb-2">Customer Support</h3>
-                                    <p className="text-gray-700">Email: support@wastewise.com.gh</p>
+                                    <p className="text-gray-700">Email: support@wasgo.com.gh</p>
                                     <p className="text-gray-700">Phone: +233 20 123 4567</p>
                                     <p className="text-gray-700">Hours: Monday-Saturday, 8AM-6PM</p>
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-gray-800 mb-2">Legal Department</h3>
-                                    <p className="text-gray-700">Email: legal@wastewise.com.gh</p>
-                                    <p className="text-gray-700">Address: WasteWise Ghana Limited</p>
+                                    <p className="text-gray-700">Email: legal@wasgo.com.gh</p>
+                                    <p className="text-gray-700">Address: wasgo Ghana Limited</p>
                                     <p className="text-gray-700">P.O. Box 123, Accra, Ghana</p>
                                 </div>
                             </div>
@@ -376,9 +376,9 @@ const TermsAndConditions: React.FC = () => {
                                 <div>
                                     <h3 className="font-semibold text-gray-900 mb-2">Important Notice</h3>
                                     <p className="text-gray-700 text-sm leading-relaxed">
-                                        By using WasteWise services, you acknowledge that you have read, understood, and agree to be 
+                                        By using wasgo services, you acknowledge that you have read, understood, and agree to be 
                                         bound by these Terms and Conditions. These terms constitute a legally binding agreement between 
-                                        you and WasteWise Ghana Limited. If you are using our services on behalf of an organization, 
+                                        you and wasgo Ghana Limited. If you are using our services on behalf of an organization, 
                                         you represent that you have the authority to bind that organization to these terms.
                                     </p>
                                 </div>
