@@ -135,10 +135,10 @@ const ServiceDetailTemplate: React.FC<{ service: ServiceDetail }> = ({ service }
                     </div>
 
                     {/* Price Display */}
-                    <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-2 mb-8 max-w-md mx-auto border border-white/30">
+                    <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 mb-8 max-w-md mx-auto border border-white/30">
                         <div className="text-center">
-                            <div className="text-3xl font-bold text-gray-800 mb-2">                        <h2 className="text-xl font-bold text-primary">Get instant price for this service</h2>
-                            </div>
+                            <div className="text-3xl font-bold text-gray-800 mb-2">{service.price}</div>
+                            <h2 className="text-xl font-bold text-primary">Get instant quote for this service</h2>
                         </div>
                     </div>
 
@@ -331,11 +331,11 @@ const ServiceDetailTemplate: React.FC<{ service: ServiceDetail }> = ({ service }
             )}
 
             {/* Call to Action */}
-            <section className="bg-gradient-to-r from-blue-600 to-indigo-700 py-16">
+            <section className="bg-gradient-to-r from-green-600 to-emerald-700 py-16">
                 <div className="max-w-4xl mx-auto text-center px-4">
-                    <h2 className="text-4xl font-bold text-white mb-4">Ready to Get Started?</h2>
-                    <p className="text-xl text-blue-100 mb-8">Join thousands of satisfied customers who trust us with their moving needs</p>
-                    <button className="inline-flex items-center px-8 py-4 bg-white text-blue-600 font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+                    <h2 className="text-4xl font-bold text-white mb-4">Ready to Make Ghana Cleaner?</h2>
+                    <p className="text-xl text-green-100 mb-8">Join thousands of satisfied customers who trust us with their waste management needs</p>
+                    <button className="inline-flex items-center px-8 py-4 bg-white text-green-600 font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
                         <span>Get Your Free Quote</span>
                         <FontAwesomeIcon icon={faArrowRight} className="ml-2 w-4 h-4" />
                     </button>
