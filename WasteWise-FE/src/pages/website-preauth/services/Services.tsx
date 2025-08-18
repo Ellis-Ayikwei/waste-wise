@@ -280,6 +280,7 @@ const Services: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {[
                             {
+                                id: 'smart-bins',
                                 icon: faTrash,
                                 title: 'Smart Bin Monitoring',
                                 description: 'IoT-enabled bins with real-time fill level monitoring and automated collection alerts',
@@ -288,6 +289,7 @@ const Services: React.FC = () => {
                                 stats: '1000+ smart bins',
                             },
                             {
+                                id: 'residential-collection',
                                 icon: faTruck,
                                 title: 'Residential Waste Collection',
                                 description: 'Regular household waste pickup with flexible scheduling and recycling options',
@@ -296,6 +298,7 @@ const Services: React.FC = () => {
                                 stats: '10K+ households',
                             },
                             {
+                                id: 'commercial-waste',
                                 icon: faGlobe,
                                 title: 'Commercial Waste Management',
                                 description: 'Tailored waste solutions for businesses, offices, and commercial establishments',
@@ -304,6 +307,7 @@ const Services: React.FC = () => {
                                 stats: '500+ businesses',
                             },
                             {
+                                id: 'recycling',
                                 icon: faRecycle,
                                 title: 'Recycling Services',
                                 description: 'Comprehensive recycling programs for plastic, paper, glass, and metal waste',
@@ -312,6 +316,7 @@ const Services: React.FC = () => {
                                 stats: '95% recovery rate',
                             },
                             {
+                                id: 'e-waste',
                                 icon: faGlobe,
                                 title: 'E-Waste Collection',
                                 description: 'Safe disposal and recycling of electronic waste including computers and phones',
@@ -320,6 +325,7 @@ const Services: React.FC = () => {
                                 stats: '5K+ devices',
                             },
                             {
+                                id: 'composting',
                                 icon: faSeedling,
                                 title: 'Organic Waste Composting',
                                 description: 'Convert organic waste into nutrient-rich compost for agricultural use',
@@ -328,6 +334,7 @@ const Services: React.FC = () => {
                                 stats: '15K+ tons composted',
                             },
                             {
+                                id: 'construction-debris',
                                 icon: faTruck,
                                 title: 'Construction Debris Removal',
                                 description: 'Efficient removal of construction and demolition waste with proper disposal',
@@ -336,6 +343,7 @@ const Services: React.FC = () => {
                                 stats: '1K+ projects',
                             },
                             {
+                                id: 'medical-waste',
                                 icon: faHandHoldingHeart,
                                 title: 'Medical Waste Management',
                                 description: 'Specialized handling and disposal of medical and hazardous waste materials',
@@ -344,6 +352,7 @@ const Services: React.FC = () => {
                                 stats: '100+ facilities',
                             },
                             {
+                                id: 'on-demand-pickup',
                                 icon: faTruck,
                                 title: 'On-Demand Pickup',
                                 description: 'Request immediate waste pickup through our mobile app - Uber for Waste',
@@ -352,6 +361,7 @@ const Services: React.FC = () => {
                                 stats: '2-hour response',
                             },
                             {
+                                id: 'bulk-waste',
                                 icon: faGlobe,
                                 title: 'Bulk Waste Collection',
                                 description: 'Large-scale waste removal for events, cleanups, and special occasions',
@@ -360,6 +370,7 @@ const Services: React.FC = () => {
                                 stats: '200+ events',
                             },
                             {
+                                id: 'plastic-recovery',
                                 icon: faRecycle,
                                 title: 'Plastic Recovery Program',
                                 description: 'Dedicated plastic waste collection and recycling to combat pollution',
@@ -368,6 +379,7 @@ const Services: React.FC = () => {
                                 stats: '80% plastic recovery',
                             },
                             {
+                                id: 'community-education',
                                 icon: faHandHoldingHeart,
                                 title: 'Community Education',
                                 description: 'Waste management education and awareness programs for communities',
@@ -418,10 +430,13 @@ const Services: React.FC = () => {
                                     </ul>
 
                                     {/* CTA Button */}
-                                    <button className={`w-full py-3 rounded-lg font-medium bg-gradient-to-r ${service.color} text-white opacity-90 hover:opacity-100 transition-opacity flex items-center justify-center gap-2 group`}>
+                                    <Link 
+                                        to={`/services/${service.id}`}
+                                        className={`w-full py-3 rounded-lg font-medium bg-gradient-to-r ${service.color} text-white opacity-90 hover:opacity-100 transition-opacity flex items-center justify-center gap-2 group`}
+                                    >
                                         Learn More
                                         <IconArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                                    </button>
+                                    </Link>
                                 </div>
 
                                 {/* Hover Effect Overlay */}
