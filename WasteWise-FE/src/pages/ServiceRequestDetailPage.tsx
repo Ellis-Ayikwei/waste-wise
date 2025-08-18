@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import CustomerRequestDetail from '../components/ServiceRequest/CustomerRequestDetail';
+import CustomerRequestDetail from './website-preauth/service-details/ServiceRequest/CustomerRequestDetail';
 
 const ServiceRequestDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();

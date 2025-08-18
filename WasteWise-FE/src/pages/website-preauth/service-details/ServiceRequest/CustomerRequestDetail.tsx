@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMapMarkerAlt, faBox, faDollarSign, faClock, faUser, faPhone, faEnvelope, faTruck } from '@fortawesome/free-solid-svg-icons';
-import axiosInstance from '../../services/axiosInstance';
+import axiosInstance from '../../../../services/axiosInstance';
 import { ServiceRequest } from '../../types';
 
 const CustomerRequestDetail: React.FC = () => {
