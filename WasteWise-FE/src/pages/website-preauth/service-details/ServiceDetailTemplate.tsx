@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import ContactDetailsStep from './ServiceRequest/ContactDetailsStep/ContactDetailsStep';
 import showMessage from '../../../helper/showMessage';
 import ServiceRequestForm from './ServiceRequest/ServiceRequestPage/ServiceRequestForm';
+import WastePickupRequestForm from '../../../components/forms/WastePickupRequestForm';
 import Header from '../../../components/Layouts/Header/Header';
 import Navbar from '../../../components/homepage/Navbar';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -153,9 +154,9 @@ const ServiceDetailTemplate: React.FC<{ service: ServiceDetail }> = ({ service }
                         </div>
                     </div>
 
-                    {/* Quote Form Section */}
-                    <div className="bg-transparent rounded-xl mt-4 mx-auto w-full lg:max-w-full w-full max-w-full">
-                        <ServiceRequestForm
+                    {/* Waste Pickup Request Form Section */}
+                    <div className="bg-white rounded-xl shadow-lg border border-gray-200 mt-4 mx-auto w-full lg:max-w-full w-full max-w-full p-6">
+                        <WastePickupRequestForm
                             serviceType={service.title}
                         />
                     </div>

@@ -29,10 +29,12 @@ const RequestPickup = () => {
     const [isSubmitted, setIsSubmitted] = useState(false);
 
     const wasteTypes = [
-        { id: 'general', name: 'General Waste', icon: faTrash, color: 'text-gray-600' },
-        { id: 'recyclable', name: 'Recyclable', icon: faRecycle, color: 'text-green-600' },
-        { id: 'organic', name: 'Organic Waste', icon: faLeaf, color: 'text-brown-600' },
-        { id: 'hazardous', name: 'Hazardous Waste', icon: faTrash, color: 'text-red-600' }
+        { id: 'general', name: 'General Waste', icon: faTrash, color: 'text-gray-600', description: 'Household and office waste' },
+        { id: 'recyclable', name: 'Recyclable Materials', icon: faRecycle, color: 'text-green-600', description: 'Plastics, paper, glass, metals' },
+        { id: 'organic', name: 'Organic Waste', icon: faLeaf, color: 'text-green-700', description: 'Food scraps, garden waste' },
+        { id: 'ewaste', name: 'Electronic Waste', icon: faTrash, color: 'text-blue-600', description: 'Computers, phones, appliances' },
+        { id: 'hazardous', name: 'Hazardous Waste', icon: faTrash, color: 'text-red-600', description: 'Chemicals, batteries, medical waste' },
+        { id: 'bulk', name: 'Bulk Items', icon: faTrash, color: 'text-purple-600', description: 'Furniture, large appliances' }
     ];
 
     const timeSlots = [
@@ -142,7 +144,10 @@ const RequestPickup = () => {
                                                     icon={type.icon} 
                                                     className={`mr-3 ${type.color}`} 
                                                 />
-                                                <span className="font-medium">{type.name}</span>
+                                                <div>
+                                                    <div className="font-medium">{type.name}</div>
+                                                    <div className="text-sm text-gray-600">{type.description}</div>
+                                                </div>
                                             </label>
                                         ))}
                                     </div>
@@ -160,10 +165,10 @@ const RequestPickup = () => {
                                         required
                                     >
                                         <option value="">Select quantity</option>
-                                        <option value="small">Small (1-2 bags)</option>
-                                        <option value="medium">Medium (3-5 bags)</option>
-                                        <option value="large">Large (6+ bags)</option>
-                                        <option value="bulk">Bulk waste</option>
+                                        <option value="small">Small (1-2 bags) - Up to 50 liters</option>
+                                        <option value="medium">Medium (3-5 bags) - 50-150 liters</option>
+                                        <option value="large">Large (6+ bags) - 150-500 liters</option>
+                                        <option value="bulk">Bulk Collection - Over 500 liters</option>
                                     </select>
                                 </div>
 

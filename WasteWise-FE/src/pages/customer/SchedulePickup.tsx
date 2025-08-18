@@ -13,7 +13,9 @@ import {
     faCheckCircle,
     faRepeat,
     faCalendarWeek,
-    faCalendarDay
+    faCalendarDay,
+    faDesktop,
+    faCouch
 } from '@fortawesome/free-solid-svg-icons';
 
 const SchedulePickup = () => {
@@ -23,7 +25,7 @@ const SchedulePickup = () => {
         startDate: '',
         endDate: '',
         preferredTime: '',
-        wasteTypes: [],
+        wasteTypes: [] as string[],
         location: '',
         specialInstructions: ''
     });
@@ -43,9 +45,11 @@ const SchedulePickup = () => {
     ];
 
     const wasteTypes = [
-        { id: 'general', name: 'General Waste', icon: faTrash, color: 'text-gray-600' },
-        { id: 'recyclable', name: 'Recyclable', icon: faRecycle, color: 'text-green-600' },
-        { id: 'organic', name: 'Organic Waste', icon: faLeaf, color: 'text-brown-600' }
+        { id: 'general', name: 'General Waste', icon: faTrash, color: 'text-gray-600', description: 'Household and office waste' },
+        { id: 'recyclable', name: 'Recyclable Materials', icon: faRecycle, color: 'text-green-600', description: 'Plastics, paper, glass, metals' },
+        { id: 'organic', name: 'Organic Waste', icon: faLeaf, color: 'text-green-700', description: 'Food scraps, garden waste' },
+        { id: 'ewaste', name: 'Electronic Waste', icon: faDesktop, color: 'text-blue-600', description: 'Computers, phones, appliances' },
+        { id: 'bulk', name: 'Bulk Items', icon: faCouch, color: 'text-purple-600', description: 'Furniture, large appliances' }
     ];
 
     const timeSlots = [
@@ -294,7 +298,10 @@ const SchedulePickup = () => {
                                                     icon={type.icon} 
                                                     className={`mr-3 ${type.color}`} 
                                                 />
-                                                <span className="font-medium">{type.name}</span>
+                                                <div>
+                                                    <div className="font-medium">{type.name}</div>
+                                                    <div className="text-sm text-gray-600">{type.description}</div>
+                                                </div>
                                             </label>
                                         ))}
                                     </div>

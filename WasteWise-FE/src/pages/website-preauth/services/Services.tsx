@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
     IconShieldCheck,
     IconStar,
@@ -41,7 +41,7 @@ import { serviceDetails } from '../service-details/serviceDetailsData';
 const Services: React.FC = () => {
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [isScrolled, setIsScrolled] = useState(false);
-
+    const navigate = useNavigate()
     // Function to map service titles to service IDs
     const getServiceIdFromTitle = (title: string): string => {
         const serviceMapping: { [key: string]: string } = {
@@ -231,6 +231,7 @@ const Services: React.FC = () => {
                             <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
+                                onClick={() => (navigate('/provider/onboarding'))}
                                 className="group bg-white text-green-700 px-8 py-4 rounded-full font-semibold text-lg shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-2"
                             >
                                 <FontAwesomeIcon icon={faRecycle} className="group-hover:rotate-180 transition-transform duration-500" />
