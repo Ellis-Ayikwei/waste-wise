@@ -1,6 +1,6 @@
+import React from 'react';
 import { motion } from 'framer-motion';
-import React, { useState } from 'react';
-import QuickQuoteModal from '../QuickQuotePrice/QuickQuoteModal';
+import { Link } from 'react-router-dom';
 
 interface QuickQuoteButtonProps {
     variant?: 'primary' | 'secondary' | 'outline';
@@ -9,9 +9,12 @@ interface QuickQuoteButtonProps {
     serviceType?: string;
 }
 
-const QuickQuoteButton: React.FC<QuickQuoteButtonProps> = ({ variant = 'primary', size = 'md', className = '', serviceType = 'manvan' }) => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-
+const QuickQuoteButton: React.FC<QuickQuoteButtonProps> = ({ 
+    variant = 'primary', 
+    size = 'md', 
+    className = '', 
+    serviceType = 'manvan' 
+}) => {
     const baseStyles = 'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2';
 
     const variants = {
@@ -27,13 +30,17 @@ const QuickQuoteButton: React.FC<QuickQuoteButtonProps> = ({ variant = 'primary'
     };
 
     return (
-        <>
-            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`} onClick={() => setIsModalOpen(true)}>
-                Get Instant Prices
-            </motion.button>
-
-            <QuickQuoteModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} serviceType={serviceType} />
-        </>
+        <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+            onClick={() => {
+                // For now, navigate to service request page or handle quote request
+                window.location.href = '/service-request';
+            }}
+        >
+            Get Quick Quote
+        </motion.button>
     );
 };
 
