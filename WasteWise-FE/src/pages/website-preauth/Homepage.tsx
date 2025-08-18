@@ -778,6 +778,70 @@ const Homepage: React.FC = () => {
                 </div>
             </section>
 
+            {/* Provider Invitation Section */}
+            <section className="py-20 bg-gradient-to-br from-green-600 to-emerald-700">
+                <div className="container mx-auto px-4">
+                    <div className="max-w-4xl mx-auto text-center">
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6 }}
+                            viewport={{ once: true }}
+                        >
+                            <h2 className="text-4xl font-bold text-white mb-6">
+                                Join Our Network of Waste Management Providers
+                            </h2>
+                            <p className="text-xl text-green-50 mb-8 leading-relaxed">
+                                Are you a waste management company in Ghana? Partner with WasteWise to expand your reach, 
+                                connect with more customers, and contribute to a cleaner environment across Ghana.
+                            </p>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+                                    <FontAwesomeIcon icon={faUsers} className="text-3xl text-green-200 mb-4" />
+                                    <h3 className="text-lg font-semibold text-white mb-2">Expand Your Customer Base</h3>
+                                    <p className="text-green-50 text-sm">Connect with thousands of households and businesses</p>
+                                </div>
+                                
+                                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+                                    <FontAwesomeIcon icon={faMobileAlt} className="text-3xl text-green-200 mb-4" />
+                                    <h3 className="text-lg font-semibold text-white mb-2">Smart Technology</h3>
+                                    <p className="text-green-50 text-sm">Access our IoT platform and mobile app ecosystem</p>
+                                </div>
+                                
+                                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+                                    <FontAwesomeIcon icon={faChartLine} className="text-3xl text-green-200 mb-4" />
+                                    <h3 className="text-lg font-semibold text-white mb-2">Grow Your Business</h3>
+                                    <p className="text-green-50 text-sm">Increase revenue with optimized operations</p>
+                                </div>
+                            </div>
+                            
+                            <motion.div 
+                                className="flex flex-col sm:flex-row gap-4 justify-center"
+                                whileHover={{ scale: 1.02 }}
+                            >
+                                <Link 
+                                    to="/provider/onboarding" 
+                                    className="bg-white text-green-600 px-8 py-4 rounded-full font-bold text-lg hover:bg-green-50 transition-all duration-300 shadow-xl hover:shadow-2xl inline-flex items-center justify-center gap-3"
+                                >
+                                    <FontAwesomeIcon icon={faHandshake} />
+                                    <span>Become a Provider</span>
+                                    <FontAwesomeIcon icon={faArrowRight} className="group-hover:translate-x-1 transition-transform" />
+                                </Link>
+                                
+                                <Link 
+                                    to="/contact" 
+                                    className="bg-transparent text-white px-8 py-4 rounded-full font-semibold text-lg border-2 border-white hover:bg-white/10 transition-all duration-300 inline-flex items-center justify-center gap-3"
+                                >
+                                    <FontAwesomeIcon icon={faPhone} />
+                                    <span>Learn More</span>
+                                </Link>
+                            </motion.div>
+                        </motion.div>
+                    </div>
+                </div>
+            </section>
+
             {/* Testimonials */}
             <section className="py-20 bg-gray-50">
                 <div className="container mx-auto px-4">

@@ -16,7 +16,7 @@ const YourDetailsSection: React.FC<YourDetailsSectionProps> = ({
     return (
         <div>
             <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-                <User className="mr-2 text-blue-600 w-5 h-5" />
+                <User className="mr-2 text-green-600 w-5 h-5" />
                 Your Details
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -27,7 +27,7 @@ const YourDetailsSection: React.FC<YourDetailsSectionProps> = ({
                     <Field
                         name="first_name"
                         type="text"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder="first name "
                     />
                     <ErrorMessage name="first_name" component="p" className="text-red-500 text-sm mt-1" />
@@ -40,7 +40,7 @@ const YourDetailsSection: React.FC<YourDetailsSectionProps> = ({
                     <Field
                         name="last_name"
                         type="text"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder="last name"
                     />
                     <ErrorMessage name="last_name" component="p" className="text-red-500 text-sm mt-1" />
@@ -53,7 +53,7 @@ const YourDetailsSection: React.FC<YourDetailsSectionProps> = ({
                     <Field
                         name="business_name"
                         type="text"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder="business name"
                     />
                     <ErrorMessage name="business_name" component="p" className="text-red-500 text-sm mt-1" />
@@ -66,7 +66,7 @@ const YourDetailsSection: React.FC<YourDetailsSectionProps> = ({
                     <Field
                         name="business_type"
                         as="select"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     >
                         <option value="">Select business type</option>
                         {businessTypeOptions.map((option) => (

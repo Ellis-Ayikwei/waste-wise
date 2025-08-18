@@ -226,6 +226,17 @@ const Navbar: React.FC<NavbarProps> = ({ isScrolled: propIsScrolled }) => {
                                         whileTap={{ scale: 0.95 }}
                                     >
                                         <Link
+                                            to="/provider/onboarding"
+                                            className="px-4 py-2.5 text-green-600 border border-green-600 rounded-full font-medium hover:bg-green-50 transition-all duration-300"
+                                        >
+                                            Become a Provider
+                                        </Link>
+                                    </motion.div>
+                                    <motion.div
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                    >
+                                        <Link
                                             to="/register"
                                             className="px-6 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-full font-medium shadow-lg hover:shadow-xl transition-all duration-300"
                                         >
@@ -351,6 +362,14 @@ const Navbar: React.FC<NavbarProps> = ({ isScrolled: propIsScrolled }) => {
                                         >
                                             <FontAwesomeIcon icon={faSignInAlt} />
                                             <span className="font-medium">Login</span>
+                                        </Link>
+                                        <Link
+                                            to="/provider/onboarding"
+                                            onClick={toggleMobileMenu}
+                                            className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-green-600 text-green-600 hover:bg-green-50 transition-colors"
+                                        >
+                                            <FontAwesomeIcon icon={faRecycle} />
+                                            <span className="font-medium">Become a Provider</span>
                                         </Link>
                                         <Link
                                             to="/register"

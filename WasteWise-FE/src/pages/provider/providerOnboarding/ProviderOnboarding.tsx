@@ -33,8 +33,9 @@ import {
     FileCheck,
     Car,
     Package,
-    Sofa,
-    Music,
+    Trash2,
+    Recycle,
+    Leaf,
     Globe,
     Eye,
     EyeOff,
@@ -123,45 +124,74 @@ const ProviderOnboarding: React.FC = () => {
         { value: 'limited', label: 'Limited Company', icon: Building },
         { value: 'sole_trader', label: 'Sole Trader', icon: User },
         { value: 'partnership', label: 'Partnership', icon: Users },
+        { value: 'cooperative', label: 'Cooperative', icon: Users },
     ];
 
-    const workTypeCategories = [
+    const wasteManagementServices = [
         {
-            id: 'removals_storage',
-            label: 'Removals & storage',
-            icon: Home,
-            description: 'Complete moving and storage solutions',
+            id: 'smart_waste_collection',
+            label: 'Smart Waste Collection',
+            icon: Trash2,
+            description: 'IoT-enabled waste collection with real-time monitoring',
             subcategories: [
-                { value: 'Home removals', label: 'Home removals' },
-                { value: 'International removals', label: 'International removals' },
-                { value: 'Office removals', label: 'Office removals' },
-                { value: 'Student removals', label: 'Student removals' },
-                { value: 'Storage services', label: 'Storage services' },
+                { value: 'Smart bin monitoring', label: 'Smart bin monitoring and maintenance' },
+                { value: 'Residential collection', label: 'Residential waste collection' },
+                { value: 'Commercial waste management', label: 'Commercial waste management' },
+                { value: 'On-demand pickup', label: 'On-demand waste pickup services' },
+                { value: 'Bulk waste collection', label: 'Bulk waste collection and disposal' },
             ]
         },
         {
-            id: 'man_van',
-            label: 'Man & Van services',
-            icon: Truck,
-            description: 'Delivery and transportation services',
+            id: 'recycling_services',
+            label: 'Recycling & Recovery',
+            icon: Recycle,
+            description: 'Specialized recycling and material recovery services',
             subcategories: [
-                { value: 'Furniture & appliance delivery', label: 'Furniture & appliance delivery' },
-                { value: 'Piano delivery', label: 'Piano delivery' },
-                { value: 'Parcel delivery', label: 'Parcel delivery' },
-                { value: 'eBay delivery', label: 'eBay delivery' },
-                { value: 'Gumtree delivery', label: 'Gumtree delivery' },
-                { value: 'Heavy & large item delivery', label: 'Heavy & large item delivery' },
-                { value: 'Specialist & antiques delivery', label: 'Specialist & antiques delivery' },
+                { value: 'General recycling', label: 'General recycling services' },
+                { value: 'E-waste recycling', label: 'Electronic waste recycling' },
+                { value: 'Plastic recovery', label: 'Plastic waste recovery and processing' },
+                { value: 'Paper recycling', label: 'Paper and cardboard recycling' },
+                { value: 'Metal recycling', label: 'Metal waste recycling' },
+                { value: 'Glass recycling', label: 'Glass waste recycling' },
             ]
         },
         {
-            id: 'vehicle_delivery',
-            label: 'Vehicle delivery',
-            icon: Car,
-            description: 'Vehicle transportation services',
+            id: 'specialized_waste',
+            label: 'Specialized Waste Management',
+            icon: Shield,
+            description: 'Handling of specialized and hazardous waste materials',
             subcategories: [
-                { value: 'Car transport', label: 'Car transport' },
-                { value: 'Motorcycle transport', label: 'Motorcycle transport' },
+                { value: 'Medical waste', label: 'Medical and healthcare waste' },
+                { value: 'Construction waste', label: 'Construction and demolition waste' },
+                { value: 'Hazardous waste', label: 'Hazardous waste disposal' },
+                { value: 'Industrial waste', label: 'Industrial waste management' },
+                { value: 'Chemical waste', label: 'Chemical waste disposal' },
+            ]
+        },
+        {
+            id: 'organic_composting',
+            label: 'Organic Waste & Composting',
+            icon: Leaf,
+            description: 'Organic waste processing and composting services',
+            subcategories: [
+                { value: 'Organic waste collection', label: 'Organic waste collection' },
+                { value: 'Composting services', label: 'Composting and soil production' },
+                { value: 'Food waste management', label: 'Food waste management' },
+                { value: 'Garden waste collection', label: 'Garden and yard waste collection' },
+                { value: 'Agricultural waste', label: 'Agricultural waste processing' },
+            ]
+        },
+        {
+            id: 'education_consulting',
+            label: 'Education & Consulting',
+            icon: Globe,
+            description: 'Waste management education and consulting services',
+            subcategories: [
+                { value: 'Community education', label: 'Community waste education programs' },
+                { value: 'Corporate training', label: 'Corporate waste management training' },
+                { value: 'Waste audits', label: 'Waste audits and assessments' },
+                { value: 'Sustainability consulting', label: 'Sustainability consulting' },
+                { value: 'Policy development', label: 'Waste policy development' },
             ]
         }
     ];
@@ -170,26 +200,38 @@ const ProviderOnboarding: React.FC = () => {
         {
             icon: CreditCard,
             title: 'Valid Driving License',
-            description: 'Full UK driving license for at least 1 year (3 years if under 22)',
+            description: 'Full Ghana driving license for waste collection vehicles',
             required: true,
         },
         {
             icon: FileText,
-            title: 'Vehicle Registration',
-            description: 'Proof of vehicle ownership or lease agreement',
+            title: 'Vehicle Registration & Insurance',
+            description: 'Valid registration and comprehensive insurance for waste collection vehicles',
             required: true,
         },
         {
             icon: Shield,
-            title: 'Insurance Documents',
-            description: 'Goods in Transit (£10k+) and Public Liability (£1M+)',
+            title: 'EPA Permit',
+            description: 'Environmental Protection Agency permit for waste handling',
             required: true,
         },
         {
             icon: Award,
-            title: 'VAT Certificate',
-            description: 'Required if VAT registered',
+            title: 'Business Registration',
+            description: 'Valid business registration certificate',
+            required: true,
+        },
+        {
+            icon: FileCheck,
+            title: 'Waste Management Certification',
+            description: 'Professional certification in waste management (if applicable)',
             required: false,
+        },
+        {
+            icon: Shield,
+            title: 'Safety Training Certificate',
+            description: 'Health and safety training for waste handling',
+            required: true,
         },
     ];
 
@@ -221,7 +263,7 @@ const ProviderOnboarding: React.FC = () => {
         phone_number: Yup.string().required('Phone number is required'),
         accepted_privacy_policy: Yup.boolean().oneOf([true], 'You must accept the privacy policy'),
         number_of_vehicles: Yup.string().required('Please select number of vehicles'),
-        work_types: Yup.array().min(1, 'Please select at least one type of work'),
+        work_types: Yup.array().min(1, 'Please select at least one waste management service'),
         vat_registered: Yup.string().required('Please select VAT registration status'),
     });
 
@@ -408,34 +450,34 @@ const ProviderOnboarding: React.FC = () => {
                                 <div></div> {/* Spacer */}
                             </div>
                             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                                Become a MoreVans Transport Partner
+                                Join WasteWise as a Service Provider
                             </h1>
                             <p className="text-lg text-gray-600 mb-6">
-                                Join over 5,000+ verified transport partners earning £800+ weekly with flexible schedules
+                                Partner with Ghana's leading smart waste management platform and help build a cleaner, sustainable future
                             </p>
                             <div className="flex justify-center space-x-8 text-sm text-gray-500">
                                 <div className="flex items-center">
                                     <Clock className="w-4 h-4 mr-1" />
-                                    <span>Quick 24hr approval</span>
+                                    <span>Quick 48hr approval</span>
                                 </div>
                                 <div className="flex items-center">
                                     <Shield className="w-4 h-4 mr-1" />
-                                    <span>Fully insured</span>
+                                    <span>EPA certified</span>
                                 </div>
                                 <div className="flex items-center">
                                     <DollarSign className="w-4 h-4 mr-1" />
-                                    <span>Weekly payments</span>
+                                    <span>Competitive rates</span>
                                 </div>
                             </div>
                         </div>
 {/* Customer Support Banner */}
-<div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-3">
+<div className="bg-gradient-to-r from-green-600 to-green-800 text-white py-3">
                 <div className="container mx-auto px-4">
                                             <div className="flex items-center justify-center">
                             <Headphones className="mr-2 w-5 h-5" />
                             
                             <span className="text-sm md:text-base">
-                                Need help? Our support team is available 8am-6pm daily • Call: +44 20 7946 0958
+                                Need help? Our support team is available 8am-6pm daily • Call: +233 30 123 4567
                             </span>
                         </div>
                 </div>
@@ -452,8 +494,8 @@ const ProviderOnboarding: React.FC = () => {
                                             <span className="text-sm font-medium text-gray-700">Registration Progress</span>
                                             <span className="text-sm text-gray-500">Step 1 of 2</span>
                                         </div>
-                                        <div className="w-full bg-gray-200 rounded-full h-2">
-                                            <div className="bg-blue-600 h-2 rounded-full" style={{ width: '50%' }}></div>
+                                        <div className="w-full bg-green-200 rounded-full h-2">
+                                            <div className="bg-green-600 h-2 rounded-full" style={{ width: '50%' }}></div>
                                         </div>
                                         <p className="text-xs text-gray-500 mt-2">Complete this form, then verify your account</p>
                                     </div>
@@ -543,7 +585,7 @@ const ProviderOnboarding: React.FC = () => {
                                                 {/* Additional Info Section */}
                                                 <AdditionalInfoSection
                                                     values={values}
-                                                    workTypeCategories={workTypeCategories}
+                                                    workTypeCategories={wasteManagementServices}
                                                 />
 
                                                 {/* Trust Indicators */}
@@ -551,15 +593,19 @@ const ProviderOnboarding: React.FC = () => {
                                                     <div className="flex items-center justify-center space-x-8 text-sm text-gray-500 mb-6">
                                                         <div className="flex items-center">
                                                             <Shield className="w-4 h-4 mr-1" />
-                                                            <span>SSL Secured</span>
+                                                            <span>EPA Certified</span>
                                                         </div>
                                                         <div className="flex items-center">
                                                             <Users className="w-4 h-4 mr-1" />
-                                                            <span>5,000+ Partners</span>
+                                                            <span>200+ Partners</span>
                                                         </div>
                                                         <div className="flex items-center">
                                                             <Star className="w-4 h-4 mr-1" />
                                                             <span>4.8/5 Rating</span>
+                                                        </div>
+                                                        <div className="flex items-center">
+                                                            <Leaf className="w-4 h-4 mr-1" />
+                                                            <span>Eco-Friendly</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -568,13 +614,13 @@ const ProviderOnboarding: React.FC = () => {
                                                 <div className="pt-6">
                                                     {registering ? (<button
                                                         type="submit"
-                                                        className="w-full bg-blue-600 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+                                                        className="w-full bg-green-600 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:bg-green-700 transition-colors flex items-center justify-center"
                                                     >
                                                         Registering...
                                                     </button>)
                                                     : (<button
                                                         type="submit"
-                                                        className="w-full bg-blue-600 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+                                                        className="w-full bg-green-600 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:bg-green-700 transition-colors flex items-center justify-center"
                                                     >
                                                         
                                                         Complete Registration

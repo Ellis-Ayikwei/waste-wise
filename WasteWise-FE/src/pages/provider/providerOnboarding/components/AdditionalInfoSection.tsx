@@ -25,14 +25,14 @@ const AdditionalInfoSection: React.FC<AdditionalInfoSectionProps> = ({
     return (
         <div>
             <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-                <Info className="mr-2 text-blue-600 w-5 h-5" />
-                Additional Info
+                <Info className="mr-2 text-green-600 w-5 h-5" />
+                Service Details
             </h2>
 
             <div className="space-y-6">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-3">
-                        Number of Vehicles
+                        Number of Waste Collection Vehicles
                     </label>
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                         {['1', '2-5', '6-10', '11+', 'No Vehicle'].map((option) => (
@@ -46,7 +46,7 @@ const AdditionalInfoSection: React.FC<AdditionalInfoSectionProps> = ({
                                 <div
                                     className={`w-full py-3 px-4 border rounded-lg cursor-pointer text-center transition-all ${
                                         values.number_of_vehicles === option
-                                            ? 'border-blue-600 bg-blue-50 text-blue-600'
+                                            ? 'border-green-600 bg-green-50 text-green-600'
                                             : 'border-gray-300 hover:border-gray-400'
                                     }`}
                                 >
@@ -60,13 +60,13 @@ const AdditionalInfoSection: React.FC<AdditionalInfoSectionProps> = ({
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-3">
-                        Type of work you're interested in
+                        Waste Management Services You Offer
                     </label>
                     <div className="space-y-4">
                         {workTypeCategories.map((category) => (
                             <div key={category.id} className="border border-gray-200 rounded-lg p-4">
                                 <div className="flex items-center mb-3">
-                                    <category.icon className="w-5 h-5 text-blue-600 mr-2" />
+                                    <category.icon className="w-5 h-5 text-green-600 mr-2" />
                                     <h4 className="font-medium text-gray-900">{category.label}</h4>
                                     <span className="ml-2 text-sm text-gray-500">({category.subcategories.length} services)</span>
                                 </div>
@@ -83,7 +83,7 @@ const AdditionalInfoSection: React.FC<AdditionalInfoSectionProps> = ({
                                             <div
                                                 className={`w-full py-2 px-3 border rounded-md cursor-pointer transition-all flex items-center text-sm ${
                                                     values.work_types.includes(subcategory.value)
-                                                        ? 'border-blue-600 bg-blue-50 text-blue-600'
+                                                        ? 'border-green-600 bg-green-50 text-green-600'
                                                         : 'border-gray-300 hover:border-gray-400'
                                                 }`}
                                             >
@@ -117,7 +117,7 @@ const AdditionalInfoSection: React.FC<AdditionalInfoSectionProps> = ({
                                 <div
                                     className={`px-8 py-3 border rounded-lg cursor-pointer transition-all ${
                                         values.vat_registered === option.toLowerCase()
-                                            ? 'border-blue-600 bg-blue-50 text-blue-600'
+                                            ? 'border-green-600 bg-green-50 text-green-600'
                                             : 'border-gray-300 hover:border-gray-400'
                                     }`}
                                 >
