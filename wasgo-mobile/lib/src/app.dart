@@ -11,6 +11,23 @@ import 'package:bytedev/app/views/onboarding_screen.dart';
 import 'package:bytedev/app/views/password_reset.dart';
 import 'package:bytedev/app/views/signup_view.dart';
 import 'package:bytedev/app/views/verify_email.dart';
+// Customer Views
+import 'package:bytedev/app/views/customer/dashboard.dart';
+import 'package:bytedev/app/views/customer/request_pickup.dart';
+import 'package:bytedev/app/views/customer/schedule_pickup.dart';
+import 'package:bytedev/app/views/customer/active_pickups.dart';
+import 'package:bytedev/app/views/customer/pickup_history.dart';
+import 'package:bytedev/app/views/customer/wallet.dart';
+import 'package:bytedev/app/views/customer/rewards.dart';
+import 'package:bytedev/app/views/customer/impact_reports.dart';
+// Provider Views
+import 'package:bytedev/app/views/provider/dashboard.dart';
+import 'package:bytedev/app/views/provider/job_requests.dart';
+import 'package:bytedev/app/views/provider/active_jobs.dart';
+import 'package:bytedev/app/views/provider/fleet_management.dart';
+import 'package:bytedev/app/views/provider/drivers_management.dart';
+import 'package:bytedev/app/views/provider/earnings.dart';
+import 'package:bytedev/app/views/provider/analytics.dart';
 import 'package:bytedev/core/theme/app_theme.dart';
 import 'package:bytedev/services/auth_service.dart';
 import 'package:flutter/material.dart';
@@ -111,6 +128,70 @@ class _MyAppState extends State<MyApp> {
         GetPage(
           name: '/reset_password',
           page: () => PasswordReset(controller: AuthController(store)),
+        ),
+        
+        // Customer Routes
+        GetPage(
+          name: '/customer/dashboard',
+          page: () => const CustomerDashboard(),
+        ),
+        GetPage(
+          name: '/customer/request-pickup',
+          page: () => const RequestPickupView(),
+        ),
+        GetPage(
+          name: '/customer/schedule-pickup',
+          page: () => const SchedulePickupView(),
+        ),
+        GetPage(
+          name: '/customer/active-pickups',
+          page: () => const ActivePickupsView(),
+        ),
+        GetPage(
+          name: '/customer/pickup-history',
+          page: () => const PickupHistoryView(),
+        ),
+        GetPage(
+          name: '/customer/wallet',
+          page: () => const WalletView(),
+        ),
+        GetPage(
+          name: '/customer/rewards',
+          page: () => const RewardsView(),
+        ),
+        GetPage(
+          name: '/customer/impact-reports',
+          page: () => const ImpactReportsView(),
+        ),
+        
+        // Provider Routes
+        GetPage(
+          name: '/provider/dashboard',
+          page: () => const ProviderDashboard(),
+        ),
+        GetPage(
+          name: '/provider/job-requests',
+          page: () => const JobRequestsView(),
+        ),
+        GetPage(
+          name: '/provider/active-jobs',
+          page: () => const ActiveJobsView(),
+        ),
+        GetPage(
+          name: '/provider/fleet',
+          page: () => const FleetManagementView(),
+        ),
+        GetPage(
+          name: '/provider/drivers',
+          page: () => const DriversManagementView(),
+        ),
+        GetPage(
+          name: '/provider/earnings',
+          page: () => const EarningsView(),
+        ),
+        GetPage(
+          name: '/provider/analytics',
+          page: () => const AnalyticsView(),
         ),
       ],
       initialRoute: widget.initialRoute,
