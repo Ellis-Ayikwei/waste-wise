@@ -1,22 +1,48 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-    IconChartLine,
-    IconChartBar,
-    IconChartPie,
-    IconChartArea,
-    IconTrendingUp,
-    IconTrendingDown,
-    IconStar,
-    IconUsers,
-    IconTruck,
-    IconDownload,
-    IconShare,
-    IconClock,
-   
-} from '@tabler/icons-react';
-import IconDollarSign from '../../components/Icon/IconDollarSign';
-import { CheckCircle } from 'lucide-react';
+    TrendingUp,
+    TrendingDown,
+    Star,
+    Users,
+    Truck,
+    Download,
+    Share,
+    Clock,
+    DollarSign,
+    CheckCircle,
+    BarChart3,
+    PieChart,
+    LineChart,
+    Activity,
+    Settings,
+    RefreshCw,
+    Plus,
+    Calendar,
+    Target,
+    Award,
+    Shield,
+    Zap,
+    Timer,
+    Navigation,
+    MapPin,
+    AlertTriangle,
+    Check,
+    X,
+    Eye,
+    Phone,
+    Mail,
+    Trash2,
+    Recycle,
+    Leaf,
+    Signal,
+    Thermometer,
+    Battery,
+    Wifi,
+    AlertCircle,
+    Package,
+    Clock as ClockIcon
+} from 'lucide-react';
 
 const Analytics = () => {
     const [activeTab, setActiveTab] = useState('overview');
@@ -58,11 +84,11 @@ const Analytics = () => {
 
     // Mock job type breakdown
     const jobTypeData = [
-        { type: 'General Waste', jobs: 45, revenue: 850, percentage: 32, color: 'bg-gray-500' },
-        { type: 'Plastic Recycling', jobs: 38, revenue: 720, percentage: 27, color: 'bg-blue-500' },
-        { type: 'Paper Recycling', jobs: 32, revenue: 610, percentage: 22, color: 'bg-yellow-500' },
-        { type: 'Metal Recycling', jobs: 25, revenue: 480, percentage: 15, color: 'bg-gray-600' },
-        { type: 'E-Waste', jobs: 16, revenue: 180, percentage: 4, color: 'bg-purple-500' },
+        { type: 'General Waste', jobs: 45, revenue: 850, percentage: 32, color: 'from-slate-500 to-slate-600' },
+        { type: 'Plastic Recycling', jobs: 38, revenue: 720, percentage: 27, color: 'from-blue-500 to-indigo-600' },
+        { type: 'Paper Recycling', jobs: 32, revenue: 610, percentage: 22, color: 'from-amber-500 to-orange-600' },
+        { type: 'Metal Recycling', jobs: 25, revenue: 480, percentage: 15, color: 'from-slate-600 to-slate-700' },
+        { type: 'E-Waste', jobs: 16, revenue: 180, percentage: 4, color: 'from-purple-500 to-purple-600' },
     ];
 
     // Mock performance metrics
@@ -73,7 +99,7 @@ const Analytics = () => {
             unit: '%',
             trend: '+2.5%',
             trendDirection: 'up',
-            icon: <CheckCircle className="w-6 h-6 text-green-500" />,
+            icon: <CheckCircle className="w-6 h-6 text-emerald-500" />,
         },
         {
             metric: 'On-Time Rate',
@@ -81,7 +107,7 @@ const Analytics = () => {
             unit: '%',
             trend: '+1.8%',
             trendDirection: 'up',
-            icon: <IconClock className="w-6 h-6 text-blue-500" />,
+            icon: <Clock className="w-6 h-6 text-blue-500" />,
         },
         {
             metric: 'Customer Satisfaction',
@@ -89,7 +115,7 @@ const Analytics = () => {
             unit: '%',
             trend: '+0.5%',
             trendDirection: 'up',
-            icon: <IconStar className="w-6 h-6 text-yellow-500" />,
+            icon: <Star className="w-6 h-6 text-yellow-500" />,
         },
         {
             metric: 'Average Rating',
@@ -97,458 +123,364 @@ const Analytics = () => {
             unit: '/5',
             trend: '+0.2',
             trendDirection: 'up',
-            icon: <IconUsers className="w-6 h-6 text-purple-500" />,
+            icon: <Users className="w-6 h-6 text-purple-500" />,
         },
     ];
 
-    // Mock top customers
-    const topCustomers = [
-        { name: 'Green Office Solutions', jobs: 15, revenue: 450, rating: 4.9 },
-        { name: 'EcoTech Industries', jobs: 12, revenue: 380, rating: 4.8 },
-        { name: 'Sustainable Living Co.', jobs: 10, revenue: 320, rating: 4.7 },
-        { name: 'Green Retail Chain', jobs: 8, revenue: 280, rating: 4.6 },
-        { name: 'Eco-Friendly Restaurant', jobs: 6, revenue: 220, rating: 4.5 },
-    ];
-
-    // Mock revenue trends
-    const revenueTrends = [
-        { period: 'This Week', revenue: 680, change: '+12.5%', trend: 'up' },
-        { period: 'This Month', revenue: 2840, change: '+8.3%', trend: 'up' },
-        { period: 'This Quarter', revenue: 7890, change: '+15.2%', trend: 'up' },
-        { period: 'This Year', revenue: 28400, change: '+22.1%', trend: 'up' },
-    ];
-
-    const getTrendColor = (trend) => {
-        return trend === 'up' ? 'text-green-600' : 'text-red-600';
-    };
-
-    const getTrendIcon = (trend) => {
-        return trend === 'up' ? <IconTrendingUp className="w-4 h-4" /> : <IconTrendingDown className="w-4 h-4" />;
-    };
-
-    const exportAnalytics = () => {
-        // Mock export functionality
-        console.log('Exporting analytics data...');
-    };
-
-    const shareAnalytics = () => {
-        // Mock share functionality
-        console.log('Sharing analytics data...');
+    const stats = {
+        totalEarnings: analyticsData.totalEarnings,
+        totalJobs: analyticsData.totalJobs,
+        completedJobs: analyticsData.completedJobs,
+        pendingJobs: analyticsData.pendingJobs,
+        averageRating: analyticsData.averageRating,
+        totalCustomers: analyticsData.totalCustomers,
+        totalDistance: analyticsData.totalDistance,
+        totalRecycled: analyticsData.totalRecycled,
+        co2Saved: analyticsData.co2Saved,
+        efficiency: analyticsData.efficiency,
+        onTimeRate: analyticsData.onTimeRate,
+        customerSatisfaction: analyticsData.customerSatisfaction
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            {/* Header */}
-            <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Analytics</h1>
-                            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                Track your business performance and operational insights
-                            </p>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                            <select
-                                value={timeRange}
-                                onChange={(e) => setTimeRange(e.target.value)}
-                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                            >
-                                <option value="week">This Week</option>
-                                <option value="month">This Month</option>
-                                <option value="quarter">This Quarter</option>
-                                <option value="year">This Year</option>
-                            </select>
-                            <button
-                                onClick={exportAnalytics}
-                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                            >
-                                <IconDownload className="w-4 h-4 mr-2" />
-                                Export
-                            </button>
-                            <button
-                                onClick={shareAnalytics}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                            >
-                                <IconShare className="w-4 h-4 mr-2" />
-                                Share
-                            </button>
-                        </div>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50 to-cyan-50">
+            {/* Header with Glassmorphism */}
+            <div className="relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-teal-600 via-cyan-600 to-blue-600"></div>
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%23ffffff%22%20fill-opacity%3D%220.1%22%3E%3Cpath%20d%3D%22M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
+                
+                <div className="relative backdrop-blur-xl bg-white/10 border-b border-white/20">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6 }}
+                            className="flex items-center justify-between"
+                        >
+                            <div>
+                                <h1 className="text-4xl font-bold text-white mb-2">Analytics Dashboard</h1>
+                                <p className="text-teal-100 text-lg">Comprehensive insights into your waste management operations</p>
+                                <div className="flex items-center space-x-4 mt-4">
+                                    <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-3 py-1">
+                                        <BarChart3 className="text-teal-300 w-4 h-4" />
+                                        <span className="text-white text-sm font-medium">₵{stats.totalEarnings} Total Earnings</span>
+                                    </div>
+                                    <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-3 py-1">
+                                        <Activity className="text-teal-300 w-4 h-4" />
+                                        <span className="text-white text-sm font-medium">{stats.totalJobs} Total Jobs</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                                <motion.button 
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className="p-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transition-all duration-300"
+                                >
+                                    <RefreshCw className="w-5 h-5" />
+                                </motion.button>
+                                <motion.button 
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className="p-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transition-all duration-300"
+                                >
+                                    <Settings className="w-5 h-5" />
+                                </motion.button>
+                            </div>
+                        </motion.div>
                     </div>
                 </div>
             </div>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Key Metrics */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+                {/* Stats Cards */}
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+                >
+                    <motion.div 
+                        whileHover={{ y: -2 }}
+                        className="relative p-6 bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50 group overflow-hidden"
                     >
-                        <div className="flex items-center">
-                            <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
-                                <IconDollarSign className="w-6 h-6 text-green-600" />
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-teal-500/20 to-transparent"></div>
+                        <div className="relative z-10">
+                            <div className="flex items-center space-x-3 mb-4">
+                                <div className="p-3 bg-teal-500">
+                                    <DollarSign className="w-6 h-6 text-white" />
+                                </div>
+                                <h3 className="font-bold text-slate-900">Total Earnings</h3>
                             </div>
-                            <div className="ml-4">
-                                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Earnings</p>
-                                <p className="text-2xl font-bold text-gray-900 dark:text-white">${analyticsData.totalEarnings}</p>
-                            </div>
+                            <p className="text-3xl font-bold text-teal-600 mb-1">₵{stats.totalEarnings}</p>
+                            <p className="text-sm text-slate-600 flex items-center">
+                                <TrendingUp className="w-4 h-4 text-emerald-500 mr-1" />
+                                +12.5% from last month
+                            </p>
                         </div>
                     </motion.div>
 
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: 0.1 }}
-                        className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+                    <motion.div 
+                        whileHover={{ y: -2 }}
+                        className="relative p-6 bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50 group overflow-hidden"
                     >
-                        <div className="flex items-center">
-                            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-                                <IconTruck className="w-6 h-6 text-blue-600" />
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-500/20 to-transparent"></div>
+                        <div className="relative z-10">
+                            <div className="flex items-center space-x-3 mb-4">
+                                <div className="p-3 bg-blue-500">
+                                    <Truck className="w-6 h-6 text-white" />
+                                </div>
+                                <h3 className="font-bold text-slate-900">Total Jobs</h3>
                             </div>
-                            <div className="ml-4">
-                                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Jobs</p>
-                                <p className="text-2xl font-bold text-gray-900 dark:text-white">{analyticsData.totalJobs}</p>
-                            </div>
+                            <p className="text-3xl font-bold text-blue-600 mb-1">{stats.totalJobs}</p>
+                            <p className="text-sm text-slate-600 flex items-center">
+                                <CheckCircle className="w-4 h-4 text-emerald-500 mr-1" />
+                                {stats.completedJobs} completed
+                            </p>
                         </div>
                     </motion.div>
 
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: 0.2 }}
-                        className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+                    <motion.div 
+                        whileHover={{ y: -2 }}
+                        className="relative p-6 bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50 group overflow-hidden"
                     >
-                        <div className="flex items-center">
-                            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
-                                <IconUsers className="w-6 h-6 text-purple-600" />
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-emerald-500/20 to-transparent"></div>
+                        <div className="relative z-10">
+                            <div className="flex items-center space-x-3 mb-4">
+                                <div className="p-3 bg-emerald-500">
+                                    <Users className="w-6 h-6 text-white" />
+                                </div>
+                                <h3 className="font-bold text-slate-900">Total Customers</h3>
                             </div>
-                            <div className="ml-4">
-                                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Customers</p>
-                                <p className="text-2xl font-bold text-gray-900 dark:text-white">{analyticsData.totalCustomers}</p>
-                            </div>
+                            <p className="text-3xl font-bold text-emerald-600 mb-1">{stats.totalCustomers}</p>
+                            <p className="text-sm text-slate-600 flex items-center">
+                                <Star className="w-4 h-4 text-yellow-500 mr-1" />
+                                {stats.averageRating} avg rating
+                            </p>
                         </div>
                     </motion.div>
 
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: 0.3 }}
-                        className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+                    <motion.div 
+                        whileHover={{ y: -2 }}
+                        className="relative p-6 bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50 group overflow-hidden"
                     >
-                        <div className="flex items-center">
-                            <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center">
-                                <IconStar className="w-6 h-6 text-yellow-600" />
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-purple-500/20 to-transparent"></div>
+                        <div className="relative z-10">
+                            <div className="flex items-center space-x-3 mb-4">
+                                <div className="p-3 bg-purple-500">
+                                    <Target className="w-6 h-6 text-white" />
+                                </div>
+                                <h3 className="font-bold text-slate-900">Efficiency</h3>
                             </div>
-                            <div className="ml-4">
-                                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Average Rating</p>
-                                <p className="text-2xl font-bold text-gray-900 dark:text-white">{analyticsData.averageRating}</p>
-                            </div>
+                            <p className="text-3xl font-bold text-purple-600 mb-1">{stats.efficiency}%</p>
+                            <p className="text-sm text-slate-600 flex items-center">
+                                <TrendingUp className="w-4 h-4 text-emerald-500 mr-1" />
+                                Job completion rate
+                            </p>
                         </div>
                     </motion.div>
-                </div>
+                </motion.div>
 
-                {/* Tabs */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
-                    <div className="border-b border-gray-200 dark:border-gray-700">
-                        <nav className="flex space-x-8 px-6">
-                            {[
-                                { id: 'overview', label: 'Overview', icon: <IconChartLine className="w-5 h-5" /> },
-                                { id: 'revenue', label: 'Revenue', icon: <IconDollarSign className="w-5 h-5" /> },
-                                { id: 'performance', label: 'Performance', icon: <IconChartBar className="w-5 h-5" /> },
-                                { id: 'customers', label: 'Customers', icon: <IconUsers className="w-5 h-5" /> },
-                            ].map((tab) => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm ${
-                                        activeTab === tab.id
-                                            ? 'border-green-500 text-green-600'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                {/* Premium Controls */}
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.3 }}
+                    className="bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50 p-6 mb-8"
+                >
+                    <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
+                        <div className="flex items-center space-x-4">
+                            <span className="text-sm font-medium text-slate-700">Time Range:</span>
+                            <div className="flex items-center space-x-2 bg-slate-100 p-1">
+                                {['week', 'month', 'quarter', 'year'].map((range) => (
+                                    <motion.button
+                                        key={range}
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        onClick={() => setTimeRange(range)}
+                                        className={`px-3 py-1 text-sm font-medium transition-all duration-300 ${
+                                            timeRange === range
+                                                ? 'bg-white text-teal-600 shadow-sm' 
+                                                : 'text-slate-600 hover:bg-white/50'
+                                        }`}
+                                    >
+                                        {range.charAt(0).toUpperCase() + range.slice(1)}
+                                    </motion.button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="p-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-all duration-300"
+                            >
+                                <Download className="w-4 h-4" />
+                            </motion.button>
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="p-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-all duration-300"
+                            >
+                                <Share className="w-4 h-4" />
+                            </motion.button>
+                        </div>
+                    </div>
+
+                    {/* Tabs */}
+                    <div className="mt-6 pt-6 border-t border-slate-200">
+                        <div className="flex items-center space-x-4">
+                            {['overview', 'revenue', 'performance', 'environmental'].map((tab) => (
+                                <motion.button
+                                    key={tab}
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={() => setActiveTab(tab)}
+                                    className={`px-4 py-2 text-sm font-medium transition-all duration-300 ${
+                                        activeTab === tab
+                                            ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white shadow-lg'
+                                            : 'text-slate-600 hover:bg-slate-100'
                                     }`}
                                 >
-                                    {tab.icon}
-                                    <span>{tab.label}</span>
-                                </button>
+                                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                                </motion.button>
                             ))}
-                        </nav>
+                        </div>
+                    </div>
+                </motion.div>
+
+                {/* Performance Metrics */}
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.4 }}
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+                >
+                    {performanceMetrics.map((metric, index) => (
+                        <motion.div
+                            key={metric.metric}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.5 + index * 0.1 }}
+                            whileHover={{ y: -2 }}
+                            className="relative p-6 bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50 group overflow-hidden"
+                        >
+                            <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-slate-500/20 to-transparent"></div>
+                            <div className="relative z-10">
+                                <div className="flex items-center space-x-3 mb-4">
+                                    <div className="p-3 bg-slate-100">
+                                        {metric.icon}
+                                    </div>
+                                    <h3 className="font-bold text-slate-900 text-sm">{metric.metric}</h3>
+                                </div>
+                                <p className="text-2xl font-bold text-slate-900 mb-1">{metric.value}{metric.unit}</p>
+                                <p className="text-sm text-slate-600 flex items-center">
+                                    {metric.trendDirection === 'up' ? (
+                                        <TrendingUp className="w-4 h-4 text-emerald-500 mr-1" />
+                                    ) : (
+                                        <TrendingDown className="w-4 h-4 text-red-500 mr-1" />
+                                    )}
+                                    {metric.trend} from last period
+                                </p>
+                            </div>
+                        </motion.div>
+                    ))}
+                </motion.div>
+
+                {/* Charts Section */}
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.6 }}
+                    className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8"
+                >
+                    {/* Revenue Chart */}
+                    <div className="bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50 p-6">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-lg font-bold text-slate-900">Revenue Trend</h3>
+                            <LineChart className="w-6 h-6 text-teal-600" />
+                        </div>
+                        <div className="space-y-4">
+                            {monthlyRevenueData.slice(-6).map((data, index) => (
+                                <div key={data.month} className="flex items-center justify-between">
+                                    <span className="text-sm font-medium text-slate-700">{data.month}</span>
+                                    <div className="flex items-center space-x-4">
+                                        <div className="w-32 bg-slate-200 h-2">
+                                            <div 
+                                                className="bg-gradient-to-r from-teal-500 to-cyan-600 h-2 transition-all duration-300"
+                                                style={{ width: `${(data.revenue / 3000) * 100}%` }}
+                                            ></div>
+                                        </div>
+                                        <span className="text-sm font-semibold text-slate-900">₵{data.revenue}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
-                    <div className="p-6">
-                        {/* Overview Tab */}
-                        {activeTab === 'overview' && (
-                            <div className="space-y-6">
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    {/* Revenue Trend Chart */}
-                                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
-                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                                            Monthly Revenue Trend
-                                        </h3>
-                                        <div className="space-y-4">
-                                            {monthlyRevenueData.map((data, index) => (
-                                                <div key={data.month} className="flex items-center space-x-4">
-                                                    <div className="w-12 text-sm font-medium text-gray-500 dark:text-gray-400">
-                                                        {data.month}
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="flex justify-between text-sm mb-1">
-                                                            <span className="text-gray-600 dark:text-gray-300">
-                                                                ${data.revenue} revenue
-                                                            </span>
-                                                            <span className="text-green-600">
-                                                                {data.jobs} jobs
-                                                            </span>
-                                                        </div>
-                                                        <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                                                            <div
-                                                                className="bg-gradient-to-r from-green-400 to-emerald-500 h-2 rounded-full"
-                                                                style={{ width: `${(data.revenue / 3000) * 100}%` }}
-                                                            ></div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
+                    {/* Job Type Breakdown */}
+                    <div className="bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50 p-6">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-lg font-bold text-slate-900">Job Type Breakdown</h3>
+                            <PieChart className="w-6 h-6 text-teal-600" />
+                        </div>
+                        <div className="space-y-4">
+                            {jobTypeData.map((jobType, index) => (
+                                <div key={jobType.type} className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-3">
+                                        <div className={`w-4 h-4 bg-gradient-to-r ${jobType.color}`}></div>
+                                        <span className="text-sm font-medium text-slate-700">{jobType.type}</span>
                                     </div>
-
-                                    {/* Performance Metrics */}
-                                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
-                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                                            Performance Metrics
-                                        </h3>
-                                        <div className="space-y-4">
-                                            {performanceMetrics.map((metric, index) => (
-                                                <motion.div
-                                                    key={metric.metric}
-                                                    initial={{ opacity: 0, x: 20 }}
-                                                    animate={{ opacity: 1, x: 0 }}
-                                                    transition={{ duration: 0.3, delay: index * 0.1 }}
-                                                    className="flex items-center space-x-4 p-3 bg-white dark:bg-gray-800 rounded-lg"
-                                                >
-                                                    <div className="flex-shrink-0">
-                                                        {metric.icon}
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="flex justify-between items-center">
-                                                            <span className="font-medium text-gray-900 dark:text-white">
-                                                                {metric.metric}
-                                                            </span>
-                                                            <div className="flex items-center space-x-2">
-                                                                <span className="text-lg font-bold text-green-600">
-                                                                    {metric.value}{metric.unit}
-                                                                </span>
-                                                                <span className={`flex items-center text-sm ${getTrendColor(metric.trendDirection)}`}>
-                                                                    {getTrendIcon(metric.trendDirection)}
-                                                                    <span className="ml-1">{metric.trend}</span>
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </motion.div>
-                                            ))}
+                                    <div className="flex items-center space-x-4">
+                                        <div className="w-24 bg-slate-200 h-2">
+                                            <div 
+                                                className={`h-2 bg-gradient-to-r ${jobType.color} transition-all duration-300`}
+                                                style={{ width: `${jobType.percentage}%` }}
+                                            ></div>
                                         </div>
+                                        <span className="text-sm font-semibold text-slate-900">{jobType.jobs} jobs</span>
                                     </div>
                                 </div>
-                            </div>
-                        )}
-
-                        {/* Revenue Tab */}
-                        {activeTab === 'revenue' && (
-                            <div className="space-y-6">
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    {/* Revenue Trends */}
-                                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
-                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                                            Revenue Trends
-                                        </h3>
-                                        <div className="space-y-4">
-                                            {revenueTrends.map((trend, index) => (
-                                                <motion.div
-                                                    key={trend.period}
-                                                    initial={{ opacity: 0, y: 20 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ duration: 0.3, delay: index * 0.1 }}
-                                                    className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg"
-                                                >
-                                                    <div>
-                                                        <h4 className="font-medium text-gray-900 dark:text-white">
-                                                            {trend.period}
-                                                        </h4>
-                                                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                            Revenue performance
-                                                        </p>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <div className="text-lg font-bold text-gray-900 dark:text-white">
-                                                            ${trend.revenue}
-                                                        </div>
-                                                        <div className={`flex items-center text-sm ${getTrendColor(trend.trend)}`}>
-                                                            {getTrendIcon(trend.trend)}
-                                                            <span className="ml-1">{trend.change}</span>
-                                                        </div>
-                                                    </div>
-                                                </motion.div>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Job Type Breakdown */}
-                                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
-                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                                            Revenue by Job Type
-                                        </h3>
-                                        <div className="space-y-4">
-                                            {jobTypeData.map((job, index) => (
-                                                <div key={job.type} className="flex items-center space-x-4">
-                                                    <div className={`w-4 h-4 rounded-full ${job.color}`}></div>
-                                                    <div className="flex-1">
-                                                        <div className="flex justify-between text-sm mb-1">
-                                                            <span className="font-medium text-gray-900 dark:text-white">
-                                                                {job.type}
-                                                            </span>
-                                                            <span className="text-gray-500 dark:text-gray-400">
-                                                                ${job.revenue} ({job.percentage}%)
-                                                            </span>
-                                                        </div>
-                                                        <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                                                            <div
-                                                                className={`h-2 rounded-full ${job.color.replace('bg-', 'bg-')}`}
-                                                                style={{ width: `${job.percentage}%` }}
-                                                            ></div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Performance Tab */}
-                        {activeTab === 'performance' && (
-                            <div className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {performanceMetrics.map((metric, index) => (
-                                        <motion.div
-                                            key={metric.metric}
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ duration: 0.3, delay: index * 0.1 }}
-                                            className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6"
-                                        >
-                                            <div className="flex items-center space-x-4 mb-4">
-                                                <div className="flex-shrink-0">
-                                                    {metric.icon}
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                                        {metric.metric}
-                                                    </h3>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                        Performance indicator
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="text-center">
-                                                <div className="text-3xl font-bold text-green-600 mb-2">
-                                                    {metric.value}{metric.unit}
-                                                </div>
-                                                <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3">
-                                                    <div
-                                                        className="bg-gradient-to-r from-green-400 to-emerald-500 h-3 rounded-full"
-                                                        style={{ width: `${Math.min((metric.value / 100) * 100, 100)}%` }}
-                                                    ></div>
-                                                </div>
-                                                <div className={`flex items-center justify-center mt-2 text-sm ${getTrendColor(metric.trendDirection)}`}>
-                                                    {getTrendIcon(metric.trendDirection)}
-                                                    <span className="ml-1">{metric.trend} from last period</span>
-                                                </div>
-                                            </div>
-                                        </motion.div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Customers Tab */}
-                        {activeTab === 'customers' && (
-                            <div className="space-y-6">
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    {/* Top Customers */}
-                                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
-                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                                            Top Customers
-                                        </h3>
-                                        <div className="space-y-4">
-                                            {topCustomers.map((customer, index) => (
-                                                <motion.div
-                                                    key={customer.name}
-                                                    initial={{ opacity: 0, x: -20 }}
-                                                    animate={{ opacity: 1, x: 0 }}
-                                                    transition={{ duration: 0.3, delay: index * 0.1 }}
-                                                    className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg"
-                                                >
-                                                    <div className="flex items-center space-x-4">
-                                                        <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center text-white font-bold">
-                                                            {customer.name.charAt(0)}
-                                                        </div>
-                                                        <div>
-                                                            <h4 className="font-medium text-gray-900 dark:text-white">
-                                                                {customer.name}
-                                                            </h4>
-                                                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                                {customer.jobs} jobs completed
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <div className="font-semibold text-gray-900 dark:text-white">
-                                                            ${customer.revenue}
-                                                        </div>
-                                                        <div className="flex items-center text-sm text-yellow-600">
-                                                            <IconStar className="w-4 h-4 mr-1" />
-                                                            {customer.rating}
-                                                        </div>
-                                                    </div>
-                                                </motion.div>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Customer Statistics */}
-                                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
-                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                                            Customer Statistics
-                                        </h3>
-                                        <div className="space-y-4">
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg">
-                                                    <div className="text-2xl font-bold text-blue-600">{analyticsData.totalCustomers}</div>
-                                                    <div className="text-sm text-gray-500 dark:text-gray-400">Total Customers</div>
-                                                </div>
-                                                <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg">
-                                                    <div className="text-2xl font-bold text-green-600">{analyticsData.averageRating}</div>
-                                                    <div className="text-sm text-gray-500 dark:text-gray-400">Avg Rating</div>
-                                                </div>
-                                                <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg">
-                                                    <div className="text-2xl font-bold text-purple-600">{analyticsData.customerSatisfaction}%</div>
-                                                    <div className="text-sm text-gray-500 dark:text-gray-400">Satisfaction</div>
-                                                </div>
-                                                <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg">
-                                                    <div className="text-2xl font-bold text-yellow-600">{analyticsData.onTimeRate}%</div>
-                                                    <div className="text-sm text-gray-500 dark:text-gray-400">On-Time Rate</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                            ))}
+                        </div>
                     </div>
-                </div>
+                </motion.div>
+
+                {/* Environmental Impact */}
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.7 }}
+                    className="bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50 p-6"
+                >
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-bold text-slate-900">Environmental Impact</h3>
+                        <Leaf className="w-6 h-6 text-emerald-600" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="text-center">
+                            <div className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Recycle className="w-8 h-8 text-white" />
+                            </div>
+                            <h4 className="text-lg font-bold text-slate-900 mb-2">{stats.totalRecycled} kg</h4>
+                            <p className="text-sm text-slate-600">Total Recycled</p>
+                        </div>
+                        <div className="text-center">
+                            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Leaf className="w-8 h-8 text-white" />
+                            </div>
+                            <h4 className="text-lg font-bold text-slate-900 mb-2">{stats.co2Saved} kg</h4>
+                            <p className="text-sm text-slate-600">CO₂ Saved</p>
+                        </div>
+                        <div className="text-center">
+                            <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <MapPin className="w-8 h-8 text-white" />
+                            </div>
+                            <h4 className="text-lg font-bold text-slate-900 mb-2">{stats.totalDistance} km</h4>
+                            <p className="text-sm text-slate-600">Total Distance</p>
+                        </div>
+                    </div>
+                </motion.div>
             </div>
         </div>
     );

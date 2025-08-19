@@ -4,6 +4,7 @@ import store, { AppDispatch, IRootState } from './store';
 import { toggleAnimation, toggleLayout, toggleLocale, toggleMenu, toggleNavbar, toggleRTL, toggleSemidark, toggleTheme } from './store/themeConfigSlice';
 import DraftRequestsModal from './components/DraftRequestsModal';
 import CookieBanner from './components/CookieBanner';
+import ScrollToTopOnRouteChange from './components/ScrollToTopOnRouteChange';
 import useAuthUser from 'react-auth-kit/hooks/useAuthUser';
 import { fetchDrafts } from './store/slices/draftRequestsSlice';
 
@@ -47,6 +48,7 @@ function App({ children }: PropsWithChildren) {
                 themeConfig.rtlClass
             } main-section antialiased relative font-nunito text-sm font-normal`}
         >
+            <ScrollToTopOnRouteChange />
             {children}
             {/* <DraftRequestsModal visible={showDraftModal} onClose={() => setShowDraftModal(false)} /> */}
             <CookieBanner />

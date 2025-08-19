@@ -49,7 +49,7 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({ requiredDocuments }) =>
                 {/* Moving Logistics Image */}
                 <div className="bg-white rounded-xl shadow-lg overflow-hidden mt-5">
                     <img
-                        src="/assets/images/services/man&van.jpg"
+                        src="https://images.pexels.com/photos/19928668/pexels-photo-19928668.png"
                         alt="Professional moving team"
                         className="w-full h-64 object-cover"
                     />

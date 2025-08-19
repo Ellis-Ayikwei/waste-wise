@@ -78,7 +78,7 @@ const Sidebar = () => {
     const auth = useAuthUser<any>();
     const user = auth?.user || null;
     // const isProviderMode = useSelector((state: IRootState) => state.viewMode.isProviderMode);
-    const isProviderMode = false;
+    const isProviderMode = true;
 
     const toggleMenu = (value: string) => {
         setCurrentMenu((oldValue) => {

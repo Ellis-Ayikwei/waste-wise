@@ -75,7 +75,7 @@ import DriverDetail from '../pages/provider/ProviderDetail/tabs/driversTab/Drive
 import EditDriver from '../pages/provider/ProviderDetail/tabs/driversTab/EditDriver';
 import CustomerDashboard from '../pages/Dasboard/Index';
 import ProviderDashboard from '../pages/provider/providerDashboard';
-import SmartBins from '../pages/SmartBins';
+import SmartBins from '../pages/customer/SmartBin/SmartBins';
 import SmartBinAlerts from '../pages/provider/SmartBinAlerts';
 import Rewards from '../pages/customer/Rewards';
 import ImpactReports from '../pages/customer/ImpactReports';

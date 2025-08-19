@@ -38,14 +38,14 @@ const HomeAddressSection: React.FC<HomeAddressSectionProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Search Postcode
+                            Search Postal Code
                         </label>
                         <div className="flex gap-2">
                             <Field
                                 name="postcode"
                                 type="text"
                                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                placeholder="SW11 5JW"
+                                placeholder="GA-123-4567"
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setFieldValue('postcode', e.target.value);
                                     if (e.target.value.length > 5) {
@@ -78,7 +78,7 @@ const HomeAddressSection: React.FC<HomeAddressSectionProps> = ({
                     </div>
 
                     {/* Address Selection */}
-                    {addressOptions.length > 0 && !values.has_non_uk_address && (
+                    {addressOptions.length > 0 && !values.has_non_ghana_address && (
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Select Address ({values.postcode})
@@ -111,7 +111,7 @@ const HomeAddressSection: React.FC<HomeAddressSectionProps> = ({
                     )}
 
                     {/* Manual Entry Section - Only show when no addresses found */}
-                    {addressError && !addressOptions.length && !values.has_non_uk_address && (
+                    {addressError && !addressOptions.length && !values.has_non_ghana_address && (
                         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                             <div className="flex items-center justify-between mb-2">
                                 <span className="text-sm font-medium text-yellow-800">
@@ -119,7 +119,7 @@ const HomeAddressSection: React.FC<HomeAddressSectionProps> = ({
                                 </span>
                             </div>
                             <p className="text-sm text-yellow-700 mb-3">
-                                {addressError || 'No addresses found for this postcode. Please enter your address manually.'}
+                                {addressError || 'No addresses found for this postal code. Please enter your address manually.'}
                             </p>
                             <button
                                 type="button"
@@ -133,7 +133,7 @@ const HomeAddressSection: React.FC<HomeAddressSectionProps> = ({
                 </div>
 
                 {/* Address Fields - Show when address is selected or manual entry is enabled */}
-                {(selectedAddress || showManualEntry) && !values.has_non_uk_address && (
+                {(selectedAddress || showManualEntry) && !values.has_non_ghana_address && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -168,7 +168,7 @@ const HomeAddressSection: React.FC<HomeAddressSectionProps> = ({
                                 name="city"
                                 type="text"
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                placeholder="e.g. London"
+                                placeholder="e.g. Accra"
                             />
                             <ErrorMessage name="city" component="p" className="text-red-500 text-sm mt-1" />
                         </div>
@@ -181,7 +181,7 @@ const HomeAddressSection: React.FC<HomeAddressSectionProps> = ({
                                 name="country"
                                 type="text"
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                placeholder="e.g. United Kingdom"
+                                placeholder="e.g. Ghana"
                             />
                             <ErrorMessage name="country" component="p" className="text-red-500 text-sm mt-1" />
                         </div>
@@ -195,7 +195,7 @@ const HomeAddressSection: React.FC<HomeAddressSectionProps> = ({
                             name="has_non_uk_address"
                             className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                         />
-                        <span className="text-sm text-gray-700">I have a non UK address</span>
+                        <span className="text-sm text-gray-700">I have a non Ghana address</span>
                     </label>
 
                     <label className="flex items-center">
@@ -208,12 +208,12 @@ const HomeAddressSection: React.FC<HomeAddressSectionProps> = ({
                     </label>
                 </div>
 
-                {/* Non UK Address Fields */}
-                {values.has_non_uk_address && (
+                {/* Non Ghana Address Fields */}
+                {values.has_non_ghana_address && (
                     <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                         <h4 className="text-sm font-medium text-yellow-800 mb-3 flex items-center">
                             <AlertCircle className="w-4 h-4 mr-2" />
-                            Non UK Address Details
+                            Non Ghana Address Details
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -221,7 +221,7 @@ const HomeAddressSection: React.FC<HomeAddressSectionProps> = ({
                                     Address Line 1
                                 </label>
                                 <Field
-                                    name="non_uk_address_line_1"
+                                    name="non_ghana_address_line_1"
                                     type="text"
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     placeholder="Street address"
@@ -232,7 +232,7 @@ const HomeAddressSection: React.FC<HomeAddressSectionProps> = ({
                                     Address Line 2
                                 </label>
                                 <Field
-                                    name="non_uk_address_line_2"
+                                    name="non_ghana_address_line_2"
                                     type="text"
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     placeholder="Apartment, suite, etc."
@@ -243,7 +243,7 @@ const HomeAddressSection: React.FC<HomeAddressSectionProps> = ({
                                     City
                                 </label>
                                 <Field
-                                    name="non_uk_city"
+                                    name="non_ghana_city"
                                     type="text"
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     placeholder="City"
@@ -254,7 +254,7 @@ const HomeAddressSection: React.FC<HomeAddressSectionProps> = ({
                                     Postal Code
                                 </label>
                                 <Field
-                                    name="non_uk_postal_code"
+                                    name="non_ghana_postal_code"
                                     type="text"
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     placeholder="Postal code"
@@ -265,7 +265,7 @@ const HomeAddressSection: React.FC<HomeAddressSectionProps> = ({
                                     Country
                                 </label>
                                 <Field
-                                    name="non_uk_country"
+                                    name="non_ghana_country"
                                     type="text"
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     placeholder="Country"
@@ -324,7 +324,7 @@ const HomeAddressSection: React.FC<HomeAddressSectionProps> = ({
                                     name="business_postcode"
                                     type="text"
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    placeholder="Business postcode"
+                                    placeholder="Business postal code"
                                 />
                             </div>
                             <div>

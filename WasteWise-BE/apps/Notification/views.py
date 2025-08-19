@@ -3,7 +3,7 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
-from django.db.models import Q
+from django.db.models import Q, Count
 from .models import Notification
 from .serializer import (
     NotificationSerializer,
@@ -98,93 +98,42 @@ class NotificationViewSet(viewsets.ModelViewSet):
         notifications = Notification.objects.filter(user=request.user, read=False)
         count = notifications.count()
 
-        for notification in notifications:
-            notification.mark_as_read()
+        notifications.update(read=True, read_at=timezone.now())
 
         return Response(
-            {"detail": f"Marked {count} notifications as read.", "count": count}
+            {
+                "detail": f"Marked {count} notifications as read.",
+                "count": count,
+            }
         )
 
     @action(detail=False, methods=["get"])
-    def unread_count(self, request):
-        """Get count of unread notifications for current user."""
-        count = Notification.objects.filter(user=request.user, read=False).count()
-        urgent_count = Notification.objects.filter(
-            user=request.user, read=False, priority__in=["high", "urgent"]
-        ).count()
+    def count(self, request):
+        """Get notification count for dashboard"""
+        user = request.user
 
-        return Response({"unread_count": count, "urgent_count": urgent_count})
+        unread_count = Notification.objects.filter(user=user, read=False).count()
+
+        total_count = Notification.objects.filter(user=user).count()
+
+        return Response({"unread_count": unread_count, "total_count": total_count})
 
     @action(detail=False, methods=["get"])
-    def summary(self, request):
-        """Get notification summary for current user."""
-        queryset = self.get_queryset()
+    def recent(self, request):
+        """Get recent notifications"""
+        limit = int(request.query_params.get("limit", 10))
 
-        summary = {
-            "total": queryset.count(),
-            "unread": queryset.filter(read=False).count(),
-            "urgent": queryset.filter(priority__in=["high", "urgent"]).count(),
-            "by_type": {},
-            "recent": [],
-        }
+        notifications = self.get_queryset()[:limit]
+        serializer = self.get_serializer(notifications, many=True)
 
-        # Count by type
-        for notification_type, _ in Notification.NOTIFICATION_TYPES:
-            count = queryset.filter(notification_type=notification_type).count()
-            if count > 0:
-                summary["by_type"][notification_type] = count
+        return Response(serializer.data)
 
-        # Recent notifications (last 5)
-        recent = queryset[:5]
-        summary["recent"] = NotificationSerializer(recent, many=True).data
+    @action(detail=False, methods=["get"])
+    def unread(self, request):
+        """Get unread notifications"""
+        notifications = Notification.objects.filter(
+            user=request.user, read=False
+        ).order_by("-created_at")
 
-        return Response(summary)
-
-    @action(detail=False, methods=["delete"])
-    def clear_read(self, request):
-        """Delete all read notifications for current user."""
-        count = Notification.objects.filter(user=request.user, read=True).delete()[0]
-        return Response(
-            {"detail": f"Deleted {count} read notifications.", "count": count}
-        )
-
-    @action(detail=False, methods=["get", "post"])
-    def preferences(self, request):
-        """Get or update notification preferences."""
-        if request.method == "GET":
-            prefs = NotificationPreferenceService.get_user_preferences(request.user)
-            return Response(prefs)
-
-        elif request.method == "POST":
-            serializer = NotificationPreferenceSerializer(data=request.data)
-            if serializer.is_valid():
-                NotificationPreferenceService.update_user_preferences(
-                    request.user, serializer.validated_data
-                )
-                return Response({"detail": "Preferences updated successfully."})
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=False, methods=["post"])
-    def test_notification(self, request):
-        """Send a test notification (staff only)."""
-        if not request.user.is_staff:
-            return Response(
-                {"detail": "Only staff can send test notifications."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-        notification_type = request.data.get("notification_type", "system_test")
-        test_data = request.data.get("test_data", {})
-
-        notification = NotificationService.create_notification(
-            user=request.user,
-            notification_type=notification_type,
-            title="Test Notification",
-            message="This is a test notification to verify the system is working correctly.",
-            data=test_data,
-            priority="normal",
-            send_immediately=True,
-        )
-
-        serializer = self.get_serializer(notification)
+        serializer = self.get_serializer(notifications, many=True)
         return Response(serializer.data)

@@ -69,13 +69,13 @@ interface OnboardingFormValues {
     address_line_2: string;
     city: string;
     country: string;
-    has_non_uk_address: boolean;
-    has_separate_business_address: boolean;
-    non_uk_address_line_1: string;
-    non_uk_address_line_2: string;
-    non_uk_city: string;
-    non_uk_postal_code: string;
-    non_uk_country: string;
+            has_non_ghana_address: boolean;
+        has_separate_business_address: boolean;
+        non_ghana_address_line_1: string;
+        non_ghana_address_line_2: string;
+        non_ghana_city: string;
+        non_ghana_postal_code: string;
+        non_ghana_country: string;
     business_address_line_1: string;
     business_address_line_2: string;
     business_city: string;
@@ -121,10 +121,11 @@ const ProviderOnboarding: React.FC = () => {
 
 
     const businessTypeOptions = [
-        { value: 'limited', label: 'Limited Company', icon: Building },
-        { value: 'sole_trader', label: 'Sole Trader', icon: User },
+        { value: 'limited', label: 'Limited Liability Company', icon: Building },
+        { value: 'sole_trader', label: 'Sole Proprietorship', icon: User },
         { value: 'partnership', label: 'Partnership', icon: Users },
-        { value: 'cooperative', label: 'Cooperative', icon: Users },
+        { value: 'cooperative', label: 'Cooperative Society', icon: Users },
+        { value: 'enterprise', label: 'Small Scale Enterprise', icon: Building },
     ];
 
     const wasteManagementServices = [
@@ -132,20 +133,21 @@ const ProviderOnboarding: React.FC = () => {
             id: 'smart_waste_collection',
             label: 'Smart Waste Collection',
             icon: Trash2,
-            description: 'IoT-enabled waste collection with real-time monitoring',
+            description: 'IoT-enabled waste collection with real-time monitoring for Ghana',
             subcategories: [
                 { value: 'Smart bin monitoring', label: 'Smart bin monitoring and maintenance' },
                 { value: 'Residential collection', label: 'Residential waste collection' },
                 { value: 'Commercial waste management', label: 'Commercial waste management' },
                 { value: 'On-demand pickup', label: 'On-demand waste pickup services' },
                 { value: 'Bulk waste collection', label: 'Bulk waste collection and disposal' },
+                { value: 'Market waste collection', label: 'Market and trading center waste collection' },
             ]
         },
         {
             id: 'recycling_services',
             label: 'Recycling & Recovery',
             icon: Recycle,
-            description: 'Specialized recycling and material recovery services',
+            description: 'Specialized recycling and material recovery services for Ghana',
             subcategories: [
                 { value: 'General recycling', label: 'General recycling services' },
                 { value: 'E-waste recycling', label: 'Electronic waste recycling' },
@@ -153,45 +155,49 @@ const ProviderOnboarding: React.FC = () => {
                 { value: 'Paper recycling', label: 'Paper and cardboard recycling' },
                 { value: 'Metal recycling', label: 'Metal waste recycling' },
                 { value: 'Glass recycling', label: 'Glass waste recycling' },
+                { value: 'Textile recycling', label: 'Textile and fabric waste recycling' },
             ]
         },
         {
             id: 'specialized_waste',
             label: 'Specialized Waste Management',
             icon: Shield,
-            description: 'Handling of specialized and hazardous waste materials',
+            description: 'Handling of specialized and hazardous waste materials in Ghana',
             subcategories: [
                 { value: 'Medical waste', label: 'Medical and healthcare waste' },
                 { value: 'Construction waste', label: 'Construction and demolition waste' },
                 { value: 'Hazardous waste', label: 'Hazardous waste disposal' },
                 { value: 'Industrial waste', label: 'Industrial waste management' },
                 { value: 'Chemical waste', label: 'Chemical waste disposal' },
+                { value: 'Mining waste', label: 'Mining and quarry waste management' },
             ]
         },
         {
             id: 'organic_composting',
             label: 'Organic Waste & Composting',
             icon: Leaf,
-            description: 'Organic waste processing and composting services',
+            description: 'Organic waste processing and composting services for Ghana',
             subcategories: [
                 { value: 'Organic waste collection', label: 'Organic waste collection' },
                 { value: 'Composting services', label: 'Composting and soil production' },
                 { value: 'Food waste management', label: 'Food waste management' },
                 { value: 'Garden waste collection', label: 'Garden and yard waste collection' },
                 { value: 'Agricultural waste', label: 'Agricultural waste processing' },
+                { value: 'Cocoa waste management', label: 'Cocoa and farming waste management' },
             ]
         },
         {
             id: 'education_consulting',
             label: 'Education & Consulting',
             icon: Globe,
-            description: 'Waste management education and consulting services',
+            description: 'Waste management education and consulting services for Ghana',
             subcategories: [
                 { value: 'Community education', label: 'Community waste education programs' },
                 { value: 'Corporate training', label: 'Corporate waste management training' },
                 { value: 'Waste audits', label: 'Waste audits and assessments' },
                 { value: 'Sustainability consulting', label: 'Sustainability consulting' },
                 { value: 'Policy development', label: 'Waste policy development' },
+                { value: 'School programs', label: 'School and educational institution programs' },
             ]
         }
     ];
@@ -199,39 +205,51 @@ const ProviderOnboarding: React.FC = () => {
     const requiredDocuments = [
         {
             icon: CreditCard,
-            title: 'Valid Driving License',
+            title: 'Valid Ghana Driving License',
             description: 'Full Ghana driving license for waste collection vehicles',
             required: true,
         },
         {
             icon: FileText,
             title: 'Vehicle Registration & Insurance',
-            description: 'Valid registration and comprehensive insurance for waste collection vehicles',
+            description: 'Valid DVLA registration and comprehensive insurance for waste collection vehicles',
             required: true,
         },
         {
             icon: Shield,
-            title: 'EPA Permit',
-            description: 'Environmental Protection Agency permit for waste handling',
+            title: 'EPA Ghana Permit',
+            description: 'Environmental Protection Agency Ghana permit for waste handling and disposal',
             required: true,
         },
         {
             icon: Award,
-            title: 'Business Registration',
-            description: 'Valid business registration certificate',
+            title: 'Business Registration Certificate',
+            description: 'Valid business registration from Registrar General\'s Department',
             required: true,
         },
         {
             icon: FileCheck,
-            title: 'Waste Management Certification',
-            description: 'Professional certification in waste management (if applicable)',
-            required: false,
+            title: 'GRA Tax Clearance Certificate',
+            description: 'Ghana Revenue Authority tax clearance certificate',
+            required: true,
         },
         {
             icon: Shield,
             title: 'Safety Training Certificate',
-            description: 'Health and safety training for waste handling',
+            description: 'Occupational Health and Safety training for waste handling',
             required: true,
+        },
+        {
+            icon: Building,
+            title: 'Local Assembly Permit',
+            description: 'Waste collection permit from Metropolitan/Municipal/District Assembly',
+            required: true,
+        },
+        {
+            icon: FileText,
+            title: 'Waste Management Certification',
+            description: 'Professional certification in waste management (if applicable)',
+            required: false,
         },
     ];
 
@@ -240,8 +258,8 @@ const ProviderOnboarding: React.FC = () => {
         last_name: Yup.string().required('Last name is required'),
         business_name: Yup.string().required('Business name is required'),
         business_type: Yup.string().required('Please select a business type'),
-        postcode: Yup.string().required('Postcode is required'),
-        selected_address: Yup.string().when('has_non_uk_address', {
+        postcode: Yup.string().required('Postal code is required'),
+        selected_address: Yup.string().when('has_non_ghana_address', {
             is: false,
             then: (schema) => schema.required('Please select an address') as Yup.StringSchema,
         }),
@@ -281,7 +299,7 @@ const ProviderOnboarding: React.FC = () => {
         }
 
         const formattedPostcode = geocodingService.formatPostcode(postcode);
-        console.log(`🔍 Searching addresses for postcode: ${formattedPostcode}`);
+        console.log(`🔍 Searching addresses for postal code: ${formattedPostcode}`);
 
         setIsSearchingAddresses(true);
         setAddressError(null);
@@ -302,15 +320,15 @@ const ProviderOnboarding: React.FC = () => {
                 setAddressOptions(result.addresses);
                 setAddressError(null);
                 setShowManualEntry(false);
-                console.log(`✅ Found ${result.addresses.length} comprehensive addresses for postcode: ${formattedPostcode}`);
+                console.log(`✅ Found ${result.addresses.length} comprehensive addresses for postal code: ${formattedPostcode}`);
             } else {
                 setAddressOptions([]);
-                setAddressError('No addresses found for this postcode. You can enter your address manually.');
+                setAddressError('No addresses found for this postal code. You can enter your address manually.');
                 setShowManualEntry(true); // Show manual entry option
-                console.log(`⚠️ No addresses found for postcode: ${formattedPostcode}`);
+                console.log(`⚠️ No addresses found for postal code: ${formattedPostcode}`);
             }
         } catch (error: any) {
-            console.error('Error searching postcode:', error);
+            console.error('Error searching postal code:', error);
             setAddressOptions([]);
             setAddressError('Error loading addresses. You can enter your address manually.');
             setShowManualEntry(true); // Show manual entry option
@@ -330,7 +348,7 @@ const ProviderOnboarding: React.FC = () => {
             setFieldValue('address_line_1', selectedAddr.line1);
             setFieldValue('address_line_2', selectedAddr.line2 || '');
             setFieldValue('city', selectedAddr.city);
-            setFieldValue('country', selectedAddr.county || 'United Kingdom');
+            setFieldValue('country', selectedAddr.county || 'Ghana');
             setFieldValue('selected_address', selectedAddr.displayText);
             
             console.log('🏠 Address selected and auto-filled:', selectedAddr);
@@ -338,7 +356,7 @@ const ProviderOnboarding: React.FC = () => {
                 address_line_1: selectedAddr.line1,
                 address_line_2: selectedAddr.line2 || '',
                 city: selectedAddr.city,
-                country: selectedAddr.county || 'United Kingdom',
+                country: selectedAddr.county || 'Ghana',
                 selected_address: selectedAddr.displayText
             });
         }
@@ -450,10 +468,10 @@ const ProviderOnboarding: React.FC = () => {
                                 <div></div> {/* Spacer */}
                             </div>
                             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                                Join WasteWise as a Service Provider
+                                Join WasteWise Ghana as a Service Provider
                             </h1>
                             <p className="text-lg text-gray-600 mb-6">
-                                Partner with Ghana's leading smart waste management platform and help build a cleaner, sustainable future
+                                Partner with Ghana's leading smart waste management platform and help build a cleaner, sustainable future for our nation
                             </p>
                             <div className="flex justify-center space-x-8 text-sm text-gray-500">
                                 <div className="flex items-center">
@@ -462,7 +480,7 @@ const ProviderOnboarding: React.FC = () => {
                                 </div>
                                 <div className="flex items-center">
                                     <Shield className="w-4 h-4 mr-1" />
-                                    <span>EPA certified</span>
+                                    <span>EPA Ghana certified</span>
                                 </div>
                                 <div className="flex items-center">
                                     <DollarSign className="w-4 h-4 mr-1" />
@@ -477,7 +495,7 @@ const ProviderOnboarding: React.FC = () => {
                             <Headphones className="mr-2 w-5 h-5" />
                             
                             <span className="text-sm md:text-base">
-                                Need help? Our support team is available 8am-6pm daily • Call: +233 30 123 4567
+                                Need help? Our support team is available 8am-6pm daily • Call: +233 24 813 8722
                             </span>
                         </div>
                 </div>
@@ -501,23 +519,23 @@ const ProviderOnboarding: React.FC = () => {
                                     </div>
                                     <Formik
                                         initialValues={{
-                                                    first_name: '',
-        last_name: '',
-        business_name: '',
-        business_type: '',
-        postcode: '',
+                                            first_name: '',
+                                            last_name: '',
+                                            business_name: '',
+                                            business_type: '',
+                                            postcode: '',
                                             selected_address: '',
                                             address_line_1: '',
                                             address_line_2: '',
                                             city: '',
                                             country: '',
-                                            has_non_uk_address: false,
+                                            has_non_ghana_address: false,
                                             has_separate_business_address: false,
-                                            non_uk_address_line_1: '',
-                                            non_uk_address_line_2: '',
-                                            non_uk_city: '',
-                                            non_uk_postal_code: '',
-                                            non_uk_country: '',
+                                            non_ghana_address_line_1: '',
+                                            non_ghana_address_line_2: '',
+                                            non_ghana_city: '',
+                                            non_ghana_postal_code: '',
+                                            non_ghana_country: '',
                                             business_address_line_1: '',
                                             business_address_line_2: '',
                                             business_city: '',
@@ -590,24 +608,24 @@ const ProviderOnboarding: React.FC = () => {
 
                                                 {/* Trust Indicators */}
                                                 <div className="pt-6 border-t border-gray-200">
-                                                    <div className="flex items-center justify-center space-x-8 text-sm text-gray-500 mb-6">
-                                                        <div className="flex items-center">
-                                                            <Shield className="w-4 h-4 mr-1" />
-                                                            <span>EPA Certified</span>
-                                                        </div>
-                                                        <div className="flex items-center">
-                                                            <Users className="w-4 h-4 mr-1" />
-                                                            <span>200+ Partners</span>
-                                                        </div>
-                                                        <div className="flex items-center">
-                                                            <Star className="w-4 h-4 mr-1" />
-                                                            <span>4.8/5 Rating</span>
-                                                        </div>
-                                                        <div className="flex items-center">
-                                                            <Leaf className="w-4 h-4 mr-1" />
-                                                            <span>Eco-Friendly</span>
-                                                        </div>
+                                                                                                    <div className="flex items-center justify-center space-x-8 text-sm text-gray-500 mb-6">
+                                                    <div className="flex items-center">
+                                                        <Shield className="w-4 h-4 mr-1" />
+                                                        <span>EPA Ghana Certified</span>
                                                     </div>
+                                                    <div className="flex items-center">
+                                                        <Users className="w-4 h-4 mr-1" />
+                                                        <span>200+ Ghana Partners</span>
+                                                    </div>
+                                                    <div className="flex items-center">
+                                                        <Star className="w-4 h-4 mr-1" />
+                                                        <span>4.8/5 Rating</span>
+                                                    </div>
+                                                    <div className="flex items-center">
+                                                        <Leaf className="w-4 h-4 mr-1" />
+                                                        <span>Ghana Eco-Friendly</span>
+                                                    </div>
+                                                </div>
                                                 </div>
 
                                                 {/* Submit Button */}
