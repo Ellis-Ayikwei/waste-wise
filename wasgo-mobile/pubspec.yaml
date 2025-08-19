@@ -1,0 +1,50 @@
+name: bytedev
+description: "A new Flutter project."
+
+# Prevent accidental publishing to pub.dev.
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  dio: ^5.0.3
+  redux: ^5.0.0
+  flutter_redux: ^0.10.0
+  get: ^4.6.6
+  bottom_navy_bar: ^6.1.0
+  smooth_page_indicator: ^1.2.0+3
+  flutter_signin_button: ^2.0.0
+  pin_code_fields: ^8.0.1
+  otp_pin_field: ^1.4.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  fonts:
+    - family: Monoton
+      fonts:
+        - asset: assets/fonts/Monoton-Regular.ttf
+
+    - family: Montez
+      fonts:
+        - asset: assets/fonts/Montez-Regular.ttf
+
+  # Enable generation of localized Strings from arb files.
+  generate: true
+
+  assets:
+    # Add assets from the images directory to the application.
+    - assets/images/
