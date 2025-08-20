@@ -4,24 +4,24 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-    faEnvelope, 
-    faLock, 
-    faEye, 
-    faEyeSlash, 
-    faUser, 
-    faTruck,
-    faRecycle,
-    faLeaf,
-    faTrash,
-    faMobileAlt,
-    faArrowRight,
-    faArrowLeft,
-    faCheck,
-    faGlobe,
-    faSeedling,
-} from '@fortawesome/free-solid-svg-icons';
+    Mail, 
+    Lock, 
+    Eye, 
+    EyeOff, 
+    User, 
+    Truck,
+    Recycle,
+    Leaf,
+    Trash,
+    Smartphone,
+    ArrowRight,
+    ArrowLeft,
+    Check,
+    Globe,
+    Sprout,
+} from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGoogle, faFacebook, faApple } from '@fortawesome/free-brands-svg-icons';
 import toast from 'react-hot-toast';
 import useSignIn from 'react-auth-kit/hooks/useSignIn';
@@ -97,7 +97,7 @@ const Login = () => {
     };
 
     const handleSocialLogin = (provider: string) => {
-        toast.info(`${provider} login coming soon!`);
+        toast(`${provider} login coming soon!`);
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,14 +127,14 @@ const Login = () => {
                         to="/" 
                         className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 mb-8 transition-colors"
                     >
-                        <FontAwesomeIcon icon={faArrowLeft} />
+                        <ArrowLeft size={16} />
                         <span>Back to Home</span>
                     </Link>
 
                     {/* Logo */}
                     <div className="flex items-center gap-3 mb-8">
                         <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
-                            <FontAwesomeIcon icon={faRecycle} className="text-white text-xl" />
+                            <Recycle className="text-white text-xl" />
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">wasgo</h1>
@@ -160,9 +160,9 @@ const Login = () => {
                                     : 'border-gray-200 hover:border-gray-300'
                             }`}
                         >
-                            <FontAwesomeIcon 
-                                icon={faUser} 
-                                className={`text-2xl mb-2 ${userType === 'customer' ? 'text-green-600' : 'text-gray-400'}`} 
+                            <User 
+                                size={32}
+                                className={`mb-2 mx-auto ${userType === 'customer' ? 'text-green-600' : 'text-gray-400'}`} 
                             />
                             <p className={`font-medium ${userType === 'customer' ? 'text-green-600' : 'text-gray-600'}`}>
                                 Customer
@@ -180,9 +180,9 @@ const Login = () => {
                                     : 'border-gray-200 hover:border-gray-300'
                             }`}
                         >
-                            <FontAwesomeIcon 
-                                icon={faTruck} 
-                                className={`text-2xl mb-2 ${userType === 'provider' ? 'text-green-600' : 'text-gray-400'}`} 
+                            <Truck 
+                                size={32}
+                                className={`mb-2 mx-auto ${userType === 'provider' ? 'text-green-600' : 'text-gray-400'}`} 
                             />
                             <p className={`font-medium ${userType === 'provider' ? 'text-green-600' : 'text-gray-600'}`}>
                                 Provider
@@ -200,7 +200,7 @@ const Login = () => {
                             </label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <FontAwesomeIcon icon={faEnvelope} className="text-gray-400" />
+                                    <Mail className="text-gray-400" size={16} />
                                 </div>
                                 <input
                                     type="email"
@@ -231,7 +231,7 @@ const Login = () => {
                             </label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <FontAwesomeIcon icon={faLock} className="text-gray-400" />
+                                    <Lock className="text-gray-400" size={16} />
                                 </div>
                                 <input
                                     type={showPassword ? 'text' : 'password'}
@@ -248,10 +248,11 @@ const Login = () => {
                                     onClick={() => setShowPassword(!showPassword)}
                                     className="absolute inset-y-0 right-0 pr-3 flex items-center"
                                 >
-                                    <FontAwesomeIcon 
-                                        icon={showPassword ? faEyeSlash : faEye} 
-                                        className="text-gray-400 hover:text-gray-600"
-                                    />
+                                    {showPassword ? (
+                                        <EyeOff className="text-gray-400 hover:text-gray-600" size={16} />
+                                    ) : (
+                                        <Eye className="text-gray-400 hover:text-gray-600" size={16} />
+                                    )}
                                 </button>
                             </div>
                             {errors.password && (
@@ -301,7 +302,7 @@ const Login = () => {
                             ) : (
                                 <>
                                     <span>Sign In</span>
-                                    <FontAwesomeIcon icon={faArrowRight} />
+                                    <ArrowRight size={16} />
                                 </>
                             )}
                         </motion.button>
@@ -318,22 +319,23 @@ const Login = () => {
                     </div>
 
                     {/* Social Login */}
-                    <div className="grid grid-cols-3 gap-3">
-                        {[
-                            { icon: faGoogle, name: 'Google', color: 'hover:bg-red-50 hover:border-red-300' },
-                            { icon: faFacebook, name: 'Facebook', color: 'hover:bg-blue-50 hover:border-blue-300' },
-                            { icon: faApple, name: 'Apple', color: 'hover:bg-gray-100 hover:border-gray-400' },
-                        ].map((provider) => (
-                            <motion.button
-                                key={provider.name}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => handleSocialLogin(provider.name)}
-                                className={`p-3 border border-gray-300 rounded-lg transition-all ${provider.color}`}
-                            >
-                                <FontAwesomeIcon icon={provider.icon} className="text-xl" />
-                            </motion.button>
-                        ))}
+                    <div className="grid grid-cols-2 gap-3">
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-300"
+                        >
+                            <FontAwesomeIcon icon={faGoogle} className="text-red-500 mr-2" />
+                            Google
+                        </motion.button>
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-300"
+                        >
+                            <FontAwesomeIcon icon={faFacebook} className="text-blue-600 mr-2" />
+                            Facebook
+                        </motion.button>
                     </div>
 
                     {/* Sign Up Link */}
@@ -385,21 +387,21 @@ const Login = () => {
                         transition={{ duration: 6, repeat: Infinity }}
                         className="absolute top-1/4 left-1/4 text-white/20"
                     >
-                        <FontAwesomeIcon icon={faRecycle} size="4x" />
+                        <Recycle size={64} />
                     </motion.div>
                     <motion.div
                         animate={{ y: [0, 20, 0], rotate: [0, -10, 0] }}
                         transition={{ duration: 8, repeat: Infinity }}
                         className="absolute bottom-1/3 right-1/4 text-white/20"
                     >
-                        <FontAwesomeIcon icon={faLeaf} size="3x" />
+                        <Leaf size={48} />
                     </motion.div>
                     <motion.div
                         animate={{ y: [0, -15, 0] }}
                         transition={{ duration: 7, repeat: Infinity }}
                         className="absolute top-1/2 right-1/3 text-white/15"
                     >
-                        <FontAwesomeIcon icon={faGlobe} size="5x" />
+                        <Globe size={80} />
                     </motion.div>
                 </div>
 
@@ -434,7 +436,7 @@ const Login = () => {
                                         className="flex items-center gap-3 text-left"
                                     >
                                         <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-                                            <FontAwesomeIcon icon={faCheck} className="text-sm" />
+                                            <Check size={16} />
                                         </div>
                                         <span className="text-green-50">{feature}</span>
                                     </motion.div>

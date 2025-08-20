@@ -283,7 +283,7 @@ const Register: React.FC = () => {
                                 <div className="text-center">
                                     <p className="text-sm text-gray-600 mb-3">Want to offer waste management services?</p>
                                     <Link
-                                        to="/provider-onboarding"
+                                        to="/provider/onboarding"
                                         className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 font-medium transition-colors"
                                     >
                                         <Truck size={16} />
