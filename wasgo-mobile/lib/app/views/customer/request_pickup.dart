@@ -6,6 +6,7 @@ import 'package:bytedev/core/widgets/app_text_field.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:bytedev/app/redux/states/app_state.dart';
 import 'package:bytedev/app/controllers/customer_controller.dart';
+import 'package:bytedev/app/views/main_screen.dart';
 import 'package:redux/redux.dart';
 
 class RequestPickupView extends StatefulWidget {
@@ -57,14 +58,9 @@ class _RequestPickupViewState extends State<RequestPickupView> {
         controller: CustomerController(store),
       ),
       builder: (context, vm) {
-        return Scaffold(
-          backgroundColor: AppColors.background,
-          appBar: AppBar(
-            title: const Text('Request Pickup'),
-            backgroundColor: AppColors.primary,
-            elevation: 0,
-          ),
-          body: SingleChildScrollView(
+        return CustomerMainScreen(
+          title: 'Request Pickup',
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Form(
               key: _formKey,
@@ -77,6 +73,7 @@ class _RequestPickupViewState extends State<RequestPickupView> {
                   const SizedBox(height: 16),
                   AppTextField(
                     controller: _quantityController,
+                    labelText: 'Estimated quantity (kg)',
                     hintText: 'Estimated quantity (kg)',
                     keyboardType: TextInputType.number,
                     validator: (value) {
@@ -88,14 +85,15 @@ class _RequestPickupViewState extends State<RequestPickupView> {
                   ),
                   const SizedBox(height: 16),
                   AppTextField(
+                    labelText: 'Description',
                     controller: _descriptionController,
                     hintText: 'Description (optional)',
-                    maxLines: 3,
                   ),
                   const SizedBox(height: 24),
                   _buildSectionTitle('Pickup Location'),
                   const SizedBox(height: 16),
                   AppTextField(
+                    labelText: 'Pickup Address',
                     controller: _addressController,
                     hintText: 'Pickup address',
                     validator: (value) {
@@ -104,10 +102,6 @@ class _RequestPickupViewState extends State<RequestPickupView> {
                       }
                       return null;
                     },
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.my_location),
-                      onPressed: _getCurrentLocation,
-                    ),
                   ),
                   const SizedBox(height: 24),
                   _buildSectionTitle('Schedule'),
@@ -122,7 +116,7 @@ class _RequestPickupViewState extends State<RequestPickupView> {
                   AppButton(
                     text: 'Submit Request',
                     onPressed: vm.state.customerState.isLoading
-                        ? null
+                        ? () {}
                         : () => _submitRequest(vm),
                     isLoading: vm.state.customerState.isLoading,
                   ),

@@ -5,6 +5,7 @@ import 'package:bytedev/core/widgets/app_button.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:bytedev/app/redux/states/app_state.dart';
 import 'package:bytedev/app/controllers/provider_controller.dart';
+import 'package:bytedev/app/views/main_screen.dart';
 import 'package:redux/redux.dart';
 
 class JobRequestsView extends StatefulWidget {
@@ -35,20 +36,15 @@ class _JobRequestsViewState extends State<JobRequestsView> {
         controller: ProviderController(store),
       ),
       builder: (context, vm) {
-        return Scaffold(
-          backgroundColor: AppColors.background,
-          appBar: AppBar(
-            title: const Text('Job Requests'),
-            backgroundColor: AppColors.primary,
-            elevation: 0,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.filter_list),
-                onPressed: _showFilterOptions,
-              ),
-            ],
-          ),
-          body: RefreshIndicator(
+        return ProviderMainScreen(
+          title: 'Job Requests',
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.filter_list),
+              onPressed: _showFilterOptions,
+            ),
+          ],
+          child: RefreshIndicator(
             onRefresh: () async {
               vm.controller.fetchJobRequests();
             },
@@ -151,11 +147,19 @@ class _JobRequestsViewState extends State<JobRequestsView> {
             Row(
               children: [
                 Expanded(
-                  child: AppButton(
-                    text: 'Reject',
-                    onPressed: () => _rejectJob(job['id'], vm),
-                    backgroundColor: Colors.red,
+                  child: Container(
                     height: 40,
+                    child: TextButton(
+                      onPressed: () => _rejectJob(job['id'], vm),
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Reject'),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),

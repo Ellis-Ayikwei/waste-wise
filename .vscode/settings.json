@@ -1,3 +1,4 @@
 {
-    "iis.configDir": ""
+    "iis.configDir": "",
+    "cmake.sourceDirectory": "C:/Users/Ellis/Desktop/Wasgo/waste-wise/wasgo-mobile/linux/flutter"
 }

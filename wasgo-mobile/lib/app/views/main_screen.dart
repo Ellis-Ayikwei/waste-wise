@@ -1,385 +1,203 @@
-import 'dart:async';
-
-import 'package:bottom_navy_bar/bottom_navy_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:get/get.dart';
+import 'package:bytedev/core/theme/app_colors.dart';
+import 'package:bytedev/core/widgets/app_sidebar.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final Widget child;
+  final String title;
+  final String userType; // 'customer' or 'provider'
+  final List<Widget>? actions;
+  final bool showBackButton;
+
+  const MainScreen({
+    Key? key,
+    required this.child,
+    required this.title,
+    required this.userType,
+    this.actions,
+    this.showBackButton = true,
+  }) : super(key: key);
 
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int indexOfBTB = 0;
-  int indexOfPageview = 0;
-  int indexOfCategories = 0;
-  PageController pageController = PageController(initialPage: 0);
+  bool _isSidebarOpen = false;
 
-  @override
-  void initState() {
-    super.initState();
-
-    /// For Changing Index of Page View Automatically
-    Timer.periodic(const Duration(seconds: 3), (Timer timer) {
-      if (indexOfPageview < 12) {
-        indexOfPageview++;
-        pageController.animateToPage(
-          indexOfPageview,
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.ease,
-        );
-      } else {
-        indexOfPageview = -1;
-      }
+  void _toggleSidebar() {
+    setState(() {
+      _isSidebarOpen = !_isSidebarOpen;
     });
   }
 
   @override
-  void dispose() {
-    pageController.dispose();
-    super.dispose();
-  }
-
-  /// List of Icons(for Categories) just for debuging
-  List<IconData> icons = [
-    Icons.safety_check,
-    Icons.ac_unit,
-    Icons.label,
-    Icons.data_saver_on_outlined,
-    Icons.umbrella_outlined,
-    Icons.widgets,
-    Icons.earbuds_battery,
-    Icons.safety_check,
-    Icons.wallet,
-    Icons.gps_fixed,
-    Icons.hourglass_full,
-    Icons.spa_rounded
-  ];
-
-  String showProductName(index) {
-    switch (index) {
-      case 0:
-        return "Dresses";
-      case 1:
-        return "Tops, Tees & Blouses";
-      case 2:
-        return "Sweaters";
-      case 3:
-        return "Jeans";
-      case 4:
-        return "Leggings";
-      case 5:
-        return "Active";
-      case 6:
-        return "Skirts";
-      case 7:
-        return "Socks & Hosiery";
-      case 8:
-        return "Suiting & Blazers";
-      case 9:
-        return "Bodysuits";
-      case 10:
-        return "Shorts";
-      case 11:
-        return "ُShoes";
-      case 12:
-        return "Sweaters";
-
-      default:
-        return "";
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-
-    return SafeArea(
-      child: Scaffold(
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 8, left: 4, right: 4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                /// AppBar
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.all(5),
-                      width: screenWidth * 0.1,
-                      height: screenWidth * 0.1,
-                      decoration: BoxDecoration(
-                          color: Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(3)),
-                      child: Center(
-                        child: IconButton(
-                            onPressed: () {},
-                            icon: const Icon(
-                              Icons.menu,
-                              color: Colors.black,
-                            )),
-                      ),
-                    ),
-                    Container(
-                      margin: const EdgeInsets.all(5),
-                      width: screenWidth * 0.1,
-                      height: screenWidth * 0.1,
-                      decoration: BoxDecoration(
-                          color: Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(10)),
-                      child: Center(
-                        child: IconButton(
-                            onPressed: () {},
-                            icon: const Icon(
-                              Icons.search_sharp,
-                              color: Colors.black,
-                            )),
-                      ),
-                    ),
-                  ],
-                ),
-
-                /// Titles
-                Padding(
-                  padding: const EdgeInsets.only(top: 12, left: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        "Hello Amir �",
-                        style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 30),
-                      ),
-                      Text(
-                        "Lets get somthing?",
-                        style: TextStyle(
-                            color: Colors.grey,
-                            fontWeight: FontWeight.w300,
-                            fontSize: 15),
-                      ),
-                    ],
-                  ),
-                ),
-
-                /// Page View
-                Padding(
-                  padding: const EdgeInsets.only(top: 20),
-                  child: SizedBox(
-                    width: screenWidth,
-                    height: screenHeight * 0.35,
-                    child: PageView.builder(
-                        controller: pageController,
-                        onPageChanged: (val) {
-                          setState(() {
-                            indexOfPageview = val;
-                          });
-                        },
-                        itemCount: 13,
-                        physics: const BouncingScrollPhysics(),
-                        itemBuilder: (ctx, index) {
-                          return Container(
-                            margin: const EdgeInsets.all(5),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              image: DecorationImage(
-                                  image: AssetImage(
-                                      'assets/images/${index + 1}.jpg'),
-                                  fit: BoxFit.cover),
-                            ),
-                          );
-                        }),
-                  ),
-                ),
-
-                /// Page Indicator
-                Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Align(
-                      alignment: Alignment.center, child: pageindicator()),
-                ),
-
-                /// Top Categories Text
-                Padding(
-                  padding: const EdgeInsets.only(top: 25, left: 10, right: 10),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
-                      Text(
-                        "Top Categories",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 17,
-                        ),
-                      ),
-                      Text(
-                        "SEE ALL",
-                        style: TextStyle(
-                          color: Colors.deepOrange,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                /// Categories List
-                Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: SizedBox(
-                    width: screenWidth,
-                    height: screenHeight * 0.1,
-                    child: ListView.builder(
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: icons.length,
-                        scrollDirection: Axis.horizontal,
-                        itemBuilder: (ctx, index) {
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                indexOfCategories = index;
-                              });
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 500),
-                              margin: const EdgeInsets.all(3),
-                              width: screenWidth * 0.1,
-                              decoration: BoxDecoration(
-                                  color: indexOfCategories == index
-                                      ? Colors.deepOrangeAccent
-                                      : Colors.grey.shade300,
-                                  borderRadius: BorderRadius.circular(15)),
-                              child: Center(
-                                child: Icon(
-                                  icons[index],
-                                  color: indexOfCategories == index
-                                      ? Colors.white
-                                      : Colors.grey,
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
-                  ),
-                ),
-
-                /// Product List
-                SizedBox(
-                  width: screenWidth,
-                  height: screenHeight * 0.4,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "A list of Products will be Shown here",
-                        style: TextStyle(color: Colors.grey.shade400),
-                      ),
-                      const SizedBox(
-                        height: 40,
-                      ),
-                      Text(
-                        showProductName(indexOfCategories),
-                        style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.deepOrangeAccent),
-                      ),
-                      Icon(
-                        icons[indexOfCategories],
-                        size: screenWidth * 0.1,
-                        color: Colors.deepOrangeAccent,
-                      )
-                    ],
-                  ),
-                )
-              ],
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: Stack(
+        children: [
+          // Main content
+          Column(
+            children: [
+              _buildAppBar(),
+              Expanded(
+                child: widget.child,
+              ),
+            ],
+          ),
+          
+          // Sidebar overlay
+          if (_isSidebarOpen)
+            GestureDetector(
+              onTap: _toggleSidebar,
+              child: Container(
+                color: Colors.black.withOpacity(0.5),
+              ),
+            ),
+          
+          // Sidebar
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            child: AppSidebar(
+              isOpen: _isSidebarOpen,
+              onToggle: _toggleSidebar,
+              userType: widget.userType,
             ),
           ),
-        ),
-        bottomNavigationBar: bottomNav(),
+        ],
       ),
     );
   }
 
-  /// Bottom Navigation Bar
-  BottomNavyBar bottomNav() {
-    return BottomNavyBar(
-      selectedIndex: indexOfBTB,
-      iconSize: 28, // Slightly larger icons for better visuals
-      curve: Curves.easeInOut, // Smoother animation curve
-      showElevation: true, // Adds a nice shadow effect
-      backgroundColor: Colors.white, // Ensure a clean background
-      onItemSelected: (index) {
-        setState(() {
-          indexOfBTB = index;
-        });
-      },
-      items: [
-        // Home Item
-        BottomNavyBarItem(
-          icon: const Icon(Icons.home),
-          title: const Text('Home'),
-          activeColor: Colors.deepOrange,
-          inactiveColor: Colors.grey.shade400,
-          textAlign: TextAlign.center,
+  Widget _buildAppBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Container(
+          height: 60,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              // Menu button
+              IconButton(
+                onPressed: _toggleSidebar,
+                icon: const Icon(
+                  Icons.menu,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              
+              // Title
+              Expanded(
+                child: Text(
+                  widget.title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              
+              // Actions
+              if (widget.actions != null) ...[
+                ...widget.actions!,
+              ] else ...[
+                // Default actions
+                IconButton(
+                  onPressed: () {
+                    // TODO: Navigate to notifications
+                  },
+                  icon: const Icon(
+                    Icons.notifications_outlined,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () {
+                    // TODO: Navigate to profile
+                  },
+                  icon: const Icon(
+                    Icons.person_outline,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
-
-        // Favorite Item
-        BottomNavyBarItem(
-          icon: const Icon(Icons.favorite),
-          title: const Text('Favorite'),
-          activeColor: Colors.deepOrange,
-          inactiveColor: Colors.grey.shade400,
-          textAlign: TextAlign.center,
-        ),
-
-        // Cart Item
-        BottomNavyBarItem(
-          icon: const Icon(Icons.shopping_cart),
-          title: const Text('Cart'),
-          activeColor: Colors.deepOrange,
-          inactiveColor: Colors.grey.shade400,
-          textAlign: TextAlign.center,
-        ),
-
-        // Profile Item
-        BottomNavyBarItem(
-          icon: const Icon(Icons.person),
-          title: const Text('Profile'),
-          activeColor: Colors.deepOrange,
-          inactiveColor: Colors.grey.shade400,
-          textAlign: TextAlign.center,
-        ),
-      ],
+      ),
     );
   }
+}
 
-  /// Smooth Page Indicator Widget
-  SmoothPageIndicator pageindicator() {
-    return SmoothPageIndicator(
-      controller: pageController,
-      count: 13,
-      effect: WormEffect(
-          spacing: 5.0,
-          radius: 10.0,
-          dotWidth: 12.0,
-          dotHeight: 12.0,
-          dotColor: Colors.grey.shade400,
-          activeDotColor: Colors.deepOrange),
-      onDotClicked: (newIndex) {
-        setState(() {
-          pageController.animateToPage(newIndex,
-              duration: const Duration(milliseconds: 500), curve: Curves.ease);
-        });
-      },
+// Convenience widget for customer screens
+class CustomerMainScreen extends StatelessWidget {
+  final Widget child;
+  final String title;
+  final List<Widget>? actions;
+  final bool showBackButton;
+
+  const CustomerMainScreen({
+    Key? key,
+    required this.child,
+    required this.title,
+    this.actions,
+    this.showBackButton = true,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MainScreen(
+      userType: 'customer',
+      title: title,
+      actions: actions,
+      showBackButton: showBackButton,
+      child: child,
+    );
+  }
+}
+
+// Convenience widget for provider screens
+class ProviderMainScreen extends StatelessWidget {
+  final Widget child;
+  final String title;
+  final List<Widget>? actions;
+  final bool showBackButton;
+
+  const ProviderMainScreen({
+    Key? key,
+    required this.child,
+    required this.title,
+    this.actions,
+    this.showBackButton = true,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MainScreen(
+      userType: 'provider',
+      title: title,
+      actions: actions,
+      showBackButton: showBackButton,
+      child: child,
     );
   }
 }

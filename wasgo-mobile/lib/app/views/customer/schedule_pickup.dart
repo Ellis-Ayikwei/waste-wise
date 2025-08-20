@@ -6,6 +6,7 @@ import 'package:bytedev/core/widgets/app_text_field.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:bytedev/app/redux/states/app_state.dart';
 import 'package:bytedev/app/controllers/customer_controller.dart';
+import 'package:bytedev/app/views/main_screen.dart';
 import 'package:redux/redux.dart';
 
 class SchedulePickupView extends StatefulWidget {
@@ -64,14 +65,9 @@ class _SchedulePickupViewState extends State<SchedulePickupView> {
         controller: CustomerController(store),
       ),
       builder: (context, vm) {
-        return Scaffold(
-          backgroundColor: AppColors.background,
-          appBar: AppBar(
-            title: const Text('Schedule Pickup'),
-            backgroundColor: AppColors.primary,
-            elevation: 0,
-          ),
-          body: SingleChildScrollView(
+        return CustomerMainScreen(
+          title: 'Schedule Pickup',
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Form(
               key: _formKey,
@@ -92,14 +88,15 @@ class _SchedulePickupViewState extends State<SchedulePickupView> {
                   _buildWasteTypeSelector(),
                   const SizedBox(height: 16),
                   AppTextField(
+                    labelText: 'Additional Notes',
                     controller: _descriptionController,
                     hintText: 'Additional notes (optional)',
-                    maxLines: 3,
                   ),
                   const SizedBox(height: 24),
                   _buildSectionTitle('Pickup Location'),
                   const SizedBox(height: 16),
                   AppTextField(
+                    labelText: 'Pickup Address',
                     controller: _addressController,
                     hintText: 'Pickup address',
                     validator: (value) {
@@ -108,16 +105,12 @@ class _SchedulePickupViewState extends State<SchedulePickupView> {
                       }
                       return null;
                     },
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.my_location),
-                      onPressed: _getCurrentLocation,
-                    ),
                   ),
                   const SizedBox(height: 32),
                   AppButton(
                     text: 'Create Schedule',
                     onPressed: vm.state.customerState.isLoading
-                        ? null
+                        ? () {}
                         : () => _submitSchedule(vm),
                     isLoading: vm.state.customerState.isLoading,
                   ),
