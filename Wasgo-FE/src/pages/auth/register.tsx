@@ -5,28 +5,22 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ErrorMessage, Field, Form, Formik } from 'formik';
 import * as Yup from 'yup';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-    faUser,
-    faEnvelope,
-    faPhone,
-    faLock,
-    faEye,
-    faEyeSlash,
-    faTruck,
-    faCheckCircle,
-    faArrowRight,
-    faShieldAlt,
-    faMapMarkerAlt,
-    faClock,
-    faExclamationCircle,
-    faRecycle,
-    faLeaf,
-    faGlobe,
-    faSeedling,
-    faArrowLeft,
-    faCheck,
-} from '@fortawesome/free-solid-svg-icons';
+    User,
+    Phone,
+    Lock,
+    Eye,
+    EyeOff,
+    Truck,
+    ArrowRight,
+    AlertCircle,
+    Recycle,
+    Leaf,
+    Globe,
+    ArrowLeft,
+    Check,
+} from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGoogle, faFacebookF } from '@fortawesome/free-brands-svg-icons';
 import { RegisterUser } from '../../store/authSlice';
 import { useDispatch } from 'react-redux';
@@ -36,7 +30,6 @@ interface RegisterFormValues {
     phone: string;
     password: string;
     confirmPassword: string;
-    accountType: 'user' | 'provider';
     termsAccepted: boolean;
 }
 
@@ -51,7 +44,6 @@ const RegisterSchema = Yup.object().shape({
     confirmPassword: Yup.string()
         .oneOf([Yup.ref('password')], 'Passwords must match')
         .required('Confirm password is required'),
-    accountType: Yup.string().oneOf(['user', 'provider'], 'Please select an account type').required('Account type is required'),
     termsAccepted: Yup.boolean().oneOf([true], 'You must accept the terms and conditions'),
 });
 
@@ -75,7 +67,7 @@ const Register: React.FC = () => {
                     first_name: '',
                     last_name: '',
                     phone_number: values.phone,
-                    accountType: values.accountType,
+                    accountType: 'user', // Default to user account
                 })
             ).unwrap();
 
@@ -84,7 +76,7 @@ const Register: React.FC = () => {
                     state: {
                         phone: values.phone,
                         type: 'registration',
-                        accountType: values.accountType,
+                        accountType: 'user',
                     },
                 });
             }
@@ -112,14 +104,14 @@ const Register: React.FC = () => {
                         to="/" 
                         className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 mb-8 transition-colors"
                     >
-                        <FontAwesomeIcon icon={faArrowLeft} />
+                        <ArrowLeft size={16} />
                         <span>Back to Home</span>
                     </Link>
 
                     {/* Logo */}
                     <div className="flex items-center gap-3 mb-8">
                         <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
-                            <FontAwesomeIcon icon={faRecycle} className="text-white text-xl" />
+                            <Recycle className="text-white text-xl" />
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">wasgo</h1>
@@ -143,7 +135,7 @@ const Register: React.FC = () => {
                                 exit={{ opacity: 0, y: -20 }}
                             >
                                 <div className="flex items-center">
-                                    <FontAwesomeIcon icon={faExclamationCircle} className="text-red-400 mr-3" />
+                                    <AlertCircle className="text-red-400 mr-3" size={16} />
                                     <div>
                                         <p className="text-red-800 text-sm font-medium">Registration Failed</p>
                                         <p className="text-red-600 text-xs mt-1">{registerError}</p>
@@ -159,7 +151,6 @@ const Register: React.FC = () => {
                             phone: '',
                             password: '',
                             confirmPassword: '',
-                            accountType: 'user',
                             termsAccepted: false,
                         }}
                         validationSchema={RegisterSchema}
@@ -172,7 +163,7 @@ const Register: React.FC = () => {
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <FontAwesomeIcon icon={faPhone} className="text-gray-400" />
+                                            <Phone className="text-gray-400" size={16} />
                                         </div>
                                         <Field
                                             name="phone"
@@ -192,7 +183,7 @@ const Register: React.FC = () => {
                                         <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
                                         <div className="relative">
                                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                <FontAwesomeIcon icon={faLock} className="text-gray-400" />
+                                                <Lock className="text-gray-400" size={16} />
                                             </div>
                                             <Field
                                                 name="password"
@@ -207,10 +198,11 @@ const Register: React.FC = () => {
                                                 onClick={() => setShowPassword(!showPassword)}
                                                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
                                             >
-                                                <FontAwesomeIcon 
-                                                    icon={showPassword ? faEyeSlash : faEye} 
-                                                    className="text-gray-400 hover:text-gray-600"
-                                                />
+                                                {showPassword ? (
+                                                    <EyeOff className="text-gray-400 hover:text-gray-600" size={16} />
+                                                ) : (
+                                                    <Eye className="text-gray-400 hover:text-gray-600" size={16} />
+                                                )}
                                             </button>
                                         </div>
                                         <ErrorMessage name="password" component="p" className="text-red-500 text-sm mt-1" />
@@ -220,7 +212,7 @@ const Register: React.FC = () => {
                                         <label className="block text-sm font-medium text-gray-700 mb-2">Confirm</label>
                                         <div className="relative">
                                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                <FontAwesomeIcon icon={faLock} className="text-gray-400" />
+                                                <Lock className="text-gray-400" size={16} />
                                             </div>
                                             <Field
                                                 name="confirmPassword"
@@ -235,44 +227,15 @@ const Register: React.FC = () => {
                                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
                                             >
-                                                <FontAwesomeIcon 
-                                                    icon={showConfirmPassword ? faEyeSlash : faEye} 
-                                                    className="text-gray-400 hover:text-gray-600"
-                                                />
+                                                {showConfirmPassword ? (
+                                                    <EyeOff className="text-gray-400 hover:text-gray-600" size={16} />
+                                                ) : (
+                                                    <Eye className="text-gray-400 hover:text-gray-600" size={16} />
+                                                )}
                                             </button>
                                         </div>
                                         <ErrorMessage name="confirmPassword" component="p" className="text-red-500 text-sm mt-1" />
                                     </div>
-                                </div>
-
-                                {/* Account Type */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">Account Type</label>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <Field name="accountType" value="user" type="radio" id="user" className="hidden peer" />
-                                            <label
-                                                htmlFor="user"
-                                                className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl cursor-pointer transition-all duration-300 hover:border-green-300 peer-checked:border-green-500 peer-checked:bg-green-50 text-center"
-                                            >
-                                                <FontAwesomeIcon icon={faUser} className="h-6 w-6 text-green-600 mb-2" />
-                                                <span className="text-gray-900 font-medium">Customer</span>
-                                                <span className="text-gray-500 text-xs mt-1">Request waste collection</span>
-                                            </label>
-                                        </div>
-                                        <div>
-                                            <Field name="accountType" value="provider" type="radio" id="provider" className="hidden peer" />
-                                            <label
-                                                htmlFor="provider"
-                                                className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl cursor-pointer transition-all duration-300 hover:border-green-300 peer-checked:border-green-500 peer-checked:bg-green-50 text-center"
-                                            >
-                                                <FontAwesomeIcon icon={faTruck} className="h-6 w-6 text-green-600 mb-2" />
-                                                <span className="text-gray-900 font-medium">Provider</span>
-                                                <span className="text-gray-500 text-xs mt-1">Offer waste services</span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <ErrorMessage name="accountType" component="p" className="text-red-500 text-sm mt-2" />
                                 </div>
 
                                 {/* Terms and Conditions */}
@@ -311,10 +274,23 @@ const Register: React.FC = () => {
                                     ) : (
                                         <>
                                             <span>Create Your Account</span>
-                                            <FontAwesomeIcon icon={faArrowRight} />
+                                            <ArrowRight size={16} />
                                         </>
                                     )}
                                 </motion.button>
+
+                                {/* Provider Signup Link */}
+                                <div className="text-center">
+                                    <p className="text-sm text-gray-600 mb-3">Want to offer waste management services?</p>
+                                    <Link
+                                        to="/provider-onboarding"
+                                        className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 font-medium transition-colors"
+                                    >
+                                        <Truck size={16} />
+                                        <span>Sign up as a Provider</span>
+                                        <ArrowRight size={14} />
+                                    </Link>
+                                </div>
                             </Form>
                         )}
                     </Formik>
@@ -398,21 +374,21 @@ const Register: React.FC = () => {
                         transition={{ duration: 6, repeat: Infinity }}
                         className="absolute top-1/4 left-1/4 text-white/20"
                     >
-                        <FontAwesomeIcon icon={faRecycle} size="4x" />
+                        <Recycle size={64} />
                     </motion.div>
                     <motion.div
                         animate={{ y: [0, 20, 0], rotate: [0, -10, 0] }}
                         transition={{ duration: 8, repeat: Infinity }}
                         className="absolute bottom-1/3 right-1/4 text-white/20"
                     >
-                        <FontAwesomeIcon icon={faLeaf} size="3x" />
+                        <Leaf size={48} />
                     </motion.div>
                     <motion.div
                         animate={{ y: [0, -15, 0] }}
                         transition={{ duration: 7, repeat: Infinity }}
                         className="absolute top-1/2 right-1/3 text-white/15"
                     >
-                        <FontAwesomeIcon icon={faGlobe} size="5x" />
+                        <Globe size={80} />
                     </motion.div>
                 </div>
 
@@ -448,7 +424,7 @@ const Register: React.FC = () => {
                                         className="flex items-center gap-3 text-left"
                                     >
                                         <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-                                            <FontAwesomeIcon icon={faCheck} className="text-sm" />
+                                            <Check size={16} />
                                         </div>
                                         <span className="text-green-50">{feature}</span>
                                     </motion.div>

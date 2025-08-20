@@ -2,258 +2,18 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-    IconHome,
     IconBell,
     IconTruck,
-    IconCalendar,
-    IconMap,
     IconClock,
-    IconFileAnalytics,
     IconCreditCard,
     IconStar,
-    IconTrophy,
-    IconMessages,
-    IconHeadset,
-    IconUser,
     IconSettings,
     IconArrowRight,
-    IconArrowLeft,
     IconCheck,
-    IconX,
-    IconPlus,
-    IconMinus,
-    IconEye,
-    IconPhone,
-    IconMail,
-    IconMapPin,
     IconRoute,
     IconTrendingUp,
-    IconTrendingDown,
-    IconActivity,
-    IconBarChart3,
-    IconPieChart,
-    IconLineChart,
-    IconDots,
-    IconArrowUp,
-    IconArrowDown,
-    IconChevronRight,
-    IconChevronLeft,
-    IconChevronUp,
-    IconChevronDown,
-    IconMenu,
-    IconGrid,
-    IconList,
-    IconLayout,
-    IconMaximize,
-    IconMinimize,
-    IconRotate,
-    IconZoomIn,
-    IconZoomOut,
-    IconMove,
-    IconCrop,
-    IconScissors,
-    IconPalette,
-    IconBrush,
-    IconEraser,
-    IconType,
-    IconAlignLeft,
-    IconAlignCenter,
-    IconAlignRight,
-    IconBold,
-    IconItalic,
-    IconUnderline,
-    IconStrikethrough,
-    IconLink,
-    IconUnlink,
-    IconPhoto,
-    IconVideo,
-    IconMusic,
-    IconFile,
-    IconFolder,
-    IconFolderOpen,
-    IconFileText,
-    IconFileCode,
-    IconFileImage,
-    IconFileVideo,
-    IconFileAudio,
-    IconFileZip,
-    IconFilePdf,
-    IconFileWord,
-    IconFileExcel,
-    IconFilePowerpoint,
-    IconDatabase,
-    IconServer,
-    IconCloud,
-    IconCloudUpload,
-    IconCloudDownload,
-    IconCloudRain,
-    IconCloudSnow,
-    IconCloudLightning,
-    IconSun,
-    IconMoon,
-    IconCloudy,
-    IconWind,
-    IconThermometer,
-    IconDroplet,
-    IconUmbrella,
-    IconShield,
-    IconLock,
-    IconUnlock,
-    IconKey,
-    IconFingerprint,
-    IconEyeOff,
-    IconEyeCheck,
-    IconEyeX,
-    IconEyeHeart,
-    IconEyeStar,
-    IconEyeUp,
-    IconEyeDown,
-    IconEyeLeft,
-    IconEyeRight,
-    IconEyeCancel,
-    IconEyeCode,
-    IconEyeCog,
-    IconEyeDiscount,
-    IconEyeDollar,
-    IconEyeEdit,
-    IconEyeExclamation,
-    IconEyeFilled,
-    IconEyePause,
-    IconEyePin,
-    IconEyePlus,
-    IconEyeQuestion,
-    IconEyeSearch,
-    IconEyeShare,
-    IconEyeTable,
-    IconRecycle,
-    IconTrash,
     IconLeaf,
-    IconWallet,
-    IconHistory,
-    IconReceipt,
-    IconAward,
-    IconTarget,
-    IconUsers,
-    IconBuilding,
-    IconBuilding2,
-    IconBuildingBank,
-    IconBuildingBridge,
-    IconBuildingBridge2,
-    IconBuildingCarousel,
-    IconBuildingChurch,
-    IconBuildingFactory,
-    IconBuildingFactory2,
-    IconBuildingFortress,
-    IconBuildingHospital,
-    IconBuildingLighthouse,
-    IconBuildingMonument,
-    IconBuildingMuseum,
-    IconBuildingPavilion,
-    IconBuildingSkyscraper,
-    IconBuildingStore,
-    IconBuildingWarehouse,
-    IconBuildingWindTurbine,
-    IconHome2,
-    IconHome3,
-    IconHome4,
-    IconHome5,
-    IconHome6,
-    IconHome7,
-    IconHome8,
-    IconHome9,
-    IconHome10,
-    IconHome11,
-    IconHome12,
-    IconHome13,
-    IconHome14,
-    IconHome15,
-    IconHome16,
-    IconHome17,
-    IconHome18,
-    IconHome19,
-    IconHome20,
-    IconHome21,
-    IconHome22,
-    IconHome23,
-    IconHome24,
-    IconHome25,
-    IconHome26,
-    IconHome27,
-    IconHome28,
-    IconHome29,
-    IconHome30,
-    IconHome31,
-    IconHome32,
-    IconHome33,
-    IconHome34,
-    IconHome35,
-    IconHome36,
-    IconHome37,
-    IconHome38,
-    IconHome39,
-    IconHome40,
-    IconHome41,
-    IconHome42,
-    IconHome43,
-    IconHome44,
-    IconHome45,
-    IconHome46,
-    IconHome47,
-    IconHome48,
-    IconHome49,
-    IconHome50,
-    IconHome51,
-    IconHome52,
-    IconHome53,
-    IconHome54,
-    IconHome55,
-    IconHome56,
-    IconHome57,
-    IconHome58,
-    IconHome59,
-    IconHome60,
-    IconHome61,
-    IconHome62,
-    IconHome63,
-    IconHome64,
-    IconHome65,
-    IconHome66,
-    IconHome67,
-    IconHome68,
-    IconHome69,
-    IconHome70,
-    IconHome71,
-    IconHome72,
-    IconHome73,
-    IconHome74,
-    IconHome75,
-    IconHome76,
-    IconHome77,
-    IconHome78,
-    IconHome79,
-    IconHome80,
-    IconHome81,
-    IconHome82,
-    IconHome83,
-    IconHome84,
-    IconHome85,
-    IconHome86,
-    IconHome87,
-    IconHome88,
-    IconHome89,
-    IconHome90,
-    IconHome91,
-    IconHome92,
-    IconHome93,
-    IconHome94,
-    IconHome95,
-    IconHome96,
-    IconHome97,
-    IconHome98,
-    IconHome99,
-    IconHome100,
 } from '@tabler/icons-react';
-
 const ProviderDashboard = () => {
     const [activeTab, setActiveTab] = useState('overview');
     const [isOnline, setIsOnline] = useState(true);
@@ -627,10 +387,10 @@ const ProviderDashboard = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.5 }}
-                        className="bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50 rounded-xl p-6 hover:shadow-2xl transition-all duration-300"
+                        className="bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50 p-6 hover:shadow-2xl transition-all duration-300"
                     >
                         <div className="flex items-center justify-between mb-4">
-                            <div className="p-3 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl">
+                            <div className="p-3 bg-gradient-to-br from-emerald-500 to-green-600">
                                 <IconTruck className="w-6 h-6 text-white" />
                             </div>
                             <motion.div
@@ -656,10 +416,10 @@ const ProviderDashboard = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.6 }}
-                        className="bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50 rounded-xl p-6 hover:shadow-2xl transition-all duration-300"
+                        className="bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50 p-6 hover:shadow-2xl transition-all duration-300"
                     >
                         <div className="flex items-center justify-between mb-4">
-                            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl">
+                            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600">
                                 <IconCreditCard className="w-6 h-6 text-white" />
                             </div>
                             <motion.div
@@ -685,10 +445,10 @@ const ProviderDashboard = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.7 }}
-                        className="bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50 rounded-xl p-6 hover:shadow-2xl transition-all duration-300"
+                        className="bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50 p-6 hover:shadow-2xl transition-all duration-300"
                     >
                         <div className="flex items-center justify-between mb-4">
-                            <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl">
+                            <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-600">
                                 <IconStar className="w-6 h-6 text-white" />
                             </div>
                             <motion.div
@@ -714,10 +474,10 @@ const ProviderDashboard = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.8 }}
-                        className="bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50 rounded-xl p-6 hover:shadow-2xl transition-all duration-300"
+                        className="bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50 p-6 hover:shadow-2xl transition-all duration-300"
                     >
                         <div className="flex items-center justify-between mb-4">
-                            <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl">
+                            <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-600">
                                 <IconLeaf className="w-6 h-6 text-white" />
                             </div>
                             <motion.div
@@ -748,14 +508,14 @@ const ProviderDashboard = () => {
                         transition={{ delay: 0.9 }}
                         className="lg:col-span-2"
                     >
-                        <div className="bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50 rounded-xl">
+                        <div className="bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50">
                             <div className="p-6 border-b border-slate-200/50">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <h2 className="text-2xl font-bold text-slate-900">New Job Requests</h2>
                                         <p className="text-slate-600">Latest waste collection requests</p>
                                     </div>
-                                    <Link to="/provider/job-requests" className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg hover:from-emerald-600 hover:to-green-700 transition-all duration-300 rounded-lg">
+                                    <Link to="/provider/job-requests" className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg hover:from-emerald-600 hover:to-green-700 transition-all duration-300">
                                         View All
                                         <IconArrowRight className="ml-2 w-4 h-4" />
                                     </Link>
@@ -768,7 +528,7 @@ const ProviderDashboard = () => {
                                             <motion.div
                                                 key={job.id}
                                                 whileHover={{ y: -2 }}
-                                                className="border border-slate-200/50 bg-white/50 backdrop-blur-sm rounded-lg p-4 hover:shadow-lg transition-all duration-300"
+                                                className="border border-slate-200/50 bg-white/50 backdrop-blur-sm p-4 hover:shadow-lg transition-all duration-300"
                                             >
                                                 <div className="flex items-center justify-between mb-3">
                                                     <div className="flex items-center">
@@ -777,7 +537,7 @@ const ProviderDashboard = () => {
                                                     </div>
                                                     <div className="flex items-center space-x-2">
                                                         <span className="text-sm text-slate-600">{job.timeRequested}</span>
-                                                        <div className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full border border-red-200">
+                                                        <div className="bg-red-100 text-red-600 text-xs px-2 py-1 border border-red-200">
                                                             {job.expiresIn}s
                                                         </div>
                                                     </div>
@@ -797,14 +557,14 @@ const ProviderDashboard = () => {
                                                             <motion.button
                                                                 whileHover={{ scale: 1.05 }}
                                                                 whileTap={{ scale: 0.95 }}
-                                                                className="px-3 py-1 bg-red-100 text-red-600 text-xs rounded-lg hover:bg-red-200 transition-colors border border-red-200"
+                                                                className="px-3 py-1 bg-red-100 text-red-600 text-xs hover:bg-red-200 transition-colors border border-red-200"
                                                             >
                                                                 Decline
                                                             </motion.button>
                                                             <motion.button
                                                                 whileHover={{ scale: 1.05 }}
                                                                 whileTap={{ scale: 0.95 }}
-                                                                className="px-3 py-1 bg-emerald-100 text-emerald-600 text-xs rounded-lg hover:bg-emerald-200 transition-colors border border-emerald-200"
+                                                                className="px-3 py-1 bg-emerald-100 text-emerald-600 text-xs hover:bg-emerald-200 transition-colors border border-emerald-200"
                                                             >
                                                                 Accept
                                                             </motion.button>
@@ -833,7 +593,7 @@ const ProviderDashboard = () => {
                         className="space-y-6"
                     >
                         {/* Performance Metrics */}
-                        <div className="bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50 rounded-xl">
+                        <div className="bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50">
                             <div className="p-6 border-b border-slate-200/50">
                                 <h3 className="text-lg font-semibold text-slate-900">Performance</h3>
                             </div>
@@ -843,10 +603,10 @@ const ProviderDashboard = () => {
                                         <motion.div
                                             key={metric.id}
                                             whileHover={{ y: -1 }}
-                                            className="flex items-center justify-between p-3 bg-white/50 backdrop-blur-sm rounded-lg hover:shadow-lg transition-all duration-300"
+                                            className="flex items-center justify-between p-3 bg-white/50 backdrop-blur-sm hover:shadow-lg transition-all duration-300"
                                         >
                                             <div className="flex items-center">
-                                                <div className="p-2 bg-slate-100 rounded-lg">
+                                                <div className="p-2 bg-slate-100">
                                                     <metric.icon className="w-4 h-4 text-slate-600" />
                                                 </div>
                                                 <div className="ml-3">
@@ -870,7 +630,7 @@ const ProviderDashboard = () => {
                         </div>
 
                         {/* Achievements */}
-                        <div className="bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50 rounded-xl">
+                        <div className="bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50">
                             <div className="p-6 border-b border-slate-200/50">
                                 <h3 className="text-lg font-semibold text-slate-900">Achievements</h3>
                             </div>
@@ -880,13 +640,13 @@ const ProviderDashboard = () => {
                                         <motion.div
                                             key={achievement.id}
                                             whileHover={{ y: -1 }}
-                                            className={`flex items-center p-3 rounded-lg transition-all duration-300 ${
+                                            className={`flex items-center p-3 transition-all duration-300 ${
                                                 achievement.earned 
                                                     ? 'bg-emerald-50 border border-emerald-200 hover:shadow-lg' 
                                                     : 'bg-slate-50 border border-slate-200 hover:shadow-lg'
                                             }`}
                                         >
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${
+                                            <div className={`w-10 h-10 flex items-center justify-center text-lg ${
                                                 achievement.earned ? 'bg-emerald-100' : 'bg-slate-100'
                                             }`}>
                                                 {achievement.icon}

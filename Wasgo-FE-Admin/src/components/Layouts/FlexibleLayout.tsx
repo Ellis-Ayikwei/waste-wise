@@ -9,7 +9,7 @@ import Footer from './Footer';
 import Header from './Header';
 import Setting from './Setting';
 import Sidebar from './Sidebar';
-import Portals from '../../components/Portals';
+import Portals from '../Portals';
 
 interface AuthUser {
     user: {
