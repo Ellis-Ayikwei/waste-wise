@@ -1,0 +1,16 @@
+{
+  "name": "paystack-payment-components",
+  "version": "1.0.0",
+  "description": "Paystack payment integration components for Wasgo",
+  "dependencies": {
+    "react-paystack": "^4.0.2",
+    "axios": "^1.6.2",
+    "react-toastify": "^9.1.3",
+    "lucide-react": "^0.292.0"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "react-router-dom": "^6.0.0"
+  }
+}
