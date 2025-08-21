@@ -1,7 +1,7 @@
 from django.db import models
 
 from apps.Basemodel.models import Basemodel
-from apps.Bidding.models import Bid
+# from apps.Bidding.models import Bid  # Removed - bidding system eliminated
 from apps.Request.models import Request
 
 
@@ -16,7 +16,7 @@ class ContractAgreement(Basemodel):
 
     # Core Agreement Details
     logistics_request = models.OneToOneField(Request, on_delete=models.CASCADE)
-    selected_bid = models.OneToOneField(Bid, on_delete=models.CASCADE)
+    # selected_bid = models.OneToOneField(Bid, on_delete=models.CASCADE)  # Removed - bidding system eliminated
 
     # Contract Terms
     insurance_coverage = models.DecimalField(

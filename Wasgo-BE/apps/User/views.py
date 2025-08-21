@@ -1,14 +1,27 @@
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.hashers import make_password
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status, permissions, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Q, Count, Avg
 from django.utils import timezone
 import logging
+from django.contrib.contenttypes.models import ContentType
+from datetime import timedelta
 
-from .models import User, Address, UserActivity
-from .serializer import UserSerializer, AddressSerializer, UserActivitySerializer
+from .models import User, Address, UserActivity, Document, Availability
+from .serializer import (
+    UserSerializer,
+    AddressSerializer,
+    UserActivitySerializer,
+    DocumentSerializer,
+    DocumentVerificationSerializer,
+    DocumentRejectionSerializer,
+    AvailabilitySerializer,
+    AvailabilityBookingSerializer,
+    AvailabilityReleaseSerializer,
+    UserDetailSerializer,
+)
 from apps.Request.models import Request
 
 logger = logging.getLogger(__name__)
@@ -1135,3 +1148,267 @@ class UserGroupManagementViewSet(viewsets.ViewSet):
 
         serializer = UserWithGroupsSerializer(users, many=True)
         return Response(serializer.data)
+
+
+class DocumentViewSet(viewsets.ModelViewSet):
+    """ViewSet for the unified Document model"""
+
+    queryset = Document.objects.all()
+    serializer_class = DocumentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["title", "description", "document_number"]
+    ordering_fields = ["created_at", "expiry_date", "status", "priority"]
+    ordering = ["-created_at"]
+
+    def get_queryset(self):
+        """Filter documents based on request parameters"""
+        queryset = super().get_queryset()
+
+        # Filter by document type
+        document_type = self.request.query_params.get("document_type")
+        if document_type:
+            queryset = queryset.filter(document_type=document_type)
+
+        # Filter by content type
+        content_type = self.request.query_params.get("content_type")
+        if content_type:
+            queryset = queryset.filter(content_type__model=content_type)
+
+        # Filter by object ID
+        object_id = self.request.query_params.get("object_id")
+        if object_id:
+            queryset = queryset.filter(object_id=object_id)
+
+        # Filter by status
+        status_filter = self.request.query_params.get("status")
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+
+        # Filter by verification status
+        is_verified = self.request.query_params.get("is_verified")
+        if is_verified is not None:
+            queryset = queryset.filter(is_verified=is_verified.lower() == "true")
+
+        # Filter by priority
+        priority = self.request.query_params.get("priority")
+        if priority:
+            queryset = queryset.filter(priority=priority)
+
+        return queryset
+
+    @action(detail=False, methods=["get"])
+    def expiring_soon(self, request):
+        """Get documents expiring within specified days"""
+        days = int(request.query_params.get("days", 30))
+        documents = Document.get_expiring_soon(days=days)
+        serializer = self.get_serializer(documents, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=["get"])
+    def expired(self, request):
+        """Get expired documents"""
+        documents = Document.get_expired()
+        serializer = self.get_serializer(documents, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["post"])
+    def verify(self, request, pk=None):
+        """Verify a document"""
+        document = self.get_object()
+        serializer = DocumentVerificationSerializer(
+            document, data=request.data, context={"request": request}
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(DocumentSerializer(document).data)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["post"])
+    def reject(self, request, pk=None):
+        """Reject a document"""
+        document = self.get_object()
+        serializer = DocumentRejectionSerializer(document, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(DocumentSerializer(document).data)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["post"])
+    def mark_expired(self, request, pk=None):
+        """Mark document as expired"""
+        document = self.get_object()
+        document.mark_expired()
+        return Response(DocumentSerializer(document).data)
+
+    @action(detail=False, methods=["get"])
+    def by_owner(self, request):
+        """Get documents for a specific owner"""
+        content_type = request.query_params.get("content_type")
+        object_id = request.query_params.get("object_id")
+
+        if not content_type or not object_id:
+            return Response(
+                {"error": "content_type and object_id are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            ct = ContentType.objects.get(model=content_type)
+            documents = self.get_queryset().filter(content_type=ct, object_id=object_id)
+            serializer = self.get_serializer(documents, many=True)
+            return Response(serializer.data)
+
+        except ContentType.DoesNotExist:
+            return Response(
+                {"error": "Invalid content_type"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class AvailabilityViewSet(viewsets.ModelViewSet):
+    """ViewSet for the unified Availability model"""
+
+    queryset = Availability.objects.all()
+    serializer_class = AvailabilitySerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["notes"]
+    ordering_fields = ["day_of_week", "start_time", "created_at"]
+    ordering = ["day_of_week", "start_time"]
+
+    def get_queryset(self):
+        """Filter availability based on request parameters"""
+        queryset = super().get_queryset()
+
+        # Filter by availability type
+        availability_type = self.request.query_params.get("availability_type")
+        if availability_type:
+            queryset = queryset.filter(availability_type=availability_type)
+
+        # Filter by content type
+        content_type = self.request.query_params.get("content_type")
+        if content_type:
+            queryset = queryset.filter(content_type__model=content_type)
+
+        # Filter by object ID
+        object_id = self.request.query_params.get("object_id")
+        if object_id:
+            queryset = queryset.filter(object_id=object_id)
+
+        # Filter by day of week
+        day_of_week = self.request.query_params.get("day_of_week")
+        if day_of_week:
+            queryset = queryset.filter(day_of_week=day_of_week)
+
+        # Filter by availability status
+        is_available = self.request.query_params.get("is_available")
+        if is_available is not None:
+            queryset = queryset.filter(is_available=is_available.lower() == "true")
+
+        # Filter by recurring status
+        is_recurring = self.request.query_params.get("is_recurring")
+        if is_recurring is not None:
+            queryset = queryset.filter(is_recurring=is_recurring.lower() == "true")
+
+        return queryset
+
+    @action(detail=False, methods=["get"])
+    def available_slots(self, request):
+        """Get available slots for a specific owner and date"""
+        content_type = request.query_params.get("content_type")
+        object_id = request.query_params.get("object_id")
+        date = request.query_params.get("date")
+        start_time = request.query_params.get("start_time")
+        end_time = request.query_params.get("end_time")
+
+        if not content_type or not object_id:
+            return Response(
+                {"error": "content_type and object_id are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            ct = ContentType.objects.get(model=content_type)
+            owner = ct.model_class().objects.get(id=object_id)
+
+            # Parse date and times
+            parsed_date = None
+            if date:
+                parsed_date = timezone.datetime.strptime(date, "%Y-%m-%d").date()
+
+            parsed_start_time = None
+            if start_time:
+                parsed_start_time = timezone.datetime.strptime(
+                    start_time, "%H:%M"
+                ).time()
+
+            parsed_end_time = None
+            if end_time:
+                parsed_end_time = timezone.datetime.strptime(end_time, "%H:%M").time()
+
+            slots = Availability.get_available_slots(
+                owner=owner,
+                date=parsed_date,
+                start_time=parsed_start_time,
+                end_time=parsed_end_time,
+            )
+
+            serializer = self.get_serializer(slots, many=True)
+            return Response(serializer.data)
+
+        except (ContentType.DoesNotExist, ct.model_class().DoesNotExist):
+            return Response(
+                {"error": "Invalid content_type or object_id"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @action(detail=True, methods=["post"])
+    def book_slot(self, request, pk=None):
+        """Book this availability slot"""
+        slot = self.get_object()
+        serializer = AvailabilityBookingSerializer(slot, data={})
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(AvailabilitySerializer(slot).data)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["post"])
+    def release_slot(self, request, pk=None):
+        """Release this availability slot"""
+        slot = self.get_object()
+        serializer = AvailabilityReleaseSerializer(slot, data={})
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(AvailabilitySerializer(slot).data)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=["get"])
+    def by_owner(self, request):
+        """Get availability slots for a specific owner"""
+        content_type = request.query_params.get("content_type")
+        object_id = request.query_params.get("object_id")
+
+        if not content_type or not object_id:
+            return Response(
+                {"error": "content_type and object_id are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            ct = ContentType.objects.get(model=content_type)
+            slots = self.get_queryset().filter(content_type=ct, object_id=object_id)
+            serializer = self.get_serializer(slots, many=True)
+            return Response(serializer.data)
+
+        except ContentType.DoesNotExist:
+            return Response(
+                {"error": "Invalid content_type"}, status=status.HTTP_400_BAD_REQUEST
+            )

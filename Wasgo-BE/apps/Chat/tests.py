@@ -5,7 +5,7 @@ from rest_framework import status
 from .models import Conversation, ConversationParticipant, ChatMessage
 from apps.Job.models import Job
 from apps.Request.models import Request
-from apps.Bidding.models import Bid
+# from apps.Bidding.models import Bid  # Removed - bidding system eliminated
 from apps.Provider.models import ServiceProvider
 import uuid
 

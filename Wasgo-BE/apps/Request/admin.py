@@ -185,7 +185,7 @@ class RequestAdmin(admin.ModelAdmin):
         color_map = {
             "draft": "#6c757d",
             "pending": "#ffc107",
-            "bidding": "#17a2b8",
+            # "bidding": "#17a2b8",  # Removed - bidding system eliminated
             "accepted": "#28a745",
             "assigned": "#007bff",
             "in_transit": "#fd7e14",

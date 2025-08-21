@@ -46,6 +46,36 @@ class Notification(Basemodel):
         ("feature_announcement", "New Feature"),
         ("account_warning", "Account Warning"),
         ("system_test", "System Test"),
+        # Waste Management Specific Notifications
+        ("waste_collection_scheduled", "Waste Collection Scheduled"),
+        ("waste_collection_en_route", "Waste Collection En Route"),
+        ("waste_collection_arrived", "Waste Collection Arrived"),
+        ("waste_collection_completed", "Waste Collection Completed"),
+        ("waste_collection_cancelled", "Waste Collection Cancelled"),
+        ("bin_full_alert", "Bin Full Alert"),
+        ("bin_overflow_alert", "Bin Overflow Alert"),
+        ("bin_maintenance_required", "Bin Maintenance Required"),
+        ("bin_offline_alert", "Bin Offline Alert"),
+        ("collection_route_optimized", "Collection Route Optimized"),
+        ("waste_audit_completed", "Waste Audit Completed"),
+        ("recycling_rate_update", "Recycling Rate Update"),
+        ("environmental_impact_report", "Environmental Impact Report"),
+        ("hazardous_waste_alert", "Hazardous Waste Alert"),
+        ("citizen_report_received", "Citizen Report Received"),
+        ("citizen_report_resolved", "Citizen Report Resolved"),
+        ("provider_earnings_update", "Provider Earnings Update"),
+        ("waste_license_expiry_warning", "Waste License Expiry Warning"),
+        ("environmental_permit_expiry_warning", "Environmental Permit Expiry Warning"),
+        ("collection_efficiency_report", "Collection Efficiency Report"),
+        ("route_optimization_suggestion", "Route Optimization Suggestion"),
+        ("waste_volume_forecast", "Waste Volume Forecast"),
+        ("emergency_collection_request", "Emergency Collection Request"),
+        ("scheduled_maintenance_reminder", "Scheduled Maintenance Reminder"),
+        ("bin_sensor_alert", "Bin Sensor Alert"),
+        ("collection_delay_notification", "Collection Delay Notification"),
+        ("waste_type_mismatch_alert", "Waste Type Mismatch Alert"),
+        ("collection_verification_required", "Collection Verification Required"),
+        ("environmental_compliance_alert", "Environmental Compliance Alert"),
         # Legacy types for backward compatibility
         ("payment", "Payment Notification"),
         ("bid", "Bid Notification"),
@@ -58,6 +88,7 @@ class Notification(Basemodel):
         ("normal", "Normal"),
         ("high", "High"),
         ("urgent", "Urgent"),
+        ("emergency", "Emergency"),
     ]
 
     DELIVERY_CHANNELS = [
@@ -65,12 +96,14 @@ class Notification(Basemodel):
         ("email", "Email"),
         ("sms", "SMS"),
         ("push", "Push Notification"),
+        ("webhook", "Webhook"),
+        ("iot_device", "IoT Device"),
     ]
 
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="notifications"
     )
-    notification_type = models.CharField(max_length=30, choices=NOTIFICATION_TYPES)
+    notification_type = models.CharField(max_length=50, choices=NOTIFICATION_TYPES)
     title = models.CharField(max_length=200)
     message = models.TextField()
     data = models.JSONField(null=True, blank=True)  # Additional data
@@ -98,69 +131,177 @@ class Notification(Basemodel):
 
     # Action tracking
     action_url = models.URLField(
-        null=True, blank=True, help_text="URL for notification action"
+        max_length=500, null=True, blank=True, help_text="URL for action button"
     )
     action_text = models.CharField(
         max_length=100, null=True, blank=True, help_text="Text for action button"
     )
-    expires_at = models.DateTimeField(
-        null=True, blank=True, help_text="When notification expires"
+
+    # Waste Management Specific Fields
+    waste_type = models.CharField(
+        max_length=20,
+        blank=True,
+        help_text="Type of waste for waste-related notifications",
+    )
+    bin_id = models.CharField(
+        max_length=50, blank=True, help_text="Bin ID for bin-related notifications"
+    )
+    collection_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Collection date for collection-related notifications",
+    )
+    location_coordinates = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="GPS coordinates for location-based notifications",
+    )
+    environmental_impact = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Environmental impact data for waste notifications",
+    )
+    urgency_level = models.CharField(
+        max_length=20,
+        choices=[
+            ("routine", "Routine"),
+            ("scheduled", "Scheduled"),
+            ("urgent", "Urgent"),
+            ("emergency", "Emergency"),
+        ],
+        default="routine",
+        help_text="Urgency level for waste management notifications",
     )
 
-    def __str__(self):
-        return str(self.title or f"Notification {self.pk}")
+    # Notification grouping and threading
+    thread_id = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        help_text="Thread ID for grouping related notifications",
+    )
+    parent_notification = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="child_notifications",
+        help_text="Parent notification for threaded notifications",
+    )
+
+    # Delivery status tracking
+    delivery_attempts = models.IntegerField(default=0)
+    last_delivery_attempt = models.DateTimeField(null=True, blank=True)
+    delivery_error = models.TextField(
+        blank=True, help_text="Error message if delivery failed"
+    )
+
+    # Expiration and cleanup
+    expires_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When notification expires and can be cleaned up",
+    )
+    auto_delete = models.BooleanField(
+        default=True,
+        help_text="Whether notification should be auto-deleted after expiration",
+    )
 
     class Meta:
         db_table = "notification"
         managed = True
+        verbose_name = "Notification"
+        verbose_name_plural = "Notifications"
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["user", "read"]),
+            models.Index(fields=["notification_type"]),
+            models.Index(fields=["priority"]),
+            models.Index(fields=["scheduled_for"]),
+            models.Index(fields=["thread_id"]),
+            models.Index(fields=["waste_type"]),
+            models.Index(fields=["bin_id"]),
+            models.Index(fields=["urgency_level"]),
+        ]
+
+    def __str__(self):
+        return f"{self.notification_type} - {self.user} - {self.created_at}"
 
     def mark_as_read(self):
+        """Mark notification as read"""
         from django.utils import timezone
 
-        self.read = True
-        self.read_at = timezone.now()
-        self.save(update_fields=["read", "read_at"])
+        if not self.read:
+            self.read = True
+            self.read_at = timezone.now()
+            self.save(update_fields=["read", "read_at"])
 
-    def mark_as_delivered(self, channel=None):
+    def mark_as_delivered(self, channel):
+        """Mark notification as delivered via specific channel"""
         from django.utils import timezone
 
-        self.delivered_at = timezone.now()
         if channel == "email":
             self.email_sent = True
         elif channel == "sms":
             self.sms_sent = True
         elif channel == "push":
             self.push_sent = True
+
+        if not self.delivered_at:
+            self.delivered_at = timezone.now()
+
         self.save()
 
-    def is_expired(self):
-        from django.utils import timezone
-
-        if self.expires_at:
-            return timezone.now() > self.expires_at
-        return False
-
-    @property
     def is_urgent(self):
-        return self.priority in ["high", "urgent"]
+        """Check if notification is urgent or emergency"""
+        return self.priority in ["urgent", "emergency"] or self.urgency_level in [
+            "urgent",
+            "emergency",
+        ]
 
-    @property
-    def delivery_status(self):
-        """Get delivery status across all channels"""
-        status = {}
-        channels = self.delivery_channels or []
-        if not isinstance(channels, list):
-            try:
-                channels = list(channels)
-            except Exception:
-                channels = []
+    def is_waste_related(self):
+        """Check if notification is waste management related"""
+        waste_types = [
+            "waste_collection_scheduled",
+            "waste_collection_en_route",
+            "waste_collection_arrived",
+            "waste_collection_completed",
+            "waste_collection_cancelled",
+            "bin_full_alert",
+            "bin_overflow_alert",
+            "bin_maintenance_required",
+            "bin_offline_alert",
+            "collection_route_optimized",
+            "waste_audit_completed",
+            "recycling_rate_update",
+            "environmental_impact_report",
+            "hazardous_waste_alert",
+            "citizen_report_received",
+            "citizen_report_resolved",
+            "provider_earnings_update",
+            "waste_license_expiry_warning",
+            "environmental_permit_expiry_warning",
+            "collection_efficiency_report",
+            "route_optimization_suggestion",
+            "waste_volume_forecast",
+            "emergency_collection_request",
+            "scheduled_maintenance_reminder",
+            "bin_sensor_alert",
+            "collection_delay_notification",
+            "waste_type_mismatch_alert",
+            "collection_verification_required",
+            "environmental_compliance_alert",
+        ]
+        return self.notification_type in waste_types
 
-        if "email" in channels:
-            status["email"] = self.email_sent
-        if "sms" in channels:
-            status["sms"] = self.sms_sent
-        if "push" in channels:
-            status["push"] = self.push_sent
-        status["in_app"] = True  # Always available in-app
-        return status
+    def get_environmental_impact_summary(self):
+        """Get a summary of environmental impact data"""
+        if self.environmental_impact:
+            impact = self.environmental_impact
+            return {
+                "co2_emissions_kg": impact.get("co2_emissions_kg", 0),
+                "recycling_rate": impact.get("recycling_rate", 0),
+                "waste_collected_kg": impact.get("waste_collected_kg", 0),
+                "environmental_score": impact.get("environmental_score", 0),
+            }
+        return None

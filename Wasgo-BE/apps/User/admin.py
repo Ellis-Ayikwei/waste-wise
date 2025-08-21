@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.html import format_html
 from django.urls import reverse
-from .models import User, Address, UserActivity
+from .models import User, Address, UserActivity, Document, Availability
 
 
 class AddressInline(admin.TabularInline):
@@ -111,179 +111,384 @@ class UserRequestInline(admin.TabularInline):
 
 
 @admin.register(User)
-class UserAdmin(BaseUserAdmin):
+class UserAdmin(admin.ModelAdmin):
+    """Admin interface for User model"""
+
     list_display = [
         "email",
-        "first_name",
-        "last_name",
-        "user_type_display",
-        "admin_status",
-        "rating_display",
-        "is_active",
+        "full_name",
+        "user_type",
+        "account_status",
+        "rating",
+        "last_active",
         "date_joined",
     ]
-
     list_filter = [
         "user_type",
+        "account_status",
         "is_active",
         "is_staff",
         "is_superuser",
-        "account_status",
         "date_joined",
     ]
-
     search_fields = ["email", "first_name", "last_name", "phone_number"]
-
-    ordering = ["email"]
-
-    readonly_fields = ["id", "last_login", "date_joined", "rating"]
-
-    inlines = [
-        AddressInline,
-        UserRequestInline,
-        UserActivityInline,
+    readonly_fields = [
+        "id",
+        "date_joined",
+        "last_login",
+        "rating",
+        "rating_count",
+        "average_rating",
     ]
+    date_hierarchy = "date_joined"
 
     fieldsets = (
-        (None, {"fields": ("email", "password")}),
         (
-            "Personal info",
-            {"fields": ("first_name", "last_name", "phone_number", "profile_picture")},
-        ),
-        (
-            "User Type & Status",
-            {"fields": ("user_type", "account_status", "rating", "last_active")},
-        ),
-        (
-            "Permissions",
+            "Basic Information",
             {
                 "fields": (
+                    "email",
+                    "first_name",
+                    "last_name",
+                    "phone_number",
+                    "profile_picture",
+                )
+            },
+        ),
+        (
+            "Account Status",
+            {
+                "fields": (
+                    "user_type",
+                    "account_status",
                     "is_active",
                     "is_staff",
                     "is_superuser",
-                    "groups",
-                    "user_permissions",
-                ),
-                "classes": ("collapse",),
+                )
             },
         ),
         (
-            "Payment & Notifications",
+            "Ratings & Activity",
             {
                 "fields": (
-                    "stripe_customer_id",
+                    "rating",
+                    "last_active",
                     "notification_preferences",
                     "device_tokens",
-                ),
-                "classes": ("collapse",),
+                )
             },
         ),
         (
-            "Important dates",
-            {"fields": ("last_login", "date_joined"), "classes": ("collapse",)},
+            "Timestamps",
+            {"fields": ("date_joined", "last_login"), "classes": ("collapse",)},
         ),
     )
 
-    add_fieldsets = (
-        (
-            None,
-            {
-                "classes": ("wide",),
-                "fields": ("email", "password1", "password2", "user_type"),
-            },
-        ),
-    )
+    def full_name(self, obj):
+        """Get user's full name"""
+        return obj.get_full_name()
 
-    def user_type_display(self, obj):
-        """Display user type with color coding"""
-        color_map = {
-            "admin": "#dc3545",  # Red for admin
-            "provider": "#007bff",  # Blue for provider
-            "customer": "#28a745",  # Green for customer
-        }
-        color = color_map.get(obj.user_type, "#6c757d")
-        return format_html(
-            '<span style="color: {}; font-weight: bold;">{}</span>',
-            color,
-            obj.get_user_type_display(),
-        )
+    full_name.short_description = "Full Name"
 
-    user_type_display.short_description = "User Type"
-    user_type_display.admin_order_field = "user_type"
+    def rating_count(self, obj):
+        """Get number of ratings received"""
+        return obj.get_rating_count()
 
-    def admin_status(self, obj):
-        """Show admin permissions status"""
-        status_parts = []
+    rating_count.short_description = "Rating Count"
 
-        if obj.is_superuser:
-            status_parts.append(
-                '<span style="color: #dc3545; font-weight: bold;">SUPER</span>'
-            )
-        if obj.is_staff:
-            status_parts.append(
-                '<span style="color: #fd7e14; font-weight: bold;">STAFF</span>'
-            )
-        if obj.user_type == "admin":
-            status_parts.append(
-                '<span style="color: #6f42c1; font-weight: bold;">ADMIN</span>'
-            )
+    def average_rating(self, obj):
+        """Get average rating received"""
+        return obj.get_average_rating()
 
-        return format_html(" | ".join(status_parts)) if status_parts else "-"
-
-    admin_status.short_description = "Admin Status"
-
-    def rating_display(self, obj):
-        """Display rating with stars"""
-        if obj.rating:
-            stars = "★" * int(obj.rating)
-            return format_html(f"{stars} ({obj.rating:.1f})")
-        return "-"
-
-    rating_display.short_description = "Rating"
-
-    def get_form(self, request, obj=None, **kwargs):
-        """Override form to make fields optional in admin"""
-        form = super().get_form(request, obj, **kwargs)
-
-        # Make these fields optional in admin forms
-        if "last_name" in form.base_fields:
-            form.base_fields["last_name"].required = False
-        if "rating" in form.base_fields:
-            form.base_fields["rating"].required = False
-        if "stripe_customer_id" in form.base_fields:
-            form.base_fields["stripe_customer_id"].required = False
-        if "notification_preferences" in form.base_fields:
-            form.base_fields["notification_preferences"].required = False
-        if "device_tokens" in form.base_fields:
-            form.base_fields["device_tokens"].required = False
-        if "phone_number" in form.base_fields:
-            form.base_fields["phone_number"].required = False
-
-        return form
+    average_rating.short_description = "Average Rating"
 
 
 @admin.register(Address)
 class AddressAdmin(admin.ModelAdmin):
-    list_display = [
-        "address_user",
+    """Admin interface for Address model"""
+
+    list_display = ["user_email", "address_line1", "city", "postcode", "country"]
+    list_filter = ["country", "city"]
+    search_fields = [
+        "user__email",
         "address_line1",
+        "address_line2",
         "city",
-        "postal_code",
-        "country",
-        "address_type",
+        "postcode",
     ]
+    readonly_fields = ["id"]
 
-    list_filter = ["address_type", "country", "state"]
+    def user_email(self, obj):
+        """Get user's email"""
+        return obj.user.email if obj.user else "No User"
 
-    search_fields = ["address_user__email", "address_line1", "city", "postal_code"]
+    user_email.short_description = "User Email"
 
 
 @admin.register(UserActivity)
 class UserActivityAdmin(admin.ModelAdmin):
-    list_display = ["user", "activity_type", "request", "created_at"]
+    """Admin interface for UserActivity model"""
 
+    list_display = ["user_email", "activity_type", "ip_address", "created_at"]
     list_filter = ["activity_type", "created_at"]
+    search_fields = ["user__email", "activity_type", "description", "ip_address"]
+    readonly_fields = ["id", "created_at"]
+    date_hierarchy = "created_at"
 
-    search_fields = ["user__email", "request__tracking_number"]
+    def user_email(self, obj):
+        """Get user's email"""
+        return obj.user.email if obj.user else "No User"
 
-    readonly_fields = ["created_at", "updated_at"]
+    user_email.short_description = "User Email"
+
+
+@admin.register(Document)
+class DocumentAdmin(admin.ModelAdmin):
+    """Admin interface for the unified Document model"""
+
+    list_display = [
+        "id",
+        "document_type",
+        "owner_name",
+        "status",
+        "is_verified",
+        "expiry_date",
+        "days_until_expiry",
+        "created_at",
+    ]
+    list_filter = [
+        "document_type",
+        "status",
+        "is_verified",
+        "is_required",
+        "priority",
+        "created_at",
+        "content_type",
+    ]
+    search_fields = ["title", "description", "document_number", "verification_notes"]
+    readonly_fields = [
+        "id",
+        "created_at",
+        "updated_at",
+        "verified_at",
+        "has_two_sides",
+        "days_until_expiry",
+        "is_expired",
+        "needs_renewal",
+    ]
+    date_hierarchy = "created_at"
+
+    fieldsets = (
+        (
+            "Basic Information",
+            {"fields": ("document_type", "title", "description", "document_number")},
+        ),
+        ("Owner Information", {"fields": ("content_type", "object_id", "owner_name")}),
+        (
+            "Document Files",
+            {"fields": ("document_front", "document_back", "has_two_sides")},
+        ),
+        (
+            "Dates",
+            {
+                "fields": (
+                    "issue_date",
+                    "expiry_date",
+                    "days_until_expiry",
+                    "is_expired",
+                    "needs_renewal",
+                )
+            },
+        ),
+        (
+            "Verification",
+            {
+                "fields": (
+                    "status",
+                    "is_verified",
+                    "verified_by",
+                    "verified_at",
+                    "verification_notes",
+                )
+            },
+        ),
+        ("Rejection", {"fields": ("rejection_reason",), "classes": ("collapse",)}),
+        ("Metadata", {"fields": ("is_required", "priority"), "classes": ("collapse",)}),
+        (
+            "Timestamps",
+            {"fields": ("created_at", "updated_at"), "classes": ("collapse",)},
+        ),
+    )
+
+    def owner_name(self, obj):
+        """Get the name of the document owner"""
+        if obj.owner:
+            if hasattr(obj.owner, "get_full_name"):
+                return obj.owner.get_full_name()
+            elif hasattr(obj.owner, "name"):
+                return obj.owner.name
+            elif hasattr(obj.owner, "business_name"):
+                return obj.owner.business_name
+            else:
+                return str(obj.owner)
+        return "Unknown"
+
+    owner_name.short_description = "Owner"
+
+    def days_until_expiry(self, obj):
+        """Get days until document expires"""
+        return obj.days_until_expiry
+
+    days_until_expiry.short_description = "Days Until Expiry"
+
+    actions = ["verify_documents", "reject_documents", "mark_expired"]
+
+    def verify_documents(self, request, queryset):
+        """Verify selected documents"""
+        updated = 0
+        for document in queryset:
+            document.verify(verified_by=request.user)
+            updated += 1
+        self.message_user(request, f"Successfully verified {updated} document(s).")
+
+    verify_documents.short_description = "Verify selected documents"
+
+    def reject_documents(self, request, queryset):
+        """Reject selected documents"""
+        updated = queryset.update(status="rejected", is_verified=False)
+        self.message_user(request, f"Successfully rejected {updated} document(s).")
+
+    reject_documents.short_description = "Reject selected documents"
+
+    def mark_expired(self, request, queryset):
+        """Mark selected documents as expired"""
+        updated = 0
+        for document in queryset:
+            document.mark_expired()
+            updated += 1
+        self.message_user(
+            request, f"Successfully marked {updated} document(s) as expired."
+        )
+
+    mark_expired.short_description = "Mark selected documents as expired"
+
+
+@admin.register(Availability)
+class AvailabilityAdmin(admin.ModelAdmin):
+    """Admin interface for the unified Availability model"""
+
+    list_display = [
+        "id",
+        "availability_type",
+        "owner_name",
+        "day_of_week",
+        "start_time",
+        "end_time",
+        "is_available",
+        "is_fully_booked",
+        "current_bookings",
+        "max_jobs",
+    ]
+    list_filter = [
+        "availability_type",
+        "day_of_week",
+        "is_available",
+        "is_recurring",
+        "priority",
+        "created_at",
+        "content_type",
+    ]
+    search_fields = ["notes", "owner_name"]
+    readonly_fields = [
+        "id",
+        "created_at",
+        "updated_at",
+        "duration_hours",
+        "is_fully_booked",
+        "available_capacity",
+    ]
+    date_hierarchy = "created_at"
+
+    fieldsets = (
+        (
+            "Basic Information",
+            {
+                "fields": (
+                    "availability_type",
+                    "content_type",
+                    "object_id",
+                    "owner_name",
+                )
+            },
+        ),
+        (
+            "Schedule",
+            {"fields": ("day_of_week", "start_time", "end_time", "duration_hours")},
+        ),
+        (
+            "Availability Status",
+            {"fields": ("is_available", "is_recurring", "specific_date")},
+        ),
+        (
+            "Capacity",
+            {
+                "fields": (
+                    "max_jobs",
+                    "current_bookings",
+                    "is_fully_booked",
+                    "available_capacity",
+                )
+            },
+        ),
+        (
+            "Restrictions",
+            {"fields": ("service_areas", "vehicle_types"), "classes": ("collapse",)},
+        ),
+        ("Metadata", {"fields": ("notes", "priority"), "classes": ("collapse",)}),
+        (
+            "Timestamps",
+            {"fields": ("created_at", "updated_at"), "classes": ("collapse",)},
+        ),
+    )
+
+    def owner_name(self, obj):
+        """Get the name of the availability owner"""
+        if obj.owner:
+            if hasattr(obj.owner, "get_full_name"):
+                return obj.owner.get_full_name()
+            elif hasattr(obj.owner, "name"):
+                return obj.owner.name
+            elif hasattr(obj.owner, "business_name"):
+                return obj.owner.business_name
+            else:
+                return str(obj.owner)
+        return "Unknown"
+
+    owner_name.short_description = "Owner"
+
+    def is_fully_booked(self, obj):
+        """Check if this slot is fully booked"""
+        return obj.is_fully_booked
+
+    is_fully_booked.short_description = "Fully Booked"
+    is_fully_booked.boolean = True
+
+    actions = ["enable_availability", "disable_availability"]
+
+    def enable_availability(self, request, queryset):
+        """Enable selected availability slots"""
+        updated = queryset.update(is_available=True)
+        self.message_user(
+            request, f"Successfully enabled {updated} availability slot(s)."
+        )
+
+    enable_availability.short_description = "Enable selected availability slots"
+
+    def disable_availability(self, request, queryset):
+        """Disable selected availability slots"""
+        updated = queryset.update(is_available=False)
+        self.message_user(
+            request, f"Successfully disabled {updated} availability slot(s)."
+        )
+
+    disable_availability.short_description = "Disable selected availability slots"

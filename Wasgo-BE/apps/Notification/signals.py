@@ -132,67 +132,68 @@ def handle_provider_verification(sender, instance, created, **kwargs):
             logger.error(f"Error sending provider verification notification: {str(e)}")
 
 
-@receiver(post_save, sender="Bidding.Bid")
-def handle_bid_created(sender, instance, created, **kwargs):
-    """Send notification when a new bid is placed"""
-    if created and instance.job and instance.job.request and instance.job.request.user:
-        try:
-            if not NotificationService.has_sent_email_for(
-                user=instance.job.request.user,
-                notification_type="bid_received",
-                related_object_type="bid",
-                related_object_id=instance.id,
-            ):
-                NotificationService.notify_bid_received(
-                    user=instance.job.request.user, bid_obj=instance
-                )
-            logger.info(f"Sent bid received notification for bid {instance.id}")
-        except Exception as e:
-            logger.error(f"Error sending bid notification: {str(e)}")
+# @receiver(post_save, sender="Bidding.Bid")  # Removed - bidding system eliminated
+# def handle_bid_created(sender, instance, created, **kwargs):
+#     """Send notification when a new bid is placed"""
+#     if created and instance.job and instance.job.request and instance.job.request.user:
+#         try:
+#             if not NotificationService.has_sent_email_for(
+#                 user=instance.job.request.user,
+#                 notification_type="bid_received",
+#                 related_object_type="bid",
+#                 related_object_type="bid",
+#                 related_object_id=instance.id,
+#             ):
+#                 NotificationService.notify_bid_received(
+#                     user=instance.job.request.user, bid_obj=instance
+#                 )
+#             logger.info(f"Sent bid received notification for bid {instance.id}")
+#         except Exception as e:
+#             logger.error(f"Error sending bid notification: {str(e)}")
 
 
-@receiver(post_save, sender="Bidding.Bid")
-def handle_bid_status_change(sender, instance, created, **kwargs):
-    """Send notification when bid status changes"""
-    if not created and instance.provider and instance.provider.user:
-        try:
-            if instance.status == "accepted":
-                if not NotificationService.has_sent_email_for(
-                    user=instance.provider.user,
-                    notification_type="bid_accepted",
-                    related_object_type="bid",
-                    related_object_id=instance.id,
-                ):
-                    NotificationService.create_notification(
-                        user=instance.provider.user,
-                        notification_type="bid_accepted",
-                        related_object_type="bid",
-                        related_object_id=instance.id,
-                        action_url=f"/bids/{instance.id}",
-                        priority="high",
-                        bid=instance,
-                        amount=instance.amount,
-                    )
-            elif instance.status == "rejected":
-                if not NotificationService.has_sent_email_for(
-                    user=instance.provider.user,
-                    notification_type="bid_rejected",
-                    related_object_type="bid",
-                    related_object_id=instance.id,
-                ):
-                    NotificationService.create_notification(
-                        user=instance.provider.user,
-                        notification_type="bid_rejected",
-                        related_object_type="bid",
-                        related_object_id=instance.id,
-                        action_url=f"/bids/{instance.id}",
-                        bid=instance,
-                        amount=instance.amount,
-                    )
+# @receiver(post_save, sender="Bidding.Bid")  # Removed - bidding system eliminated
+# def handle_bid_status_change(sender, instance, created, **kwargs):
+#     """Send notification when bid status changes"""
+#     if not created and instance.provider and instance.provider.user:
+#         try:
+#             if instance.status == "accepted":
+#                 if not NotificationService.has_sent_email_for(
+#                     user=instance.provider.user,
+#                     notification_type="bid_accepted",
+#                     related_object_type="bid",
+#                     related_object_id=instance.id,
+#                 ):
+#                     NotificationService.create_notification(
+#                         user=instance.provider.user,
+#                         notification_type="bid_accepted",
+#                         related_object_type="bid",
+#                         related_object_id=instance.id,
+#                         action_url=f"/bids/{instance.id}",
+#                         priority="high",
+#                         bid=instance,
+#                         amount=instance.amount,
+#                     )
+#             elif instance.status == "rejected":
+#                 if not NotificationService.has_sent_email_for(
+#                     user=instance.provider.user,
+#                     notification_type="bid_rejected",
+#                     related_object_type="bid",
+#                     related_object_id=instance.id,
+#                 ):
+#                     NotificationService.create_notification(
+#                         user=instance.provider.user,
+#                         notification_type="bid_rejected",
+#                         related_object_type="bid",
+#                         related_object_id=instance.id,
+#                         action_url=f"/bids/{instance.id}",
+#                         bid=instance,
+#                         amount=instance.amount,
+#                     )
 
-            logger.info(f"Sent bid status notification for bid {instance.id}")
-        except Exception as e:
-            logger.error(f"Error sending bid status notification: {str(e)}")
+#             logger.info(f"Sent bid status notification for bid {instance.id}")
+#         except Exception as e:
+#             logger.error(f"Error sending bid status notification: {str(e)}")
 
 
 @receiver(post_save, sender="Job.Job")

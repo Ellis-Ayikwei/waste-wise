@@ -119,7 +119,7 @@ class RequestViewSet(viewsets.ModelViewSet):
 
             print(
                 "\033[93m"
-                + f"Request Type: {'Instant' if is_instant else 'Bidding'}"
+                + f"Request Type: {'Instant' if is_instant else 'Standard'}"  # Updated - bidding system eliminated
                 + "\033[0m"
             )
 

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import Job, TimelineEvent
 from apps.Request.serializer import RequestSerializer
-from apps.Bidding.serializers import BidSerializer
+# from apps.Bidding.serializers import BidSerializer  # Removed - bidding system eliminated
 from apps.Provider.serializer import ServiceProviderSerializer
 
 
@@ -35,7 +35,7 @@ class JobSerializer(serializers.ModelSerializer):
     time_remaining = serializers.SerializerMethodField()
     timeline_events = serializers.SerializerMethodField()
     job_number = serializers.CharField(read_only=True)
-    bids = BidSerializer(many=True, read_only=True)  # Add this line
+    # bids = BidSerializer(many=True, read_only=True)  # Removed - bidding system eliminated
     assigned_provider = ServiceProviderSerializer(read_only=True)
 
     class Meta:
@@ -52,7 +52,7 @@ class JobSerializer(serializers.ModelSerializer):
             "is_completed",  # Add this if it exists in your model
             "created_at",
             "updated_at",
-            "bidding_end_time",
+            # "bidding_end_time",  # Removed - bidding system eliminated
             "minimum_bid",
             "preferred_vehicle_types",
             "required_qualifications",
@@ -61,16 +61,16 @@ class JobSerializer(serializers.ModelSerializer):
             "time_remaining",
             "price",
             "timeline_events",
-            "bids",  # Add this line
+            # "bids",  # Removed - bidding system eliminated
         ]
-        read_only_fields = ["id", "job_number", "created_at", "updated_at", "bids"]
+        read_only_fields = ["id", "job_number", "created_at", "updated_at"]  # Removed "bids" - bidding system eliminated
 
     def get_time_remaining(self, obj):
-        if obj.bidding_end_time:
-            from django.utils import timezone
+        # if obj.bidding_end_time:  # Removed - bidding system eliminated
+        #     from django.utils import timezone
 
-            remaining = obj.bidding_end_time - timezone.now()
-            return max(0, remaining.total_seconds())
+        #     remaining = obj.bidding_end_time - timezone.now()
+        #     return max(0, remaining.total_seconds())
         return None
 
     def get_timeline_events(self, obj):

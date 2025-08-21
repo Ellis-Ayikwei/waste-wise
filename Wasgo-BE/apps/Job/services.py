@@ -203,7 +203,7 @@ class ProviderAvailabilityService:
 class JobService:
     @staticmethod
     def create_from_request(
-        request, is_instant=False, bidding_duration_hours=24, minimum_bid=None
+        request, is_instant=False, minimum_bid=None  # Removed bidding_duration_hours - bidding system eliminated
     ):
         """
         Create a job from a request.
@@ -211,7 +211,7 @@ class JobService:
         Args:
             request: The Request instance to create the job from
             is_instant (bool): Whether this should be an instant job
-            bidding_duration_hours (int): Duration of bidding period if not instant
+            # bidding_duration_hours (int): Duration of bidding period if not instant  # Removed - bidding system eliminated
             minimum_bid (Decimal): Minimum bid amount if not instant
 
         Returns:
@@ -243,7 +243,7 @@ class JobService:
         # Otherwise, make it biddable
         else:
             job.make_biddable(
-                bidding_duration_hours=bidding_duration_hours, minimum_bid=minimum_bid
+                minimum_bid=minimum_bid  # Removed bidding_duration_hours - bidding system eliminated
             )
 
         return job
@@ -279,7 +279,7 @@ class JobService:
                 "confidence_score": 1.0,
                 "reasoning": reasoning,
                 "estimated_response_time": "2-6 hours",
-                "recommendation": "Route to auction for competitive bidding",
+                "recommendation": "Route to job assignment system",  # Updated - bidding system eliminated
             }
 
         # Step 2: Assess job complexity
@@ -356,16 +356,16 @@ class JobService:
                 "recommendation": "Show instant price and booking option",
             }
         else:
-            # Use auction bidding
+            # Use job assignment system  # Updated - bidding system eliminated
             reasoning.append("Job requires human assessment via auction")
 
-            # Determine bidding duration based on complexity
+            # Determine assignment duration based on complexity  # Updated - bidding system eliminated
             if complexity_score > 0.8:
-                bidding_hours = 48  # Complex jobs get longer bidding
+                assignment_hours = 48  # Complex jobs get longer assignment time
             elif complexity_score > 0.6:
-                bidding_hours = 24  # Standard bidding time
+                assignment_hours = 24  # Standard assignment time
             else:
-                bidding_hours = 12  # Simple jobs get shorter bidding
+                assignment_hours = 12  # Simple jobs get shorter assignment time
 
             base_price_dec = to_decimal(request.base_price)
             minimum_bid = (base_price_dec * Decimal("0.8")) if base_price_dec else None
@@ -374,10 +374,10 @@ class JobService:
                 "is_instant": False,
                 "confidence_score": confidence_score,
                 "reasoning": reasoning,
-                "estimated_response_time": f"{bidding_hours//12 * 2}-{bidding_hours//6} hours",
-                "bidding_duration_hours": bidding_hours,
+                "estimated_response_time": f"{assignment_hours//12 * 2}-{assignment_hours//6} hours",
+                "assignment_duration_hours": assignment_hours,  # Updated - bidding system eliminated
                 "minimum_bid": minimum_bid,
-                "recommendation": "Create auction listing for competitive bidding",
+                "recommendation": "Create job listing for provider assignment",  # Updated - bidding system eliminated
             }
 
     @staticmethod
@@ -420,13 +420,13 @@ class JobService:
             )
 
         else:  # biddable
-            bidding_hours = strategy_result.get("bidding_duration_hours", 24)
+            assignment_hours = strategy_result.get("assignment_duration_hours", 24)  # Updated - bidding system eliminated
             minimum_bid = strategy_result.get("minimum_bid")
 
             job = JobService.create_from_request(
                 request=request,
                 is_instant=False,
-                bidding_duration_hours=bidding_hours,
+                # bidding_duration_hours=bidding_hours,  # Removed - bidding system eliminated
                 minimum_bid=minimum_bid,
             )
 
@@ -434,12 +434,12 @@ class JobService:
             TimelineEvent.objects.create(
                 job=job,
                 event_type="system_notification",
-                description="Job routed to auction for competitive bidding",
+                description="Job routed to provider assignment system",  # Updated - bidding system eliminated
                 metadata={
                     "strategy": "biddable",
                     "confidence_score": strategy_result["confidence_score"],
                     "reasoning": strategy_result["reasoning"],
-                    "bidding_duration_hours": bidding_hours,
+                    "assignment_duration_hours": assignment_hours,  # Updated - bidding system eliminated
                 },
                 visibility="system",
             )

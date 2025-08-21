@@ -106,6 +106,8 @@ urlpatterns = [
                 path("", include("apps.Request.urls")),
                 # User app URLs
                 path("", include("apps.User.urls")),
+                # Review app URLs
+                path("reviews/", include("apps.Review.urls")),
                 # pricing app URLs
                 path("", include("apps.pricing.urls")),
                 # location app URLs
@@ -115,7 +117,7 @@ urlpatterns = [
                 # provider app URLs
                 path("", include("apps.Provider.urls")),
                 path("", include("apps.Driver.urls")),
-                path("", include("apps.Bidding.urls")),
+                # path("", include("apps.Bidding.urls")),  # Removed - bidding system eliminated
                 path("", include("apps.CommonItems.urls")),
                 path("", include("apps.Message.urls")),
                 path("chat/", include("apps.Chat.urls")),
@@ -124,8 +126,10 @@ urlpatterns = [
                 path("", include("apps.Notification.urls")),
                 # Wasgo IoT endpoints
                 path("waste/", include("apps.WasteBin.urls")),
+                # Analytics endpoints
+                path("analytics/", include("apps.Analytics.urls")),
                 # Wasgo Provider (Uber for Waste) endpoints
-                path("provider/", include("apps.WasteProvider.urls")),
+                # path("provider/", include("apps.WasteProvider.urls")),  # Removed - merged into Provider app
                 # Media files under API prefix
                 *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
             ]

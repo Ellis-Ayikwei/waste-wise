@@ -136,7 +136,7 @@ class NotificationFormatter:
         user_name = context.get("user_name", "there")
 
         messages = {
-            "booking_created": f"Your booking request has been submitted successfully. We'll notify you when providers start bidding on your job.",
+            "booking_created": f"Your booking request has been submitted successfully. We'll notify you when providers are assigned to your job.",  # Updated - bidding system eliminated
             "booking_confirmed": f"Great news! Your booking has been confirmed and assigned to a provider. They'll be in touch shortly.",
             "booking_cancelled": f"Your booking has been cancelled. If this was unexpected, please contact our support team.",
             "provider_accepted": f"A provider has accepted your job and will contact you with the next steps.",
@@ -145,7 +145,7 @@ class NotificationFormatter:
             "job_in_transit": f"Your items are now in transit. You'll receive another notification when they arrive safely.",
             "job_completed": f"Your job has been completed successfully! Please take a moment to rate your experience.",
             "account_verified": f"Congratulations! Your account has been fully verified and is now active.",
-            "provider_verified": f"Your provider account has been verified! You can now start bidding on jobs and accepting assignments.",
+            "provider_verified": f"Your provider account has been verified! You can now start accepting job assignments.",  # Updated - bidding system eliminated
             "payment_confirmed": f"Your payment has been processed successfully. Thank you for choosing MoreVans!",
             "payment_failed": f"We couldn't process your payment. Please update your payment method or try again.",
             "deposit_received": f"We've received your deposit payment. Your booking is now confirmed and being processed.",

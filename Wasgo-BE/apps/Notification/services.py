@@ -312,7 +312,7 @@ class NotificationService:
     ) -> str:
         """Generate default message based on notification type and context."""
         messages = {
-            "booking_created": f"Your booking request has been created successfully. We'll notify you when providers start bidding.",
+            "booking_created": f"Your booking request has been created successfully. We'll notify you when providers are assigned.",  # Updated - bidding system eliminated
             "booking_confirmed": f"Great news! Your booking has been confirmed and assigned to a provider.",
             "booking_cancelled": f"Your booking has been cancelled. If this was unexpected, please contact support.",
             "provider_accepted": f"A provider has accepted your job and will be in touch shortly.",

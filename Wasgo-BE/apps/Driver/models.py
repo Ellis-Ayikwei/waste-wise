@@ -303,98 +303,10 @@ class DriverLocation(Basemodel):
         ordering = ["-timestamp"]
 
 
-class DriverAvailability(Basemodel):
-    """Detailed driver availability schedule"""
-
-    driver = models.ForeignKey(
-        Driver, on_delete=models.CASCADE, related_name="availability_slots"
-    )
-    date = models.DateField()
-    time_slots = models.JSONField()  # Available time slots
-    service_areas = models.ManyToManyField("Provider.ServiceArea")
-    max_jobs = models.IntegerField(default=1)
-    notes = models.TextField(blank=True)
-
-    class Meta:
-        db_table = "driver_availability"
-        managed = True
-        verbose_name = _("Driver Availability")
-        verbose_name_plural = _("Driver Availabilities")
+# DriverAvailability model removed - functionality merged into unified Availability model in User app
 
 
-# Add new models for Driver documentation and compliance
-class DriverDocument(Basemodel):
-    """Model for storing driver-related documents such as license, CPC, and training certificates"""
-
-    objects: models.Manager = models.Manager()
-
-    DOCUMENT_STATUS = [
-        ("rejected", "Rejected"),
-        ("verified", "Verified"),
-        ("pending", "pending"),
-    ]
-
-    DOCUMENT_TYPES = [
-        ("license", "Driving License"),
-        ("cpc", "CPC Qualification Card"),
-        ("tacho", "Tachograph Card"),
-        ("adr", "ADR Certificate"),
-        ("insurance", "Insurance Document"),
-        ("training", "Training Certificate"),
-        ("employment", "Employment Contract"),
-        ("id", "ID Document"),
-        ("medical", "Medical Certificate"),
-        ("other", "Other Document"),
-    ]
-
-    driver = models.ForeignKey(
-        Driver, on_delete=models.CASCADE, related_name="documents"
-    )
-    document_type = models.CharField(max_length=20, choices=DOCUMENT_TYPES)
-    issue_date = models.DateField(null=True, blank=True)
-    expiry_date = models.DateField(null=True, blank=True)
-    reference_number = models.CharField(max_length=100, blank=True)
-    notes = models.TextField(blank=True)
-    is_verified = models.BooleanField(default=False)
-    has_two_sides = models.BooleanField(default=False)
-    rejection_reason = models.TextField(blank=True, null=True)
-    verification_note = models.TextField(blank=True, null=True)
-    status = models.CharField(max_length=50, choices=DOCUMENT_STATUS, default="pending")
-
-    def __str__(self):
-        return f"{self.get_document_type_display()} - {self.driver.name}"
-
-    def get_upload_path(instance, filename):
-        # Get the file extension
-        ext = filename.split(".")[-1]
-        # Create a shorter filename using timestamp
-        from django.utils import timezone
-
-        timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
-        # Create new filename with timestamp and extension
-        new_filename = f"{timestamp}.{ext}"
-        return f"docs/drivers/{instance.driver.id}/{instance.id}/{new_filename}"
-
-    document_front = models.FileField(
-        upload_to=get_upload_path, blank=True, null=True, max_length=255
-    )
-    document_back = models.FileField(
-        upload_to=get_upload_path, blank=True, null=True, max_length=255
-    )
-
-    class Meta:
-        db_table = "driver_document"
-        managed = True
-        verbose_name = _("Driver Document")
-        verbose_name_plural = _("Driver Documents")
-        ordering = ["-issue_date"]
-
-    def save(self, *args, **kwargs):
-        """Override save to update driver verification status"""
-        super().save(*args, **kwargs)
-        # Update driver verification status when document is saved
-        if hasattr(self, "driver"):
-            self.driver.update_verification_status()
+# DriverDocument model removed - functionality merged into unified Document model in User app
 
 
 class DriverInfringement(Basemodel):

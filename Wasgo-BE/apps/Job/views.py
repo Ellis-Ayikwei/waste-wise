@@ -8,8 +8,8 @@ from django.db.models import Q
 from .models import Job
 from .serializers import JobSerializer
 from apps.Request.models import Request
-from apps.Bidding.models import Bid
-from apps.Bidding.serializers import BidSerializer
+# from apps.Bidding.models import Bid  # Removed - bidding system eliminated
+# from apps.Bidding.serializers import BidSerializer  # Removed - bidding system eliminated
 from apps.Request.views import RequestViewSet
 from decimal import Decimal
 from apps.Chat.utils import (
@@ -57,20 +57,20 @@ class JobViewSet(viewsets.ModelViewSet):
 
         Expected request body:
         {
-            "bidding_duration_hours": 24,  # Optional, defaults to 24
+            # "bidding_duration_hours": 24,  # Removed - bidding system eliminated
             "minimum_bid": 100.00  # Optional
         }
         """
         job = self.get_object()
 
         try:
-            bidding_duration_hours = int(request.data.get("bidding_duration_hours", 24))
+            # bidding_duration_hours = int(request.data.get("bidding_duration_hours", 24))  # Removed - bidding system eliminated
             minimum_bid = request.data.get("minimum_bid")
             if minimum_bid:
                 minimum_bid = Decimal(str(minimum_bid))
 
             job.make_biddable(
-                bidding_duration_hours=bidding_duration_hours, minimum_bid=minimum_bid
+                minimum_bid=minimum_bid  # Removed bidding_duration_hours - bidding system eliminated
             )
 
             return Response(
@@ -297,65 +297,66 @@ class JobViewSet(viewsets.ModelViewSet):
             }
         )
 
-    @action(detail=False, methods=["get"])
-    def bids(self, request, pk=None):
-        job = self.get_object()
-        bids = job.bids.all()
-        return Response({"bids": BidSerializer(bids, many=True).data})
+    # @action(detail=False, methods=["get"])
+    # def bids(self, request, pk=None):
+    #     job = self.get_object()
+    #     bids = job.bids.all()
+    #     return Response({"bids": BidSerializer(bids, many=True).data})
 
-    @action(detail=True, methods=["post"])
-    def add_bid(self, request, pk=None):
-        """Add a bid to a job"""
-        from apps.Provider.models import ServiceProvider
+    # @action(detail=True, methods=["post"])
+    # def add_bid(self, request, pk=None):
+    #     """Add a bid to a job"""
+    #     from apps.Provider.models import ServiceProvider
 
-        job = self.get_object()
-        user = request.user
-        provider = ServiceProvider.objects.get(user=user)
-        if not provider:
-            return Response(
-                {"error": "Provider not found"}, status=status.HTTP_404_NOT_FOUND
-            )
-        if job.status != "bidding":
-            return Response(
-                {"error": "Job is not in bidding status"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        bid = Bid.objects.create(
-            job=job,
-            provider=provider,
-            amount=request.data.get("amount"),
-            message=request.data.get("message"),
-            status="pending",
-        )
-        bid.save()
-        # Create or update job conversation
-        return Response({"status": "Bid added"})
+    #     job = self.get_object()
+    #     user = request.user
+    #     provider = ServiceProvider.objects.get(user=user)
+    #     if not provider:
+    #         return Response(
+    #                 {"error": "Provider not found"}, status=status.HTTP_404_NOT_FOUND
+    #             )
+    #     # if job.status != "bidding":  # Removed - bidding system eliminated
+    #     #     return Response(
+    #     #         {"error": "Job is not in bidding status"},
+    #     #         status=status.HTTP_400_BAD_REQUEST,
+    #     #     )
+    #     bid = Bid.objects.create(
+    #         job=job,
+    #         provider=provider,
+    #         amount=request.data.get("amount"),
+    #         message=request.data.get("message"),
+    #         status="pending",
+    #     )
+    #     bid.save()
+    #     # Create or update job conversation
+    #     return Response({"status": "Bid added"})
 
-    @action(detail=True, methods=["delete"])
-    def delete_bid(self, request, pk=None):
-        """Delete a bid from a job"""
-        job = self.get_object()
-        user = request.user
-        provider = ServiceProvider.objects.get(user=user)
-        if not provider:
-            return Response(
-                {"error": "Provider not found"}, status=status.HTTP_404_NOT_FOUND
-            )
-        bid = Bid.objects.get(job=job, provider=provider)
-        if not bid:
-            return Response(
-                {"error": "Bid not found"}, status=status.HTTP_404_NOT_FOUND
-            )
-        bid.delete()
-        return Response({"status": "Bid deleted"})
+    # @action(detail=True, methods=["delete"])
+    # def delete_bid(self, request, pk=None):
+    #     """Delete a bid from a job"""
+    #     job = self.get_object()
+    #     user = request.user
+    #     provider = ServiceProvider.objects.get(user=user)
+    #     if not provider:
+    #         return Response(
+    #                 {"error": "Provider not found"}, status=status.HTTP_404_NOT_FOUND
+    #             )
+    #     bid = Bid.objects.get(job=job, provider=provider)
+    #     if not bid:
+    #         return Response(
+    #                 {"error": "Bid not found"}, status=status.HTTP_404_NOT_FOUND
+    #             )
+    #     bid.delete()
+    #     return Response({"status": "Bid deleted"})
 
-    @action(detail=True, methods=["put"])
-    def update_bid(self, request, pk=None):
-        """Update a bid"""
-        bid = Bid.objects.get(id=pk)
-        bid.message = request.data.get("message")
-        bid.save()
-        return Response({"status": "Bid updated"})
+    # @action(detail=True, methods=["put"])
+    # def update_bid(self, request, pk=None):
+    #     """Update a bid"""
+    #     bid = Bid.objects.get(id=pk)
+    #     bid.message = request.data.get("message")
+    #     bid.save()
+    #     return Response({"status": "Bid updated"})
+    # Removed - bidding system eliminated
 
     @action(detail=False, methods=["get"])
     def bookings(self, request):

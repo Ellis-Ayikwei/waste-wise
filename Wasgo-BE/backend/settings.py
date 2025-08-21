@@ -48,10 +48,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.gis",  # Django GIS support
     "rest_framework",
     "rest_framework.authtoken",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
+    "rest_framework_gis",  # GIS support for DRF
     "corsheaders",
     "channels",
     # Django OTP
@@ -68,7 +70,7 @@ INSTALLED_APPS = [
     "apps.Driver",
     "apps.Tracking",
     "apps.Location",
-    "apps.Bidding",
+    # "apps.Bidding",  # Removed - bidding system eliminated
     "apps.Review",
     "apps.Services",
     "apps.Contract",
@@ -81,7 +83,8 @@ INSTALLED_APPS = [
     "apps.JourneyStop",
     "apps.Chat",
     "apps.WasteBin",  # Wasgo IoT bin management
-    "apps.WasteProvider",  # Uber for Waste provider system
+    "apps.Analytics",  # Waste management analytics and reporting
+    "rest_framework_gis",
 ]
 
 MIDDLEWARE = [
@@ -120,7 +123,7 @@ ASGI_APPLICATION = "backend.asgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.contrib.gis.db.backends.postgis",
-        "NAME": "Wasgo",  # database name
+        "NAME": "wasgo_db",  # database name
         "USER": "postgres",  # database user
         "PASSWORD": "@Toshib123",  # database password
         "HOST": "localhost",  # database host

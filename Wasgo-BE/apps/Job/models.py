@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.gis.db import models as gis_models
 from apps.Basemodel.models import Basemodel
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
@@ -35,16 +36,278 @@ class JobProviderAcceptance(Basemodel):
         return f"JobProviderAcceptance {self.id}"
 
 
+# Removed JobOffer model - functionality merged into Job model
+
+
+class CollectionRoute(Basemodel):
+    """Optimized collection routes for waste trucks and service providers"""
+
+    ROUTE_STATUS = [
+        ("planned", "Planned"),
+        ("active", "Active"),
+        ("completed", "Completed"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    ROUTE_TYPES = [
+        ("waste_collection", "Waste Collection"),
+        ("recycling", "Recycling Collection"),
+        ("maintenance", "Maintenance Route"),
+        ("inspection", "Inspection Route"),
+        ("emergency", "Emergency Response"),
+    ]
+
+    name = models.CharField(max_length=255, help_text="Route name/identifier")
+    route_type = models.CharField(
+        max_length=30, choices=ROUTE_TYPES, default="waste_collection"
+    )
+    status = models.CharField(max_length=20, choices=ROUTE_STATUS, default="planned")
+
+    # Route assignment
+    assigned_provider = models.ForeignKey(
+        ServiceProvider,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_routes",
+    )
+    assigned_vehicle = models.ForeignKey(
+        "Vehicle.Vehicle",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_routes",
+    )
+
+    # Route details
+    start_location = gis_models.PointField(srid=4326, help_text="Route starting point")
+    end_location = gis_models.PointField(srid=4326, help_text="Route ending point")
+    total_distance_km = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
+    estimated_duration_minutes = models.IntegerField(null=True, blank=True)
+
+    # Scheduling
+    scheduled_date = models.DateField(help_text="Date when route should be executed")
+    scheduled_start_time = models.TimeField(help_text="Scheduled start time")
+    scheduled_end_time = models.TimeField(help_text="Scheduled end time")
+
+    # Actual execution
+    actual_start_time = models.DateTimeField(null=True, blank=True)
+    actual_end_time = models.DateTimeField(null=True, blank=True)
+    actual_duration_minutes = models.IntegerField(null=True, blank=True)
+
+    # Route optimization
+    optimization_score = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True
+    )
+    fuel_efficiency_km_l = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True
+    )
+    co2_emissions_kg = models.DecimalField(
+        max_digits=8, decimal_places=2, null=True, blank=True
+    )
+
+    # Route metadata
+    stops_count = models.PositiveIntegerField(
+        default=0, help_text="Number of stops in route"
+    )
+    completed_stops = models.PositiveIntegerField(
+        default=0, help_text="Number of completed stops"
+    )
+    total_weight_collected_kg = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal("0.00")
+    )
+
+    # Route notes and issues
+    route_notes = models.TextField(blank=True, help_text="Notes about the route")
+    issues_encountered = models.TextField(
+        blank=True, help_text="Issues encountered during route execution"
+    )
+    requires_follow_up = models.BooleanField(default=False)
+
+    # Route verification
+    route_photos = models.JSONField(
+        default=list, blank=True, help_text="Photos taken during route execution"
+    )
+    route_verified = models.BooleanField(
+        default=False, help_text="Whether route completion has been verified"
+    )
+
+    class Meta:
+        db_table = "collection_routes"
+        verbose_name = "Collection Route"
+        verbose_name_plural = "Collection Routes"
+        ordering = ["-scheduled_date", "-created_at"]
+        indexes = [
+            models.Index(fields=["status"]),
+            models.Index(fields=["scheduled_date"]),
+            models.Index(fields=["assigned_provider"]),
+            models.Index(fields=["route_type"]),
+        ]
+
+    def __str__(self):
+        return f"{self.name} - {self.get_route_type_display()} - {self.get_status_display()}"
+
+    def get_completion_percentage(self):
+        """Get route completion percentage"""
+        if self.stops_count == 0:
+            return 0
+        return (self.completed_stops / self.stops_count) * 100
+
+    def start_route(self):
+        """Mark route as started"""
+        if self.status == "planned":
+            self.status = "active"
+            self.actual_start_time = timezone.now()
+            self.save(update_fields=["status", "actual_start_time"])
+
+    def complete_route(self):
+        """Mark route as completed"""
+        if self.status == "active":
+            self.status = "completed"
+            self.actual_end_time = timezone.now()
+            if self.actual_start_time:
+                duration = self.actual_end_time - self.actual_start_time
+                self.actual_duration_minutes = int(duration.total_seconds() / 60)
+            self.save(
+                update_fields=["status", "actual_end_time", "actual_duration_minutes"]
+            )
+
+    def add_stop(self, waste_bin, sequence=None):
+        """Add a stop to this route"""
+        if sequence is None:
+            sequence = self.stops_count + 1
+
+        RouteStop.objects.create(
+            route=self,
+            bin=waste_bin,
+            sequence=sequence,
+            scheduled_arrival_time=self.scheduled_start_time,
+            scheduled_departure_time=self.scheduled_end_time,
+        )
+        self.stops_count += 1
+        self.save(update_fields=["stops_count"])
+
+
+class RouteStop(Basemodel):
+    """Individual stops within a collection route"""
+
+    route = models.ForeignKey(
+        CollectionRoute, on_delete=models.CASCADE, related_name="stops"
+    )
+    bin = models.ForeignKey(
+        "WasteBin.WasteBin", on_delete=models.CASCADE, related_name="route_stops"
+    )
+    sequence = models.PositiveIntegerField(help_text="Stop sequence in route")
+
+    # Scheduling
+    scheduled_arrival_time = models.TimeField(
+        help_text="Scheduled arrival time at this stop"
+    )
+    scheduled_departure_time = models.TimeField(
+        help_text="Scheduled departure time from this stop"
+    )
+    scheduled_duration_minutes = models.IntegerField(null=True, blank=True)
+
+    # Actual execution
+    actual_arrival = models.DateTimeField(null=True, blank=True)
+    actual_departure = models.DateTimeField(null=True, blank=True)
+    actual_duration_minutes = models.IntegerField(null=True, blank=True)
+
+    # Collection details
+    is_collected = models.BooleanField(
+        default=False, help_text="Whether waste was collected at this stop"
+    )
+    weight_collected_kg = models.DecimalField(
+        max_digits=8, decimal_places=2, null=True, blank=True
+    )
+    fill_level_before = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True
+    )
+    fill_level_after = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True
+    )
+
+    # Stop status
+    skip_reason = models.TextField(blank=True, help_text="Reason if stop was skipped")
+    issues_encountered = models.TextField(
+        blank=True, help_text="Issues encountered at this stop"
+    )
+
+    # Verification
+    before_photos = models.JSONField(default=list, blank=True)
+    after_photos = models.JSONField(default=list, blank=True)
+
+    # Issues
+    issues_encountered = models.TextField(blank=True)
+    requires_follow_up = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.route.name} - Stop {self.sequence}: {self.bin.name}"
+
+    class Meta:
+        db_table = "route_stops"
+        verbose_name = "Route Stop"
+        verbose_name_plural = "Route Stops"
+        ordering = ["route", "sequence"]
+        unique_together = [["route", "sequence"]]
+        indexes = [
+            models.Index(fields=["route", "sequence"]),
+            models.Index(fields=["is_collected"]),
+        ]
+
+    def arrive_at_stop(self):
+        """Mark arrival at this stop"""
+        if not self.actual_arrival:
+            self.actual_arrival = timezone.now()
+            self.save(update_fields=["actual_arrival"])
+
+    def depart_from_stop(self):
+        """Mark departure from this stop"""
+        if self.actual_arrival and not self.actual_departure:
+            self.actual_departure = timezone.now()
+            if self.actual_arrival:
+                duration = self.actual_departure - self.actual_arrival
+                self.actual_duration_minutes = int(duration.total_seconds() / 60)
+            self.save(update_fields=["actual_departure", "actual_duration_minutes"])
+
+    def mark_collected(self, weight_collected=None, fill_level_after=None):
+        """Mark this stop as collected"""
+        self.is_collected = True
+        if weight_collected is not None:
+            self.weight_collected_kg = weight_collected
+        if fill_level_after is not None:
+            self.fill_level_after = fill_level_after
+        self.save()
+
+    def skip_stop(self, reason):
+        """Mark this stop as skipped"""
+        self.skip_reason = reason
+        self.save(update_fields=["skip_reason"])
+
+
 class Job(Basemodel):
     STATUS_CHOICES = [
         ("draft", "Draft"),
         ("pending", "Pending"),
-        ("bidding", "Bidding in Progress"),
+        ("offered", "Offered to Provider"),  # New status for when job is offered
         ("accepted", "Accepted"),
         ("assigned", "Assigned"),
         ("in_transit", "In Transit"),
         ("completed", "Completed"),
         ("cancelled", "Cancelled"),
+    ]
+
+    JOB_TYPES = [
+        ("general", "General Service"),
+        ("waste_collection", "Waste Collection"),
+        ("recycling", "Recycling Service"),
+        ("hazardous_waste", "Hazardous Waste Disposal"),
+        ("bin_maintenance", "Bin Maintenance"),
+        ("route_optimization", "Route Optimization"),
+        ("waste_audit", "Waste Audit"),
+        ("environmental_consulting", "Environmental Consulting"),
     ]
 
     is_instant = models.BooleanField(default=False)
@@ -60,6 +323,12 @@ class Job(Basemodel):
         null=True,
         help_text="Unique job identifier with prefix",
     )
+    job_type = models.CharField(
+        max_length=30,
+        choices=JOB_TYPES,
+        default="general",
+        help_text="Type of job being performed",
+    )
     accepted_providers = models.ManyToManyField(
         "Provider.ServiceProvider",
         related_name="accepted_jobs",
@@ -71,7 +340,6 @@ class Job(Basemodel):
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
     is_completed = models.BooleanField(default=False)
-    bidding_end_time = models.DateTimeField(null=True, blank=True)
     minimum_bid = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True
     )
@@ -88,589 +356,392 @@ class Job(Basemodel):
         related_name="assigned_jobs",
     )
 
+    # Provider-specific fields (merged from JobOffer)
+    offered_provider = models.ForeignKey(
+        "Provider.ServiceProvider",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="offered_jobs",
+        help_text="Provider who was offered this job",
+    )
+    offered_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Price offered by the provider",
+    )
+    offer_expires_at = models.DateTimeField(
+        null=True, blank=True, help_text="When the offer expires"
+    )
+    offer_response = models.CharField(
+        max_length=20,
+        choices=[
+            ("pending", "Pending Response"),
+            ("accepted", "Accepted"),
+            ("rejected", "Rejected"),
+            ("expired", "Expired"),
+        ],
+        default="pending",
+        help_text="Provider's response to the offer",
+    )
+    offer_responded_at = models.DateTimeField(null=True, blank=True)
+    provider_notes = models.TextField(
+        blank=True, help_text="Provider's notes about the job"
+    )
+
+    # Offer terms (merged from JobOffer)
+    includes_equipment = models.BooleanField(default=False)
+    includes_materials = models.BooleanField(default=False)
+    includes_insurance = models.BooleanField(default=False)
+    special_conditions = models.TextField(blank=True)
+
+    # Distance and timing (merged from JobOffer)
+    distance_to_provider_km = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Distance from provider to job location",
+    )
+
+    # Waste Management Specific Fields
+    waste_type = models.CharField(
+        max_length=20,
+        choices=[
+            ("general", "General Waste"),
+            ("recyclable", "Recyclable"),
+            ("organic", "Organic/Compost"),
+            ("hazardous", "Hazardous Waste"),
+            ("electronic", "E-Waste"),
+            ("plastic", "Plastic Only"),
+            ("paper", "Paper & Cardboard"),
+            ("glass", "Glass"),
+            ("metal", "Metal"),
+            ("construction", "Construction Debris"),
+            ("textile", "Textile & Clothing"),
+        ],
+        blank=True,
+        help_text="Type of waste for collection jobs",
+    )
+    estimated_weight_kg = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Estimated weight of waste in kg",
+    )
+    actual_weight_kg = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Actual weight collected in kg",
+    )
+    collection_method = models.CharField(
+        max_length=20,
+        choices=[
+            ("manual", "Manual Collection"),
+            ("automated", "Automated Lift"),
+            ("side_loader", "Side Loader"),
+            ("rear_loader", "Rear Loader"),
+            ("front_loader", "Front Loader"),
+        ],
+        blank=True,
+        help_text="Method used for waste collection",
+    )
+
+    # GIS Location tracking for waste collection
+    pickup_coordinates = gis_models.PointField(
+        srid=4326,
+        null=True,
+        blank=True,
+        help_text="GPS coordinates for pickup location",
+    )
+    dropoff_coordinates = gis_models.PointField(
+        srid=4326,
+        null=True,
+        blank=True,
+        help_text="GPS coordinates for dropoff location",
+    )
+    current_location = gis_models.PointField(
+        srid=4326,
+        null=True,
+        blank=True,
+        help_text="Current location during job execution",
+    )
+
+    # Collection scheduling and timing
+    scheduled_collection_date = models.DateField(
+        null=True, blank=True, help_text="Scheduled collection date"
+    )
+    scheduled_collection_time = models.TimeField(
+        null=True, blank=True, help_text="Scheduled collection time"
+    )
+    actual_start_time = models.DateTimeField(
+        null=True, blank=True, help_text="Actual time job started"
+    )
+    actual_completion_time = models.DateTimeField(
+        null=True, blank=True, help_text="Actual time job completed"
+    )
+    estimated_duration_minutes = models.IntegerField(
+        null=True, blank=True, help_text="Estimated duration in minutes"
+    )
+    actual_duration_minutes = models.IntegerField(
+        null=True, blank=True, help_text="Actual duration in minutes"
+    )
+
+    # Collection verification and proof
+    collection_photos = models.JSONField(
+        default=list, blank=True, help_text="Photos taken during collection"
+    )
+    collection_notes = models.TextField(
+        blank=True, help_text="Notes from the collection process"
+    )
+    collection_verified = models.BooleanField(
+        default=False, help_text="Whether collection has been verified"
+    )
+    verification_photos = models.JSONField(
+        default=list, blank=True, help_text="Photos for verification purposes"
+    )
+
+    # Environmental impact tracking
+    co2_emissions_kg = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="CO2 emissions in kg for this job",
+    )
+    recycling_rate = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Percentage of waste recycled",
+    )
+    environmental_impact_score = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Environmental impact score (0-100)",
+    )
+
     class Meta:
         verbose_name = _("Job")
         verbose_name_plural = _("Jobs")
         ordering = ["-created_at"]
         db_table = "job"
         managed = True
+        indexes = [
+            models.Index(fields=["status"]),
+            models.Index(fields=["job_type"]),
+            models.Index(fields=["assigned_provider"]),
+            models.Index(fields=["offered_provider"]),
+            models.Index(fields=["scheduled_collection_date"]),
+            models.Index(fields=["created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.job_number} - {self.title} - {self.get_status_display()}"
 
     def save(self, *args, **kwargs):
-        # Generate job number if not already set
         if not self.job_number:
             self.job_number = self.generate_job_number()
         super().save(*args, **kwargs)
 
     def generate_job_number(self):
-        """
-        Generates a unique job number.
-        Format: JOB-{YYYYMM}-{SEQUENTIAL_NUMBER}
-        Example: JOB-202406-001, JOB-202406-002
-        """
-        if self.job_number and self.job_number.strip():
-            return self.job_number
+        """Generate unique job number with prefix"""
+        prefix = "JOB"
+        timestamp = timezone.now().strftime("%Y%m%d")
+        random_suffix = "".join(
+            random.choices(string.ascii_uppercase + string.digits, k=4)
+        )
+        job_number = f"{prefix}{timestamp}{random_suffix}"
 
-        # Get current date for the prefix
-        now = timezone.now()
-        date_prefix = now.strftime("%Y%m")
-
-        # Get the count of jobs created this month to generate sequential number
-        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        jobs_this_month = Job.objects.filter(
-            created_at__gte=month_start, job_number__startswith=f"JOB-{date_prefix}-"
-        ).count()
-
-        # Generate sequential number (padded to 3 digits)
-        sequential_number = str(jobs_this_month + 1).zfill(3)
-
-        # Create the job number
-        job_number = f"JOB-{date_prefix}-{sequential_number}"
-
-        # Ensure uniqueness (in case of race conditions)
-        counter = 1
-        while Job.objects.filter(job_number=job_number).exclude(id=self.id).exists():
-            counter += 1
-            sequential_number = str(jobs_this_month + counter).zfill(3)
-            job_number = f"JOB-{date_prefix}-{sequential_number}"
-
-            # Prevent infinite loop
-            if counter > 1000:
-                # Fallback to random string
-                random_suffix = "".join(random.choices(string.digits, k=4))
-                job_number = f"JOB-{date_prefix}-{random_suffix}"
-                break
+        # Ensure uniqueness
+        while Job.objects.filter(job_number=job_number).exists():
+            random_suffix = "".join(
+                random.choices(string.ascii_uppercase + string.digits, k=4)
+            )
+            job_number = f"{prefix}{timestamp}{random_suffix}"
 
         return job_number
 
-    @classmethod
-    def generate_alternative_job_number(cls):
-        """
-        Alternative job number format if you prefer shorter numbers.
-        Format: MV-{RANDOM_6_CHARS}
-        Example: MV-A1B2C3, MV-X9Y8Z7
-        """
-        while True:
-            # Generate 6 random alphanumeric characters
-            random_chars = "".join(
-                random.choices(string.ascii_uppercase + string.digits, k=6)
+    def offer_to_provider(
+        self, provider, offered_price, expires_at=None, **offer_details
+    ):
+        """Offer this job to a specific provider"""
+        if expires_at is None:
+            expires_at = timezone.now() + timedelta(hours=24)
+
+        self.offered_provider = provider
+        self.offered_price = offered_price
+        self.offer_expires_at = expires_at
+        self.offer_response = "pending"
+        self.status = "offered"
+
+        # Set offer-specific details
+        for field, value in offer_details.items():
+            if hasattr(self, field):
+                setattr(self, field, value)
+
+        self.save()
+
+        # Create acceptance record
+        JobProviderAcceptance.objects.get_or_create(job=self, provider=provider)
+
+    def accept_offer(self):
+        """Accept the current offer"""
+        if self.offer_response == "pending" and not self.is_offer_expired():
+            self.offer_response = "accepted"
+            self.offer_responded_at = timezone.now()
+            self.status = "accepted"
+            self.assigned_provider = self.offered_provider
+            self.price = self.offered_price
+            self.save()
+            return True
+        return False
+
+    def reject_offer(self, reason=""):
+        """Reject the current offer"""
+        if self.offer_response == "pending":
+            self.offer_response = "rejected"
+            self.offer_responded_at = timezone.now()
+            self.provider_notes = (
+                f"Rejected: {reason}" if reason else "Rejected by provider"
             )
-            job_number = f"MV-{random_chars}"
+            self.status = "pending"  # Back to pending for other offers
+            self.save()
+            return True
+        return False
 
-            # Check if it's unique
-            if not cls.objects.filter(job_number=job_number).exists():
-                return job_number
+    def is_offer_expired(self):
+        """Check if the current offer has expired"""
+        return self.offer_expires_at and timezone.now() > self.offer_expires_at
 
-    @classmethod
-    def get_next_job_number_preview(cls):
-        """
-        Preview what the next job number would be without creating a job.
-        Useful for displaying to users before job creation.
-        """
-        now = timezone.now()
-        date_prefix = now.strftime("%Y%m")
-
-        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        jobs_this_month = cls.objects.filter(
-            created_at__gte=month_start, job_number__startswith=f"JOB-{date_prefix}-"
-        ).count()
-
-        sequential_number = str(jobs_this_month + 1).zfill(3)
-        return f"JOB-{date_prefix}-{sequential_number}"
-
-    @staticmethod
-    def create_job(request_obj, **kwargs):
-        """
-        Creates a job after payment has been completed for a request.
-        If a job already exists for this request, returns the existing job.
-
-        Args:
-            request_obj: The Request instance that has been paid for
-            kwargs: Additional arguments for job creation
-
-        Returns:
-            Job: The created or existing job instance
-
-        Raises:
-            ValueError: If the request is not in a valid state or payment is not completed
-        """
-        print(f"create_job called with kwargs: {kwargs}")
-
-        # Check if a job already exists for this request
-        existing_job = Job.objects.filter(request=request_obj).first()
-        print(f"Checking for existing job in create_job method: {existing_job}")
-        if existing_job:
-            print(f"Returning existing job: {existing_job.id}")
-            return existing_job
-
-        # Get all stops ordered by sequence
-        all_stops = request_obj.stops.all().order_by("sequence")
-        pickup_stops = all_stops.filter(type="pickup")
-        dropoff_stops = all_stops.filter(type="dropoff")
-        intermediate_stops = all_stops.filter(type="intermediate")
-
-        print(
-            f"Stops found: {all_stops.count()} total, {pickup_stops.count()} pickup, {dropoff_stops.count()} dropoff, {intermediate_stops.count()} intermediate"
+    def get_active_offers(self):
+        """Get all active (non-expired) job offers"""
+        return Job.objects.filter(
+            offered_provider=self.offered_provider,
+            offer_response="pending",
+            offer_expires_at__gt=timezone.now(),
         )
 
-        # Get first pickup and last dropoff for job title
-        first_pickup = pickup_stops.first()
-        last_dropoff = dropoff_stops.last()
-
-        # Build location description
-        location_parts = []
-        if first_pickup and first_pickup.location:
-            location_parts.append(f"from {first_pickup.location.address}")
-
-        if intermediate_stops.exists():
-            location_parts.append(
-                f"with {intermediate_stops.count()} intermediate stop(s)"
-            )
-
-        if last_dropoff and last_dropoff.location:
-            location_parts.append(f"to {last_dropoff.location.address}")
-
-        location_description = (
-            " ".join(location_parts) if location_parts else "Multiple locations"
-        )
-
-        # Create job title and description
-        total_stops = all_stops.count()
-        title = f"Moving Service Request - {total_stops} stops"
-
-        description_parts = [
-            f"Moving service job created from request {request_obj.id}",
-            f"Total stops: {total_stops}",
-            f"Route: {location_description}",
-        ]
-
-        if request_obj.total_weight:
-            description_parts.insert(1, f"Total weight: {request_obj.total_weight}kg")
-
-        if pickup_stops.count() > 1:
-            description_parts.append(
-                f"Multiple pickups: {pickup_stops.count()} locations"
-            )
-
-        if dropoff_stops.count() > 1:
-            description_parts.append(
-                f"Multiple dropoffs: {dropoff_stops.count()} locations"
-            )
-
-        description = ". ".join(description_parts)
-
-        # Determine if job should be instant (50% chance, but consider complexity)
-        complexity_factor = min(total_stops / 10.0, 0.8)  # Max 80% complexity
-        instant_probability = max(0.2, 0.5 - complexity_factor)  # Min 20% chance
-        is_instant = random.random() < instant_probability
-
-        # Create the job
-        base_price = request_obj.base_price or Decimal("0.00")
-        print(f"Base price: {base_price}, Type: {type(base_price)}")
-
-        # If base price is 0, try to calculate it
-        if base_price == Decimal("0.00"):
-            print("Base price is 0, attempting to calculate it...")
-            try:
-                base_price = request_obj.calculate_base_price()
-                print(f"Calculated base price: {base_price}")
-            except Exception as e:
-                print(f"Error calculating base price: {e}")
-                # Use a default base price
-                base_price = Decimal("50.00")
-                print(f"Using default base price: {base_price}")
-
-        # For all jobs, use the base price as the job price (what provider gets paid)
-        final_price = base_price
-
-        # Calculate minimum bid based on job type
-        if (
-            kwargs.get("is_instant", is_instant)
-            or request_obj.request_type == "instant"
-        ):
-            # For instant jobs, minimum bid is 90% of job price
-            minimum_bid = base_price * Decimal("0.9") if base_price > 0 else None
-        else:
-            # For non-instant jobs, use traditional bidding approach
-            minimum_bid_multiplier = 0.6 + (
-                complexity_factor * 0.2
-            )  # 60-80% for bidding
-            minimum_bid = (
-                base_price * minimum_bid_multiplier if base_price > 0 else None
-            )
-
-        print(f"Final price: {final_price}, Minimum bid: {minimum_bid}")
-        print(f"Complexity factor: {complexity_factor}, Is instant: {is_instant}")
-
-        job_data = {
-            "request": request_obj,
-            "title": title,
-            "description": description,
-            "price": kwargs.get("price", final_price),
-            "status": kwargs.get("status", "draft"),
-            "is_instant": kwargs.get("is_instant", is_instant),
-            "minimum_bid": kwargs.get("minimum_bid", minimum_bid),
-        }
-        print(f"Creating job with data: {job_data}")
-        print(f"About to call Job.objects.create with {len(job_data)} fields")
-
-        try:
-            job = Job.objects.create(**job_data)
-            print("Job.objects.create() completed successfully")
-        except Exception as create_error:
-            print(f"Error in Job.objects.create(): {str(create_error)}")
-            print(f"Error type: {type(create_error)}")
-            import traceback
-
-            print(f"Traceback: {traceback.format_exc()}")
-            raise create_error
-
-        # Ensure the job is saved and job number is generated
-        job.save()
-
-        print(f"\033[92mJob created with number: {job.job_number}\033[0m")
-        print(f"\033[92mJob ID: {job.id}, Status: {job.status}\033[0m")
-
-        return job
-
-    def accept(self, provider):
-        """Accept a job"""
-        if self.status == "accepted":
-            raise ValueError("Job has already been accepted")
-
-        if self.assigned_provider is not None:
-            raise ValueError("Job already has an assigned provider")
-
-        if self.status not in ["pending", "bidding"]:
-            raise ValueError(f"Job cannot be accepted from status '{self.status}'")
-
-        self.status = "accepted"
+    def assign_provider(self, provider, price=None):
+        """Directly assign a provider to this job"""
         self.assigned_provider = provider
-        self.save()
-
-    def __str__(self):
-        return f"{self.job_number} - {self.title}"
-
-    def make_biddable(self, bidding_duration_hours=24, minimum_bid=None):
-        """
-        Convert the job to a biddable job with a specified bidding duration.
-
-        Args:
-            bidding_duration_hours (int): Duration of the bidding period in hours
-            minimum_bid (Decimal, optional): Minimum bid amount for the job
-        """
-        if self.status != "draft":
-            raise ValueError("Only draft jobs can be made biddable")
-
-        self.is_instant = False
-        self.status = "bidding"
-        self.bidding_end_time = timezone.now() + timedelta(hours=bidding_duration_hours)
-        if minimum_bid:
-            self.minimum_bid = minimum_bid
-        self.save()
-
-        # Create a timeline event
-        TimelineEvent.objects.create(
-            job=self,
-            event_type="status_changed",
-            description="Job converted to biddable",
-            metadata={
-                "bidding_end_time": self.bidding_end_time.isoformat(),
-                "minimum_bid": str(self.minimum_bid) if self.minimum_bid else None,
-            },
-        )
-
-        return True
-
-    def make_instant(self):
-        """
-        Convert the job to an instant job that can be assigned immediately.
-        """
-        if self.status != "draft":
-            raise ValueError("Only draft jobs can be made instant")
-
-        self.is_instant = True
-        self.status = "pending"
-        self.bidding_end_time = None
-        self.minimum_bid = None
-        self.save()
-
-        # Create a timeline event
-        TimelineEvent.objects.create(
-            job=self,
-            event_type="status_changed",
-            description="Job converted to instant",
-            metadata={"is_instant": True},
-        )
-
-        return True
-
-    def start_bidding(self):
-        """Start the bidding process for the job"""
-        if self.status == "draft":
-            self.status = "bidding"
-            self.save()
-            return True
-        return False
-
-    def accept_bid(self, bid):
-        """Accept a bid for this job"""
-        if self.status == "bidding":
-            self.status = "assigned"
-            self.assigned_provider = bid.provider
-            self.save()
-            return True
-        return False
-
-    def complete_job(self, completed_by=None):
-        """
-        Mark a job as completed.
-
-        Args:
-            completed_by: The user who marked the job as completed
-
-        Raises:
-            ValueError: If job is not in a valid state to be completed
-        """
-        valid_states = ["in_transit", "assigned"]
-        if self.status not in valid_states:
-            raise ValueError(
-                f"Job can only be completed from states: {', '.join(valid_states)}"
-            )
-
-        old_status = self.status
-        self.status = "completed"
-        self.is_completed = True
-        self.save()
-
-        # Create timeline event
-        TimelineEvent.objects.create(
-            job=self,
-            event_type="completed",
-            description="Job has been marked as completed",
-            created_by=completed_by,
-            metadata={
-                "completed_at": timezone.now().isoformat(),
-                "previous_status": old_status,
-            },
-        )
-
-    def cancel_job(self, cancelled_by=None, reason=None):
-        """
-        Cancel a job.
-
-        Args:
-            cancelled_by: The user who cancelled the job
-            reason: The reason for cancellation
-
-        Raises:
-            ValueError: If job is not in a valid state to be cancelled
-        """
-        invalid_states = ["completed", "cancelled"]
-        if self.status in invalid_states:
-            raise ValueError(f"Cannot cancel job in state: {self.status}")
-
-        old_status = self.status
-        self.status = "cancelled"
-        self.save()
-
-        # Create timeline event
-        TimelineEvent.objects.create(
-            job=self,
-            event_type="cancelled",
-            description=f"Job cancelled: {reason if reason else 'No reason provided'}",
-            created_by=cancelled_by,
-            metadata={
-                "cancelled_at": timezone.now().isoformat(),
-                "previous_status": old_status,
-                "reason": reason,
-            },
-        )
-
-    def start_transit(self, started_by=None):
-        """
-        Mark a job as in transit.
-
-        Args:
-            started_by: The user who started the transit
-
-        Raises:
-            ValueError: If job is not in a valid state to start transit
-        """
-        if self.status != "assigned":
-            raise ValueError("Job must be assigned before starting transit")
-
-        old_status = self.status
-        self.status = "in_transit"
-        self.save()
-
-        # Create timeline event
-        TimelineEvent.objects.create(
-            job=self,
-            event_type="in_transit",
-            description="Job is now in transit",
-            created_by=started_by,
-            metadata={
-                "transit_started_at": timezone.now().isoformat(),
-                "previous_status": old_status,
-            },
-        )
-
-    def assign_provider(self, provider, assigned_by=None):
-        """
-        Assign a provider to the job.
-
-        Args:
-            provider: The ServiceProvider instance to assign
-            assigned_by: The user making the assignment
-
-        Raises:
-            ValueError: If job is not in a valid state for provider assignment
-        """
-        valid_states = ["draft", "pending", "bidding", "accepted"]
-        if self.status not in valid_states:
-            raise ValueError(f"Cannot assign provider in state: {self.status}")
-
-        if self.assigned_provider:
-            raise ValueError("Job already has an assigned provider")
-
-        old_status = self.status
+        if price:
+            self.price = price
         self.status = "assigned"
-        self.assigned_provider = provider
         self.save()
 
-        # Create timeline event
-        TimelineEvent.objects.create(
-            job=self,
-            event_type="provider_assigned",
-            description=f"Provider {provider.user.get_full_name()} assigned to job",
-            created_by=assigned_by,
-            metadata={
-                "assigned_at": timezone.now().isoformat(),
-                "previous_status": old_status,
-                "provider_id": str(provider.id),
-            },
-        )
+        # Create acceptance record
+        JobProviderAcceptance.objects.get_or_create(job=self, provider=provider)
 
-    def unassign_provider(self, unassigned_by=None):
-        """
-        Unassign a provider from the job.
+    def start_job(self):
+        """Mark job as started"""
+        if self.status in ["assigned", "accepted"]:
+            self.status = "in_transit"
+            self.actual_start_time = timezone.now()
+            self.save(update_fields=["status", "actual_start_time"])
 
-        Args:
-            provider: The ServiceProvider instance to assign
-            assigned_by: The user making the assignment
+    def complete_job(self):
+        """Mark job as completed"""
+        if self.status == "in_transit":
+            self.status = "completed"
+            self.is_completed = True
+            self.actual_completion_time = timezone.now()
+            if self.actual_start_time:
+                duration = self.actual_completion_time - self.actual_start_time
+                self.actual_duration_minutes = int(duration.total_seconds() / 60)
+            self.save(
+                update_fields=[
+                    "status",
+                    "is_completed",
+                    "actual_completion_time",
+                    "actual_duration_minutes",
+                ]
+            )
 
-        Raises:
-            ValueError: If job is not in a valid state for provider assignment
-        """
-        valid_states = ["assigned"]
-        if self.status not in valid_states:
-            raise ValueError(f"Cannot unassign provider in state: {self.status}")
+    def cancel_job(self, reason=""):
+        """Cancel the job"""
+        self.status = "cancelled"
+        if reason:
+            self.notes = f"Cancelled: {reason}"
+        self.save(update_fields=["status", "notes"])
 
-        if not self.assigned_provider:
-            raise ValueError("No Provider is assigned yet")
+    def get_time_remaining(self):
+        """Get time remaining for offer (if applicable)"""
+        if self.offer_expires_at and self.offer_response == "pending":
+            remaining = self.offer_expires_at - timezone.now()
+            return max(0, remaining.total_seconds())
+        return None
 
-        self.status = "pending"
-        self.assigned_provider = None
-        _ = unassigned_by
-        self.save()
+    def get_total_cost(self):
+        """Get total cost including any additional fees"""
+        total = self.price or Decimal("0.00")
+        # Add any additional costs here if needed
+        return total
 
-    def accept_job(self, accepted_by):
-        """
-        Mark a job as accepted by a provider.
-
-        Args:
-            accepted_by: The user accepting the job
-
-        Raises:
-            ValueError: If job is not in a valid state to be accepted
-        """
-        if self.status not in ["pending", "bidding"]:
-            raise ValueError(f"Cannot accept job in state: {self.status}")
-
-        old_status = self.status
-        self.status = "accepted"
-        self.save()
-
-        # Create timeline event
-        TimelineEvent.objects.create(
-            job=self,
-            event_type="provider_accepted",
-            description="Job has been accepted",
-            created_by=accepted_by,
-            metadata={
-                "accepted_at": timezone.now().isoformat(),
-                "previous_status": old_status,
-            },
-        )
-
-    @property
-    def can_be_completed(self):
-        """Check if job can be completed"""
-        return self.status in ["in_transit", "assigned"]
-
-    @property
-    def can_be_cancelled(self):
-        """Check if job can be cancelled"""
-        return self.status not in ["completed", "cancelled"]
-
-    @property
-    def can_start_transit(self):
-        """Check if job can start transit"""
-        return self.status == "assigned"
-
-    @property
-    def can_be_assigned(self):
-        """Check if provider can be assigned"""
-        return self.status in ["pending", "bidding", "accepted"]
+    def get_environmental_impact(self):
+        """Calculate environmental impact score"""
+        if self.co2_emissions_kg and self.recycling_rate:
+            # Simple scoring algorithm
+            co2_score = max(
+                0, 100 - (self.co2_emissions_kg * 10)
+            )  # Lower CO2 = higher score
+            recycling_score = self.recycling_rate  # Higher recycling = higher score
+            return (co2_score + recycling_score) / 2
+        return None
 
 
 class TimelineEvent(Basemodel):
-    """Tracks events in the job timeline with different visibility levels"""
+    """Track timeline events for jobs"""
 
-    EVENT_TYPE_CHOICES = [
+    EVENT_TYPES = [
         ("created", "Job Created"),
-        ("updated", "Job Updated"),
-        ("status_changed", "Status Changed"),
-        ("provider_assigned", "Provider Assigned"),
-        ("provider_accepted", "Provider Accepted"),
-        ("job_started", "Job Started"),
-        ("in_transit", "In Transit"),
-        ("completed", "Completed"),
-        ("cancelled", "Cancelled"),
-        ("document_uploaded", "Document Uploaded"),
-        ("message_sent", "Message Sent"),
-        ("payment_processed", "Payment Processed"),
-        ("rating_submitted", "Rating Submitted"),
+        # ("bidding_started", "Bidding Started"),  # Removed - bidding system eliminated
+        ("offer_sent", "Offer Sent"),
+        ("offer_accepted", "Offer Accepted"),
+        ("offer_rejected", "Offer Rejected"),
+        ("assigned", "Provider Assigned"),
+        ("started", "Job Started"),
+        ("completed", "Job Completed"),
+        ("cancelled", "Job Cancelled"),
         ("system_notification", "System Notification"),
-    ]
-
-    VISIBILITY_CHOICES = [
-        ("all", "Visible to All"),
-        ("provider", "Provider Only"),
-        ("customer", "Customer Only"),
-        ("system", "System Only"),
     ]
 
     job = models.ForeignKey(
         Job, on_delete=models.CASCADE, related_name="timeline_events"
     )
-    event_type = models.CharField(max_length=50, choices=EVENT_TYPE_CHOICES)
+    event_type = models.CharField(max_length=30, choices=EVENT_TYPES)
     description = models.TextField()
-    visibility = models.CharField(
-        max_length=20, choices=VISIBILITY_CHOICES, default="all"
-    )
-    metadata = models.JSONField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(
+    timestamp = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(
         "User.User", on_delete=models.SET_NULL, null=True, blank=True
+    )
+    metadata = models.JSONField(default=dict, blank=True)
+    visibility = models.CharField(
+        max_length=20,
+        choices=[
+            ("public", "Public"),
+            ("provider", "Provider Only"),
+            ("customer", "Customer Only"),
+            ("system", "System Only"),
+        ],
+        default="public",
     )
 
     class Meta:
-        db_table = "timeline_event"
-        managed = True
-        ordering = ["-created_at"]
-        verbose_name = "Timeline Event"
-        verbose_name_plural = "Timeline Events"
+        db_table = "job_timeline_events"
+        ordering = ["-timestamp"]
+        indexes = [
+            models.Index(fields=["job", "event_type"]),
+            models.Index(fields=["timestamp"]),
+        ]
 
     def __str__(self):
-        return f"TimelineEvent {self.id}"
+        return f"{self.job.job_number} - {self.get_event_type_display()} - {self.timestamp}"
