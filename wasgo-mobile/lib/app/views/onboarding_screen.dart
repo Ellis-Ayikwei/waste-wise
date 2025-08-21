@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:bytedev/core/theme/app_colors.dart';
+import 'package:bytedev/core/storage/app_storage.dart';
+import 'package:bytedev/core/routes/app_routes.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -80,19 +82,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
     super.dispose();
   }
 
-  void _nextPage() {
+  void _nextPage() async {
     if (_currentPage < _pages.length - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
     } else {
-      Get.offAllNamed('/login');
+      await _completeOnboarding();
     }
   }
 
-  void _skipToLogin() {
-    Get.offAllNamed('/login');
+  void _skipToLogin() async {
+    await _completeOnboarding();
+  }
+
+  Future<void> _completeOnboarding() async {
+    try {
+      await AppStorage.setOnboardingCompleted();
+      AppRoutes.goToLogin();
+    } catch (e) {
+      print('Error completing onboarding: $e');
+      AppRoutes.goToLogin();
+    }
   }
 
   // Responsive helper methods
@@ -409,3 +421,4 @@ class OnboardingPage {
     required this.image,
   });
 }
+

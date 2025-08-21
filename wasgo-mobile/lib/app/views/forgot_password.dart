@@ -101,13 +101,9 @@ class ForgotPassword extends StatelessWidget {
                         AppButton(
                           text: 'Continue',
                           isLoading: authState.isLoading,
-                          shape: RoundedRectangleBorder(),
-                          buttonTextStyle: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: isSmallScreen ? 20 : 25,
-                          ),
-                            onPressed: () => Get.toNamed('/verify_email'),
+                          type: AppButtonType.primary,
+                          size: AppButtonSize.large,
+                          onPressed: () => Get.toNamed('/verify_email'),
                           width: double.infinity,
                         ),
                       ],

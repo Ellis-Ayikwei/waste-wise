@@ -5,8 +5,7 @@ import 'package:bytedev/core/widgets/app_button.dart';
 import 'package:bytedev/core/widgets/app_text_field.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:bytedev/app/redux/states/app_state.dart';
-import 'package:bytedev/app/controllers/customer_controller.dart';
-import 'package:bytedev/app/views/main_screen.dart';
+import 'package:bytedev/app/controllers/user_controller.dart';
 import 'package:redux/redux.dart';
 
 class RequestPickupView extends StatefulWidget {
@@ -55,73 +54,70 @@ class _RequestPickupViewState extends State<RequestPickupView> {
     return StoreConnector<AppState, _ViewModel>(
       converter: (store) => _ViewModel(
         state: store.state,
-        controller: CustomerController(store),
+        controller: UserController(store),
       ),
       builder: (context, vm) {
-        return CustomerMainScreen(
-          title: 'Request Pickup',
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSectionTitle('Pickup Details'),
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionTitle('Pickup Details'),
+                const SizedBox(height: 16),
+                _buildWasteTypeSelector(),
+                const SizedBox(height: 16),
+                AppTextField(
+                  controller: _quantityController,
+                  labelText: 'Estimated quantity (kg)',
+                  hintText: 'Estimated quantity (kg)',
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter quantity';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                AppTextField(
+                  labelText: 'Description',
+                  controller: _descriptionController,
+                  hintText: 'Description (optional)',
+                ),
+                const SizedBox(height: 24),
+                _buildSectionTitle('Pickup Location'),
+                const SizedBox(height: 16),
+                AppTextField(
+                  labelText: 'Pickup Address',
+                  controller: _addressController,
+                  hintText: 'Pickup address',
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter pickup address';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 24),
+                _buildSectionTitle('Schedule'),
+                const SizedBox(height: 16),
+                _buildUrgencySelector(),
+                const SizedBox(height: 16),
+                if (_selectedUrgency == 'Scheduled') ...[
+                  _buildDateTimePicker(),
                   const SizedBox(height: 16),
-                  _buildWasteTypeSelector(),
-                  const SizedBox(height: 16),
-                  AppTextField(
-                    controller: _quantityController,
-                    labelText: 'Estimated quantity (kg)',
-                    hintText: 'Estimated quantity (kg)',
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter quantity';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  AppTextField(
-                    labelText: 'Description',
-                    controller: _descriptionController,
-                    hintText: 'Description (optional)',
-                  ),
-                  const SizedBox(height: 24),
-                  _buildSectionTitle('Pickup Location'),
-                  const SizedBox(height: 16),
-                  AppTextField(
-                    labelText: 'Pickup Address',
-                    controller: _addressController,
-                    hintText: 'Pickup address',
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter pickup address';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  _buildSectionTitle('Schedule'),
-                  const SizedBox(height: 16),
-                  _buildUrgencySelector(),
-                  const SizedBox(height: 16),
-                  if (_selectedUrgency == 'Scheduled') ...[
-                    _buildDateTimePicker(),
-                    const SizedBox(height: 16),
-                  ],
-                  const SizedBox(height: 32),
-                  AppButton(
-                    text: 'Submit Request',
-                    onPressed: vm.state.customerState.isLoading
-                        ? () {}
-                        : () => _submitRequest(vm),
-                    isLoading: vm.state.customerState.isLoading,
-                  ),
                 ],
-              ),
+                const SizedBox(height: 32),
+                AppButton(
+                  text: 'Submit Request',
+                  onPressed: vm.state.userState.isLoading
+                      ? () {}
+                      : () => _submitRequest(vm),
+                  isLoading: vm.state.userState.isLoading,
+                ),
+              ],
             ),
           ),
         );
@@ -150,6 +146,7 @@ class _RequestPickupViewState extends State<RequestPickupView> {
         child: DropdownButton<String>(
           value: _selectedWasteType,
           isExpanded: true,
+          hint: const Text('Select waste type'),
           onChanged: (String? newValue) {
             setState(() {
               _selectedWasteType = newValue!;
@@ -167,29 +164,30 @@ class _RequestPickupViewState extends State<RequestPickupView> {
   }
 
   Widget _buildUrgencySelector() {
-    return Row(
-      children: _urgencyLevels.map((level) {
-        return Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: ChoiceChip(
-              label: Text(level),
-              selected: _selectedUrgency == level,
-              onSelected: (selected) {
-                if (selected) {
-                  setState(() {
-                    _selectedUrgency = level;
-                  });
-                }
-              },
-              selectedColor: AppColors.primary,
-              labelStyle: TextStyle(
-                color: _selectedUrgency == level ? Colors.white : Colors.black,
-              ),
-            ),
-          ),
-        );
-      }).toList(),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedUrgency,
+          isExpanded: true,
+          hint: const Text('Select urgency level'),
+          onChanged: (String? newValue) {
+            setState(() {
+              _selectedUrgency = newValue!;
+            });
+          },
+          items: _urgencyLevels.map<DropdownMenuItem<String>>((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
+        ),
+      ),
     );
   }
 
@@ -209,9 +207,7 @@ class _RequestPickupViewState extends State<RequestPickupView> {
                 children: [
                   const Icon(Icons.calendar_today, size: 20),
                   const SizedBox(width: 8),
-                  Text(
-                    '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                  ),
+                  Text('${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}'),
                 ],
               ),
             ),
@@ -239,11 +235,6 @@ class _RequestPickupViewState extends State<RequestPickupView> {
         ),
       ],
     );
-  }
-
-  void _getCurrentLocation() {
-    // TODO: Implement location fetching
-    _addressController.text = 'Current Location';
   }
 
   void _selectDate() async {
@@ -306,7 +297,7 @@ class _RequestPickupViewState extends State<RequestPickupView> {
 
 class _ViewModel {
   final AppState state;
-  final CustomerController controller;
+  final UserController controller;
 
   _ViewModel({
     required this.state,

@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_button.dart';
 import '../../core/widgets/app_text_field.dart';
 import '../../core/widgets/socials.dart';
+import '../../core/routes/app_routes.dart';
 import '../controllers/auth_controller.dart';
 import '../redux/states/app_state.dart';
 import '../redux/states/auth_state.dart';
@@ -130,14 +131,10 @@ class SignupView extends StatelessWidget {
                       AppButton(
                         text: 'SIGN UP',
                         isLoading: authState.isLoading,
-                        shape: RoundedRectangleBorder(),
-                        buttonTextStyle: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: isSmallScreen ? 20 : 25,
-                        ),
+                        type: AppButtonType.primary,
+                        size: AppButtonSize.large,
                         onPressed: () {
-                          Get.toNamed('/home');
+                          AppRoutes.goToHome();
                         },
                         width: double.infinity,
                       ),
@@ -146,9 +143,9 @@ class SignupView extends StatelessWidget {
                   BuildSocialLoginSection(
                     promptText: "Already have an account?",
                     actionText: "Sign in",
-                    onActionPressed: () {
-                      Get.toNamed('/login');
-                    },
+                                         onActionPressed: () {
+                       AppRoutes.goToLogin();
+                     },
                   )
                 ],
               ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:bytedev/core/theme/app_colors.dart';
-import 'package:bytedev/app/views/main_screen.dart';
+
 
 class WalletView extends StatefulWidget {
   const WalletView({super.key});
@@ -79,9 +79,7 @@ class _WalletViewState extends State<WalletView> {
 
   @override
   Widget build(BuildContext context) {
-    return CustomerMainScreen(
-      title: 'Wallet',
-      child: Column(
+    return Column(
         children: [
           _buildBalanceCard(),
           _buildTabBar(),
@@ -89,8 +87,7 @@ class _WalletViewState extends State<WalletView> {
             child: _selectedTab == 0 ? _buildTransactionsTab() : _buildPaymentMethodsTab(),
           ),
         ],
-      ),
-    );
+      );
   }
 
   Widget _buildBalanceCard() {

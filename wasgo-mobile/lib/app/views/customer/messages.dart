@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:bytedev/core/theme/app_colors.dart';
-import 'package:bytedev/app/views/main_screen.dart';
+
 
 class MessagesView extends StatefulWidget {
   const MessagesView({Key? key}) : super(key: key);
@@ -13,9 +13,7 @@ class MessagesView extends StatefulWidget {
 class _MessagesViewState extends State<MessagesView> {
   @override
   Widget build(BuildContext context) {
-    return CustomerMainScreen(
-      title: 'Messages',
-      child: SingleChildScrollView(
+    return SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -25,8 +23,7 @@ class _MessagesViewState extends State<MessagesView> {
             _buildMessagesList(),
           ],
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildHeader() {

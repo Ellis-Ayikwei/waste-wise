@@ -5,8 +5,7 @@ import 'package:bytedev/core/widgets/app_button.dart';
 import 'package:bytedev/core/widgets/app_text_field.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:bytedev/app/redux/states/app_state.dart';
-import 'package:bytedev/app/controllers/customer_controller.dart';
-import 'package:bytedev/app/views/main_screen.dart';
+import 'package:bytedev/app/controllers/user_controller.dart';
 import 'package:redux/redux.dart';
 
 class SchedulePickupView extends StatefulWidget {
@@ -62,60 +61,57 @@ class _SchedulePickupViewState extends State<SchedulePickupView> {
     return StoreConnector<AppState, _ViewModel>(
       converter: (store) => _ViewModel(
         state: store.state,
-        controller: CustomerController(store),
+        controller: UserController(store),
       ),
       builder: (context, vm) {
-        return CustomerMainScreen(
-          title: 'Schedule Pickup',
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSectionTitle('Schedule Details'),
-                  const SizedBox(height: 16),
-                  _buildFrequencySelector(),
-                  const SizedBox(height: 16),
-                  if (_selectedFrequency == 'Weekly' || _selectedFrequency == 'Bi-Weekly')
-                    _buildDaySelector(),
-                  const SizedBox(height: 16),
-                  _buildTimePicker(),
-                  const SizedBox(height: 24),
-                  _buildSectionTitle('Waste Information'),
-                  const SizedBox(height: 16),
-                  _buildWasteTypeSelector(),
-                  const SizedBox(height: 16),
-                  AppTextField(
-                    labelText: 'Additional Notes',
-                    controller: _descriptionController,
-                    hintText: 'Additional notes (optional)',
-                  ),
-                  const SizedBox(height: 24),
-                  _buildSectionTitle('Pickup Location'),
-                  const SizedBox(height: 16),
-                  AppTextField(
-                    labelText: 'Pickup Address',
-                    controller: _addressController,
-                    hintText: 'Pickup address',
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter pickup address';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 32),
-                  AppButton(
-                    text: 'Create Schedule',
-                    onPressed: vm.state.customerState.isLoading
-                        ? () {}
-                        : () => _submitSchedule(vm),
-                    isLoading: vm.state.customerState.isLoading,
-                  ),
-                ],
-              ),
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionTitle('Schedule Details'),
+                const SizedBox(height: 16),
+                _buildFrequencySelector(),
+                const SizedBox(height: 16),
+                if (_selectedFrequency == 'Weekly' || _selectedFrequency == 'Bi-Weekly')
+                  _buildDaySelector(),
+                const SizedBox(height: 16),
+                _buildTimePicker(),
+                const SizedBox(height: 24),
+                _buildSectionTitle('Waste Information'),
+                const SizedBox(height: 16),
+                _buildWasteTypeSelector(),
+                const SizedBox(height: 16),
+                AppTextField(
+                  labelText: 'Additional Notes',
+                  controller: _descriptionController,
+                  hintText: 'Additional notes (optional)',
+                ),
+                const SizedBox(height: 24),
+                _buildSectionTitle('Pickup Location'),
+                const SizedBox(height: 16),
+                AppTextField(
+                  labelText: 'Pickup Address',
+                  controller: _addressController,
+                  hintText: 'Pickup address',
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter pickup address';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 32),
+                AppButton(
+                  text: 'Create Schedule',
+                  onPressed: vm.state.userState.isLoading
+                      ? () {}
+                      : () => _submitSchedule(vm),
+                  isLoading: vm.state.userState.isLoading,
+                ),
+              ],
             ),
           ),
         );
@@ -246,11 +242,6 @@ class _SchedulePickupViewState extends State<SchedulePickupView> {
     );
   }
 
-  void _getCurrentLocation() {
-    // TODO: Implement location fetching
-    _addressController.text = 'Current Location';
-  }
-
   void _selectTime() async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
@@ -301,7 +292,7 @@ class _SchedulePickupViewState extends State<SchedulePickupView> {
 
 class _ViewModel {
   final AppState state;
-  final CustomerController controller;
+  final UserController controller;
 
   _ViewModel({
     required this.state,

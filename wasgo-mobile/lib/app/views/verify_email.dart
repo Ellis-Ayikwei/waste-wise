@@ -3,6 +3,7 @@ import 'package:bytedev/app/redux/states/app_state.dart';
 import 'package:bytedev/app/redux/states/auth_state.dart';
 import 'package:bytedev/core/theme/app_theme.dart';
 import 'package:bytedev/core/widgets/app_button.dart';
+import 'package:bytedev/core/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:get/get.dart';
@@ -72,8 +73,7 @@ class VerifyEmail extends StatelessWidget {
                             ),
                           ),
                           SizedBox(height: screenSize.height * 0.05),
-                          CustomPinField(),
-                          // TestOtp(),
+                          // TODO: Add OTP input field
                           SizedBox(height: screenSize.height * 0.01),
                           if (authState.error != null)
                             Padding(
@@ -93,13 +93,9 @@ class VerifyEmail extends StatelessWidget {
                             child: AppButton(
                               text: 'Confirm',
                               isLoading: authState.isLoading,
-                              shape: RoundedRectangleBorder(),
-                              buttonTextStyle: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: isSmallScreen ? 20 : 25,
-                              ),
-                                onPressed: () => Get.toNamed('/reset_password'),
+                              type: AppButtonType.primary,
+                              size: AppButtonSize.large,
+                              onPressed: () => AppRoutes.goToResetPassword(),
                               width: double.infinity,
                             ),
                           ),

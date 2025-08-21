@@ -23,7 +23,8 @@ dependencies:
   flutter_signin_button: ^2.0.0
   pin_code_fields: ^8.0.1
   otp_pin_field: ^1.4.0
-  lucide_icons_flutter: ^0.263.1
+  lucide_icons_flutter: 3.0.9
+  shared_preferences: ^2.2.2
 
 dev_dependencies:
   flutter_test:

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:bytedev/core/theme/app_colors.dart';
-import 'package:bytedev/app/views/main_screen.dart';
+
 
 class RewardsView extends StatefulWidget {
   const RewardsView({super.key});
@@ -116,9 +116,7 @@ class _RewardsViewState extends State<RewardsView> {
 
   @override
   Widget build(BuildContext context) {
-    return CustomerMainScreen(
-      title: 'Rewards',
-      child: Column(
+    return Column(
         children: [
           _buildHeader(),
           _buildTabBar(),
@@ -126,8 +124,7 @@ class _RewardsViewState extends State<RewardsView> {
             child: _selectedTab == 0 ? _buildBadgesTab() : _buildRewardsTab(),
           ),
         ],
-      ),
-    );
+      );
   }
 
   Widget _buildHeader() {

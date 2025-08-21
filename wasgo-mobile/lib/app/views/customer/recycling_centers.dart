@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:bytedev/core/theme/app_colors.dart';
-import 'package:bytedev/app/views/main_screen.dart';
+
 
 class RecyclingCentersView extends StatefulWidget {
   const RecyclingCentersView({Key? key}) : super(key: key);
@@ -13,9 +13,7 @@ class RecyclingCentersView extends StatefulWidget {
 class _RecyclingCentersViewState extends State<RecyclingCentersView> {
   @override
   Widget build(BuildContext context) {
-    return CustomerMainScreen(
-      title: 'Recycling Centers',
-      child: SingleChildScrollView(
+    return SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -27,8 +25,7 @@ class _RecyclingCentersViewState extends State<RecyclingCentersView> {
             _buildCentersList(),
           ],
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildHeader() {

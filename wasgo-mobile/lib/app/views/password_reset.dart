@@ -108,17 +108,10 @@ class PasswordReset extends StatelessWidget {
                       ),
                       const SizedBox(height: 40),
                       AppButton(
-                        height: 50,
                         text: 'Reset Password',
                         isLoading: authState.isLoading,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        buttonTextStyle: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
+                        type: AppButtonType.primary,
+                        size: AppButtonSize.large,
                         onPressed: () {
                           Get.toNamed('/login');
                         },

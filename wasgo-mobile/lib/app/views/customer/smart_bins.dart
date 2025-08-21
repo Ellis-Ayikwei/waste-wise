@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:bytedev/core/theme/app_colors.dart';
-import 'package:bytedev/app/views/main_screen.dart';
+
 
 class SmartBinsView extends StatefulWidget {
   const SmartBinsView({Key? key}) : super(key: key);
@@ -105,19 +105,16 @@ class _SmartBinsViewState extends State<SmartBinsView> {
 
   @override
   Widget build(BuildContext context) {
-    return CustomerMainScreen(
-      title: 'Smart Bins',
-      child: Column(
-        children: [
-          _buildHeader(),
-          _buildControls(),
-          Expanded(
-            child: _viewMode == 'grid' 
-                ? _buildGridView() 
-                : _buildListView(),
-          ),
-        ],
-      ),
+    return Column(
+      children: [
+        _buildHeader(),
+        _buildControls(),
+        Expanded(
+          child: _viewMode == 'grid' 
+              ? _buildGridView() 
+              : _buildListView(),
+        ),
+      ],
     );
   }
 
