@@ -1,24 +1,25 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import (
-    PaymentMethodViewSet,
-    PaymentViewSet,
-    StripeWebhookView,
-    StripeConfigView,
-    stripe_webhook,
-)
+from .views_paystack_secure import SecurePaystackPaymentViewSet, paystack_webhook
 
-router = DefaultRouter()
-router.register(r"payment-methods", PaymentMethodViewSet)
-router.register(r"payments", PaymentViewSet)
+# Create router for viewset
+router = DefaultRouter(trailing_slash=True)
+router.register(r'payments', SecurePaystackPaymentViewSet, basename='payment')
 
 urlpatterns = [
-    path("", include(router.urls)),
-    path(
-        "payments-webhook/webhook/", StripeWebhookView.as_view(), name="stripe-webhook"
-    ),
-    path("config/", StripeConfigView.as_view(), name="stripe-config"),
-    path(
-        "stripe-webhook/", stripe_webhook, name="legacy-stripe-webhook"
-    ),  # Legacy support
+    # Include router URLs (provides /payments/ endpoints)
+    path('', include(router.urls)),
+    
+    # Webhook endpoint (no trailing slash for webhooks)
+    path('payments/webhook/', paystack_webhook, name='paystack_webhook'),
+    
+    # Additional custom endpoints if needed
+    # These are already handled by the viewset actions:
+    # - /payments/initialize_payment/ (POST)
+    # - /payments/verify_payment/ (GET)
+    # - /payments/charge_authorization/ (POST)
+    # - /payments/payment_methods/ (GET)
+    # - /payments/set_default_payment_method/ (POST)
+    # - /payments/delete_payment_method/ (DELETE)
+    # - /payments/create_refund/ (POST)
 ]

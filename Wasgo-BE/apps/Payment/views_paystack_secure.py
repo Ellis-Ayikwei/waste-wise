@@ -1,0 +1,614 @@
+"""
+Secure Paystack Payment Views
+All API keys and sensitive operations handled server-side only
+"""
+import json
+import uuid
+from decimal import Decimal
+from django.conf import settings
+from django.shortcuts import get_object_or_404, redirect
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
+from rest_framework import viewsets, status, permissions
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny, IsAuthenticated
+
+from .models_paystack import (
+    Payment, PaymentMethod, PaystackCustomer, 
+    PaymentWebhook, TransferRecipient, Transfer
+)
+from .serializer import PaymentSerializer
+from .paystack_service import PaystackService
+from apps.Request.models import Request
+from apps.User.models import User
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class SecurePaystackPaymentViewSet(viewsets.ModelViewSet):
+    """
+    Secure ViewSet for Paystack payment operations
+    All sensitive operations handled server-side
+    """
+    queryset = Payment.objects.all()
+    serializer_class = PaymentSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.paystack_service = PaystackService()
+    
+    @action(detail=False, methods=['post'])
+    def initialize_payment(self, request):
+        """
+        Initialize a payment transaction (server-side only)
+        Frontend sends payment details, backend handles Paystack initialization
+        
+        Expected data:
+        {
+            "request_id": "uuid",
+            "amount": 5000.00,
+            "email": "user@example.com",
+            "callback_url": "https://yourapp.com/payment/callback",
+            "metadata": {...}
+        }
+        """
+        try:
+            data = request.data
+            user = request.user
+            
+            # Validate amount
+            amount = Decimal(str(data.get('amount', 0)))
+            if amount <= 0:
+                return Response({
+                    'success': False,
+                    'message': 'Invalid amount'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Get request if provided
+            request_obj = None
+            if data.get('request_id'):
+                request_obj = get_object_or_404(Request, id=data['request_id'])
+                # Verify user owns this request
+                if request_obj.user != user:
+                    return Response({
+                        'success': False,
+                        'message': 'Unauthorized'
+                    }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Generate unique reference
+            reference = f"WASGO-{uuid.uuid4().hex[:8].upper()}"
+            
+            # Prepare metadata
+            metadata = data.get('metadata', {})
+            metadata.update({
+                'user_id': str(user.id),
+                'request_id': str(request_obj.id) if request_obj else None,
+                'custom_fields': [
+                    {
+                        'display_name': 'Customer Name',
+                        'variable_name': 'customer_name',
+                        'value': f"{user.first_name} {user.last_name}"
+                    }
+                ]
+            })
+            
+            # Initialize transaction with Paystack (server-side with secret key)
+            paystack_response = self.paystack_service.initialize_transaction(
+                email=data.get('email', user.email),
+                amount=amount,
+                reference=reference,
+                callback_url=data.get('callback_url'),
+                metadata=metadata,
+                channels=data.get('channels', ['card', 'bank', 'ussd', 'mobile_money'])
+            )
+            
+            # Create payment record
+            payment = Payment.objects.create(
+                user=user,
+                request=request_obj,
+                reference=reference,
+                amount=amount,
+                currency=data.get('currency', 'NGN'),
+                status='pending',
+                payment_type=data.get('payment_type', 'full_payment'),
+                authorization_url=paystack_response['authorization_url'],
+                access_code=paystack_response['access_code'],
+                metadata=metadata,
+                description=data.get('description', '')
+            )
+            
+            logger.info(f"Payment initialized for user {user.id}: {reference}")
+            
+            return Response({
+                'success': True,
+                'message': 'Payment initialized successfully',
+                'data': {
+                    'payment_id': payment.id,
+                    'reference': reference,
+                    'authorization_url': paystack_response['authorization_url'],
+                    'access_code': paystack_response['access_code']
+                }
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error initializing payment: {str(e)}")
+            return Response({
+                'success': False,
+                'message': 'Payment initialization failed. Please try again.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['post'])
+    def charge_authorization(self, request):
+        """
+        Charge a saved card/authorization (server-side only)
+        Frontend sends payment method ID, backend handles the actual charge
+        
+        Expected data:
+        {
+            "payment_method_id": "123",
+            "amount": 5000.00,
+            "email": "user@example.com",
+            "request_id": "uuid" (optional)
+        }
+        """
+        try:
+            data = request.data
+            user = request.user
+            
+            # Get payment method and verify ownership
+            payment_method_id = data.get('payment_method_id')
+            if not payment_method_id:
+                return Response({
+                    'success': False,
+                    'message': 'Payment method ID required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            payment_method = get_object_or_404(PaymentMethod, id=payment_method_id)
+            
+            # Security check: Verify user owns this payment method
+            if payment_method.user != user:
+                logger.warning(f"User {user.id} attempted to use payment method {payment_method_id} owned by user {payment_method.user.id}")
+                return Response({
+                    'success': False,
+                    'message': 'Unauthorized payment method'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Validate amount
+            amount = Decimal(str(data.get('amount', 0)))
+            if amount <= 0:
+                return Response({
+                    'success': False,
+                    'message': 'Invalid amount'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Generate unique reference
+            reference = f"WASGO-{uuid.uuid4().hex[:8].upper()}"
+            
+            # Get request if provided
+            request_obj = None
+            if data.get('request_id'):
+                request_obj = get_object_or_404(Request, id=data['request_id'])
+                # Verify user owns this request
+                if request_obj.user != user:
+                    return Response({
+                        'success': False,
+                        'message': 'Unauthorized'
+                    }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Charge authorization using the stored authorization code
+            paystack_response = self.paystack_service.charge_authorization(
+                authorization_code=payment_method.authorization_code,
+                email=data.get('email', user.email),
+                amount=amount,
+                reference=reference,
+                metadata=data.get('metadata', {})
+            )
+            
+            # Create payment record
+            payment = Payment.objects.create(
+                user=user,
+                request=request_obj,
+                payment_method=payment_method,
+                reference=reference,
+                amount=amount,
+                currency=data.get('currency', 'NGN'),
+                status='success' if paystack_response['status'] == 'success' else 'failed',
+                payment_type=data.get('payment_type', 'full_payment'),
+                transaction_id=paystack_response.get('id'),
+                channel=paystack_response.get('channel'),
+                gateway_response=paystack_response.get('gateway_response'),
+                message=paystack_response.get('message'),
+                paid_at=timezone.now() if paystack_response['status'] == 'success' else None,
+                metadata=data.get('metadata', {})
+            )
+            
+            # Update payment method last used
+            if payment.status == 'success':
+                payment_method.last_used = timezone.now()
+                payment_method.save()
+            
+            logger.info(f"Charged authorization for user {user.id}: {reference} - Status: {payment.status}")
+            
+            return Response({
+                'success': True,
+                'message': 'Payment processed successfully' if payment.status == 'success' else 'Payment failed',
+                'data': {
+                    'payment_id': payment.id,
+                    'reference': reference,
+                    'status': payment.status,
+                    'amount': float(payment.amount),
+                    'currency': payment.currency
+                }
+            }, status=status.HTTP_200_OK)
+            
+        except PaymentMethod.DoesNotExist:
+            return Response({
+                'success': False,
+                'message': 'Payment method not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error charging authorization: {str(e)}")
+            return Response({
+                'success': False,
+                'message': 'Payment processing failed. Please try again.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['get'])
+    def verify_payment(self, request):
+        """
+        Verify a payment transaction (server-side verification)
+        
+        Query params:
+        ?reference=WASGO-XXXXX
+        """
+        try:
+            reference = request.query_params.get('reference')
+            
+            if not reference:
+                return Response({
+                    'success': False,
+                    'message': 'Reference is required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Get payment record
+            payment = get_object_or_404(Payment, reference=reference)
+            
+            # Security check: Verify user owns this payment
+            if payment.user != request.user:
+                logger.warning(f"User {request.user.id} attempted to verify payment {reference} owned by user {payment.user.id}")
+                return Response({
+                    'success': False,
+                    'message': 'Unauthorized'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # If already verified and successful, return cached result
+            if payment.status == 'success' and payment.paid_at:
+                return Response({
+                    'success': True,
+                    'message': 'Payment already verified',
+                    'data': {
+                        'payment_id': payment.id,
+                        'reference': payment.reference,
+                        'status': payment.status,
+                        'amount': float(payment.amount),
+                        'currency': payment.currency,
+                        'paid_at': payment.paid_at.isoformat() if payment.paid_at else None
+                    }
+                }, status=status.HTTP_200_OK)
+            
+            # Verify with Paystack (server-side with secret key)
+            paystack_response = self.paystack_service.verify_transaction(reference)
+            
+            # Update payment record based on verification
+            if paystack_response['status'] == 'success':
+                payment.status = 'success'
+                payment.paid_at = timezone.now()
+                payment.transaction_id = paystack_response.get('id')
+                payment.channel = paystack_response.get('channel')
+                payment.ip_address = paystack_response.get('ip_address')
+                payment.fees = Decimal(str(paystack_response.get('fees', 0))) / 100  # Convert from kobo
+                payment.gateway_response = paystack_response.get('gateway_response')
+                
+                # Save authorization for reuse if card payment
+                if paystack_response.get('authorization'):
+                    auth = paystack_response['authorization']
+                    if auth.get('reusable'):
+                        PaymentMethod.objects.update_or_create(
+                            user=payment.user,
+                            authorization_code=auth['authorization_code'],
+                            defaults={
+                                'payment_type': 'card',
+                                'last4': auth.get('last4'),
+                                'exp_month': auth.get('exp_month'),
+                                'exp_year': auth.get('exp_year'),
+                                'card_type': auth.get('card_type'),
+                                'bank': auth.get('bank'),
+                                'country_code': auth.get('country_code'),
+                                'brand': auth.get('brand', '').lower(),
+                                'reusable': auth.get('reusable', False),
+                                'signature': auth.get('signature'),
+                                'bin': auth.get('bin'),
+                            }
+                        )
+                
+                # Update request payment status if applicable
+                if payment.request:
+                    payment.request.payment_status = 'paid'
+                    payment.request.save()
+                    
+            else:
+                payment.status = 'failed'
+                payment.failed_at = timezone.now()
+                payment.gateway_response = paystack_response.get('gateway_response', 'Payment verification failed')
+            
+            payment.message = paystack_response.get('message')
+            payment.save()
+            
+            logger.info(f"Payment verified for user {request.user.id}: {reference} - Status: {payment.status}")
+            
+            return Response({
+                'success': True,
+                'message': 'Payment verified successfully',
+                'data': {
+                    'payment_id': payment.id,
+                    'reference': payment.reference,
+                    'status': payment.status,
+                    'amount': float(payment.amount),
+                    'currency': payment.currency,
+                    'paid_at': payment.paid_at.isoformat() if payment.paid_at else None
+                }
+            }, status=status.HTTP_200_OK)
+            
+        except Payment.DoesNotExist:
+            return Response({
+                'success': False,
+                'message': 'Payment not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error verifying payment: {str(e)}")
+            return Response({
+                'success': False,
+                'message': 'Payment verification failed'
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['get'])
+    def payment_methods(self, request):
+        """
+        Get user's saved payment methods (no sensitive data exposed)
+        """
+        try:
+            user = request.user
+            methods = PaymentMethod.objects.filter(
+                user=user,
+                is_active=True,
+                reusable=True
+            )
+            
+            # Return sanitized payment method data (no authorization codes)
+            data = []
+            for method in methods:
+                data.append({
+                    'id': method.id,
+                    'type': method.payment_type,
+                    'last4': method.last4,
+                    'brand': method.brand,
+                    'bank': method.bank,
+                    'exp_month': method.exp_month,
+                    'exp_year': method.exp_year,
+                    'is_default': method.is_default,
+                    # Never send authorization_code to frontend
+                })
+            
+            return Response({
+                'success': True,
+                'data': data
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error fetching payment methods: {str(e)}")
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['post'])
+    def set_default_payment_method(self, request):
+        """
+        Set a payment method as default
+        """
+        try:
+            user = request.user
+            payment_method_id = request.data.get('payment_method_id')
+            
+            if not payment_method_id:
+                return Response({
+                    'success': False,
+                    'message': 'Payment method ID required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Get payment method and verify ownership
+            payment_method = get_object_or_404(PaymentMethod, id=payment_method_id)
+            
+            if payment_method.user != user:
+                return Response({
+                    'success': False,
+                    'message': 'Unauthorized'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Remove default from other methods
+            PaymentMethod.objects.filter(user=user, is_default=True).update(is_default=False)
+            
+            # Set this as default
+            payment_method.is_default = True
+            payment_method.save()
+            
+            return Response({
+                'success': True,
+                'message': 'Default payment method updated'
+            }, status=status.HTTP_200_OK)
+            
+        except PaymentMethod.DoesNotExist:
+            return Response({
+                'success': False,
+                'message': 'Payment method not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error setting default payment method: {str(e)}")
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['delete'])
+    def delete_payment_method(self, request):
+        """
+        Delete a saved payment method
+        """
+        try:
+            user = request.user
+            payment_method_id = request.query_params.get('payment_method_id')
+            
+            if not payment_method_id:
+                return Response({
+                    'success': False,
+                    'message': 'Payment method ID required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Get payment method and verify ownership
+            payment_method = get_object_or_404(PaymentMethod, id=payment_method_id)
+            
+            if payment_method.user != user:
+                return Response({
+                    'success': False,
+                    'message': 'Unauthorized'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Soft delete
+            payment_method.is_active = False
+            payment_method.save()
+            
+            return Response({
+                'success': True,
+                'message': 'Payment method deleted'
+            }, status=status.HTTP_200_OK)
+            
+        except PaymentMethod.DoesNotExist:
+            return Response({
+                'success': False,
+                'message': 'Payment method not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error deleting payment method: {str(e)}")
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def paystack_webhook(request):
+    """
+    Handle Paystack webhook events (server-side only)
+    Paystack sends events here, we verify and process them
+    """
+    try:
+        # Verify webhook signature (important for security)
+        paystack_service = PaystackService()
+        signature = request.META.get('HTTP_X_PAYSTACK_SIGNATURE', '')
+        
+        if not paystack_service.verify_webhook_signature(
+            request.body.decode('utf-8'),
+            signature
+        ):
+            logger.warning("Invalid Paystack webhook signature")
+            return JsonResponse({'status': 'error', 'message': 'Invalid signature'}, status=400)
+        
+        # Parse webhook data
+        data = json.loads(request.body)
+        event = data.get('event')
+        webhook_data = data.get('data', {})
+        
+        logger.info(f"Received Paystack webhook: {event}")
+        
+        # Store webhook event for audit
+        webhook = PaymentWebhook.objects.create(
+            event=event,
+            reference=webhook_data.get('reference', ''),
+            payload=data
+        )
+        
+        # Process based on event type
+        if event == 'charge.success':
+            # Update payment status
+            reference = webhook_data.get('reference')
+            if reference:
+                try:
+                    payment = Payment.objects.get(reference=reference)
+                    payment.status = 'success'
+                    payment.paid_at = timezone.now()
+                    payment.transaction_id = webhook_data.get('id')
+                    payment.channel = webhook_data.get('channel')
+                    payment.gateway_response = webhook_data.get('gateway_response')
+                    payment.save()
+                    
+                    # Update request status if applicable
+                    if payment.request:
+                        payment.request.payment_status = 'paid'
+                        payment.request.save()
+                    
+                    logger.info(f"Payment {reference} marked as successful via webhook")
+                    
+                except Payment.DoesNotExist:
+                    logger.error(f"Payment not found for reference: {reference}")
+        
+        elif event == 'charge.failed':
+            reference = webhook_data.get('reference')
+            if reference:
+                try:
+                    payment = Payment.objects.get(reference=reference)
+                    payment.status = 'failed'
+                    payment.failed_at = timezone.now()
+                    payment.gateway_response = webhook_data.get('gateway_response')
+                    payment.save()
+                    
+                    logger.info(f"Payment {reference} marked as failed via webhook")
+                    
+                except Payment.DoesNotExist:
+                    logger.error(f"Payment not found for reference: {reference}")
+        
+        elif event == 'refund.processed':
+            # Handle refund confirmation
+            reference = webhook_data.get('transaction_reference')
+            if reference:
+                try:
+                    payment = Payment.objects.get(reference=reference)
+                    payment.refunded_at = timezone.now()
+                    payment.save()
+                    
+                    logger.info(f"Payment {reference} refund confirmed via webhook")
+                    
+                except Payment.DoesNotExist:
+                    logger.error(f"Payment not found for reference: {reference}")
+        
+        # Mark webhook as processed
+        webhook.processed = True
+        webhook.processed_at = timezone.now()
+        webhook.save()
+        
+        return JsonResponse({'status': 'success'}, status=200)
+        
+    except Exception as e:
+        logger.error(f"Error processing Paystack webhook: {str(e)}")
+        
+        if 'webhook' in locals():
+            webhook.error_message = str(e)
+            webhook.save()
+        
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
