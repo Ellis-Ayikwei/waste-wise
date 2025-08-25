@@ -1,6 +1,6 @@
 from django.db import models
 from apps.Basemodel.models import Basemodel
-from apps.Request.models import Request
+from apps.ServiceRequest.models import ServiceRequest
 from apps.User.models import User
 
 
@@ -14,7 +14,7 @@ class PaymentMethod(Basemodel):
     ]
 
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="payment_methods"
+        User, on_delete=models.CASCADE, related_name="stripe_payment_methods"
     )
     payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPES)
     is_default = models.BooleanField(default=False)
@@ -68,7 +68,7 @@ class Payment(Basemodel):
     ]
 
     request = models.ForeignKey(
-        Request, on_delete=models.CASCADE, related_name="payments"
+        ServiceRequest, on_delete=models.CASCADE, related_name="stripe_payments"
     )
     payment_method = models.ForeignKey(
         PaymentMethod, on_delete=models.SET_NULL, null=True, blank=True
@@ -283,7 +283,7 @@ class Payment(Basemodel):
         Sync this payment with job and request
         Returns: dict with sync results
         """
-        from apps.Job.models import Job, TimelineEvent
+        from apps.ServiceRequest.models import ServiceRequest, TimelineEvent
         from django.db import transaction
         import logging
 
@@ -300,12 +300,12 @@ class Payment(Basemodel):
                 request_obj = self.request
 
                 # Check if job already exists
-                existing_job = Job.objects.filter(request=request_obj).first()
+                existing_job = ServiceRequest.objects.filter(request=request_obj).first()
 
                 if existing_job and not force_create:
                     return {
                         "success": False,
-                        "error": f"Job already exists for request {request_obj.id}",
+                        "error": f"ServiceRequest already exists for request {request_obj.id}",
                         "existing_job_id": existing_job.id,
                     }
 
@@ -318,11 +318,11 @@ class Payment(Basemodel):
                     job_created = False
                     job_updated = True
                 else:
-                    job = Job.create_job(
+                    job = ServiceRequest.create_job(
                         request_obj=request_obj,
                         price=self.amount,
                         status="pending",
-                        is_instant=request_obj.request_type == "instant",
+                        is_instant=request_obj.service_type == "instant",
                     )
                     job_created = True
                     job_updated = False
@@ -350,7 +350,7 @@ class Payment(Basemodel):
                     TimelineEvent.objects.create(
                         job=job,
                         event_type="payment_processed",
-                        description=f"Job {'updated' if job_updated else 'created'} from payment {self.id}",
+                        description=f"ServiceRequest {'updated' if job_updated else 'created'} from payment {self.id}",
                         visibility="all",
                         metadata={
                             "payment_id": self.id,
@@ -367,7 +367,7 @@ class Payment(Basemodel):
                     "success": True,
                     "job": {
                         "job_id": job.id,
-                        "job_number": job.job_number,
+                        "request_id": job.request_id,
                         "status": job.status,
                         "price": str(job.price),
                         "created": job_created,

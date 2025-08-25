@@ -2,8 +2,6 @@ from rest_framework import serializers
 from apps.Driver.models import (
     Driver,
     DriverLocation,
-    DriverAvailability,
-    DriverDocument,
     DriverInfringement,
 )
 from django.utils import timezone
@@ -94,95 +92,10 @@ class DriverLocationSerializer(serializers.ModelSerializer):
         read_only_fields = ["timestamp"]
 
 
-class DriverAvailabilitySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = DriverAvailability
-        fields = [
-            "id",
-            "driver",
-            "date",
-            "time_slots",
-            "service_areas",
-            "max_jobs",
-            "notes",
-            "created_at",
-            "updated_at",
-        ]
-        read_only_fields = ["created_at", "updated_at"]
 
 
-class DriverDocumentSerializer(serializers.ModelSerializer):
-    front_url = serializers.SerializerMethodField()
-    back_url = serializers.SerializerMethodField()
-    name = serializers.SerializerMethodField()
-    type = serializers.SerializerMethodField()
-    issue_date = serializers.DateField()
-    expiry_date = serializers.DateField()
-    has_two_sides = serializers.BooleanField()
-    status = serializers.ChoiceField(
-        choices=DriverDocument.DOCUMENT_STATUS, default="pending"
-    )
 
-    class Meta:
-        model = DriverDocument
-        fields = [
-            "id",
-            "document_type",
-            "document_front",
-            "document_back",
-            "front_url",
-            "back_url",
-            "has_two_sides",
-            "name",
-            "type",
-            "issue_date",
-            "expiry_date",
-            "has_two_sides",
-            "reference_number",
-            "notes",
-            "is_verified",
-            "rejection_reason",
-            "status",
-            "created_at",
-            "updated_at",
-        ]
-        read_only_fields = [
-            "created_at",
-            "updated_at",
-            "is_verified",
-            "rejection_reason",
-            "status",
-        ]
 
-    def get_front_url(self, obj):
-        if obj.document_front:
-            return f"uploads/docs/drivers/{obj.driver.id}/{obj.id}/{obj.document_front.name.split('/')[-1]}"
-        return None
-
-    def get_back_url(self, obj):
-        if obj.document_back:
-            return f"uploads/docs/drivers/{obj.driver.id}/{obj.id}/{obj.document_back.name.split('/')[-1]}"
-        return None
-
-    def get_name(self, obj):
-        return obj.get_document_type_display()
-
-    def get_type(self, obj):
-        return obj.document_type
-
-    def create(self, validated_data):
-        driver = self.context["driver"]
-        document_front = validated_data.pop("document_front", None)
-        document_back = validated_data.pop("document_back", None)
-
-        document = DriverDocument.objects.create(driver=driver, **validated_data)
-
-        if document_front:
-            document.document_front.save(document_front.name, document_front)
-        if document_back:
-            document.document_back.save(document_back.name, document_back)
-
-        return document
 
 
 class DriverInfringementSerializer(serializers.ModelSerializer):
@@ -208,13 +121,9 @@ class DriverInfringementSerializer(serializers.ModelSerializer):
 
 # Extended serializer that includes related data
 class DriverDetailSerializer(DriverSerializer):
-    documents = DriverDocumentSerializer(many=True, read_only=True)
     infringements = DriverInfringementSerializer(many=True, read_only=True)
-    availability_slots = DriverAvailabilitySerializer(many=True, read_only=True)
 
     class Meta(DriverSerializer.Meta):
         fields = DriverSerializer.Meta.fields + [
-            "documents",
             "infringements",
-            "availability_slots",
         ]

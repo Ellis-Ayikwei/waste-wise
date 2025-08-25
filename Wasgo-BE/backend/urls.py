@@ -9,19 +9,21 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
     TokenVerifyView,
 )
-from apps.Job.views import JobViewSet
+from apps.ServiceRequest.views import ServiceRequestViewSet, CitizenReportViewSet
 from django.conf import settings
 from django.conf.urls.static import static
 
 # Import the ViewSets from Vehicle and Driver apps
-from apps.Vehicle.views import VehicleViewSet, VehicleDocumentViewSet
+from apps.Vehicle.views import VehicleViewSet
 from apps.Driver.views import (
     DriverViewSet,
     DriverLocationViewSet,
-    DriverAvailabilityViewSet,
-    DriverDocumentViewSet,
     DriverInfringementViewSet,
 )
+
+# Import Campaign and Customer views
+from apps.Campaign.views import CampaignViewSet
+from apps.Customer.views import CustomerViewSet
 
 # Import Location views for testing
 from apps.Location.views import (
@@ -38,16 +40,18 @@ router = routers.DefaultRouter(trailing_slash=True)
 
 # Register Vehicle app ViewSets
 router.register(r"vehicles", VehicleViewSet)
-router.register(r"vehicle-documents", VehicleDocumentViewSet)
 
+# Register Campaign and Customer ViewSets
+router.register(r"campaigns", CampaignViewSet)
+router.register(r"customers", CustomerViewSet)
 
-router.register(r"jobs", JobViewSet)
+router.register(r"citizen-reports", CitizenReportViewSet)
 
 urlpatterns = [
     # Geocoding endpoints outside API path to bypass authentication issues
     # API routes with prefix
     path(
-        "Wasgo/api/v1/",
+        "wasgo/api/v1/",
         include(
             [
                 path(
@@ -102,10 +106,14 @@ urlpatterns = [
                 ),
                 # Authentication endpoints
                 path("auth/", include("apps.Authentication.urls")),
-                # Request app URLs
-                path("", include("apps.Request.urls")),
+                # ServiceRequest app URLs
+                path("", include("apps.ServiceRequest.urls")),
                 # User app URLs
                 path("", include("apps.User.urls")),
+                # Customer app URLs
+                path("", include("apps.Customer.urls")),
+                # Campaign app URLs
+                path("", include("apps.Campaign.urls")),
                 # Review app URLs
                 path("reviews/", include("apps.Review.urls")),
                 # pricing app URLs
@@ -128,6 +136,10 @@ urlpatterns = [
                 path("waste/", include("apps.WasteBin.urls")),
                 # Analytics endpoints
                 path("analytics/", include("apps.Analytics.urls")),
+                # Backward compatibility routes
+                # path(
+                #     "compliance-alerts/", include("apps.WasteBin.urls")
+                # ),  # Alias for waste/alerts/
                 # Wasgo Provider (Uber for Waste) endpoints
                 # path("provider/", include("apps.WasteProvider.urls")),  # Removed - merged into Provider app
                 # Media files under API prefix

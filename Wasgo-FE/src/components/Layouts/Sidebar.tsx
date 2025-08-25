@@ -67,6 +67,8 @@ import {
     IconX,
 } from '@tabler/icons-react';
 
+import logo from '/assets/images/wasgologo/wasgo.png';
+
 const Sidebar = () => {
     const [currentMenu, setCurrentMenu] = useState<string>('');
     const [errorSubMenu, setErrorSubMenu] = useState(false);
@@ -78,7 +80,7 @@ const Sidebar = () => {
     const auth = useAuthUser<any>();
     const user = auth?.user || null;
     // const isProviderMode = useSelector((state: IRootState) => state.viewMode.isProviderMode);
-    const isProviderMode = true;
+    const isProviderMode = auth?.user?.user_type === 'provider';
 
     const toggleMenu = (value: string) => {
         setCurrentMenu((oldValue) => {
@@ -130,7 +132,7 @@ const Sidebar = () => {
     const customerNavItems = [
         {
             name: 'dashboard',
-            path: '/customer/dashboard',
+            path: '/dashboard',
             icon: <IconHome2 className="!w-8 !h-8 !text-white" />,
             label: 'Dashboard',
             children: null,
@@ -378,8 +380,8 @@ const Sidebar = () => {
                     <div className="flex justify-between items-center px-4 py-3">
                         <NavLink to="/" className="main-logo flex items-center shrink-0">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
-                                    <IconRecycle className="w-6 h-6 text-green-600" />
+                                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center overflow-hidden">
+                                    <img src={logo} alt="wasgo" className="w-10 h-10" />
                                 </div>
                                 <div>
                                     <h1 className="text-xl font-bold text-white">wasgo</h1>

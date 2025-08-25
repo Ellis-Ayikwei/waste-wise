@@ -22,7 +22,7 @@ from .serializer import (
     AvailabilityReleaseSerializer,
     UserDetailSerializer,
 )
-from apps.Request.models import Request
+from apps.ServiceRequest.models import ServiceRequest
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +85,12 @@ class UserManagementViewSet(viewsets.ModelViewSet):
 
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+    def get_serializer_class(self):
+        """Use detailed serializer for retrieve actions"""
+        if self.action in ["retrieve", "me"]:
+            return UserDetailSerializer
+        return UserSerializer
 
     def get_permissions(self):
         """
@@ -168,6 +174,64 @@ class UserManagementViewSet(viewsets.ModelViewSet):
                     f"User with email {email} already exists, returning existing user: {existing_user.id}"
                 )
 
+                # If user exists but is not a customer, update to customer type
+                if existing_user.user_type != "customer":
+                    existing_user.user_type = "customer"
+                    existing_user.save()
+                    logger.info(f"Updated user {existing_user.id} to customer type")
+
+                # Check if customer profile exists, create if not
+                try:
+                    from apps.Customer.models import CustomerProfile
+
+                    customer_profile, created = CustomerProfile.objects.get_or_create(
+                        user=existing_user,
+                        defaults={
+                            "phone_number": data.get("phone_number", ""),
+                            "emergency_contact": data.get("emergency_contact", ""),
+                            "emergency_contact_name": data.get(
+                                "emergency_contact_name", ""
+                            ),
+                            "preferred_collection_days": data.get(
+                                "preferred_collection_days", []
+                            ),
+                            "preferred_collection_time": data.get(
+                                "preferred_collection_time", "morning"
+                            ),
+                            "waste_types": data.get("waste_types", ["general"]),
+                            "estimated_weekly_waste_kg": data.get(
+                                "estimated_weekly_waste_kg", 10.0
+                            ),
+                            "requires_special_handling": data.get(
+                                "requires_special_handling", False
+                            ),
+                            "special_handling_notes": data.get(
+                                "special_handling_notes", ""
+                            ),
+                            "billing_cycle": data.get("billing_cycle", "monthly"),
+                            "auto_payment_enabled": data.get(
+                                "auto_payment_enabled", False
+                            ),
+                            "payment_method": data.get("payment_method", "card"),
+                            "communication_preferences": data.get(
+                                "communication_preferences", {}
+                            ),
+                            "marketing_opt_in": data.get("marketing_opt_in", False),
+                        },
+                    )
+                    if created:
+                        logger.info(
+                            f"Created customer profile for existing user: {existing_user.id}"
+                        )
+                except ImportError:
+                    logger.warning(
+                        "Customer app not available, skipping profile creation"
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"Error creating customer profile for existing user {existing_user.id}: {e}"
+                    )
+
                 # Return existing user data
                 return Response(
                     self.get_serializer(existing_user).data, status=status.HTTP_200_OK
@@ -184,7 +248,123 @@ class UserManagementViewSet(viewsets.ModelViewSet):
                 serializer.validated_data["password"] = make_password(data["password"])
 
             user = serializer.save()
-            logger.info(f"New customer user created: {user.id}")
+            logger.info(f"New user created: {user.id}")
+
+            # Handle different user types
+            if user.user_type == "customer":
+                # Create customer profile for the new user
+                try:
+                    from apps.Customer.models import CustomerProfile
+                    from apps.Customer.serializers import CustomerProfileSerializer
+
+                    # Extract customer-specific data from request
+                    customer_data = {
+                        "user": user.id,
+                        "phone_number": data.get("phone_number", ""),
+                        "emergency_contact": data.get("emergency_contact", ""),
+                        "emergency_contact_name": data.get(
+                            "emergency_contact_name", ""
+                        ),
+                        "preferred_collection_days": data.get(
+                            "preferred_collection_days", []
+                        ),
+                        "preferred_collection_time": data.get(
+                            "preferred_collection_time", "morning"
+                        ),
+                        "waste_types": data.get("waste_types", ["general"]),
+                        "estimated_weekly_waste_kg": data.get(
+                            "estimated_weekly_waste_kg", 10.0
+                        ),
+                        "requires_special_handling": data.get(
+                            "requires_special_handling", False
+                        ),
+                        "special_handling_notes": data.get(
+                            "special_handling_notes", ""
+                        ),
+                        "billing_cycle": data.get("billing_cycle", "monthly"),
+                        "auto_payment_enabled": data.get("auto_payment_enabled", False),
+                        "payment_method": data.get("payment_method", "card"),
+                        "communication_preferences": data.get(
+                            "communication_preferences", {}
+                        ),
+                        "marketing_opt_in": data.get("marketing_opt_in", False),
+                    }
+
+                    customer_profile_serializer = CustomerProfileSerializer(
+                        data=customer_data
+                    )
+                    if customer_profile_serializer.is_valid():
+                        customer_profile = customer_profile_serializer.save()
+                        logger.info(f"Customer profile created for user: {user.id}")
+                    else:
+                        logger.warning(
+                            f"Failed to create customer profile for user {user.id}: {customer_profile_serializer.errors}"
+                        )
+
+                except ImportError as e:
+                    logger.warning(
+                        f"Customer app not available, skipping profile creation: {e}"
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"Error creating customer profile for user {user.id}: {e}"
+                    )
+
+            elif user.user_type == "provider":
+                # Create ServiceProvider profile
+                try:
+                    from apps.Provider.models import ServiceProvider
+                    from django.contrib.gis.geos import Point
+
+                    # Default location (Accra coordinates)
+                    default_location = Point(-0.1869644, 5.5600149, srid=4326)
+
+                    # Extract provider-specific data
+                    provider_data = {
+                        "user": user,
+                        "business_name": data.get(
+                            "business_name", f"{user.first_name}'s Service"
+                        ),
+                        "business_type": "sole_trader",  # Default business type
+                        "verification_status": "unverified",  # Default verification status
+                        "base_location": default_location,
+                        "phone": data.get("phone_number", "N/A"),
+                        "email": user.email,
+                        "address_line1": data.get("business_address")
+                        or data.get("address_line1", "Address to be updated"),
+                        "address_line2": data.get("address_line2", ""),
+                        "city": data.get("city", "City to be updated"),
+                        "county": data.get("state", "County to be updated"),
+                        "postcode": data.get("postal_code", "00233"),  # Accra postcode
+                        "country": data.get("country", "Ghana"),
+                    }
+
+                    # Add optional provider fields
+                    if data.get("vat_number"):
+                        provider_data["vat_number"] = data["vat_number"]
+                    if data.get("company_registration_number"):
+                        provider_data["registration_number"] = data[
+                            "company_registration_number"
+                        ]
+                    if data.get("number_of_vehicles"):
+                        provider_data["vehicle_fleet_size"] = int(
+                            data["number_of_vehicles"]
+                        )
+
+                    # Create ServiceProvider
+                    service_provider = ServiceProvider.objects.create(**provider_data)
+
+                    logger.info(f"ServiceProvider profile created for user: {user.id}")
+
+                except ImportError as e:
+                    logger.warning(
+                        f"Provider app not available, skipping profile creation: {e}"
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"Error creating ServiceProvider profile for user {user.id}: {e}"
+                    )
+
             return Response(
                 self.get_serializer(user).data, status=status.HTTP_201_CREATED
             )
@@ -198,7 +378,7 @@ class UserManagementViewSet(viewsets.ModelViewSet):
     )
     def create_provider(self, request):
         """
-        Creates a new service provider user.
+        Creates a new service provider user with ServiceProvider profile.
         Only accessible to admin users.
         """
         data = request.data.copy()
@@ -211,7 +391,60 @@ class UserManagementViewSet(viewsets.ModelViewSet):
                 serializer.validated_data["password"] = make_password(data["password"])
 
             user = serializer.save()
-            logger.info(f"Provider user created by admin {request.user.id}: {user.id}")
+
+            # Create ServiceProvider profile
+            try:
+                from apps.Provider.models import ServiceProvider
+                from django.contrib.gis.geos import Point
+
+                # Default location (Accra coordinates)
+                default_location = Point(-0.1869644, 5.5600149, srid=4326)
+
+                # Extract provider-specific data
+                provider_data = {
+                    "user": user,
+                    "business_name": data.get(
+                        "business_name", f"{user.first_name}'s Service"
+                    ),
+                    "business_type": "sole_trader",  # Default business type
+                    "verification_status": "unverified",  # Default verification status
+                    "base_location": default_location,
+                    "phone": data.get("phone_number", "N/A"),
+                    "email": user.email,
+                    "address_line1": data.get("business_address")
+                    or data.get("address_line1", "Address to be updated"),
+                    "address_line2": data.get("address_line2", ""),
+                    "city": data.get("city", "City to be updated"),
+                    "county": data.get("state", "County to be updated"),
+                    "postcode": data.get("postal_code", "00233"),  # Accra postcode
+                    "country": data.get("country", "Ghana"),
+                }
+
+                # Add optional provider fields
+                if data.get("vat_number"):
+                    provider_data["vat_number"] = data["vat_number"]
+                if data.get("company_registration_number"):
+                    provider_data["registration_number"] = data[
+                        "company_registration_number"
+                    ]
+                if data.get("number_of_vehicles"):
+                    provider_data["vehicle_fleet_size"] = int(
+                        data["number_of_vehicles"]
+                    )
+
+                # Create ServiceProvider
+                service_provider = ServiceProvider.objects.create(**provider_data)
+
+                logger.info(
+                    f"Provider user and ServiceProvider profile created by admin {request.user.id}: {user.id}"
+                )
+
+            except Exception as e:
+                logger.error(
+                    f"Error creating ServiceProvider profile for user {user.id}: {e}"
+                )
+                # Continue even if ServiceProvider creation fails - user is still created
+
             return Response(
                 self.get_serializer(user).data, status=status.HTTP_201_CREATED
             )
@@ -290,8 +523,8 @@ class UserManagementViewSet(viewsets.ModelViewSet):
         )
         return Response({"status": "User promoted to admin successfully"})
 
-    @action(detail=False, methods=["get"])
-    def me(self, request):
+    @action(detail=True, methods=["get"])
+    def me(self, request, pk=None):
         """
         Returns the current user's profile.
         """
@@ -333,14 +566,14 @@ class UserManagementViewSet(viewsets.ModelViewSet):
             )
 
         status_filter = request.query_params.get("status")
-        requests = Request.objects.filter(user=user)
+        requests = ServiceRequest.objects.filter(user=user)
 
         if status_filter:
             requests = requests.filter(status=status_filter)
 
-        from Request.serializer import RequestSerializer
+        from ServiceRequest.serializer import ServiceRequestSerializer
 
-        serializer = RequestSerializer(requests, many=True)
+        serializer = ServiceRequestSerializer(requests, many=True)
         return Response(serializer.data)
 
     @action(
@@ -365,8 +598,10 @@ class UserManagementViewSet(viewsets.ModelViewSet):
         thirty_days_ago = timezone.now() - timezone.timedelta(days=30)
         new_users_30d = User.objects.filter(date_joined__gte=thirty_days_ago).count()
 
-        # Request statistics by user type
-        customer_requests = Request.objects.filter(user__user_type="customer").count()
+        # ServiceRequest statistics by user type
+        customer_requests = ServiceRequest.objects.filter(
+            user__user_type="customer"
+        ).count()
 
         stats = {
             "total_users": total_users,
@@ -661,7 +896,7 @@ class UserManagementViewSet(viewsets.ModelViewSet):
             absolute_url = frontend_url
             try:
                 send_mail(
-                    "Password Reset Request",
+                    "Password Reset ServiceRequest",
                     f"Use this link to reset your password: {absolute_url}",
                     getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@example.com"),
                     [user.email],
@@ -817,7 +1052,7 @@ class UserActivityViewSet(viewsets.ReadOnlyModelViewSet):
         ):
             queryset = queryset.filter(user=self.request.user)
 
-        return queryset.order_by("-timestamp")
+        return queryset.order_by("-created_at")
 
 
 # Add these imports to your existing views.py

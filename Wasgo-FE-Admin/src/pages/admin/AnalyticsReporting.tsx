@@ -27,9 +27,12 @@ import {
     IconChartPie,
     IconChartArea
 } from '@tabler/icons-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faDollarSign, faUsers, faCheckCircle, faStar, faChartLine, faTruck, faBox, faRecycle } from '@fortawesome/free-solid-svg-icons';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
+import StatCard from '../../components/ui/statCard';
 import { setPageTitle } from '../../store/themeConfigSlice';
 import useSwr from 'swr';
 import fetcher from '../../services/fetcher';
@@ -459,61 +462,50 @@ const AnalyticsReporting: React.FC = () => {
                 <>
                     {/* Key Metrics */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                                <IconCurrencyDollar className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">${(data.revenue.total / 1000000).toFixed(1)}M</div>
-                                <div className={`flex items-center text-xs ${getGrowthColor(data.revenue.growth)}`}>
-                                    {getGrowthIcon(data.revenue.growth)}
-                                    <span className="ml-1">+{data.revenue.growth}% from last month</span>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                                <IconUsers className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{data.users.totalCustomers.toLocaleString()}</div>
-                                <div className="flex items-center text-xs text-green-500">
-                                    <IconTrendingUp className="w-3 h-3 mr-1" />
-                                    <span>+{data.users.newCustomers} new this month</span>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Job Completion Rate</CardTitle>
-                                <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{data.performance.completionRate}%</div>
-                                <div className="flex items-center text-xs text-green-500">
-                                    <IconTrendingUp className="w-3 h-3 mr-1" />
-                                    <span>+2.1% from last month</span>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Customer Satisfaction</CardTitle>
-                                <IconStar className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{data.performance.customerSatisfaction}%</div>
-                                <div className="flex items-center text-xs text-green-500">
-                                    <IconTrendingUp className="w-3 h-3 mr-1" />
-                                    <span>+1.2% from last month</span>
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <StatCard
+                            icon={faDollarSign}
+                            title="Total Revenue"
+                            value={`$${(data.revenue.total / 1000000).toFixed(1)}M`}
+                            color="blue"
+                            delay={0.1}
+                            trend={{
+                                value: data.revenue.growth,
+                                isPositive: data.revenue.growth > 0
+                            }}
+                        />
+                        <StatCard
+                            icon={faUsers}
+                            title="Total Users"
+                            value={data.users.totalCustomers.toLocaleString()}
+                            color="green"
+                            delay={0.2}
+                            trend={{
+                                value: data.users.newCustomers,
+                                isPositive: true
+                            }}
+                        />
+                        <StatCard
+                            icon={faCheckCircle}
+                            title="Job Completion Rate"
+                            value={`${data.performance.completionRate}%`}
+                            color="purple"
+                            delay={0.3}
+                            trend={{
+                                value: 2.1,
+                                isPositive: true
+                            }}
+                        />
+                        <StatCard
+                            icon={faStar}
+                            title="Customer Satisfaction"
+                            value={`${data.performance.customerSatisfaction}%`}
+                            color="yellow"
+                            delay={0.4}
+                            trend={{
+                                value: 1.2,
+                                isPositive: true
+                            }}
+                        />
                     </div>
 
                     {/* Charts */}

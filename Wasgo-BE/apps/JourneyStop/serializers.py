@@ -3,7 +3,7 @@ from rest_framework import serializers
 from .models import JourneyStop
 from apps.Location.serializer import LocationSerializer
 from apps.Location.models import Location
-from apps.Request.models import Request
+from apps.ServiceRequest.models import ServiceRequest
 
 
 class JourneyStopSerializer(serializers.ModelSerializer):
@@ -13,7 +13,7 @@ class JourneyStopSerializer(serializers.ModelSerializer):
     )
     floor = serializers.IntegerField(required=False, allow_null=True, default=0)
     request = serializers.PrimaryKeyRelatedField(
-        queryset=Request.objects.all(),
+        queryset=ServiceRequest.objects.all(),
         required=False,
         allow_null=True
     )

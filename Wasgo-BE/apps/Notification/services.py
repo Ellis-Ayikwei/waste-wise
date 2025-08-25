@@ -21,7 +21,7 @@ class NotificationService:
 
     # Default templates mapping
     NOTIFICATION_TEMPLATES = {
-        # Booking/Request Related
+        # Booking/ServiceRequest Related
         "booking_created": {
             "subject": "Booking Created Successfully",
             "email_template": "booking_created",
@@ -37,19 +37,19 @@ class NotificationService:
             "email_template": "booking_cancelled",
             "default_channels": ["in_app", "email", "push"],
         },
-        # Provider/Job Related
+        # Provider/ServiceRequest Related
         "provider_accepted": {
-            "subject": "Provider Accepted Your Job",
+            "subject": "Provider Accepted Your ServiceRequest",
             "email_template": "provider_accepted",
             "default_channels": ["in_app", "email", "push"],
         },
         "provider_assigned": {
-            "subject": "Provider Assigned to Your Job",
+            "subject": "Provider Assigned to Your ServiceRequest",
             "email_template": "provider_assigned",
             "default_channels": ["in_app", "email"],
         },
         "job_started": {
-            "subject": "Your Job Has Started",
+            "subject": "Your ServiceRequest Has Started",
             "email_template": "job_started",
             "default_channels": ["in_app", "email", "push"],
         },
@@ -59,7 +59,7 @@ class NotificationService:
             "default_channels": ["in_app", "push"],
         },
         "job_completed": {
-            "subject": "Job Completed Successfully",
+            "subject": "ServiceRequest Completed Successfully",
             "email_template": "job_completed",
             "default_channels": ["in_app", "email", "push"],
         },
@@ -256,7 +256,7 @@ class NotificationService:
                 "message": notification.message,
                 "action_url": notification.action_url,
                 "action_text": notification.action_text or "View Details",
-                "app_name": "MoreVans",
+                "app_name": "Wasgo",
                 "current_year": datetime.now().year,
                 "notification_data": notification.data,
                 **context,
@@ -366,7 +366,7 @@ class NotificationService:
             notification_type="booking_created",
             related_object_type="request",
             related_object_id=request_obj.id,
-            action_url=f"/requests/{request_obj.id}",
+            action_url=f"/service-requests/{request_obj.id}",
             request=request_obj,
             **kwargs,
         )
@@ -379,7 +379,7 @@ class NotificationService:
             notification_type="booking_confirmed",
             related_object_type="request",
             related_object_id=request_obj.id,
-            action_url=f"/requests/{request_obj.id}",
+            action_url=f"/service-requests/{request_obj.id}",
             priority="high",
             request=request_obj,
             provider=provider,
@@ -423,7 +423,7 @@ class NotificationService:
             notification_type="bid_received",
             related_object_type="bid",
             related_object_id=bid_obj.id,
-            action_url=f"/jobs/{bid_obj.job.id}/bids",
+            action_url=f"/service-requests/{bid_obj.job.id}/bids",
             priority="high",
             bid=bid_obj,
             amount=bid_obj.amount,
@@ -467,7 +467,7 @@ class NotificationService:
             notification_type=notification_type,
             related_object_type="job",
             related_object_id=job_obj.id,
-            action_url=f"/jobs/{job_obj.id}",
+            action_url=f"/service-requests/{job_obj.id}",
             priority="high" if new_status in ["started", "completed"] else "normal",
             job=job_obj,
             old_status=old_status,

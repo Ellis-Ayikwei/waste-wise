@@ -121,12 +121,12 @@ class MessageSerializer(serializers.ModelSerializer):
 
         # Get the request object
         try:
-            from apps.Request.models import Request
+            from apps.ServiceRequest.models import ServiceRequest
 
-            request_obj = Request.objects.get(id=request_id)
+            request_obj = ServiceRequest.objects.get(id=request_id)
             validated_data["request"] = request_obj
-        except Request.DoesNotExist:
-            raise serializers.ValidationError("Request not found")
+        except ServiceRequest.DoesNotExist:
+            raise serializers.ValidationError("ServiceRequest not found")
 
         # Get receiver
         try:

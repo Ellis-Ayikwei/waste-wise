@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getPricingConfigurations, getPricingFactors, deletePricingConfiguration, deletePricingFactor, setDefaultPricingConfiguration } from '../../../services/pricingService';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCog, faList, faCheckCircle, faDollarSign } from '@fortawesome/free-solid-svg-icons';
+import StatCard from '../../../components/ui/statCard';
 import PricingConfigForm from './PricingConfigForm';
 import PricingConfigurationForm from './PricingConfigurationForm';
 import { 
@@ -185,6 +188,38 @@ const PricingAdmin = () => {
     return (
         <div className="container mx-auto px-4 py-8">
             <ErrorAlert error={error} />
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <StatCard
+                    icon={faCog}
+                    title="Total Configurations"
+                    value={configurations.length}
+                    color="blue"
+                    delay={0.1}
+                />
+                <StatCard
+                    icon={faList}
+                    title="Active Factors"
+                    value={factors.length}
+                    color="green"
+                    delay={0.2}
+                />
+                <StatCard
+                    icon={faCheckCircle}
+                    title="Default Config"
+                    value={configurations.filter(c => c.is_default).length}
+                    color="purple"
+                    delay={0.3}
+                />
+                <StatCard
+                    icon={faDollarSign}
+                    title="Active Configs"
+                    value={configurations.filter(c => c.is_active).length}
+                    color="orange"
+                    delay={0.4}
+                />
+            </div>
 
             <TabNavigation 
                 activeTab={activeTab} 

@@ -6,26 +6,12 @@ from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 from .models import (
     ServiceProvider,
-    ServiceArea,
-    InsurancePolicy,
-    ProviderDocument,
-    ProviderReview,
-    ProviderPayment,
-    SavedJob,
-    WatchedJob,
 )
 from .serializer import (
     ServiceProviderSerializer,
-    ServiceAreaSerializer,
-    InsurancePolicySerializer,
-    ProviderDocumentSerializer,
-    ProviderReviewSerializer,
-    ProviderPaymentSerializer,
-    SavedJobSerializer,
-    WatchedJobSerializer,
 )
-from apps.Job.serializers import JobSerializer
-from apps.Job.models import Job
+from apps.ServiceRequest.serializers import ServiceRequestSerializer
+from apps.ServiceRequest.models import ServiceRequest
 from apps.User.models import User
 from django.db import transaction
 import logging
@@ -116,155 +102,11 @@ class ServiceProviderViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post", "patch"])
     def verify(self, request, pk=None):
         provider = self.get_object()
+        print("Verifying provider:")
         provider.verification_status = "verified"
         provider.last_verified = timezone.now()
         provider.save()
         return Response({"status": "provider verified"})
-
-    @action(detail=True, methods=["get", "post"])
-    def documents(self, request, pk=None):
-        provider = self.get_object()
-        if request.method == "GET":
-            documents = provider.documents.all()
-            serializer = ProviderDocumentSerializer(
-                documents, many=True, context={"request": request}
-            )
-            return Response(serializer.data)
-        elif request.method == "POST":
-            serializer = ProviderDocumentSerializer(
-                data=request.data, context={"request": request}
-            )
-            if serializer.is_valid():
-                serializer.save(provider=provider)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=True, methods=["post"])
-    def verify_document(self, request, pk=None):
-        """
-        Verify a provider's document.
-        """
-        provider = self.get_object()
-        document_id = request.data.get("document_id")
-        verification_note = request.data.get("verification_note")
-
-        try:
-            document = provider.documents.get(id=document_id)
-            document.is_verified = True
-            document.rejection_reason = None
-            document.status = "verified"
-            if verification_note:
-                document.notes = verification_note
-            document.save()
-            serializer = ProviderDocumentSerializer(document)
-            return Response(serializer.data)
-        except ObjectDoesNotExist:
-            return Response(
-                {"detail": "Document not found."}, status=status.HTTP_404_NOT_FOUND
-            )
-
-    @action(detail=True, methods=["post"])
-    def reject_document(self, request, pk=None):
-        """
-        Reject a provider's document.
-        """
-        provider = self.get_object()
-        document_id = request.data.get("document_id")
-        rejection_reason = request.data.get("rejection_reason")
-
-        if not rejection_reason:
-            return Response(
-                {"detail": "Rejection reason is required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            document = provider.documents.get(id=document_id)
-            document.is_verified = False
-            document.rejection_reason = rejection_reason
-            document.status = "rejected"
-            document.save()
-            serializer = ProviderDocumentSerializer(document)
-            return Response(serializer.data)
-        except ObjectDoesNotExist:
-            return Response(
-                {"detail": "Document not found."}, status=status.HTTP_404_NOT_FOUND
-            )
-
-    @action(detail=True, methods=["post"])
-    def update_document_status(self, request, pk=None):
-        """
-        Update the status of a provider's document.
-        """
-        provider = self.get_object()
-        document_id = request.data.get("document_id")
-        new_status = request.data.get("status")
-        notes = request.data.get("notes")
-
-        if not new_status:
-            return Response(
-                {"detail": "Status is required."}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        if new_status not in dict(ProviderDocument.DOCUMENT_STATUS):
-            return Response(
-                {
-                    "detail": f"Invalid status. Must be one of: {', '.join(dict(ProviderDocument.DOCUMENT_STATUS).keys())}"
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            document = provider.documents.get(id=document_id)
-            document.status = new_status
-            if notes:
-                document.notes = notes
-            if new_status == "verified":
-                document.is_verified = True
-                document.rejection_reason = None
-            elif new_status == "rejected":
-                document.is_verified = False
-                if not notes:
-                    return Response(
-                        {"detail": "Notes are required when rejecting a document."},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-                document.rejection_reason = notes
-            document.save()
-            serializer = ProviderDocumentSerializer(document)
-            return Response(serializer.data)
-        except ObjectDoesNotExist:
-            return Response(
-                {"detail": "Document not found."}, status=status.HTTP_404_NOT_FOUND
-            )
-
-    @action(detail=True, methods=["get"])
-    def reviews(self, request, pk=None):
-        provider = self.get_object()
-        reviews = provider.reviews.all()
-        serializer = ProviderReviewSerializer(reviews, many=True)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=["get"])
-    def payments(self, request, pk=None):
-        provider = self.get_object()
-        payments = provider.payments.all()
-        serializer = ProviderPaymentSerializer(payments, many=True)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=["get"])
-    def saved_jobs(self, request, pk=None):
-        provider = self.get_object()
-        saved_jobs = SavedJob.objects.filter(provider=provider.user)
-        serializer = SavedJobSerializer(saved_jobs, many=True)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=["get"])
-    def watched_jobs(self, request, pk=None):
-        provider = self.get_object()
-        watched_jobs = WatchedJob.objects.filter(provider=provider.user)
-        serializer = WatchedJobSerializer(watched_jobs, many=True)
-        return Response(serializer.data)
 
     @action(detail=False, methods=["get"])
     def get_provider_by_user_id(self, request):
@@ -314,12 +156,81 @@ class ServiceProviderViewSet(viewsets.ModelViewSet):
             )
 
         try:
-            job = Job.objects.get(id=job_id)
+            job = ServiceRequest.objects.get(id=job_id)
             job.accept_bid(request.user)
-            return Response({"status": "Job accepted"})
+            return Response({"status": "ServiceRequest accepted"})
         except ObjectDoesNotExist:
             return Response(
-                {"error": "Job not found"}, status=status.HTTP_404_NOT_FOUND
+                {"error": "ServiceRequest not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+    @action(detail=False, methods=["get"])
+    def activities(self, request):
+        """Get provider activities and recent jobs"""
+        try:
+            # Get the provider for the current user
+            provider = self.get_queryset().filter(user=request.user).first()
+
+            if not provider:
+                return Response(
+                    {"detail": "Provider profile not found"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            # Get recent jobs for this provider
+            from apps.ServiceRequest.models import ServiceRequest
+
+            recent_jobs = ServiceRequest.objects.filter(
+                assigned_provider=provider
+            ).order_by("-created_at")[:10]
+
+            # Get job statistics
+            total_jobs = ServiceRequest.objects.filter(
+                assigned_provider=provider
+            ).count()
+            completed_jobs = ServiceRequest.objects.filter(
+                assigned_provider=provider, status="completed"
+            ).count()
+            active_jobs = ServiceRequest.objects.filter(
+                assigned_provider=provider, status__in=["assigned", "in_progress"]
+            ).count()
+
+            # Calculate completion rate
+            completion_rate = (
+                (completed_jobs / total_jobs * 100) if total_jobs > 0 else 0
+            )
+
+            return Response(
+                {
+                    "provider_info": {
+                        "id": provider.id,
+                        "business_name": provider.business_name,
+                        "status": provider.status,
+                        "verification_status": provider.verification_status,
+                        "total_jobs": total_jobs,
+                        "completed_jobs": completed_jobs,
+                        "active_jobs": active_jobs,
+                        "completion_rate": round(completion_rate, 2),
+                    },
+                    "recent_jobs": [
+                        {
+                            "id": job.id,
+                            "title": job.title,
+                            "status": job.status,
+                            "created_at": job.created_at,
+                            "estimated_duration": job.estimated_duration,
+                            "total_amount": job.total_amount,
+                        }
+                        for job in recent_jobs
+                    ],
+                }
+            )
+
+        except Exception as e:
+            logger.error(f"Error getting provider activities: {e}")
+            return Response(
+                {"detail": "Error retrieving provider activities"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
     @action(
@@ -348,38 +259,104 @@ class ServiceProviderViewSet(viewsets.ModelViewSet):
                 for user in provider_users:
                     try:
                         # Check if ServiceProvider entry exists
-                        provider, created = ServiceProvider.objects.get_or_create(
-                            user=user,
-                            defaults={
-                                "business_type": "sole_trader",  # Default business type
-                                "company_name": f"{user.first_name}'s Service",  # Default company name
-                                "verification_status": "unverified",  # Default verification status
-                            },
+                        from django.contrib.gis.geos import Point
+
+                        # Default location (Accra coordinates)
+                        default_location = Point(-0.1869644, 5.5600149, srid=4326)
+
+                        # Handle phone number - now supports up to 25 characters
+                        phone_number = ""
+                        if user.phone_number:
+                            # Truncate to 25 characters for ServiceProvider.phone field
+                            phone_number = str(user.phone_number)
+                        else:
+                            phone_number = "N/A"
+
+                        # Ensure business name fits within 200 character limit
+                        business_name = f"{user.first_name}'s Service"
+                        if len(business_name) > 200:
+                            business_name = business_name[:197] + "..."
+                        # Create the defaults dictionary with all values
+                        defaults_data = {
+                            "business_type": "sole_trader",  # Default business type
+                            "business_name": business_name,  # Truncated business name
+                            "verification_status": "unverified",  # Default verification status
+                            "base_location": default_location,  # Default location
+                            "phone": phone_number,  # Truncated phone number
+                            "email": user.email,  # Use user's email
+                            "address_line1": "Address to be updated",  # Placeholder
+                            "city": "City to be updated",  # Placeholder
+                            "county": "County to be updated",  # Placeholder
+                            "postcode": "00233",  # Accra postcode
+                            "country": "Ghana",  # Placeholder
+                        }
+
+                        # Check if ServiceProvider already exists for this user
+                        existing_provider = ServiceProvider.objects.filter(
+                            user=user
+                        ).first()
+                        if existing_provider:
+                            logger.info(
+                                f"ServiceProvider already exists for user {user.id}, updating existing record"
+                            )
+                            # Update the existing provider with the new data
+                            for key, value in defaults_data.items():
+                                if key == "verification_status":
+                                    continue
+                                setattr(existing_provider, key, value)
+                            existing_provider.save()
+                            stats["existing_entries"] += 1
+                            continue
+
+                        # Log the data being used for debugging
+                        logger.info(
+                            f"Creating ServiceProvider with data: {defaults_data}"
                         )
 
-                        if created:
-                            stats["new_entries"] += 1
-                            logger.info(
-                                f"Created new ServiceProvider entry for user {user.id}"
-                            )
-                        else:
-                            stats["existing_entries"] += 1
-                            logger.info(
-                                f"ServiceProvider entry already exists for user {user.id}"
-                            )
+                        print("Creating ServiceProvider with data:")
+                        print(defaults_data)
+
+                        provider = ServiceProvider.objects.create(
+                            user=user, **defaults_data
+                        )
+                        created = True
+
+                        stats["new_entries"] += 1
+                        logger.info(
+                            f"Created new ServiceProvider entry for user {user.id}"
+                        )
 
                     except Exception as e:
-                        error_msg = f"Error processing user {user.id}: {str(e)}"
+                        # Add more detailed error information
+                        error_msg = (
+                            f"Error processing user {user.id} ({user.email}): {str(e)}"
+                        )
                         stats["errors"].append(error_msg)
                         logger.error(error_msg)
 
-                return Response(
-                    {
-                        "status": "success",
-                        "message": "Provider sync completed",
-                        "statistics": stats,
-                    }
-                )
+                        # Log additional debugging info
+                        logger.error(
+                            f"User data: first_name='{user.first_name}', phone_number='{user.phone_number}'"
+                        )
+
+                # Check if there were any errors
+                if stats["errors"]:
+                    return Response(
+                        {
+                            "status": "partial_success",
+                            "message": "Provider sync completed with errors",
+                            "statistics": stats,
+                        },
+                        status=status.HTTP_207_MULTI_STATUS,  # 207 Multi-Status
+                    )
+                else:
+                    return Response(
+                        {
+                            "status": "success",
+                            "message": "Provider sync completed successfully",
+                            "statistics": stats,
+                        }
+                    )
 
         except Exception as e:
             error_msg = f"Error during provider sync: {str(e)}"
@@ -387,204 +364,4 @@ class ServiceProviderViewSet(viewsets.ModelViewSet):
             return Response(
                 {"status": "error", "message": error_msg},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
-
-class ServiceAreaViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for viewing and editing ServiceArea instances.
-    """
-
-    queryset = ServiceArea.objects.all()
-    serializer_class = ServiceAreaSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        provider_id = self.request.query_params.get("provider_id")
-        if provider_id:
-            return queryset.filter(provider_id=provider_id)
-        return queryset
-
-
-class InsurancePolicyViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for viewing and editing InsurancePolicy instances.
-    """
-
-    queryset = InsurancePolicy.objects.all()
-    serializer_class = InsurancePolicySerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        provider_id = self.request.query_params.get("provider_id")
-        if provider_id:
-            return queryset.filter(provider_id=provider_id)
-        return queryset
-
-
-class ProviderDocumentViewSet(viewsets.ModelViewSet):
-    queryset = ProviderDocument.objects.all()
-    serializer_class = ProviderDocumentSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        provider_id = self.request.query_params.get("provider_id")
-        if provider_id:
-            return queryset.filter(provider_id=provider_id)
-        return queryset
-
-    @action(detail=True, methods=["post"])
-    def approve(self, request, pk=None):
-        document = self.get_object()
-        document.status = "approved"
-        document.save()
-        return Response({"status": "document approved"})
-
-    @action(detail=True, methods=["post"])
-    def reject(self, request, pk=None):
-        document = self.get_object()
-        document.status = "rejected"
-        document.save()
-        return Response({"status": "document rejected"})
-
-
-class ProviderReviewViewSet(viewsets.ModelViewSet):
-    queryset = ProviderReview.objects.all()
-    serializer_class = ProviderReviewSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        provider_id = self.request.query_params.get("provider_id")
-        if provider_id:
-            return queryset.filter(provider_id=provider_id)
-        return queryset
-
-    def perform_create(self, serializer):
-        serializer.save(customer=self.request.user)
-
-
-class ProviderPaymentViewSet(viewsets.ModelViewSet):
-    queryset = ProviderPayment.objects.all()
-    serializer_class = ProviderPaymentSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        provider_id = self.request.query_params.get("provider_id")
-        if provider_id:
-            return queryset.filter(provider_id=provider_id)
-        return queryset
-
-
-class SavedJobViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for provider's saved jobs
-    """
-
-    queryset = SavedJob.objects.all()
-    serializer_class = SavedJobSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        return self.queryset.filter(provider=self.request.user)
-
-    def perform_create(self, serializer):
-        serializer.save(provider=self.request.user)
-
-    @action(detail=False, methods=["get"])
-    def jobs(self, request):
-        """Return the actual job objects the provider has saved"""
-        saved_job_ids = SavedJob.objects.filter(provider=request.user).values_list(
-            "job_id", flat=True
-        )
-
-        jobs = Job.objects.filter(id__in=saved_job_ids)
-        serializer = JobSerializer(jobs, many=True)
-        return Response(serializer.data)
-
-    @action(detail=False, methods=["post"])
-    def toggle(self, request):
-        """Toggle saving/unsaving a job"""
-        job_id = request.data.get("job_id")
-        if not job_id:
-            return Response(
-                {"error": "job_id is required"}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-            job = Job.objects.get(pk=job_id)
-
-            saved_job, created = SavedJob.objects.get_or_create(
-                job=job, provider=request.user
-            )
-
-            if not created:
-                # If already saved, remove it (toggle off)
-                saved_job.delete()
-                return Response({"status": "job unsaved"})
-
-            return Response({"status": "job saved"})
-
-        except ObjectDoesNotExist:
-            return Response(
-                {"error": "Job not found"}, status=status.HTTP_404_NOT_FOUND
-            )
-
-
-class WatchedJobViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for provider's watched jobs
-    """
-
-    queryset = WatchedJob.objects.all()
-    serializer_class = WatchedJobSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        return self.queryset.filter(provider=self.request.user)
-
-    def perform_create(self, serializer):
-        serializer.save(provider=self.request.user)
-
-    @action(detail=False, methods=["get"])
-    def jobs(self, request):
-        """Return the actual job objects the provider is watching"""
-        watched_job_ids = WatchedJob.objects.filter(provider=request.user).values_list(
-            "job_id", flat=True
-        )
-
-        jobs = Job.objects.filter(id__in=watched_job_ids)
-        serializer = JobSerializer(jobs, many=True)
-        return Response(serializer.data)
-
-    @action(detail=False, methods=["post"])
-    def toggle(self, request):
-        """Toggle watching/unwatching a job"""
-        job_id = request.data.get("job_id")
-        if not job_id:
-            return Response(
-                {"error": "job_id is required"}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-            job = Job.objects.get(pk=job_id)
-
-            watched_job, created = WatchedJob.objects.get_or_create(
-                job=job, provider=request.user
-            )
-
-            if not created:
-                # If already watching, remove it (toggle off)
-                watched_job.delete()
-                return Response({"status": "job unwatched"})
-
-            return Response({"status": "job watched"})
-
-        except ObjectDoesNotExist:
-            return Response(
-                {"error": "Job not found"}, status=status.HTTP_404_NOT_FOUND
             )

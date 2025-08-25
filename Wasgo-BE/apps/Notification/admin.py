@@ -44,9 +44,6 @@ class NotificationAdmin(admin.ModelAdmin):
         "email_sent",
         "sms_sent",
         "push_sent",
-        "delivery_status",
-        "is_urgent",
-        "is_expired",
     ]
     date_hierarchy = "created_at"
     ordering = ["-created_at"]
@@ -82,9 +79,6 @@ class NotificationAdmin(admin.ModelAdmin):
                     "email_sent",
                     "sms_sent",
                     "push_sent",
-                    "delivery_status",
-                    "is_urgent",
-                    "is_expired",
                 ),
                 "classes": ("collapse",),
             },
@@ -261,6 +255,6 @@ class NotificationAdminActions:
 
 
 # Custom admin site integration
-admin.site.site_header = "MoreVans Notification Admin"
+admin.site.site_header = "Wasgo Notification Admin"
 admin.site.site_title = "Notification Management"
 admin.site.index_title = "Notification Administration"

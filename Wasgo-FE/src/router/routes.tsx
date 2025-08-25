@@ -73,7 +73,6 @@ import AddEditVehiclePage from '../pages/provider/ProviderDetail/tabs/vehiclesTa
 import ViewVehiclePage from '../pages/provider/ProviderDetail/tabs/vehiclesTab/ViewVehiclePage';
 import DriverDetail from '../pages/provider/ProviderDetail/tabs/driversTab/DriverDetail';
 import EditDriver from '../pages/provider/ProviderDetail/tabs/driversTab/EditDriver';
-import CustomerDashboard from '../pages/Dasboard/Index';
 import ProviderDashboard from '../pages/provider/providerDashboard';
 import SmartBins from '../pages/customer/SmartBin/SmartBins';
 import SmartBinAlerts from '../pages/provider/SmartBinAlerts';
@@ -84,7 +83,6 @@ import Performance from '../pages/provider/Performance';
 import Training from '../pages/provider/Training';
 
 // Import new customer dashboard pages
-import CustomerDashboardNew from '../pages/customer/Dashboard';
 import RequestPickup from '../pages/customer/RequestPickup';
 import SchedulePickup from '../pages/customer/SchedulePickup';
 import ActivePickups from '../pages/customer/ActivePickups';
@@ -101,6 +99,7 @@ import JobRequests from '../pages/provider/JobRequests';
 import ActiveJobs from '../pages/provider/ActiveJobs';
 import FleetManagement from '../pages/provider/FleetManagement';
 import Earnings from '../pages/provider/Earnings';
+import Dashboard from '../pages/customer/Dashboard';
 
 
 
@@ -238,7 +237,7 @@ const routes = [
         path: '/dashboard',
         element: (
             <ProtectedRoute customerOnly>
-                <CustomerDashboard />
+                <Dashboard />
             </ProtectedRoute>
         ),
         layout: 'default',
@@ -276,15 +275,6 @@ const routes = [
         path: '/service-request',
         element: <ServiceRequestForm />,
         layout: 'flexible',
-    },
-    {
-        path: '/customer/dashboard',
-        element: (
-            <ProtectedRoute customerOnly>
-                <CustomerDashboardNew />
-            </ProtectedRoute>
-        ),
-        layout: 'default',
     },
     {
         path: '/customer/request-pickup',

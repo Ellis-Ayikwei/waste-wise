@@ -1,4 +1,4 @@
-{{ app_name|default:"MoreVans" }} - STAFF NOTIFICATION
+{{ app_name|default:"Wasgo" }} - STAFF NOTIFICATION
 ==============================================
 
 Hello {{ user_name }}!
@@ -48,10 +48,10 @@ View Booking: {{ booking_details_url }}
 Customize notifications: {{ notification_preferences_url }}
 {% endif %}
 
-Staff Support: staff@morevans.com
+Staff Support: staff@wasgo.com
 Help Desk: +44 123 456 789
 
 ---
 This is an automated staff notification, please do not reply to this email.
 
-© {{ current_year }} {{ app_name|default:"MoreVans" }} Staff Portal. All rights reserved.
+© {{ current_year }} {{ app_name|default:"Wasgo" }} Staff Portal. All rights reserved.

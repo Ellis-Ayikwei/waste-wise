@@ -258,7 +258,7 @@ class PricingService:
             "weather_type": weather_type,
             "staff_prices": staff_prices,
             "status": "available",
-            "request_type": data.get('request_type', 'standard'),
+            "service_type": data.get('service_type', 'standard'),
             "priority_type": priority_type,
             "best_price": best_price if best_price != float('inf') else None,
             "best_staff_count": best_staff_count

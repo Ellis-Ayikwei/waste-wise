@@ -19,10 +19,9 @@ from .serializer import (
     CreateRefundSerializer,
 )
 from .stripe_service import StripeService
-from apps.Job.models import Job
-from apps.Job.serializers import JobSerializer
-from apps.Job.services import JobService
-from apps.Request.models import Request
+from apps.ServiceRequest.models import ServiceRequest
+from apps.ServiceRequest.serializers import ServiceRequestSerializer
+from apps.ServiceRequest.services import ServiceRequestService
 import uuid
 
 logger = logging.getLogger(__name__)
@@ -699,10 +698,10 @@ class PaymentViewSet(viewsets.ModelViewSet):
 
         try:
             # Get the request object
-            request_obj = Request.objects.get(id=request_id, user=user_id)
-        except Request.DoesNotExist:
+            request_obj = ServiceRequest.objects.get(id=request_id, user=user_id)
+        except ServiceRequest.DoesNotExist:
             return Response(
-                {"detail": "Request not found before checkout creation"},
+                {"detail": "ServiceRequest not found before checkout creation"},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -793,11 +792,11 @@ class PaymentViewSet(viewsets.ModelViewSet):
 
             # Get request with specific user
             try:
-                request_obj = Request.objects.get(id=request_id, user=actual_user)
+                request_obj = ServiceRequest.objects.get(id=request_id, user=actual_user)
                 print(f"Found request for user: {request_obj.id}")
-            except Request.DoesNotExist:
+            except ServiceRequest.DoesNotExist:
                 return Response(
-                    {"detail": "Request not found for this user"},
+                    {"detail": "ServiceRequest not found for this user"},
                     status=status.HTTP_404_NOT_FOUND,
                 )
         # Create checkout session
@@ -898,7 +897,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 and result.get("payment_status") == "paid"
             ):
                 try:
-                    request_obj = Request.objects.get(
+                    request_obj = ServiceRequest.objects.get(
                         id=result.get("metadata").get("request_id")
                     )
                     JobService.create_job_with_strategy(request_obj)
@@ -919,7 +918,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
         """
         Sync payments with jobs and requests - creates jobs when payments are completed
 
-        POST /api/payments/sync_payments_with_jobs/
+        POST /api/payments/sync_payments_with_service-requests/
         {
             "payment_ids": [1, 2, 3],  // optional - if not provided, syncs all completed payments
             "force_sync": false,        // optional - force sync even if job already exists
@@ -927,8 +926,8 @@ class PaymentViewSet(viewsets.ModelViewSet):
             "update_requests": true     // optional - whether to update request statuses
         }
         """
-        from apps.Job.models import Job
-        from apps.Request.models import Request
+        from apps.ServiceRequest.models import ServiceRequest
+        from apps.ServiceRequest.models import ServiceRequest
         from django.db import transaction
         import logging
 
@@ -973,95 +972,37 @@ class PaymentViewSet(viewsets.ModelViewSet):
 
                         request_obj = payment.request
 
-                        # Check if job already exists for this request
-                        existing_job = Job.objects.filter(request=request_obj).first()
-                        print(
-                            f"Checking for existing job for request {request_obj.id}: {existing_job}"
+                        # ServiceRequest is now the unified model, no separate job needed
+                        # Update the service request directly
+                        if create_jobs and force_sync:
+                            # Update service request with payment information
+                            request_obj.final_price = payment.amount
+                            request_obj.is_paid = True
+                            request_obj.paid_at = timezone.now()
+                            request_obj.payment_reference = payment.stripe_payment_intent_id
+                            request_obj.save()
+                            
+                            payment_result["service_request_updated"] = True
+                            logger.info(
+                                f"Updated service request {request_obj.id} for payment {payment.id}"
+                            )
+                            print(
+                                f"Updated service request {request_obj.id} for payment {payment.id}"
+                            )
+
+                        # Add timeline event for payment processing
+                        from apps.ServiceRequest.services import ServiceRequestTimelineService
+                        
+                        ServiceRequestTimelineService.create_timeline_event(
+                            service_request=request_obj,
+                            event_type="system_notification",
+                            description=f"Payment processed: {payment.id}",
+                            metadata={
+                                "payment_id": str(payment.id),
+                                "payment_amount": str(payment.amount),
+                                "payment_type": payment.payment_type,
+                            },
                         )
-
-                        if create_jobs and (not existing_job or force_sync):
-                            # Create job if it doesn't exist or force sync is enabled
-                            if existing_job and force_sync:
-                                # Update existing job
-                                job = existing_job
-                                # Calculate base job price from final price
-                                base_job_price = (
-                                    request_obj.calculate_base_job_price_from_final_price()
-                                )
-                                job.price = base_job_price
-                                job.status = "pending"
-                                job.save()
-                                payment_result["job_updated"] = True
-                                logger.info(
-                                    f"Updated existing job {job.id} for payment {payment.id}"
-                                )
-                                print(
-                                    f"Updated existing job {job.id} for payment {payment.id}"
-                                )
-                            else:
-                                # Create new job
-                                print(f"=== STARTING JOB CREATION ===")
-                                print(
-                                    f"Creating job for request {request_obj.id} with request_type: {request_obj.request_type}"
-                                )
-                                print(f"Payment amount: {payment.amount}")
-                                print(f"Payment type: {payment.payment_type}")
-                                print(f"Request status: {request_obj.status}")
-
-                                try:
-                                    # Calculate base job price from final price
-                                    base_job_price = (
-                                        request_obj.calculate_base_job_price_from_final_price()
-                                    )
-                                    from apps.Job.services import JobService
-
-                                    request_obj.base_price = base_job_price
-                                    request_obj.save(update_fields=["base_price"])
-                                    job = JobService.create_job_with_strategy(
-                                        request_obj
-                                    )
-
-                                    request_obj.base_price = base_job_price
-                                    request_obj.save()
-                                    print(f"=== JOB CREATION SUCCESSFUL ===")
-                                    print(f"Job created with ID: {job.id}")
-                                    print(f"Job number: {job.job_number}")
-                                    print(f"Job status: {job.status}")
-                                    print(f"Job price: {job.price}")
-                                    print(f"Job is_instant: {job.is_instant}")
-
-                                    payment_result["job_created"] = True
-                                    jobs_created += 1
-                                    logger.info(
-                                        f"Created new job {job.id} for payment {payment.id}"
-                                    )
-                                    print(
-                                        f"Successfully created job {job.id} with number {job.job_number}"
-                                    )
-                                except Exception as job_error:
-                                    print(f"=== JOB CREATION FAILED ===")
-                                    print(f"Error creating job: {str(job_error)}")
-                                    print(f"Error type: {type(job_error)}")
-                                    import traceback
-
-                                    print(f"Traceback: {traceback.format_exc()}")
-                                    raise job_error
-
-                            # Add timeline event for job creation
-                            if hasattr(job, "timeline_events"):
-                                from apps.Job.models import TimelineEvent
-
-                                TimelineEvent.objects.create(
-                                    job=job,
-                                    event_type="payment_processed",
-                                    description=f"Job created/updated from payment {payment.id}",
-                                    visibility="all",
-                                    metadata={
-                                        "payment_id": str(payment.id),
-                                        "payment_amount": str(payment.amount),
-                                        "payment_type": payment.payment_type,
-                                    },
-                                )
 
                         # Update request status based on payment
                         if update_requests:
@@ -1133,11 +1074,11 @@ class PaymentViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"], permission_classes=[permissions.IsAdminUser])
     def pending_sync_payments(self, request):
         """
-        Get payments that need to be synced with jobs/requests
+        Get payments that need to be synced with service-requests/requests
 
         GET /api/payments/pending_sync_payments/
         """
-        from apps.Job.models import Job
+        from apps.ServiceRequest.models import ServiceRequest
 
         # Get completed payments that don't have corresponding jobs
         completed_payments = Payment.objects.filter(
@@ -1148,7 +1089,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
 
         for payment in completed_payments:
             # Check if job exists for this request
-            job_exists = Job.objects.filter(request=payment.request).exists()
+            job_exists = ServiceRequest.objects.filter(request=payment.request).exists()
 
             if not job_exists:
                 pending_sync.append(
@@ -1159,7 +1100,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
                         "payment_type": payment.payment_type,
                         "completed_at": payment.completed_at,
                         "request_status": payment.request.status,
-                        "request_type": payment.request.request_type,
+                        "service_type": payment.request.service_type,
                         "user_email": (
                             payment.request.user.email if payment.request.user else None
                         ),
@@ -1177,7 +1118,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
 
         POST /api/payments/{payment_id}/sync_single_payment/
         """
-        from apps.Job.models import Job
+        from apps.ServiceRequest.models import ServiceRequest
         from django.db import transaction
         import logging
 
@@ -1198,30 +1139,18 @@ class PaymentViewSet(viewsets.ModelViewSet):
             with transaction.atomic():
                 request_obj = payment.request
 
-                # Check if job already exists
-                existing_job = Job.objects.filter(request=request_obj).first()
-
-                if existing_job:
-                    return Response(
-                        {
-                            "success": False,
-                            "error": f"Job already exists for request {request_obj.id}",
-                            "existing_job_id": existing_job.id,
-                        },
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-
-                # Create job using strategy
-                from apps.Job.services import JobService
-
-                request_obj.base_price = payment.amount
-                request_obj.save(update_fields=["base_price"])
-                job = JobService.create_job_with_strategy(request_obj)
-
-                # Update request status
+                # Update ServiceRequest directly
                 old_status = request_obj.status
+                old_payment_status = request_obj.payment_status
+                
+                # Update payment-related fields
+                request_obj.final_price = payment.amount
+                request_obj.is_paid = True
+                request_obj.paid_at = timezone.now()
+                request_obj.payment_reference = payment.payment_reference
                 request_obj.payment_status = "completed"
 
+                # Update status based on payment type
                 if payment.payment_type == "deposit":
                     if request_obj.status == "draft":
                         request_obj.status = "pending"
@@ -1232,37 +1161,33 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 request_obj.save()
 
                 # Add timeline event
-                if hasattr(job, "timeline_events"):
-                    from apps.Job.models import TimelineEvent
+                from apps.ServiceRequest.models import ServiceRequestTimelineEvent
 
-                    TimelineEvent.objects.create(
-                        job=job,
-                        event_type="payment_processed",
-                        description=f"Job created from payment {payment.id}",
-                        visibility="all",
-                        metadata={
-                            "payment_id": str(payment.id),
-                            "payment_amount": str(payment.amount),
-                            "payment_type": payment.payment_type,
-                        },
-                    )
+                ServiceRequestTimelineEvent.objects.create(
+                    service_request=request_obj,
+                    event_type="payment_processed",
+                    description=f"Payment processed: {payment.payment_type} - {payment.amount}",
+                    metadata={
+                        "payment_id": str(payment.id),
+                        "payment_amount": str(payment.amount),
+                        "payment_type": payment.payment_type,
+                        "payment_reference": payment.payment_reference,
+                    },
+                )
 
                 return Response(
                     {
                         "success": True,
-                        "job_created": {
-                            "job_id": job.id,
-                            "job_number": job.job_number,
-                            "status": job.status,
-                            "price": str(job.price),
-                        },
-                        "request_updated": {
+                        "service_request_updated": {
                             "request_id": request_obj.id,
                             "old_status": old_status,
                             "new_status": request_obj.status,
-                            "payment_status": request_obj.payment_status,
+                            "old_payment_status": old_payment_status,
+                            "new_payment_status": request_obj.payment_status,
+                            "final_price": str(request_obj.final_price),
+                            "is_paid": request_obj.is_paid,
                         },
-                        "message": f"Successfully synced payment {payment.id} with job {job.id}",
+                        "message": f"Successfully processed payment {payment.id} for service request {request_obj.id}",
                     },
                     status=status.HTTP_200_OK,
                 )
@@ -1320,7 +1245,7 @@ class StripeWebhookView(APIView):
         """
         Automatically sync a payment with job and request when payment is completed
         """
-        from apps.Job.models import Job
+        from apps.ServiceRequest.models import ServiceRequest
         from django.db import transaction
         import logging
 
@@ -1332,21 +1257,16 @@ class StripeWebhookView(APIView):
             with transaction.atomic():
                 request_obj = payment.request
 
-                # Check if job already exists
-                existing_job = Job.objects.filter(request=request_obj).first()
-
-                if not existing_job:
-                    # Create job using strategy
-                    from apps.Job.services import JobService
-
-                    request_obj.base_price = payment.amount
-                    request_obj.save(update_fields=["base_price"])
-                    job = JobService.create_job_with_strategy(request_obj)
-
-                    # Update request status
-                    old_status = request_obj.status
+                # Update ServiceRequest directly if not already processed
+                if not request_obj.is_paid:
+                    # Update payment-related fields
+                    request_obj.final_price = payment.amount
+                    request_obj.is_paid = True
+                    request_obj.paid_at = timezone.now()
+                    request_obj.payment_reference = payment.payment_reference
                     request_obj.payment_status = "completed"
 
+                    # Update status based on payment type
                     if payment.payment_type == "deposit":
                         if request_obj.status == "draft":
                             request_obj.status = "pending"
@@ -1357,27 +1277,26 @@ class StripeWebhookView(APIView):
                     request_obj.save()
 
                     # Add timeline event
-                    if hasattr(job, "timeline_events"):
-                        from apps.Job.models import TimelineEvent
+                    from apps.ServiceRequest.models import ServiceRequestTimelineEvent
 
-                        TimelineEvent.objects.create(
-                            job=job,
-                            event_type="payment_processed",
-                            description=f"Job auto-created from payment {payment.id}",
-                            visibility="all",
-                            metadata={
-                                "payment_id": str(payment.id),
-                                "payment_amount": str(payment.amount),
-                                "payment_type": payment.payment_type,
-                                "auto_synced": True,
-                            },
-                        )
+                    ServiceRequestTimelineEvent.objects.create(
+                        service_request=request_obj,
+                        event_type="payment_processed",
+                        description=f"Payment auto-processed: {payment.payment_type} - {payment.amount}",
+                        metadata={
+                            "payment_id": str(payment.id),
+                            "payment_amount": str(payment.amount),
+                            "payment_type": payment.payment_type,
+                            "payment_reference": payment.payment_reference,
+                            "auto_synced": True,
+                        },
+                    )
 
-                    logger.info(f"Auto-synced payment {payment.id} with job {job.id}")
+                    logger.info(f"Auto-processed payment {payment.id} for service request {request_obj.id}")
                     return True
                 else:
                     logger.info(
-                        f"Job already exists for payment {payment.id}, skipping auto-sync"
+                        f"Service request {request_obj.id} already paid, skipping auto-sync"
                     )
                     return False
 

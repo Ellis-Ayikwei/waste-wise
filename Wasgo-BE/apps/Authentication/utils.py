@@ -85,7 +85,7 @@ def send_email_template(user, subject, template_name, context=None):
         context.update(
             {
                 "user_name": user.first_name or user.email.split("@")[0],
-                "app_name": "MoreVans",
+                "app_name": "Wasgo",
                 "current_year": datetime.now().year,
             }
         )
@@ -173,7 +173,7 @@ class OTPEmailService:
                 "validity_minutes": int(
                     (otp.expires_at - timezone.now()).total_seconds() / 60
                 ),
-                "app_name": kwargs.get("app_name", "MoreVans"),
+                "app_name": kwargs.get("app_name", "Wasgo"),
                 "current_year": datetime.now().year,
                 "logo_svg_base64": logo_data_url.split(",")[
                     1

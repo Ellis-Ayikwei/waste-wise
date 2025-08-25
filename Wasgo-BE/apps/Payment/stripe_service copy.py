@@ -10,7 +10,7 @@ from django.conf import settings
 from django.utils import timezone
 from .models import Payment, PaymentMethod, StripeEvent
 from apps.User.models import User
-from apps.Request.models import Request
+from apps.ServiceRequest.models import ServiceRequest
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class StripeService:
         amount: Decimal,
         currency: str,
         user: User,
-        request_obj: Request,
+        request_obj: ServiceRequest,
         success_url: str,
         cancel_url: str,
         description: Optional[str] = None,
@@ -46,7 +46,7 @@ class StripeService:
             metadata = {
                 "user_id": str(user.id),
                 "request_id": str(request_obj.id),
-                "platform": "morevans",
+                "platform": "wasgo",
             }
 
             # Create checkout session
@@ -58,7 +58,7 @@ class StripeService:
                             "currency": currency.lower(),
                             "product_data": {
                                 "name": description
-                                or f"MoreVans Service - Request #{request_obj.id}",
+                                or f"Wasgo Service - ServiceRequest #{request_obj.id}",
                                 "description": f"Payment for moving service request {request_obj.id}",
                             },
                             "unit_amount": amount_cents,
@@ -119,7 +119,7 @@ class StripeService:
             refund_params = {
                 "payment_intent": payment_intent_id,
                 "metadata": {
-                    "platform": "morevans",
+                    "platform": "wasgo",
                     "reason": reason or "Customer request",
                 },
             }
@@ -265,7 +265,7 @@ class StripeService:
                 request_obj.save()
 
                 # TODO: Create job from request or trigger business logic
-                logger.info(f"Request {request_obj.id} confirmed after payment")
+                logger.info(f"ServiceRequest {request_obj.id} confirmed after payment")
 
             logger.info(f"Checkout completed for request {request_obj.id}")
             return {"status": "success", "payment_id": payment.id}

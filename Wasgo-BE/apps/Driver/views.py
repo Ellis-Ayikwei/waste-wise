@@ -6,16 +6,12 @@ from django.utils import timezone
 from .models import (
     Driver,
     DriverLocation,
-    DriverAvailability,
-    DriverDocument,
     DriverInfringement,
 )
 from .serializer import (
     DriverSerializer,
     DriverDetailSerializer,
     DriverLocationSerializer,
-    DriverAvailabilitySerializer,
-    DriverDocumentSerializer,
     DriverInfringementSerializer,
 )
 
@@ -308,52 +304,10 @@ class DriverLocationViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class DriverAvailabilityViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for viewing and editing DriverAvailability instances.
-    """
-
-    queryset = DriverAvailability.objects.all()
-    serializer_class = DriverAvailabilitySerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        queryset = DriverAvailability.objects.all()
-        driver_id = self.request.query_params.get("driver", None)
-        date = self.request.query_params.get("date", None)
-
-        if driver_id:
-            queryset = queryset.filter(driver_id=driver_id)
-        if date:
-            try:
-                date_obj = timezone.datetime.strptime(date, "%Y-%m-%d").date()
-                queryset = queryset.filter(date=date_obj)
-            except ValueError:
-                pass
-
-        return queryset
 
 
-class DriverDocumentViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for viewing and editing DriverDocument instances.
-    """
 
-    queryset = DriverDocument.objects.all()
-    serializer_class = DriverDocumentSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
-        queryset = DriverDocument.objects.all()
-        driver_id = self.request.query_params.get("driver", None)
-        document_type = self.request.query_params.get("type", None)
-
-        if driver_id:
-            queryset = queryset.filter(driver_id=driver_id)
-        if document_type:
-            queryset = queryset.filter(document_type=document_type)
-
-        return queryset
 
 
 class DriverInfringementViewSet(viewsets.ModelViewSet):

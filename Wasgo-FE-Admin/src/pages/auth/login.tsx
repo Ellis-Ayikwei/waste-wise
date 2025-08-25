@@ -1,412 +1,409 @@
 'use client';
 
-import { faFacebookF, faGoogle } from '@fortawesome/free-brands-svg-icons';
-import {
-    faEnvelope,
-    faLock,
-    faEye,
-    faEyeSlash,
-    faExclamationCircle,
-    faShieldAlt,
-    faArrowRight,
-    faUserShield,
-    faChartLine,
-    faCog,
-    faUsers,
-    faDatabase,
-    faGlobe,
-} from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { ErrorMessage, Field, Form, Formik } from 'formik';
-import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import * as Yup from 'yup';
-import { motion, AnimatePresence } from 'framer-motion';
-import { AppDispatch, IRootState } from '../../store/index';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { LoginUser } from '../../store/authSlice';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+    Mail, 
+    Lock, 
+    Eye, 
+    EyeOff, 
+    User, 
+    Truck,
+    Recycle,
+    Leaf,
+    Trash,
+    Smartphone,
+    ArrowRight,
+    ArrowLeft,
+    Check,
+    Globe,
+    Sprout,
+} from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faGoogle, faFacebook, faApple } from '@fortawesome/free-brands-svg-icons';
+import toast from 'react-hot-toast';
 import useSignIn from 'react-auth-kit/hooks/useSignIn';
-import { ThunkDispatch, AnyAction } from '@reduxjs/toolkit';
-import { useEffect } from 'react';
-import useIsAuthenticated from 'react-auth-kit/hooks/useIsAuthenticated';
+import { LoginUser } from '../../store/authSlice';
+import { AppDispatch, IRootState } from '../../store';
 
-interface LoginFormValues {
-    email: string;
-    password: string;
-    rememberMe: boolean;
-}
-
-const LoginSchema = Yup.object().shape({
-    email: Yup.string().email('Please enter a valid email address').required('Email is required'),
-    password: Yup.string().required('Password is required'),
-});
-
-const Login: React.FC = () => {
+const Login = () => {
     const navigate = useNavigate();
-    const location = useLocation();
-    const isAuthenticated = useIsAuthenticated();
-    const dispatch: ThunkDispatch<IRootState, unknown, AnyAction> = useDispatch();
+    const dispatch = useDispatch<AppDispatch>();
     const signIn = useSignIn();
+    const { loading, error } = useSelector((state: IRootState) => state.auth);
+    
+    const [formData, setFormData] = useState({
+        email: '',
+        password: '',
+        rememberMe: false,
+    });
+    
+    const [userType, setUserType] = useState<'customer' | 'provider'>('customer');
     const [showPassword, setShowPassword] = useState(false);
-    const [loginAttempts, setLoginAttempts] = useState(0);
-
-    const { loading, error, user } = useSelector((state: IRootState) => state.auth);
-    const from = new URLSearchParams(location.search).get('from') || '/admin/dashboard';
+    const [errors, setErrors] = useState<any>({});
+    const [loginLoading, setLoginLoading] = useState(false)
 
     useEffect(() => {
-        if (isAuthenticated) {
-            navigate(from);
+        // Check if user is already logged in
+        const token = localStorage.getItem('token');
+        if (token) {
+            navigate('/dashboard');
         }
-    }, [isAuthenticated, navigate, from]);
+    }, [navigate]);
 
-    const handleSubmit = async (values: LoginFormValues, { setSubmitting }: any) => {
+    const validateForm = () => {
+        const newErrors: any = {};
+        
+        if (!formData.email) {
+            newErrors.email = 'Email is required';
+        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+            newErrors.email = 'Email is invalid';
+        }
+        
+        if (!formData.password) {
+            newErrors.password = 'Password is required';
+        } else if (formData.password.length < 6) {
+            newErrors.password = 'Password must be at least 6 characters';
+        }
+        
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoginLoading(true)
+
+        console.log("login clicked", formData)
+        
+        if (!validateForm()) {
+            console.log("form is not valid")
+            return;
+        }
+
+
+        console.log("trying to login")
+
         try {
-            setLoginAttempts((prev) => prev + 1);
+            const result = await dispatch(LoginUser({
+                email: formData.email,
+                password: formData.password,
+               extra: { signIn },
+            })).unwrap();
 
-            if (loginAttempts >= 5) {
-                setSubmitting(false);
-                return;
+            console.log("the result",result)
+            navigate("/")
+            if(result.status===200){
+
+                
             }
 
-            const resultAction = await dispatch(
-                LoginUser({
-                    email: values.email,
-                    password: values.password,
-                    extra: {
-                        signIn: signIn,
-                    },
-                })
-            ).unwrap();
 
-            if (resultAction.success) {
-                navigate(from);
-            }
-        } catch (error) {
-            console.error('Login error:', error);
-        } finally {
-            setSubmitting(false);
+        } catch (err: any) {
+            console.log(err)
+        }
+        finally{
+            setLoginLoading(false)
         }
     };
 
-    const togglePasswordVisibility = () => setShowPassword(!showPassword);
+    const handleSocialLogin = (provider: string) => {
+        toast(`${provider} login coming soon!`);
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value, type, checked } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: type === 'checkbox' ? checked : value,
+        }));
+        // Clear error for this field
+        if (errors[name]) {
+            setErrors((prev: any) => ({ ...prev, [name]: '' }));
+        }
+    };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 flex">
-            {/* Left Side - Admin Hero Section */}
-            <div className="hidden lg:flex lg:flex-1 relative overflow-hidden">
-                {/* Background Elements */}
-                <div className="absolute inset-0 bg-gradient-to-br from-slate-800/90 via-gray-900/95 to-slate-900/90"></div>
+        <div className="min-h-screen relative flex">
+            {/* Left Side - Form */}
+            <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
+                <motion.div 
+                    initial={{ opacity: 0, x: -50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="w-full max-w-md"
+                >
+                    {/* Back to Home */}
+                    <Link 
+                        to="/" 
+                        className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 mb-8 transition-colors"
+                    >
+                        <ArrowLeft size={16} />
+                        <span>Back to Home</span>
+                    </Link>
 
-                {/* Admin Pattern Overlay */}
-                <div className="absolute inset-0 opacity-10">
-                    <div
-                        className="w-full h-full"
-                        style={{
-                            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Ccircle cx='9' cy='9' r='2'/%3E%3Ccircle cx='21' cy='21' r='2'/%3E%3Ccircle cx='33' cy='33' r='2'/%3E%3Ccircle cx='45' cy='45' r='2'/%3E%3Ccircle cx='51' cy='9' r='2'/%3E%3Ccircle cx='39' cy='21' r='2'/%3E%3Ccircle cx='27' cy='33' r='2'/%3E%3Ccircle cx='15' cy='45' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+                    {/* Logo */}
+                    <div className="flex items-center gap-3 mb-8">
+                        <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
+                           <img src={"/assets/images/wasgologo/wasgo.png"}/>
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900">Wasgo Admin</h1>
+                            <p className="text-xs text-gray-600">Smart Waste Management</p>
+                        </div>
+                    </div>
+
+                    {/* Welcome Text */}
+                    <div className="mb-8">
+                        <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back!</h2>
+                        <p className="text-gray-600">Sign in to access your eco-friendly waste management dashboard</p>
+                    </div>
+
+                    
+
+                    {/* Login Form */}
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        {/* Email Field */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Email Address
+                            </label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Mail className="text-gray-400" size={16} />
+                                </div>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleInputChange}
+                                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all ${
+                                        errors.email ? 'border-red-500' : 'border-gray-300'
+                                    }`}
+                                    placeholder="your.email@example.com"
+                                />
+                            </div>
+                            {errors.email && (
+                                <motion.p 
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="text-red-500 text-sm mt-1"
+                                >
+                                    {errors.email}
+                                </motion.p>
+                            )}
+                        </div>
+
+                        {/* Password Field */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Password
+                            </label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Lock className="text-gray-400" size={16} />
+                                </div>
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleInputChange}
+                                    className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all ${
+                                        errors.password ? 'border-red-500' : 'border-gray-300'
+                                    }`}
+                                    placeholder="Enter your password"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                >
+                                    {showPassword ? (
+                                        <EyeOff className="text-gray-400 hover:text-gray-600" size={16} />
+                                    ) : (
+                                        <Eye className="text-gray-400 hover:text-gray-600" size={16} />
+                                    )}
+                                </button>
+                            </div>
+                            {errors.password && (
+                                <motion.p 
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="text-red-500 text-sm mt-1"
+                                >
+                                    {errors.password}
+                                </motion.p>
+                            )}
+                        </div>
+
+                        {/* Remember Me & Forgot Password */}
+                        <div className="flex items-center justify-between">
+                            <label className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    name="rememberMe"
+                                    checked={formData.rememberMe}
+                                    onChange={handleInputChange}
+                                    className="w-4 h-4 text-gray-600 border-gray-300 rounded focus:ring-gray-500"
+                                />
+                                <span className="ml-2 text-sm text-gray-600">Remember me</span>
+                            </label>
+                            <Link 
+                                to="/forgot-password" 
+                                className="text-sm text-gray-600 hover:text-gray-700 font-medium"
+                            >
+                                Forgot Password?
+                            </Link>
+                        </div>
+
+                        {/* Submit Button */}
+                        <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            type="submit"
+                            disabled={loading}
+                            className="w-full bg-gradient-to-r from-gray-600 to-slate-600 text-white py-3 rounded-lg font-semibold hover:from-gray-700 hover:to-slate-700 transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            {loginLoading ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    <span>Signing in...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span>Sign In</span>
+                                    <ArrowRight size={16} />
+                                </>
+                            )}
+                        </motion.button>
+                    </form>
+
+                
+                </motion.div>
+            </div>
+
+            {/* Right Side - Visual */}
+            <div className="hidden lg:block lg:w-1/2 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-600 via-slate-600 to-zinc-700"></div>
+                
+                {/* Animated Background Elements */}
+                <div className="absolute inset-0">
+                    <motion.div
+                        animate={{
+                            scale: [1, 1.2, 1],
+                            rotate: [0, 180, 360],
                         }}
-                    ></div>
+                        transition={{
+                            duration: 20,
+                            repeat: Infinity,
+                            ease: "linear"
+                        }}
+                        className="absolute top-20 left-20 w-64 h-64 bg-green-400 rounded-full filter blur-3xl opacity-20"
+                    />
+                    <motion.div
+                        animate={{
+                            scale: [1, 1.3, 1],
+                            rotate: [360, 180, 0],
+                        }}
+                        transition={{
+                            duration: 25,
+                            repeat: Infinity,
+                            ease: "linear"
+                        }}
+                        className="absolute bottom-20 right-20 w-96 h-96 bg-emerald-400 rounded-full filter blur-3xl opacity-20"
+                    />
                 </div>
 
-                {/* Content */}
-                <div className="relative z-10 flex flex-col justify-center px-12 py-12 text-white">
-                    <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} className="max-w-lg">
-                        {/* Logo */}
-                        <div className="flex items-center mb-8">
-                            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-1 rounded-2xl shadow-lg mr-4">
-                            <img className="w-16 ml-[5px] flex-none brightness-0 invert" src="/assets/images/morevans.png" alt="logo" />
-
-                            </div>
-                            <div>
-                                <h1 className="text-3xl font-bold text-white">MoreVans Admin</h1>
-                                <p className="text-slate-300 text-sm">Administrative Control Center</p>
-                            </div>
-                        </div>
-
-                        {/* Main Content */}
-                        <h2 className="text-4xl font-bold mb-6 leading-tight">
-                            Admin <span className="text-blue-400">Control Panel</span>
-                        </h2>
-                        <p className="text-xl text-slate-200 mb-8 leading-relaxed">
-                            Manage Providers, Customers and Bookings
-                                                    </p>
-
-                        {/* Features */}
-                        <div className="space-y-4 mb-8">
-                            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }} className="flex items-center">
-                                <div className="bg-white/20 rounded-full p-2 mr-4">
-                                    <FontAwesomeIcon icon={faUsers} className="h-5 w-5 text-blue-400" />
-                                </div>
-                                <span className="text-white">Complete user & provider management</span>
-                            </motion.div>
-                            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 }} className="flex items-center">
-                                <div className="bg-white/20 rounded-full p-2 mr-4">
-                                    <FontAwesomeIcon icon={faChartLine} className="h-5 w-5 text-blue-400" />
-                                </div>
-                                <span className="text-white">Advanced analytics & reporting</span>
-                            </motion.div>
-                            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.7 }} className="flex items-center">
-                                <div className="bg-white/20 rounded-full p-2 mr-4">
-                                    <FontAwesomeIcon icon={faShieldAlt} className="h-5 w-5 text-blue-400" />
-                                </div>
-                                <span className="text-white">Role-based access control</span>
-                            </motion.div>
-                            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.8 }} className="flex items-center">
-                                <div className="bg-white/20 rounded-full p-2 mr-4">
-                                    <FontAwesomeIcon icon={faDatabase} className="h-5 w-5 text-blue-400" />
-                                </div>
-                                <span className="text-white">System monitoring & maintenance</span>
-                            </motion.div>
-                        </div>
-
-                        {/* Admin Stats */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.9 }}
-                            className="grid grid-cols-3 gap-6 bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20"
-                        >
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-blue-400">24/7</div>
-                                <div className="text-sm text-slate-300">Monitoring</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-blue-400">100%</div>
-                                <div className="text-sm text-slate-300">Admin Control</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-blue-400">5M+</div>
-                                <div className="text-sm text-slate-300">Data Points</div>
-                            </div>
-                        </motion.div>
+                {/* Floating Icons */}
+                <div className="absolute inset-0 overflow-hidden">
+                    <motion.div
+                        animate={{ y: [0, -20, 0], rotate: [0, 10, 0] }}
+                        transition={{ duration: 6, repeat: Infinity }}
+                        className="absolute top-1/4 left-1/4 text-white/20"
+                    >
+                        <Recycle size={64} />
+                    </motion.div>
+                    <motion.div
+                        animate={{ y: [0, 20, 0], rotate: [0, -10, 0] }}
+                        transition={{ duration: 8, repeat: Infinity }}
+                        className="absolute bottom-1/3 right-1/4 text-white/20"
+                    >
+                        <Leaf size={48} />
+                    </motion.div>
+                    <motion.div
+                        animate={{ y: [0, -15, 0] }}
+                        transition={{ duration: 7, repeat: Infinity }}
+                        className="absolute top-1/2 right-1/3 text-white/15"
+                    >
+                        <Globe size={80} />
                     </motion.div>
                 </div>
 
-                {/* Floating Elements */}
-                <motion.div
-                    animate={{ y: [0, -10, 0] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                    className="absolute top-1/4 right-12 w-20 h-20 bg-blue-500/20 rounded-full backdrop-blur-sm"
-                ></motion.div>
-                <motion.div
-                    animate={{ y: [0, 15, 0] }}
-                    transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-                    className="absolute bottom-1/4 right-24 w-12 h-12 bg-indigo-500/30 rounded-full backdrop-blur-sm"
-                ></motion.div>
-            </div>
-
-            {/* Right Side - Login Form */}
-            <div className="flex-1 flex items-center justify-center p-4 lg:p-8">
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="w-full max-w-md">
-                    {/* Mobile Logo */}
-                    <div className="lg:hidden flex items-center justify-center mb-8">
-                        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-3 rounded-xl shadow-lg mr-3">
-                            <FontAwesomeIcon icon={faUserShield} className="h-6 w-6 text-white" />
-                        </div>
-                        <div>
-                            <h1 className="text-xl font-bold text-white">MoreVans Admin</h1>
-                            <p className="text-slate-300 text-xs">Control Center</p>
-                        </div>
-                    </div>
-
-                    {/* Main Card */}
-                    <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl p-8">
-                        {/* Header */}
-                        <div className="text-center mb-8">
-                            <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2 }}>
-                                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                                <img className="w-[200px] ml-[5px] flex-none brightness-0 invert" src="/assets/images/morevans.png" alt="logo" />
-
-                                </div>
-                                <h2 className="text-3xl font-bold text-white mb-2">Admin Access</h2>
-                                <p className="text-gray-300 text-sm">Sign in to the administrative dashboard</p>
-                            </motion.div>
-                        </div>
-
-                        {/* Error Message */}
-                        <AnimatePresence mode="wait">
-                            {error && (
-                                <motion.div
-                                    className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 mb-6 backdrop-blur-sm"
-                                    initial={{ opacity: 0, y: -20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -20 }}
-                                >
-                                    <div className="flex items-center">
-                                        <FontAwesomeIcon icon={faExclamationCircle} className="text-red-400 mr-3" />
-                                        <div>
-                                            <p className="text-red-200 text-sm font-medium">Authentication Failed</p>
-                                            <p className="text-red-300 text-xs mt-1">{error}</p>
-                                        </div>
-                                    </div>
-                                    {loginAttempts >= 3 && (
-                                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-3 pt-3 border-t border-red-500/20">
-                                            <Link to="/forgot-password" className="text-red-300 text-xs hover:text-red-200 transition-colors underline">
-                                                Reset your admin password
-                                            </Link>
-                                        </motion.div>
-                                    )}
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        {/* Login Form */}
-                        <Formik
-                            initialValues={{
-                                email: '',
-                                password: '',
-                                rememberMe: false,
-                            }}
-                            validationSchema={LoginSchema}
-                            onSubmit={handleSubmit}
+                {/* Content */}
+                <div className="relative z-10 h-full flex items-center justify-center p-12">
+                    <div className="text-center text-white max-w-md">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5 }}
                         >
-                            {({ isSubmitting, errors, touched, values }) => (
-                                <Form className="space-y-6">
-                                    {/* Email Field */}
-                                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
-                                        <label className="block text-sm font-semibold text-gray-200 mb-2">Admin Email</label>
-                                        <div className="relative">
-                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                                <FontAwesomeIcon
-                                                    icon={faEnvelope}
-                                                    className={`h-5 w-5 transition-colors ${errors.email && touched.email ? 'text-red-400' : values.email ? 'text-blue-400' : 'text-gray-400'}`}
-                                                />
-                                            </div>
-                                            <Field
-                                                name="email"
-                                                type="email"
-                                                className={`w-full pl-12 pr-4 py-4 bg-white/5 backdrop-blur-sm border transition-all duration-300 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 ${
-                                                    errors.email && touched.email
-                                                        ? 'border-red-500/50 focus:ring-red-500/20 focus:border-red-500'
-                                                        : 'border-white/20 focus:ring-blue-500/20 focus:border-blue-500/50 hover:border-white/30'
-                                                }`}
-                                                placeholder="admin@morevans.com"
-                                            />
-                                            {errors.email && touched.email && (
-                                                <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                                                    <FontAwesomeIcon icon={faExclamationCircle} className="text-red-400 h-5 w-5" />
-                                                </div>
-                                            )}
+                            <h2 className="text-4xl font-bold mb-6">
+                                Admin Dashboard
+                            </h2>
+                            <p className="text-xl text-gray-100 mb-8">
+                                Manage and monitor the waste management system with powerful administrative tools.
+                            </p>
+                            
+                            {/* Admin Features */}
+                            <div className="space-y-4">
+                                {[
+                                    'Real-time system monitoring',
+                                    'User management & analytics',
+                                    'Provider & driver oversight',
+                                    'Financial reporting & insights',
+                                ].map((feature, index) => (
+                                    <motion.div
+                                        key={index}
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: 0.7 + index * 0.1 }}
+                                        className="flex items-center gap-3 text-left"
+                                    >
+                                        <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                                            <Check size={16} />
                                         </div>
-                                        <ErrorMessage name="email">
-                                            {(msg) => (
-                                                <motion.p initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-red-400 text-sm mt-2">
-                                                    {msg}
-                                                </motion.p>
-                                            )}
-                                        </ErrorMessage>
+                                        <span className="text-gray-50">{feature}</span>
                                     </motion.div>
-
-                                    {/* Password Field */}
-                                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
-                                        <div className="flex justify-between items-center mb-2">
-                                            <label className="block text-sm font-semibold text-gray-200">Admin Password</label>
-                                            <Link to="/forgot-password" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
-                                                Forgot?
-                                            </Link>
-                                        </div>
-                                        <div className="relative">
-                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                                <FontAwesomeIcon
-                                                    icon={faLock}
-                                                    className={`h-5 w-5 transition-colors ${
-                                                        errors.password && touched.password ? 'text-red-400' : values.password ? 'text-blue-400' : 'text-gray-400'
-                                                    }`}
-                                                />
-                                            </div>
-                                            <Field
-                                                name="password"
-                                                type={showPassword ? 'text' : 'password'}
-                                                className={`w-full pl-12 pr-12 py-4 bg-white/5 backdrop-blur-sm border transition-all duration-300 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 ${
-                                                    errors.password && touched.password
-                                                        ? 'border-red-500/50 focus:ring-red-500/20 focus:border-red-500'
-                                                        : 'border-white/20 focus:ring-blue-500/20 focus:border-blue-500/50 hover:border-white/30'
-                                                }`}
-                                                placeholder="Enter your admin password"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={togglePasswordVisibility}
-                                                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-200 transition-colors"
-                                            >
-                                                <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} className="h-5 w-5" />
-                                            </button>
-                                        </div>
-                                        <ErrorMessage name="password">
-                                            {(msg) => (
-                                                <motion.p initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-red-400 text-sm mt-2">
-                                                    {msg}
-                                                </motion.p>
-                                            )}
-                                        </ErrorMessage>
-                                    </motion.div>
-
-                                    {/* Remember Me */}
-                                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="flex items-center">
-                                        <Field name="rememberMe" type="checkbox" className="h-4 w-4 text-blue-500 focus:ring-blue-500/20 border-gray-600 rounded bg-white/10 backdrop-blur-sm" />
-                                        <label className="ml-3 text-sm text-gray-300">Keep me signed in to admin panel</label>
-                                    </motion.div>
-
-                                    {/* Submit Button */}
-                                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-                                        <motion.button
-                                            type="submit"
-                                            disabled={isSubmitting || loading}
-                                            className="w-full bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-lg hover:shadow-xl"
-                                            whileHover={{ scale: 1.02 }}
-                                            whileTap={{ scale: 0.98 }}
-                                        >
-                                            {isSubmitting || loading ? (
-                                                <div className="flex items-center justify-center">
-                                                    <motion.div
-                                                        animate={{ rotate: 360 }}
-                                                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                                                        className="w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-3"
-                                                    />
-                                                    Authenticating...
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center justify-center">
-                                                    <FontAwesomeIcon icon={faUserShield} className="mr-3 h-4 w-4" />
-                                                    Access Admin Panel
-                                                    <FontAwesomeIcon icon={faArrowRight} className="ml-2 h-4 w-4" />
-                                                </div>
-                                            )}
-                                        </motion.button>
-                                    </motion.div>
-                                </Form>
-                            )}
-                        </Formik>
-
-                        {/* Security Notice */}
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} className="mt-8">
-                            <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 text-center">
-                                <div className="flex items-center justify-center mb-2">
-                                    <FontAwesomeIcon icon={faShieldAlt} className="text-blue-400 mr-2 h-4 w-4" />
-                                    <span className="text-blue-200 text-sm font-medium">Secure Admin Access</span>
-                                </div>
-                                <p className="text-blue-300 text-xs">This is a protected administrative area. All access attempts are logged and monitored.</p>
+                                ))}
                             </div>
-                        </motion.div>
 
-                        {/* Footer */}
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} className="text-center mt-6">
-                            <div className="flex items-center justify-center text-xs text-gray-500 space-x-4">
-                                <div className="flex items-center">
-                                    <FontAwesomeIcon icon={faGlobe} className="mr-1" />
-                                    Multi-tenant
+                            {/* Admin Stats */}
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 1.2 }}
+                                className="mt-12 pt-8 border-t border-white/20"
+                            >
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div>
+                                        <p className="text-3xl font-bold">50K+</p>
+                                        <p className="text-sm text-gray-100">Active Users</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-3xl font-bold">500+</p>
+                                        <p className="text-sm text-gray-100">Providers</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-3xl font-bold">1.2M</p>
+                                        <p className="text-sm text-gray-100">Collections</p>
+                                    </div>
                                 </div>
-                                <div className="flex items-center">
-                                    <FontAwesomeIcon icon={faShieldAlt} className="mr-1" />
-                                    SSL Secured
-                                </div>
-                                <div className="flex items-center">
-                                    <FontAwesomeIcon icon={faDatabase} className="mr-1" />
-                                    Real-time
-                                </div>
-                            </div>
+                            </motion.div>
                         </motion.div>
                     </div>
-                </motion.div>
+                </div>
             </div>
         </div>
     );

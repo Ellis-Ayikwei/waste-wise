@@ -21,10 +21,13 @@ import {
     IconCalendar,
     IconRoute
 } from '@tabler/icons-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faRecycle, faCheckCircle, faExclamationTriangle, faGauge } from '@fortawesome/free-solid-svg-icons';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Progress } from '../../components/ui/Progress';
+import StatCard from '../../components/ui/statCard';
 import { setPageTitle } from '../../store/themeConfigSlice';
 import useSwr from 'swr';
 import fetcher from '../../services/fetcher';
@@ -347,57 +350,34 @@ const SmartBinManagement: React.FC = () => {
 
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Bins</CardTitle>
-                        <IconRecycle className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.totalBins}</div>
-                        <p className="text-xs text-muted-foreground">
-                            Deployed across the city
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Online Bins</CardTitle>
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.onlineBins}</div>
-                        <p className="text-xs text-muted-foreground">
-                            {((stats.onlineBins / stats.totalBins) * 100).toFixed(1)}% operational
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Critical Alerts</CardTitle>
-                        <IconAlertTriangle className="h-4 w-4 text-red-500" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.criticalAlerts}</div>
-                        <p className="text-xs text-muted-foreground">
-                            Require immediate attention
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Avg Fill Level</CardTitle>
-                        <IconGauge className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.averageFillLevel.toFixed(1)}%</div>
-                        <p className="text-xs text-muted-foreground">
-                            Across all bins
-                        </p>
-                    </CardContent>
-                </Card>
+                <StatCard
+                    icon={faRecycle}
+                    title="Total Bins"
+                    value={stats.totalBins}
+                    color="blue"
+                    delay={0.1}
+                />
+                <StatCard
+                    icon={faCheckCircle}
+                    title="Online Bins"
+                    value={stats.onlineBins}
+                    color="green"
+                    delay={0.2}
+                />
+                <StatCard
+                    icon={faExclamationTriangle}
+                    title="Critical Alerts"
+                    value={stats.criticalAlerts}
+                    color="red"
+                    delay={0.3}
+                />
+                <StatCard
+                    icon={faGauge}
+                    title="Avg Fill Level"
+                    value={`${stats.averageFillLevel.toFixed(1)}%`}
+                    color="yellow"
+                    delay={0.4}
+                />
             </div>
 
             {/* Filters and Search */}

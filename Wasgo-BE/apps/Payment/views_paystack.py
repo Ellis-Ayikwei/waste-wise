@@ -15,12 +15,12 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from .models_paystack import (
-    Payment, PaymentMethod, PaystackCustomer, 
+    PaystackPayment, PaystackPaymentMethod, PaystackCustomer, 
     PaymentWebhook, TransferRecipient, Transfer
 )
 from .serializer import PaymentSerializer
 from .paystack_service import PaystackService
-from apps.Request.models import Request
+from apps.ServiceRequest.models import ServiceRequest
 from apps.User.models import User
 
 import logging
@@ -32,7 +32,7 @@ class PaystackPaymentViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Paystack payment operations
     """
-    queryset = Payment.objects.all()
+    queryset = PaystackPayment.objects.all()
     serializer_class = PaymentSerializer
     permission_classes = [IsAuthenticated]
     
@@ -61,7 +61,7 @@ class PaystackPaymentViewSet(viewsets.ModelViewSet):
             # Get request if provided
             request_obj = None
             if data.get('request_id'):
-                request_obj = get_object_or_404(Request, id=data['request_id'])
+                request_obj = get_object_or_404(ServiceRequest, id=data['request_id'])
             
             # Generate unique reference
             reference = f"WASGO-{uuid.uuid4().hex[:8].upper()}"
@@ -233,7 +233,7 @@ class PaystackPaymentViewSet(viewsets.ModelViewSet):
             # Get request if provided
             request_obj = None
             if data.get('request_id'):
-                request_obj = get_object_or_404(Request, id=data['request_id'])
+                request_obj = get_object_or_404(ServiceRequest, id=data['request_id'])
             
             # Charge authorization
             paystack_response = self.paystack_service.charge_authorization(

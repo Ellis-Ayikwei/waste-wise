@@ -1,212 +1,422 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from apps.Basemodel.models import Basemodel
-from phonenumber_field.modelfields import PhoneNumberField
 from django.contrib.gis.db import models as gis_models
+from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils import timezone
+from datetime import datetime, timedelta
+
+User = get_user_model()
 
 
 class CustomerProfile(Basemodel):
+    """Customer profile for waste management services"""
+
     user = models.OneToOneField(
-        "User",
+        User,
         on_delete=models.CASCADE,
         related_name="customer_profile",
         limit_choices_to={"user_type": "customer"},
     )
 
-    # Enhanced fields for logistics
-    default_pickup_address = models.ForeignKey(
+    # Contact Information
+    phone_number = models.CharField(
+        max_length=20, blank=True, help_text="Primary contact number"
+    )
+    emergency_contact = models.CharField(
+        max_length=20, blank=True, help_text="Emergency contact number"
+    )
+    emergency_contact_name = models.CharField(max_length=100, blank=True)
+
+    # Address Information
+    default_address = models.ForeignKey(
         "Address",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="default_pickup",
-    )
-    default_delivery_address = models.ForeignKey(
-        "Address",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="default_delivery",
-    )
-    preferred_vehicle_types = models.JSONField(
-        default=list, help_text=_("Preferred vehicle types for shipments")
-    )
-    fragile_items_handling = models.BooleanField(
-        default=False, help_text=_("Requires special handling for fragile items")
-    )
-    insurance_preference = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=0.0,
-        help_text=_("Default insurance coverage amount"),
+        related_name="customer_default_address",
+        help_text="Default address for waste collection",
     )
 
+    # Waste Management Preferences
+    preferred_collection_days = models.JSONField(
+        default=list,
+        help_text="Preferred days for waste collection (e.g., ['monday', 'wednesday'])",
+    )
+    preferred_collection_time = models.CharField(
+        max_length=20,
+        default="morning",
+        choices=[
+            ("morning", "Morning (6AM-12PM)"),
+            ("afternoon", "Afternoon (12PM-6PM)"),
+            ("evening", "Evening (6PM-10PM)"),
+        ],
+        help_text="Preferred time slot for collection",
+    )
+
+    # Waste Types and Quantities
+    waste_types = models.JSONField(
+        default=list,
+        help_text="Types of waste generated (e.g., ['general', 'recyclable', 'organic'])",
+    )
+    estimated_weekly_waste_kg = models.FloatField(
+        default=10.0,
+        validators=[MinValueValidator(0)],
+        help_text="Estimated weekly waste generation in kilograms",
+    )
+
+    # Service Preferences
+    requires_special_handling = models.BooleanField(
+        default=False,
+        help_text="Requires special handling (hazardous waste, large items, etc.)",
+    )
+    special_handling_notes = models.TextField(blank=True)
+
+    # Billing and Payment
+    billing_cycle = models.CharField(
+        max_length=20,
+        default="monthly",
+        choices=[
+            ("weekly", "Weekly"),
+            ("biweekly", "Bi-weekly"),
+            ("monthly", "Monthly"),
+            ("quarterly", "Quarterly"),
+        ],
+    )
+    auto_payment_enabled = models.BooleanField(default=False)
+    payment_method = models.CharField(
+        max_length=20,
+        default="card",
+        choices=[
+            ("card", "Credit/Debit Card"),
+            ("bank_transfer", "Bank Transfer"),
+            ("mobile_money", "Mobile Money"),
+            ("cash", "Cash"),
+        ],
+    )
+
+    # Loyalty and Rewards
     loyalty_points = models.PositiveIntegerField(default=0)
     referral_code = models.CharField(max_length=20, unique=True, blank=True)
+    total_waste_collected_kg = models.FloatField(
+        default=0.0,
+        validators=[MinValueValidator(0)],
+        help_text="Total waste collected from this customer",
+    )
+
+    # Communication Preferences
     communication_preferences = models.JSONField(
-        default=dict, blank=True, help_text="Notification preferences settings"
+        default=dict,
+        blank=True,
+        help_text="Notification preferences (email, sms, push, etc.)",
     )
     marketing_opt_in = models.BooleanField(
         default=False, verbose_name="Marketing Communications"
     )
 
-    # Logistics-specific methods
-    def create_moving_request(self, request_data):
+    # Service Status
+    is_active = models.BooleanField(default=True)
+    service_suspended_until = models.DateTimeField(null=True, blank=True)
+    suspension_reason = models.TextField(blank=True)
+
+    # Waste Management Methods
+    def schedule_waste_collection_request(self, request_data):
         """
-        Create a new moving request
+        Schedule a waste collection request using the ServiceRequest app
         {
-            "pickup_address": Address,
-            "delivery_address": Address,
-            "items": [{"name": "Furniture", "volume": 3.5}],
-            "preferred_date": datetime,
-            "special_requirements": str
+            "bins": [bin_ids],
+            "pickup_date": date,
+            "pickup_time": time,
+            "waste_types": ["general", "recyclable"],
+            "special_instructions": str,
+            "is_urgent": bool,
+            "pickup_address": str,
+            "pickup_location": Point
         }
         """
-        from .models import MovingRequest
+        from apps.ServiceRequest.models import ServiceRequest
+        from django.contrib.gis.geos import Point
 
-        return MovingRequest.objects.create(
-            customer=self,
-            pickup_location=request_data.get("pickup_address"),
-            delivery_location=request_data.get("delivery_address"),
-            items=request_data.get("items"),
-            preferred_datetime=request_data.get("preferred_date"),
-            special_requirements=request_data.get("special_requirements"),
-            status="pending",
+        # Create request title
+        title = f"Waste Collection - {request_data.get('pickup_date')}"
+
+        # Determine priority based on urgency
+        priority = "urgent" if request_data.get("is_urgent", False) else "normal"
+
+        # Create the request
+        request = ServiceRequest.objects.create(
+            user=self.user,
+            service_type="waste_collection",
+            title=title,
+            description=request_data.get("special_instructions", ""),
+            pickup_location=request_data.get("pickup_location"),
+            pickup_address=request_data.get("pickup_address"),
+            waste_type=(
+                request_data.get("waste_types", ["general"])[0]
+                if request_data.get("waste_types")
+                else "general"
+            ),
+            requires_special_handling=request_data.get(
+                "requires_special_handling", False
+            ),
+            special_instructions=request_data.get("special_instructions", ""),
+            service_date=request_data.get("pickup_date"),
+            service_time_slot=request_data.get("pickup_time"),
+            priority=priority,
+            estimated_weight_kg=request_data.get("estimated_weight_kg"),
         )
 
-    def get_active_quotes(self):
-        """Get all active quotes for the customer"""
-        return self.quotes.filter(status__in=["pending", "negotiating"])
+        return request
 
-    def accept_quote(self, quote_id):
-        """Accept a provider's quote"""
-        quote = self.quotes.get(id=quote_id)
-        if quote.status == "accepted":
-            raise ValueError("Quote already accepted")
+    def get_my_bins(self):
+        """Get all bins owned by this customer"""
+        from apps.WasteBin.models import SmartBin
 
-        quote.status = "accepted"
-        quote.save()
-        self._create_shipment_from_quote(quote)
-        return quote
+        return SmartBin.objects.filter(user=self.user)
 
-    def track_shipment(self, shipment_id):
-        """Get real-time shipment tracking info"""
-        shipment = self.shipments.get(id=shipment_id)
-        return {
-            "status": shipment.status,
-            "current_location": shipment.current_location,
-            "estimated_arrival": shipment.estimated_arrival,
-            "driver_contact": shipment.driver_contact_info,
-        }
+    def get_active_requests(self):
+        """Get all active waste collection requests"""
+        return self.user.requests.filter(
+            service_type="waste_collection",
+            status__in=[
+                "pending",
+                "matched",
+                "accepted",
+                "en_route",
+                "arrived",
+                "in_progress",
+            ],
+        )
+
+    def get_request_history(self):
+        """Get completed waste collection requests"""
+        return self.user.requests.filter(
+            service_type="waste_collection", status="completed"
+        ).order_by("-created_at")
 
     def cancel_request(self, request_id):
-        """Cancel a moving request"""
-        request = self.moving_requests.get(id=request_id)
-        if request.status not in ["pending", "quoting"]:
-            raise PermissionError("Cannot cancel in-progress shipments")
+        """Cancel a waste collection request"""
+        request = self.user.requests.get(id=request_id)
+        if request.status not in ["pending", "matched"]:
+            raise PermissionError("Cannot cancel request that is already in progress")
 
         request.status = "cancelled"
         request.save()
         return request
 
-    def rate_shipment(self, shipment_id, rating, review):
-        """Rate completed shipment"""
-        shipment = self.shipments.get(id=shipment_id)
-        if shipment.status != "completed":
-            raise ValueError("Can only rate completed shipments")
+    def track_request(self, request_id):
+        """Get real-time request tracking info"""
+        request = self.user.requests.get(id=request_id)
+        return {
+            "status": request.status,
+            "driver_location": (
+                getattr(request.driver, "current_location", None)
+                if request.driver
+                else None
+            ),
+            "estimated_arrival": request.estimated_arrival,
+            "driver_contact": (
+                getattr(request.driver, "contact_info", {}) if request.driver else {}
+            ),
+            "current_location": request.pickup_location,
+        }
 
-        return ShipmentRating.objects.create(
-            shipment=shipment, rating=rating, review=review
-        )
+    def rate_service(self, request_id, rating, review):
+        """Rate completed service"""
+        request = self.user.requests.get(id=request_id)
+        if request.status != "completed":
+            raise ValueError("Can only rate completed services")
 
-    # Loyalty program enhancements
+        # Create rating using the Review app if it exists
+        try:
+            from apps.Review.models import Review
+
+            return Review.objects.create(
+                user=self.user,
+                request=request,
+                rating=rating,
+                review=review,
+                review_type="service",
+            )
+        except ImportError:
+            # Fallback if Review app doesn't exist
+            return {
+                "user": self.user,
+                "request": request,
+                "rating": rating,
+                "review": review,
+                "review_type": "service",
+            }
+
+    # Loyalty program methods
     def calculate_loyalty_discount(self):
         """Calculate available discount based on loyalty points"""
         tiers = {
-            1000: 0.10,  # 10% discount
-            500: 0.05,  # 5% discount
-            200: 0.02,  # 2% discount
+            1000: 0.15,  # 15% discount
+            500: 0.10,  # 10% discount
+            200: 0.05,  # 5% discount
         }
         for points, discount in tiers.items():
             if self.loyalty_points >= points:
                 return discount
         return 0.0
 
-    def apply_referral_discount(self, referral_code):
-        """Apply referral discount to account"""
+    def apply_referral_bonus(self, referral_code):
+        """Apply referral bonus to account"""
         try:
             referral = CustomerProfile.objects.get(referral_code=referral_code)
             if referral != self:
-                self.loyalty_points += 100  # Add referral bonus
+                self.loyalty_points += 200  # Add referral bonus
                 self.save()
                 return True
         except CustomerProfile.DoesNotExist:
             return False
 
-    # Payment integration
-    def get_payment_history(self):
-        """Retrieve complete payment history"""
-        return self.payments.all().order_by("-payment_date")
+    def add_loyalty_points(self, points, reason):
+        """Add loyalty points for waste reduction activities"""
+        self.loyalty_points += points
+        self.save()
 
-    def make_payment(self, shipment_id, amount, payment_method):
-        """Process payment for a shipment"""
-        from payment.models import PaymentTransaction
-
-        shipment = self.shipments.get(id=shipment_id)
-
-        return PaymentTransaction.objects.create(
+        # Log the points addition
+        LoyaltyPointsLog.objects.create(
             customer=self,
-            shipment=shipment,
-            amount=amount,
-            payment_method=payment_method,
-            status="completed",
+            points_added=points,
+            reason=reason,
+            total_points=self.loyalty_points,
         )
+
+    # Payment methods
+    def get_payment_history(self):
+        """Get payment history for waste collection services"""
+        # This will be implemented when Payment models are available
+        # For now, return empty queryset
+        return []
+
+    def make_payment(self, request_id, amount, payment_method):
+        """Process payment for a service"""
+        request = self.user.requests.get(id=request_id)
+
+        # This will be implemented when Payment models are available
+        # For now, return a simple dict
+        return {
+            "customer": self,
+            "request": request,
+            "amount": amount,
+            "payment_method": payment_method,
+            "status": "completed",
+        }
+
+    # Waste analytics
+    def get_waste_analytics(self, period_days=30):
+        """Get waste collection analytics for the customer"""
+        end_date = timezone.now()
+        start_date = end_date - timedelta(days=period_days)
+
+        requests = self.user.requests.filter(
+            service_type="waste_collection",
+            status="completed",
+            created_at__range=[start_date, end_date],
+        )
+
+        total_waste = sum(float(request.actual_weight_kg or 0) for request in requests)
+        total_requests = requests.count()
+        average_waste_per_request = (
+            total_waste / total_requests if total_requests > 0 else 0
+        )
+
+        return {
+            "period_days": period_days,
+            "total_requests": total_requests,
+            "total_waste_kg": total_waste,
+            "average_waste_per_request": average_waste_per_request,
+            "waste_types_distribution": self._get_waste_types_distribution(requests),
+            "request_frequency": total_requests
+            / (period_days / 7),  # requests per week
+        }
+
+    def _get_waste_types_distribution(self, requests):
+        """Get distribution of waste types from requests"""
+        distribution = {}
+        for request in requests:
+            waste_type = request.waste_type or "general"
+            weight = float(request.actual_weight_kg or 0)
+            distribution[waste_type] = distribution.get(waste_type, 0) + weight
+        return distribution
 
     class Meta:
         verbose_name = _("Customer Profile")
         verbose_name_plural = _("Customer Profiles")
+        db_table = "customer_profile"
 
     def __str__(self):
-        return f"{self.user.email} (Customer)"
+        return f"{self.user.email} (Waste Customer)"
 
 
-# Related Models (in same file or separate)
-class MovingRequest(Basemodel):
+class LoyaltyPointsLog(Basemodel):
+    """Log of loyalty points transactions"""
+
     customer = models.ForeignKey(
-        CustomerProfile, on_delete=models.CASCADE, related_name="moving_requests"
+        CustomerProfile, on_delete=models.CASCADE, related_name="loyalty_logs"
     )
-    pickup_location = gis_models.PointField()
-    delivery_location = gis_models.PointField()
-    items = models.JSONField()
-    preferred_datetime = models.DateTimeField()
-    special_requirements = models.TextField(blank=True)
-    status = models.CharField(max_length=20, default="pending")
-    created_at = models.DateTimeField(auto_now_add=True)
+
+    points_added = models.IntegerField(help_text="Points added (can be negative)")
+    reason = models.CharField(max_length=255, help_text="Reason for points change")
+    total_points = models.PositiveIntegerField(help_text="Total points after change")
+
+    # Related objects
+    related_request = models.ForeignKey(
+        "ServiceRequest.ServiceRequest",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="loyalty_logs",
+    )
+
+    def __str__(self):
+        return (
+            f"{self.customer.user.email} - {self.points_added} points ({self.reason})"
+        )
+
+    class Meta:
+        ordering = ["-created_at"]
+        db_table = "loyalty_points_log"
 
 
-class Quote(Basemodel):
+class Address(Basemodel):
+    """Address model for customer locations"""
+
     customer = models.ForeignKey(
-        CustomerProfile, on_delete=models.CASCADE, related_name="quotes"
+        CustomerProfile, on_delete=models.CASCADE, related_name="addresses"
     )
-    provider = models.ForeignKey("ServiceProviderProfile", on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    validity = models.DateTimeField()
-    status = models.CharField(max_length=20, default="pending")
 
+    # Address Details
+    street_address = models.CharField(max_length=255)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    postal_code = models.CharField(max_length=20)
+    country = models.CharField(max_length=100, default="Ghana")
 
-class Shipment(Basemodel):
-    customer = models.ForeignKey(
-        CustomerProfile, on_delete=models.CASCADE, related_name="shipments"
+    # Location
+    location = gis_models.PointField(srid=4326, null=True, blank=True)
+
+    # Additional Info
+    is_default = models.BooleanField(default=False)
+    address_type = models.CharField(
+        max_length=20,
+        default="residential",
+        choices=[
+            ("residential", "Residential"),
+            ("commercial", "Commercial"),
+            ("industrial", "Industrial"),
+        ],
     )
-    quote = models.OneToOneField(Quote, on_delete=models.PROTECT)
-    current_location = gis_models.PointField()
-    status = models.CharField(max_length=20, default="preparing")
-    estimated_arrival = models.DateTimeField()
-    driver_contact_info = models.JSONField()
+    access_notes = models.TextField(
+        blank=True, help_text="Special access instructions for drivers"
+    )
 
+    def __str__(self):
+        return f"{self.street_address}, {self.city}, {self.state}"
 
-class ShipmentRating(Basemodel):
-    shipment = models.OneToOneField(Shipment, on_delete=models.CASCADE)
-    rating = models.PositiveSmallIntegerField()
-    review = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        verbose_name_plural = "Addresses"

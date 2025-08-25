@@ -1,4 +1,4 @@
-{{ app_name|default:"MoreVans" }}
+{{ app_name|default:"Wasgo" }}
 ==============================================
 
 Great news {{ user_name }}!
@@ -31,9 +31,9 @@ View all bids: {{ action_url }}
 💡 TIP: Compare multiple bids to find the best value. 
 Consider provider ratings, reviews, and availability when making your decision.
 
-Need help choosing? Contact our support team at support@morevans.com
+Need help choosing? Contact our support team at support@wasgo.com
 
 ---
 This is an automated message, please do not reply to this email.
 
-© {{ current_year }} {{ app_name|default:"MoreVans" }}. All rights reserved.
+© {{ current_year }} {{ app_name|default:"Wasgo" }}. All rights reserved.

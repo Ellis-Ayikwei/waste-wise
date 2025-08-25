@@ -53,42 +53,68 @@ interface Provider {
   id: string;
   user: User;
   business_type: string;
-  company_name: string;
-  company_reg_number: string;
-  vat_registered: boolean;
+  business_name: string;
+  registration_number: string;
   vat_number: string;
-  business_description: string;
+  phone: string;
+  email: string;
   website: string;
-  founded_year: number | null;
-  operating_areas: string[];
-  contact_person_name: string;
-  contact_person_position: string;
-  contact_person_email: string;
-  contact_person_phone: string;
-  bank_account_holder: string;
-  bank_name: string;
-  bank_account_number: string;
-  bank_routing_number: string;
-  service_categories: string[];
-  specializations: string[];
-  service_image: string | null;
-  base_location: string | null;
-  hourly_rate: number | null;
-  accepts_instant_bookings: boolean;
-  service_radius_km: number;
-  insurance_policies: any[];
-  payment_methods: string[];
-  minimum_job_value: number | null;
+  address_line1: string;
+  address_line2: string;
+  city: string;
+  county: string;
+  postcode: string;
+  country: string;
+  base_location: { type: string; coordinates: [number, number] } | null;
+  service_area: any;
+  max_service_radius_km: number;
+  waste_license_number: string;
+  waste_license_expiry: string | null;
+  environmental_permit_number: string;
+  environmental_permit_expiry: string | null;
+  waste_types_handled: string[];
+  waste_categories: string[];
+  collection_methods: string[];
+  vehicle_fleet_size: number;
+  daily_collection_capacity_kg: number | null;
+  has_compaction_equipment: boolean;
+  has_recycling_facilities: boolean;
+  service_hours_start: string | null;
+  service_hours_end: string | null;
+  emergency_collection_available: boolean;
+  weekend_collection_available: boolean;
+  public_liability_insurance: boolean;
+  public_liability_amount: number | null;
+  employers_liability_insurance: boolean;
+  employers_liability_amount: number | null;
+  vehicle_insurance: boolean;
+  vehicle_insurance_amount: number | null;
   verification_status: string;
-  last_verified: string;
-  service_areas: string[];
-  documents: any[];
-  reviews: any[];
-  payments: any[];
-  average_rating: number;
-  completed_bookings_count: number;
+  verified_at: string | null;
+  verified_by: string | null;
+  verification_notes: string;
+  is_active: boolean;
+  is_available: boolean;
+  rating: string;
+  total_jobs_completed: number;
+  total_weight_collected_kg: string;
+  total_recycled_kg: string;
+  collection_efficiency_rating: string;
+  average_response_time_minutes: number;
+  completion_rate: string;
+  commission_rate: string;
+  balance: string;
+  total_earnings: string;
+  auto_accept_jobs: boolean;
+  max_distance_km: number;
+  min_job_value: string;
+  notification_enabled: boolean;
   vehicle_count: number;
   last_active: string | null;
+  average_rating: number;
+  completed_bookings_count: number;
+  created_at: string;
+  updated_at: string;
 }
 
 const ProviderEdit: React.FC = () => {
@@ -119,49 +145,74 @@ const ProviderEdit: React.FC = () => {
       date_joined: new Date().toISOString()
     },
     business_type: 'sole_trader',
-    company_name: '',
-    company_reg_number: '',
-    vat_registered: false,
+    business_name: '',
+    registration_number: '',
     vat_number: '',
-    business_description: '',
+    phone: '',
+    email: '',
     website: '',
-    founded_year: null,
-    operating_areas: [],
-    contact_person_name: '',
-    contact_person_position: '',
-    contact_person_email: '',
-    contact_person_phone: '',
-    bank_account_holder: '',
-    bank_name: '',
-    bank_account_number: '',
-    bank_routing_number: '',
-    service_categories: [],
-    specializations: [],
-    service_image: null,
+    address_line1: '',
+    address_line2: '',
+    city: '',
+    county: '',
+    postcode: '',
+    country: '',
     base_location: null,
-    hourly_rate: null,
-    accepts_instant_bookings: true,
-    service_radius_km: 50,
-    insurance_policies: [],
-    payment_methods: [],
-    minimum_job_value: null,
+    service_area: null,
+    max_service_radius_km: 50,
+    waste_license_number: '',
+    waste_license_expiry: null,
+    environmental_permit_number: '',
+    environmental_permit_expiry: null,
+    waste_types_handled: [],
+    waste_categories: [],
+    collection_methods: [],
+    vehicle_fleet_size: 0,
+    daily_collection_capacity_kg: null,
+    has_compaction_equipment: false,
+    has_recycling_facilities: false,
+    service_hours_start: null,
+    service_hours_end: null,
+    emergency_collection_available: false,
+    weekend_collection_available: false,
+    public_liability_insurance: false,
+    public_liability_amount: null,
+    employers_liability_insurance: false,
+    employers_liability_amount: null,
+    vehicle_insurance: false,
+    vehicle_insurance_amount: null,
     verification_status: 'unverified',
-    last_verified: new Date().toISOString(),
-    service_areas: [],
-    documents: [],
-    reviews: [],
-    payments: [],
+    verified_at: null,
+    verified_by: null,
+    verification_notes: '',
+    is_active: true,
+    is_available: true,
+    rating: '0.00',
+    total_jobs_completed: 0,
+    total_weight_collected_kg: '0',
+    total_recycled_kg: '0',
+    collection_efficiency_rating: 'N/A',
+    average_response_time_minutes: 0,
+    completion_rate: '0%',
+    commission_rate: '0%',
+    balance: '0',
+    total_earnings: '0',
+    auto_accept_jobs: true,
+    max_distance_km: 50,
+    min_job_value: '0',
+    notification_enabled: true,
+    vehicle_count: 0,
+    last_active: null,
     average_rating: 0,
     completed_bookings_count: 0,
-    vehicle_count: 0,
-    last_active: null
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   });
 
   // Form state for dynamic fields
-  const [newOperatingArea, setNewOperatingArea] = useState('');
-  const [newServiceCategory, setNewServiceCategory] = useState('');
-  const [newSpecialization, setNewSpecialization] = useState('');
-  const [newPaymentMethod, setNewPaymentMethod] = useState('');
+  const [newWasteType, setNewWasteType] = useState('');
+  const [newWasteCategory, setNewWasteCategory] = useState('');
+  const [newCollectionMethod, setNewCollectionMethod] = useState('');
 
   useEffect(() => {
     fetchProviderDetails();
@@ -214,71 +265,54 @@ const ProviderEdit: React.FC = () => {
     }
   };
 
-  const handleAddOperatingArea = () => {
-    if (newOperatingArea.trim() && !formData.operating_areas.includes(newOperatingArea.trim())) {
+  const handleAddWasteType = () => {
+    if (newWasteType.trim() && !formData.waste_types_handled.includes(newWasteType.trim())) {
       setFormData({
         ...formData,
-        operating_areas: [...formData.operating_areas, newOperatingArea.trim()]
+        waste_types_handled: [...formData.waste_types_handled, newWasteType.trim()]
       });
-      setNewOperatingArea('');
+      setNewWasteType('');
     }
   };
 
-  const handleRemoveOperatingArea = (index: number) => {
+  const handleRemoveWasteType = (index: number) => {
     setFormData({
       ...formData,
-      operating_areas: formData.operating_areas.filter((_, i) => i !== index)
+      waste_types_handled: formData.waste_types_handled.filter((_, i) => i !== index)
     });
   };
 
-  const handleAddServiceCategory = () => {
-    if (newServiceCategory.trim() && !formData.service_categories.includes(newServiceCategory.trim())) {
+  const handleAddWasteCategory = () => {
+    if (newWasteCategory.trim() && !formData.waste_categories.includes(newWasteCategory.trim())) {
       setFormData({
         ...formData,
-        service_categories: [...formData.service_categories, newServiceCategory.trim()]
+        waste_categories: [...formData.waste_categories, newWasteCategory.trim()]
       });
-      setNewServiceCategory('');
+      setNewWasteCategory('');
     }
   };
 
-  const handleRemoveServiceCategory = (index: number) => {
+  const handleRemoveWasteCategory = (index: number) => {
     setFormData({
       ...formData,
-      service_categories: formData.service_categories.filter((_, i) => i !== index)
+      waste_categories: formData.waste_categories.filter((_, i) => i !== index)
     });
   };
 
-  const handleAddSpecialization = () => {
-    if (newSpecialization.trim() && !formData.specializations.includes(newSpecialization.trim())) {
+  const handleAddCollectionMethod = () => {
+    if (newCollectionMethod.trim() && !formData.collection_methods.includes(newCollectionMethod.trim())) {
       setFormData({
         ...formData,
-        specializations: [...formData.specializations, newSpecialization.trim()]
+        collection_methods: [...formData.collection_methods, newCollectionMethod.trim()]
       });
-      setNewSpecialization('');
+      setNewCollectionMethod('');
     }
   };
 
-  const handleRemoveSpecialization = (index: number) => {
+  const handleRemoveCollectionMethod = (index: number) => {
     setFormData({
       ...formData,
-      specializations: formData.specializations.filter((_, i) => i !== index)
-    });
-  };
-
-  const handleAddPaymentMethod = () => {
-    if (newPaymentMethod.trim() && !formData.payment_methods.includes(newPaymentMethod.trim())) {
-      setFormData({
-        ...formData,
-        payment_methods: [...formData.payment_methods, newPaymentMethod.trim()]
-      });
-      setNewPaymentMethod('');
-    }
-  };
-
-  const handleRemovePaymentMethod = (index: number) => {
-    setFormData({
-      ...formData,
-      payment_methods: formData.payment_methods.filter((_, i) => i !== index)
+      collection_methods: formData.collection_methods.filter((_, i) => i !== index)
     });
   };
 
@@ -459,12 +493,12 @@ const ProviderEdit: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Company Name *
+                        Business Name *
                       </label>
                       <input
                         type="text"
-                        name="company_name"
-                        value={formData.company_name}
+                        name="business_name"
+                        value={formData.business_name}
                         onChange={handleInputChange}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                         required
@@ -490,12 +524,12 @@ const ProviderEdit: React.FC = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Company Registration Number
+                        Registration Number
                       </label>
                       <input
                         type="text"
-                        name="company_reg_number"
-                        value={formData.company_reg_number}
+                        name="registration_number"
+                        value={formData.registration_number}
                         onChange={handleInputChange}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                       />
@@ -503,30 +537,92 @@ const ProviderEdit: React.FC = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Founded Year
+                        VAT Number
                       </label>
                       <input
-                        type="number"
-                        name="founded_year"
-                        value={formData.founded_year || ''}
+                        type="text"
+                        name="vat_number"
+                        value={formData.vat_number}
                         onChange={handleInputChange}
-                        min="1900"
-                        max={new Date().getFullYear()}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                       />
                     </div>
 
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Business Description
+                        Address Line 1
                       </label>
-                      <textarea
-                        name="business_description"
-                        value={formData.business_description}
+                      <input
+                        type="text"
+                        name="address_line1"
+                        value={formData.address_line1}
                         onChange={handleInputChange}
-                        rows={4}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                        placeholder="Describe your business..."
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Address Line 2
+                      </label>
+                      <input
+                        type="text"
+                        name="address_line2"
+                        value={formData.address_line2}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        City
+                      </label>
+                      <input
+                        type="text"
+                        name="city"
+                        value={formData.city}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        County
+                      </label>
+                      <input
+                        type="text"
+                        name="county"
+                        value={formData.county}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Postcode
+                      </label>
+                      <input
+                        type="text"
+                        name="postcode"
+                        value={formData.postcode}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Country
+                      </label>
+                      <input
+                        type="text"
+                        name="country"
+                        value={formData.country}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                       />
                     </div>
                   </div>
@@ -559,7 +655,9 @@ const ProviderEdit: React.FC = () => {
                       <input
                         type="text"
                         name="base_location"
-                        value={formData.base_location || ''}
+                        value={typeof formData.base_location === 'object' && formData.base_location?.coordinates ? 
+                          `${formData.base_location.coordinates[1]}, ${formData.base_location.coordinates[0]}` : 
+                          (typeof formData.base_location === 'string' ? formData.base_location : '')}
                         onChange={handleInputChange}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                         placeholder="City, Country"
@@ -568,12 +666,12 @@ const ProviderEdit: React.FC = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Service Radius (km)
+                        Max Service Radius (km)
                       </label>
                       <input
                         type="number"
-                        name="service_radius_km"
-                        value={formData.service_radius_km}
+                        name="max_service_radius_km"
+                        value={formData.max_service_radius_km}
                         onChange={handleInputChange}
                         min="1"
                         max="500"
@@ -583,12 +681,12 @@ const ProviderEdit: React.FC = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Hourly Rate (£)
+                        Min Job Value (£)
                       </label>
                       <input
                         type="number"
-                        name="hourly_rate"
-                        value={formData.hourly_rate || ''}
+                        name="min_job_value"
+                        value={formData.min_job_value}
                         onChange={handleInputChange}
                         min="0"
                         step="0.01"
@@ -598,15 +696,15 @@ const ProviderEdit: React.FC = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Minimum Job Value (£)
+                        Max Distance (km)
                       </label>
                       <input
                         type="number"
-                        name="minimum_job_value"
-                        value={formData.minimum_job_value || ''}
+                        name="max_distance_km"
+                        value={formData.max_distance_km}
                         onChange={handleInputChange}
-                        min="0"
-                        step="0.01"
+                        min="1"
+                        max="100"
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                       />
                     </div>
@@ -614,99 +712,84 @@ const ProviderEdit: React.FC = () => {
                     <div className="flex items-center">
                       <input
                         type="checkbox"
-                        name="accepts_instant_bookings"
-                        checked={formData.accepts_instant_bookings}
+                        name="auto_accept_jobs"
+                        checked={formData.auto_accept_jobs}
                         onChange={handleInputChange}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
                       <label className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                        Accepts Instant Bookings
+                        Auto Accept Jobs
                       </label>
                     </div>
 
                     <div className="flex items-center">
                       <input
                         type="checkbox"
-                        name="vat_registered"
-                        checked={formData.vat_registered}
+                        name="emergency_collection_available"
+                        checked={formData.emergency_collection_available}
                         onChange={handleInputChange}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
                       <label className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                        VAT Registered
+                        Emergency Collection Available
                       </label>
                     </div>
 
-                    {formData.vat_registered && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          VAT Number
-                        </label>
-                        <input
-                          type="text"
-                          name="vat_number"
-                          value={formData.vat_number}
-                          onChange={handleInputChange}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                        />
-                      </div>
-                    )}
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="weekend_collection_available"
+                        checked={formData.weekend_collection_available}
+                        onChange={handleInputChange}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                        Weekend Collection Available
+                      </label>
+                    </div>
+
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="has_compaction_equipment"
+                        checked={formData.has_compaction_equipment}
+                        onChange={handleInputChange}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                        Has Compaction Equipment
+                      </label>
+                    </div>
+
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="has_recycling_facilities"
+                        checked={formData.has_recycling_facilities}
+                        onChange={handleInputChange}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                        Has Recycling Facilities
+                      </label>
+                    </div>
                   </div>
                 </div>
               )}
 
               {activeTab === 'contact' && (
                 <div className="space-y-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Contact & Banking Information</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Contact Information</h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Contact Person Name
-                      </label>
-                      <input
-                        type="text"
-                        name="contact_person_name"
-                        value={formData.contact_person_name}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Contact Person Position
-                      </label>
-                      <input
-                        type="text"
-                        name="contact_person_position"
-                        value={formData.contact_person_position}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Contact Person Email
-                      </label>
-                      <input
-                        type="email"
-                        name="contact_person_email"
-                        value={formData.contact_person_email}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Contact Person Phone
+                        Phone
                       </label>
                       <input
                         type="tel"
-                        name="contact_person_phone"
-                        value={formData.contact_person_phone}
+                        name="phone"
+                        value={formData.phone}
                         onChange={handleInputChange}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                       />
@@ -714,12 +797,12 @@ const ProviderEdit: React.FC = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Bank Account Holder
+                        Email
                       </label>
                       <input
-                        type="text"
-                        name="bank_account_holder"
-                        value={formData.bank_account_holder}
+                        type="email"
+                        name="email"
+                        value={formData.email}
                         onChange={handleInputChange}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                       />
@@ -727,12 +810,12 @@ const ProviderEdit: React.FC = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Bank Name
+                        Waste License Number
                       </label>
                       <input
                         type="text"
-                        name="bank_name"
-                        value={formData.bank_name}
+                        name="waste_license_number"
+                        value={formData.waste_license_number}
                         onChange={handleInputChange}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                       />
@@ -740,12 +823,12 @@ const ProviderEdit: React.FC = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Bank Account Number
+                        Environmental Permit Number
                       </label>
                       <input
                         type="text"
-                        name="bank_account_number"
-                        value={formData.bank_account_number}
+                        name="environmental_permit_number"
+                        value={formData.environmental_permit_number}
                         onChange={handleInputChange}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                       />
@@ -753,13 +836,28 @@ const ProviderEdit: React.FC = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Bank Routing Number
+                        Vehicle Fleet Size
                       </label>
                       <input
-                        type="text"
-                        name="bank_routing_number"
-                        value={formData.bank_routing_number}
+                        type="number"
+                        name="vehicle_fleet_size"
+                        value={formData.vehicle_fleet_size}
                         onChange={handleInputChange}
+                        min="0"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Daily Collection Capacity (kg)
+                      </label>
+                      <input
+                        type="number"
+                        name="daily_collection_capacity_kg"
+                        value={formData.daily_collection_capacity_kg || ''}
+                        onChange={handleInputChange}
+                        min="0"
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                       />
                     </div>
@@ -771,38 +869,38 @@ const ProviderEdit: React.FC = () => {
                 <div className="space-y-6">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Services & Specializations</h3>
                   
-                  {/* Operating Areas */}
+                  {/* Waste Types */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Operating Areas
+                      Waste Types Handled
                     </label>
                     <div className="flex gap-2 mb-2">
                       <input
                         type="text"
-                        value={newOperatingArea}
-                        onChange={(e) => setNewOperatingArea(e.target.value)}
-                        placeholder="Add operating area..."
+                        value={newWasteType}
+                        onChange={(e) => setNewWasteType(e.target.value)}
+                        placeholder="Add waste type..."
                         className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                       />
                       <button
                         type="button"
-                        onClick={handleAddOperatingArea}
+                        onClick={handleAddWasteType}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                       >
                         <FontAwesomeIcon icon={faPlus} className="w-4 h-4" />
                       </button>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {formData.operating_areas.map((area, index) => (
+                      {formData.waste_types_handled.map((wasteType, index) => (
                         <span
                           key={index}
-                          className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                          className="inline-flex items-center gap-2 px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm"
                         >
-                          {area}
+                          {wasteType}
                           <button
                             type="button"
-                            onClick={() => handleRemoveOperatingArea(index)}
-                            className="text-blue-600 hover:text-blue-800"
+                            onClick={() => handleRemoveWasteType(index)}
+                            className="text-red-600 hover:text-red-800"
                           >
                             <FontAwesomeIcon icon={faTimesCircle} className="w-3 h-3" />
                           </button>
@@ -811,38 +909,38 @@ const ProviderEdit: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Service Categories */}
+                  {/* Waste Categories */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Service Categories
+                      Waste Categories
                     </label>
                     <div className="flex gap-2 mb-2">
                       <input
                         type="text"
-                        value={newServiceCategory}
-                        onChange={(e) => setNewServiceCategory(e.target.value)}
-                        placeholder="Add service category..."
+                        value={newWasteCategory}
+                        onChange={(e) => setNewWasteCategory(e.target.value)}
+                        placeholder="Add waste category..."
                         className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                       />
                       <button
                         type="button"
-                        onClick={handleAddServiceCategory}
+                        onClick={handleAddWasteCategory}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                       >
                         <FontAwesomeIcon icon={faPlus} className="w-4 h-4" />
                       </button>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {formData.service_categories.map((category, index) => (
+                      {formData.waste_categories.map((category, index) => (
                         <span
                           key={index}
-                          className="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm"
+                          className="inline-flex items-center gap-2 px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm"
                         >
                           {category}
                           <button
                             type="button"
-                            onClick={() => handleRemoveServiceCategory(index)}
-                            className="text-green-600 hover:text-green-800"
+                            onClick={() => handleRemoveWasteCategory(index)}
+                            className="text-yellow-600 hover:text-yellow-800"
                           >
                             <FontAwesomeIcon icon={faTimesCircle} className="w-3 h-3" />
                           </button>
@@ -851,78 +949,38 @@ const ProviderEdit: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Specializations */}
+                  {/* Collection Methods */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Specializations
+                      Collection Methods
                     </label>
                     <div className="flex gap-2 mb-2">
                       <input
                         type="text"
-                        value={newSpecialization}
-                        onChange={(e) => setNewSpecialization(e.target.value)}
-                        placeholder="Add specialization..."
+                        value={newCollectionMethod}
+                        onChange={(e) => setNewCollectionMethod(e.target.value)}
+                        placeholder="Add collection method..."
                         className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                       />
                       <button
                         type="button"
-                        onClick={handleAddSpecialization}
+                        onClick={handleAddCollectionMethod}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                       >
                         <FontAwesomeIcon icon={faPlus} className="w-4 h-4" />
                       </button>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {formData.specializations.map((specialization, index) => (
+                      {formData.collection_methods.map((method, index) => (
                         <span
                           key={index}
-                          className="inline-flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm"
-                        >
-                          {specialization}
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveSpecialization(index)}
-                            className="text-purple-600 hover:text-purple-800"
-                          >
-                            <FontAwesomeIcon icon={faTimesCircle} className="w-3 h-3" />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Payment Methods */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Payment Methods
-                    </label>
-                    <div className="flex gap-2 mb-2">
-                      <input
-                        type="text"
-                        value={newPaymentMethod}
-                        onChange={(e) => setNewPaymentMethod(e.target.value)}
-                        placeholder="Add payment method..."
-                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddPaymentMethod}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        <FontAwesomeIcon icon={faPlus} className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {formData.payment_methods.map((method, index) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center gap-2 px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm"
+                          className="inline-flex items-center gap-2 px-3 py-1 bg-cyan-100 text-cyan-800 rounded-full text-sm"
                         >
                           {method}
                           <button
                             type="button"
-                            onClick={() => handleRemovePaymentMethod(index)}
-                            className="text-orange-600 hover:text-orange-800"
+                            onClick={() => handleRemoveCollectionMethod(index)}
+                            className="text-cyan-600 hover:text-cyan-800"
                           >
                             <FontAwesomeIcon icon={faTimesCircle} className="w-3 h-3" />
                           </button>

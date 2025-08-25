@@ -64,7 +64,7 @@ INSTALLED_APPS = [
     "apps.Notification",
     "apps.Payment",
     "apps.Provider",
-    "apps.Request",
+    "apps.ServiceRequest",
     "apps.User",
     "apps.Vehicle",
     "apps.Driver",
@@ -76,15 +76,15 @@ INSTALLED_APPS = [
     "apps.Contract",
     "apps.Basemodel",
     "utils",
-    "apps.Job",
     "apps.pricing",
     "apps.CommonItems",
     "apps.RequestItems",
     "apps.JourneyStop",
     "apps.Chat",
-    "apps.WasteBin",  # Wasgo IoT bin management
-    "apps.Analytics",  # Waste management analytics and reporting
-    "rest_framework_gis",
+    "apps.WasteBin",
+    "apps.Analytics",
+    "apps.Customer",
+    "apps.Campaign",
 ]
 
 MIDDLEWARE = [

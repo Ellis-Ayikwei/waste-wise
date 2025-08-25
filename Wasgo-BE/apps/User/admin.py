@@ -48,16 +48,18 @@ class UserActivityInline(admin.TabularInline):
                     f"admin:{app_label}_{model_name}_change", args=[obj.request.pk]
                 )
                 display_text = (
-                    obj.request.tracking_number or f"Request #{obj.request.pk}"
+                    obj.request.tracking_number or f"ServiceRequest #{obj.request.pk}"
                 )
                 return format_html(
                     '<a href="{}" target="_blank">{}</a>', url, display_text
                 )
             except:
-                return obj.request.tracking_number or f"Request #{obj.request.pk}"
+                return (
+                    obj.request.tracking_number or f"ServiceRequest #{obj.request.pk}"
+                )
         return "-"
 
-    request_link.short_description = "Request"
+    request_link.short_description = "ServiceRequest"
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -69,21 +71,21 @@ class UserActivityInline(admin.TabularInline):
 class UserRequestInline(admin.TabularInline):
     """Inline for viewing user requests"""
 
-    from apps.Request.models import Request
+    from apps.ServiceRequest.models import ServiceRequest
 
-    model = Request
+    model = ServiceRequest
     extra = 0
     max_num = 10
     readonly_fields = [
         "request_link",
-        "request_type",
+        "service_type",
         "status",
-        "base_price",
+        "estimated_price",
         "created_at",
     ]
-    fields = ["request_link", "request_type", "status", "base_price", "created_at"]
+    fields = ["request_link", "service_type", "status", "estimated_price", "created_at"]
     ordering = ["-created_at"]
-    verbose_name = "Request"
+    verbose_name = "ServiceRequest"
     verbose_name_plural = "User Requests"
 
     def request_link(self, obj):
@@ -93,15 +95,15 @@ class UserRequestInline(admin.TabularInline):
                 app_label = obj._meta.app_label
                 model_name = obj._meta.model_name
                 url = reverse(f"admin:{app_label}_{model_name}_change", args=[obj.pk])
-                display_text = obj.tracking_number or f"Request #{obj.pk}"
+                display_text = obj.request_id or f"ServiceRequest #{obj.pk}"
                 return format_html(
                     '<a href="{}" target="_blank">{}</a>', url, display_text
                 )
             except:
-                return obj.tracking_number or f"Request #{obj.pk}"
-        return "New Request"
+                return obj.request_id or f"ServiceRequest #{obj.pk}"
+        return "New ServiceRequest"
 
-    request_link.short_description = "Request"
+    request_link.short_description = "ServiceRequest"
 
     def has_add_permission(self, request, obj=None):
         return False

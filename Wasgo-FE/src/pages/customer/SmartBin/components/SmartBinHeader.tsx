@@ -22,8 +22,7 @@ const SmartBinHeader: React.FC<SmartBinHeaderProps> = ({ onlineCount, totalCount
                         className="flex items-center justify-between"
                     >
                         <div>
-                            <h1 className="text-4xl font-bold text-white mb-2">Smart Waste Management</h1>
-                            <p className="text-blue-100 text-lg">IoT-powered environmental monitoring system</p>
+                            <p className="text-blue-100 text-lg">Your iot powered bins</p>
                             <div className="flex items-center space-x-4 mt-4">
                                 <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1">
                                     <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>

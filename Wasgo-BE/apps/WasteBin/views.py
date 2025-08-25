@@ -13,13 +13,17 @@ import json
 from .models import (
     BinType,
     SmartBin,
+    Sensor,
     SensorReading,
     BinAlert,
 )
 from .serializers import (
     BinTypeSerializer,
+    SensorDetailSerializer,
     SmartBinSerializer,
     SmartBinListSerializer,
+    SmartBinListJSONSerializer,
+    SensorSerializer,
     SensorReadingSerializer,
     SensorDataInputSerializer,
     BinAlertSerializer,
@@ -36,16 +40,252 @@ class BinTypeViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
 
+class SensorViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing IoT sensors"""
+
+    queryset = Sensor.objects.all()
+    serializer_class = SensorSerializer
+    permission_classes = [AllowAny]  # Temporarily allow anonymous access for testing
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return SensorSerializer
+        return SensorDetailSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        # Filter by status
+        status_param = self.request.query_params.get("status")
+        if status_param:
+            queryset = queryset.filter(status=status_param)
+
+        # Filter by sensor type
+        sensor_type = self.request.query_params.get("sensor_type")
+        if sensor_type:
+            queryset = queryset.filter(sensor_type=sensor_type)
+
+        # Filter by category
+        category = self.request.query_params.get("category")
+        if category:
+            queryset = queryset.filter(category=category)
+
+        # Filter by manufacturer
+        manufacturer = self.request.query_params.get("manufacturer")
+        if manufacturer:
+            queryset = queryset.filter(manufacturer__icontains=manufacturer)
+
+        # Filter sensors needing maintenance
+        needs_maintenance = self.request.query_params.get("needs_maintenance")
+        if needs_maintenance == "true":
+            queryset = queryset.filter(
+                Q(battery_level__lt=20)
+                | Q(signal_strength__lt=30)
+                | Q(status__in=["maintenance", "faulty"])
+            )
+
+        # Filter sensors needing calibration
+        needs_calibration = self.request.query_params.get("needs_calibration")
+        if needs_calibration == "true":
+            queryset = queryset.filter(
+                Q(calibration_due_date__lte=timezone.now().date())
+            )
+
+        # Filter by health score range
+        min_health = self.request.query_params.get("min_health_score")
+        if min_health:
+            queryset = queryset.filter(
+                Q(battery_level__gte=int(min_health))
+                & Q(signal_strength__gte=int(min_health))
+                & ~Q(status__in=["faulty", "offline"])
+            )
+
+        # Filter by battery level
+        min_battery = self.request.query_params.get("min_battery_level")
+        if min_battery:
+            queryset = queryset.filter(battery_level__gte=int(min_battery))
+
+        # Filter by signal strength
+        min_signal = self.request.query_params.get("min_signal_strength")
+        if min_signal:
+            queryset = queryset.filter(signal_strength__gte=int(min_signal))
+
+        # Filter by solar powered
+        solar_powered = self.request.query_params.get("solar_powered")
+        if solar_powered is not None:
+            queryset = queryset.filter(solar_powered=solar_powered.lower() == "true")
+
+        # Filter by communication protocol
+        protocol = self.request.query_params.get("communication_protocol")
+        if protocol:
+            queryset = queryset.filter(communication_protocol__icontains=protocol)
+
+        return queryset
+
+    @action(detail=False, methods=["get"])
+    def available(self, request):
+        """Get sensors that are not assigned to any bin"""
+        assigned_sensor_ids = SmartBin.objects.filter(sensor__isnull=False).values_list(
+            "sensor__id", flat=True
+        )
+
+        available_sensors = Sensor.objects.filter(
+            ~Q(id__in=assigned_sensor_ids), status="active"
+        )
+
+        serializer = self.get_serializer(available_sensors, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["get"])
+    def readings(self, request, pk=None):
+        """Get all readings for a specific sensor"""
+        sensor = self.get_object()
+        readings = sensor.readings.select_related("bin").order_by("-timestamp")
+
+        # Apply filters
+        limit = request.query_params.get("limit", 50)
+        since = request.query_params.get("since")
+
+        if since:
+            try:
+                since_date = timezone.datetime.fromisoformat(
+                    since.replace("Z", "+00:00")
+                )
+                readings = readings.filter(timestamp__gte=since_date)
+            except ValueError:
+                return Response(
+                    {
+                        "error": "Invalid date format. Use ISO format (YYYY-MM-DDTHH:MM:SS)"
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        try:
+            limit = int(limit)
+            readings = readings[:limit]
+        except ValueError:
+            limit = 50
+            readings = readings[:limit]
+
+        # Serialize readings
+        from .serializers import SensorReadingSerializer
+
+        serializer = SensorReadingSerializer(readings, many=True)
+
+        return Response(
+            {
+                "sensor": {
+                    "id": sensor.id,
+                    "sensor_number": sensor.sensor_number,
+                    "sensor_type": sensor.sensor_type,
+                    "status": sensor.status,
+                },
+                "readings_count": sensor.readings.count(),
+                "readings": serializer.data,
+            }
+        )
+
+    @action(detail=True, methods=["get"])
+    def detail(self, request, pk=None):
+        """Get detailed sensor information including recent readings"""
+        sensor = self.get_object()
+        from .serializers import SensorDetailSerializer
+
+        serializer = SensorDetailSerializer(sensor)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=["get"])
+    def health_summary(self, request):
+        """Get sensor health summary statistics"""
+        total_sensors = Sensor.objects.count()
+        active_sensors = Sensor.objects.filter(status="active").count()
+        maintenance_needed = Sensor.objects.filter(
+            Q(battery_level__lt=20)
+            | Q(signal_strength__lt=30)
+            | Q(status__in=["maintenance", "faulty"])
+        ).count()
+        calibration_needed = Sensor.objects.filter(
+            Q(calibration_due_date__lte=timezone.now().date())
+        ).count()
+
+        avg_battery = (
+            Sensor.objects.aggregate(avg_battery=Avg("battery_level"))["avg_battery"]
+            or 0
+        )
+        avg_signal = (
+            Sensor.objects.aggregate(avg_signal=Avg("signal_strength"))["avg_signal"]
+            or 0
+        )
+
+        return Response(
+            {
+                "total_sensors": total_sensors,
+                "active_sensors": active_sensors,
+                "maintenance_needed": maintenance_needed,
+                "calibration_needed": calibration_needed,
+                "average_battery_level": round(avg_battery, 1),
+                "average_signal_strength": round(avg_signal, 1),
+            }
+        )
+
+    @action(detail=True, methods=["post"])
+    def assign_to_bin(self, request, pk=None):
+        """Assign a sensor to a bin"""
+        sensor = self.get_object()
+        bin_id = request.data.get("bin_id")
+
+        if not bin_id:
+            return Response(
+                {"error": "bin_id is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            bin = SmartBin.objects.get(id=bin_id)
+
+            # Check if sensor is already assigned
+            if sensor.assigned_bin:
+                return Response(
+                    {"error": "Sensor is already assigned to a bin"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Check if bin already has a sensor
+            if bin.sensor:
+                return Response(
+                    {"error": "Bin already has a sensor assigned"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            bin.sensor = sensor
+            bin.save()
+
+            return Response(
+                {
+                    "message": f"Sensor {sensor.sensor_number} assigned to bin {bin.bin_number}"
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except SmartBin.DoesNotExist:
+            return Response(
+                {"error": "Bin not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+
 class SmartBinViewSet(viewsets.ModelViewSet):
     """ViewSet for managing smart bins with IoT features"""
 
     queryset = SmartBin.objects.all()
     serializer_class = SmartBinSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get_serializer_class(self):
         if self.action == "list":
-            return SmartBinListSerializer
+            # Check if user wants regular JSON format instead of GeoJSON
+            format_param = self.request.query_params.get("format", "geojson")
+            if format_param.lower() == "json":
+                return SmartBinListJSONSerializer
+            return SmartBinListJSONSerializer
         return SmartBinSerializer
 
     def get_queryset(self):
@@ -80,12 +320,29 @@ class SmartBinViewSet(viewsets.ModelViewSet):
         needs_maintenance = self.request.query_params.get("needs_maintenance")
         if needs_maintenance == "true":
             queryset = queryset.filter(
-                Q(battery_level__lt=20)
-                | Q(signal_strength__lt=30)
+                Q(sensor__battery_level__lt=20)
+                | Q(sensor__signal_strength__lt=30)
                 | Q(status__in=["maintenance", "damaged"])
             )
 
-        return queryset.select_related("bin_type")
+        # Filter by user (owner)
+        user_id = self.request.query_params.get("user_id")
+        if user_id:
+            queryset = queryset.filter(user__id=user_id)
+
+        # Filter by current user's bins (if not admin)
+        if not self.request.user.is_staff:
+            queryset = queryset.filter(user=self.request.user)
+
+        # Update online status for all bins in queryset
+        queryset = queryset.select_related("bin_type", "sensor", "user")
+
+        # Check and update online status for each bin
+        for bin in queryset:
+            bin.check_and_set_online()
+            bin.save()  # Save the updated status
+
+        return queryset
 
     @action(detail=False, methods=["get"], permission_classes=[AllowAny])
     def nearest(self, request):
@@ -220,6 +477,55 @@ class SmartBinViewSet(viewsets.ModelViewSet):
 
         return Response(impact_data)
 
+    @action(detail=True, methods=["post"])
+    def assign_to_user(self, request, pk=None):
+        """Assign a bin to a user"""
+        bin = self.get_object()
+        user_id = request.data.get("user_id")
+
+        if not user_id:
+            return Response(
+                {"error": "user_id is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            from django.contrib.auth import get_user_model
+
+            User = get_user_model()
+            user = User.objects.get(id=user_id)
+
+            bin.user = user
+            bin.save()
+
+            return Response(
+                {"message": f"Bin {bin.bin_number} assigned to user {user.username}"},
+                status=status.HTTP_200_OK,
+            )
+        except User.DoesNotExist:
+            return Response(
+                {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+    @action(detail=True, methods=["post"])
+    def unassign_from_user(self, request, pk=None):
+        """Remove user assignment from a bin"""
+        bin = self.get_object()
+
+        if not bin.user:
+            return Response(
+                {"error": "Bin is not assigned to any user"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        previous_user = bin.user.username
+        bin.user = None
+        bin.save()
+
+        return Response(
+            {"message": f"Bin {bin.bin_number} unassigned from user {previous_user}"},
+            status=status.HTTP_200_OK,
+        )
+
 
 class SensorDataViewSet(viewsets.ViewSet):
     """ViewSet for receiving and processing IoT sensor data"""
@@ -279,7 +585,7 @@ class SensorDataViewSet(viewsets.ViewSet):
                 raw_data=data.get("raw_data"),
             )
 
-            return Response({"status": "success", "bin_id": bin.id})
+            return Response({"status": "success", "bin_number": bin.bin_number})
 
         except SmartBin.DoesNotExist:
             return Response(
@@ -319,6 +625,34 @@ class SensorDataViewSet(viewsets.ViewSet):
 
         return Response(results)
 
+    @action(detail=False, methods=["post"])
+    def update_online_status(self, request):
+        """Update online status for all bins"""
+        try:
+            bins = SmartBin.objects.select_related("sensor").all()
+            updated_count = 0
+
+            for bin in bins:
+                if bin.sensor:
+                    old_status = bin.is_online
+                    bin.check_and_set_online()
+                    if old_status != bin.is_online:
+                        bin.save()  # Save the updated status
+                        updated_count += 1
+
+            return Response(
+                {
+                    "message": f"Updated online status for {updated_count} bins",
+                    "total_bins": bins.count(),
+                    "updated_count": updated_count,
+                }
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to update online status: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
 
 class BinAlertViewSet(viewsets.ModelViewSet):
     """ViewSet for managing bin alerts"""
@@ -357,54 +691,74 @@ class BinAlertViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(alert)
         return Response(serializer.data)
 
+    @action(detail=False, methods=["post"])
+    def create_manual(self, request):
+        """Manually create a bin alert"""
+        from .utils import create_bin_alert_manually
 
-class CitizenReportViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing citizen reports"""
+        bin_id = request.data.get("bin_id")
+        sensor_id = request.data.get("sensor_id")  # Optional
+        alert_type = request.data.get("alert_type")
+        message = request.data.get("message")
+        priority = request.data.get("priority", "medium")
 
-    queryset = CitizenReport.objects.all()
-    serializer_class = CitizenReportSerializer
-    permission_classes = [AllowAny]  # Allow public reporting
+        if not all([bin_id, alert_type, message]):
+            return Response(
+                {"error": "bin_id, alert_type, and message are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-    def get_serializer_class(self):
-        if self.action == "create":
-            return CitizenReportCreateSerializer
-        return CitizenReportSerializer
+        try:
+            bin_obj = SmartBin.objects.get(id=bin_id)
+            sensor_obj = None
+            if sensor_id:
+                from .models import Sensor
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
+                sensor_obj = Sensor.objects.get(id=sensor_id)
 
-        # Filter by status
-        status_param = self.request.query_params.get("status")
-        if status_param:
-            queryset = queryset.filter(status=status_param)
+            alert = create_bin_alert_manually(
+                bin_obj=bin_obj,
+                alert_type=alert_type,
+                message=message,
+                priority=priority,
+                user=request.user,
+                sensor=sensor_obj,
+            )
 
-        # Filter by report type
-        report_type = self.request.query_params.get("report_type")
-        if report_type:
-            queryset = queryset.filter(report_type=report_type)
+            serializer = self.get_serializer(alert)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        return queryset.select_related("bin").order_by("-created_at")
+        except SmartBin.DoesNotExist:
+            return Response(
+                {"error": "Bin not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to create alert: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
-    @action(detail=True, methods=["post"])
-    def acknowledge(self, request, pk=None):
-        """Acknowledge a citizen report"""
-        report = self.get_object()
-        report.status = "acknowledged"
-        report.save()
-        serializer = self.get_serializer(report)
-        return Response(serializer.data)
+    @action(detail=False, methods=["post"])
+    def check_maintenance(self, request):
+        """Check and create maintenance alerts for all bins and sensors"""
+        from .utils import check_and_create_maintenance_alerts
 
-    @action(detail=True, methods=["post"])
-    def resolve(self, request, pk=None):
-        """Resolve a citizen report"""
-        report = self.get_object()
-        report.status = "resolved"
-        report.save()
-        serializer = self.get_serializer(report)
-        return Response(serializer.data)
+        try:
+            alerts_created = check_and_create_maintenance_alerts()
+            return Response(
+                {
+                    "message": f"Created {alerts_created} maintenance alerts",
+                    "alerts_created": alerts_created,
+                }
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to check maintenance: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
-# CollectionRouteViewSet moved to Job app
+# CollectionRouteViewSet moved to ServiceRequest app
 
 
 # WasteAnalyticsViewSet moved to Analytics app

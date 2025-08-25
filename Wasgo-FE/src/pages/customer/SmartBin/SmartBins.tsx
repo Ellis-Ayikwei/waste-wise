@@ -99,11 +99,10 @@ const SmartBins = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-            {/* Header */}
-            <SmartBinHeader 
-                onlineCount={onlineBins}
-                totalCount={totalBins}
-            />
+             {/* System Overview */}
+             <SystemOverview onAddDevice={handleAddDevice} />
+
+           
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Controls */}
@@ -117,7 +116,7 @@ const SmartBins = () => {
                 />
 
                 {/* Smart Bins Grid */}
-                <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8' : 'space-y-6'}>
+                <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8' : 'space-y-6'}>
                     {filteredAndSortedBins.map((bin, index) => (
                         <SmartBinCard
                             key={bin.id}
@@ -130,8 +129,7 @@ const SmartBins = () => {
                 {/* Add New Smart Bin Section */}
                 <AddSmartBinSection onAddBin={handleAddBin} />
 
-                {/* System Overview */}
-                <SystemOverview onAddDevice={handleAddDevice} />
+               
             </div>
 
             {/* Modals */}

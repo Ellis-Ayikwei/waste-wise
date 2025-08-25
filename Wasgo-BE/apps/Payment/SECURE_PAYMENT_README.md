@@ -156,7 +156,7 @@ def verify_webhook_signature(payload, signature):
 # Consider encrypting sensitive fields
 from django_cryptography.fields import encrypt
 
-class PaymentMethod(models.Model):
+class PaymentMethod(Basemodel):
     authorization_code = encrypt(models.CharField(max_length=100))
 ```
 

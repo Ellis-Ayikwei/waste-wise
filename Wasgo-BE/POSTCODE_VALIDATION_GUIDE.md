@@ -2,7 +2,7 @@
 
 ## Overview
 
-Your MoreVans backend now uses a **simplified Google Maps API** for postcode validation and address lookup. This provides clean, structured address data with proper address components.
+Your Wasgo backend now uses a **simplified Google Maps API** for postcode validation and address lookup. This provides clean, structured address data with proper address components.
 
 ## Available APIs
 

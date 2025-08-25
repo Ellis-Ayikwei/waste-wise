@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
+import ErrorBoundary from '../../components/ErrorBoundary';
 import { 
     IconUsers, 
     IconTruck, 
@@ -27,16 +28,22 @@ import {
     IconBattery,
     IconActivity
 } from '@tabler/icons-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUsers, faTruck, faBox, faDollarSign, faCheck, faClock, faExclamationTriangle, faRecycle, faWifi } from '@fortawesome/free-solid-svg-icons';
 import ReactApexChart from 'react-apexcharts';
+import Ghc from '../../helper/CurrencyFormatter';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Progress } from '../../components/ui/Progress';
+import StatCard from '../../components/ui/statCard';
 import { IRootState } from '../../store';
 import { setPageTitle } from '../../store/themeConfigSlice';
 import useSwr from 'swr';
 import fetcher from '../../services/fetcher';
+
 import dayjs from 'dayjs';
+import IconLoader from '../../components/Icon/IconLoader';
 
 // Types for the enhanced dashboard
 interface DashboardMetrics {
@@ -54,13 +61,24 @@ interface DashboardMetrics {
 
 interface SmartBinData {
     id: string;
-    location: string;
-    fillLevel: number;
-    temperature: number;
-    batteryLevel: number;
-    lastUpdated: string;
-    status: 'online' | 'offline' | 'maintenance';
-    alerts: string[];
+    bin_id: string;
+    name: string;
+    latitude: number;
+    longitude: number;
+    address: string;
+    area: string;
+    fill_level: number;
+    fill_status: string;
+    status: string;
+    bin_type: number;
+    bin_type_display: string;
+    user_id: string | null;
+    user_name: string | null;
+    sensor_id: string | null;
+    battery_level: number | null;
+    signal_strength: number | null;
+    is_online: boolean;
+    last_reading_at: string | null;
 }
 
 interface RealtimeActivity {
@@ -106,9 +124,13 @@ const EnhancedAdminDashboard: React.FC = () => {
 
     // Fetch dashboard data
     const { data: dashboardData, isLoading } = useSwr<DashboardMetrics>('admin/dashboard/metrics', fetcher);
-    const { data: binData } = useSwr<SmartBinData[]>('admin/smart-bins', fetcher);
-    const { data: activityData } = useSwr<RealtimeActivity[]>('admin/activities', fetcher);
-    const { data: complianceData } = useSwr<ComplianceAlert[]>('admin/compliance-alerts', fetcher);
+    const { data: binData } = useSwr('waste/bins/', fetcher);
+    const { data: usersData } = useSwr('users/', fetcher);
+    const { data: providersData } = useSwr('providers/', fetcher);
+    const { data: serviceRequestsData } = useSwr('service-requests/', fetcher);
+    const { data: sensorsData } = useSwr('waste/sensors/', fetcher);
+    const { data: activityData } = useSwr<RealtimeActivity[]>('activities/', fetcher);
+    const { data: complianceData } = useSwr<ComplianceAlert[]>('compliance-alerts/', fetcher);
 
     const updateRealTimeData = () => {
         // Simulate real-time updates
@@ -148,13 +170,13 @@ const EnhancedAdminDashboard: React.FC = () => {
         yaxis: {
             labels: { 
                 style: { colors: isDark ? '#9CA3AF' : '#6B7280' },
-                formatter: (value: number) => `$${(value / 1000).toFixed(1)}k`,
+                formatter: (value: number) => `${Ghc(value / 1000)}k`,
             },
         },
         grid: { borderColor: isDark ? '#374151' : '#E5E7EB' },
         tooltip: {
             theme: isDark ? 'dark' : 'light',
-            y: { formatter: (value: number) => `$${value.toLocaleString()}` },
+            y: { formatter: (value: number) => `${Ghc(value)}` },
         },
     };
 
@@ -179,134 +201,49 @@ const EnhancedAdminDashboard: React.FC = () => {
         },
     };
 
-    const smartBinChartOptions = {
-        chart: {
-            type: 'bar' as const,
-            height: 250,
-            toolbar: { show: false },
-        },
-        colors: ['#3B82F6'],
-        plotOptions: {
-            bar: {
-                horizontal: true,
-                borderRadius: 4,
-                dataLabels: { position: 'top' },
-            },
-        },
-        dataLabels: {
-            enabled: true,
-            formatter: (value: number) => `${value}%`,
-            style: { fontSize: '12px', colors: ['#fff'] },
-        },
-        xaxis: {
-            categories: smartBins.slice(0, 10).map(bin => bin.location),
-            labels: { style: { colors: isDark ? '#9CA3AF' : '#6B7280' } },
-        },
-        yaxis: {
-            labels: { style: { colors: isDark ? '#9CA3AF' : '#6B7280' } },
-        },
-        grid: { borderColor: isDark ? '#374151' : '#E5E7EB' },
+
+
+
+
+    const data = dashboardData;
+    
+    // Helper function to extract array data
+    const extractArrayData = (data: any): any[] => {
+        if (!data) return [];
+        if (Array.isArray(data)) return data;
+        if (typeof data === 'object' && data !== null) {
+            if ('results' in data && Array.isArray(data.results)) return data.results;
+            if ('data' in data && Array.isArray(data.data)) return data.data;
+        }
+        return [];
     };
-
-    // Mock data for demonstration
-    const mockData: DashboardMetrics = {
-        totalCustomers: 1247,
-        totalProviders: 89,
-        activeJobs: 23,
-        completedJobs: 156,
-        totalRevenue: 124750,
-        monthlyRevenue: 45600,
-        revenueGrowth: 12.5,
-        customerSatisfaction: 94.2,
-        providerPerformance: 87.8,
-        systemHealth: 99.1,
-    };
-
-    const mockSmartBins: SmartBinData[] = [
-        {
-            id: '1',
-            location: 'Downtown Mall',
-            fillLevel: 85,
-            temperature: 22,
-            batteryLevel: 78,
-            lastUpdated: '2 min ago',
-            status: 'online',
-            alerts: ['High fill level'],
-        },
-        {
-            id: '2',
-            location: 'Central Park',
-            fillLevel: 45,
-            temperature: 24,
-            batteryLevel: 92,
-            lastUpdated: '1 min ago',
-            status: 'online',
-            alerts: [],
-        },
-        {
-            id: '3',
-            location: 'Business District',
-            fillLevel: 95,
-            temperature: 21,
-            batteryLevel: 65,
-            lastUpdated: '5 min ago',
-            status: 'maintenance',
-            alerts: ['Critical fill level', 'Low battery'],
-        },
-    ];
-
-    const mockActivities: RealtimeActivity[] = [
-        {
-            id: '1',
-            type: 'job',
-            message: 'New job assigned to Provider ABC',
-            timestamp: '2 min ago',
-            priority: 'medium',
-            status: 'pending',
-        },
-        {
-            id: '2',
-            type: 'payment',
-            message: 'Payment completed for Job #1234',
-            timestamp: '5 min ago',
-            priority: 'low',
-            status: 'resolved',
-        },
-        {
-            id: '3',
-            type: 'alert',
-            message: 'Smart bin at Downtown Mall needs attention',
-            timestamp: '8 min ago',
-            priority: 'high',
-            status: 'in_progress',
-        },
-    ];
-
-    const mockComplianceAlerts: ComplianceAlert[] = [
-        {
-            id: '1',
-            type: 'environmental',
-            title: 'Waste Disposal Compliance Check Due',
-            description: 'Monthly environmental compliance report is due in 3 days',
-            severity: 'medium',
-            createdAt: '1 hour ago',
-            status: 'open',
-        },
-        {
-            id: '2',
-            type: 'security',
-            title: 'Unusual Login Activity Detected',
-            description: 'Multiple failed login attempts from unknown IP',
-            severity: 'high',
-            createdAt: '2 hours ago',
-            status: 'investigating',
-        },
-    ];
-
-    const data = dashboardData || mockData;
-    const binDataFinal = binData || mockSmartBins;
-    const activityDataFinal = activityData || mockActivities;
-    const complianceDataFinal = complianceData || mockComplianceAlerts;
+    
+    // Extract data from API responses
+    const binDataFinal: SmartBinData[] = extractArrayData(binData);
+    const usersDataFinal = extractArrayData(usersData);
+    const providersDataFinal = extractArrayData(providersData);
+    const serviceRequestsDataFinal = extractArrayData(serviceRequestsData);
+    const sensorsDataFinal = extractArrayData(sensorsData);
+    
+    const activityDataFinal: RealtimeActivity[] = extractArrayData(activityData);
+    const complianceDataFinal: ComplianceAlert[] = extractArrayData(complianceData);
+    
+    // Calculate metrics from real data
+    const totalCustomers = usersDataFinal.filter((user: any) => user.user_type === 'customer').length;
+    const totalProviders = providersDataFinal.length;
+    const totalBins = binDataFinal.length;
+    const totalSensors = sensorsDataFinal.length;
+    const activeServiceRequests = serviceRequestsDataFinal.filter((request: any) => 
+        ['pending', 'assigned', 'en_route', 'arrived', 'in_progress'].includes(request.status)
+    ).length;
+    const completedServiceRequests = serviceRequestsDataFinal.filter((request: any) => 
+        request.status === 'completed'
+    ).length;
+    const totalRevenue = serviceRequestsDataFinal
+        .filter((request: any) => request.status === 'completed' && request.final_price)
+        .reduce((sum: number, request: any) => sum + (request.final_price || 0), 0);
+    const onlineBins = binDataFinal.filter(bin => bin.is_online).length;
+    const highFillBins = binDataFinal.filter(bin => bin.fill_level > 80).length;
 
     const getPriorityColor = (priority: string) => {
         switch (priority) {
@@ -318,17 +255,27 @@ const EnhancedAdminDashboard: React.FC = () => {
         }
     };
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'online': return 'text-green-500';
-            case 'offline': return 'text-red-500';
-            case 'maintenance': return 'text-yellow-500';
-            default: return 'text-gray-500';
-        }
-    };
+
+
+    // Show loading state if data is still loading
+    if (isLoading) {
+        return (
+            <ErrorBoundary>
+                <div className="p-6 space-y-6">
+                    <div className="flex justify-center items-center h-64">
+                        <div className="flex flex-col items-center gap-4">
+<IconLoader />
+                            <p className="text-gray-600 dark:text-gray-400">Loading dashboard data...</p>
+                        </div>
+                    </div>
+                </div>
+            </ErrorBoundary>
+        );
+    }
 
     return (
-        <div className="p-6 space-y-6">
+        <ErrorBoundary>
+            <div className="p-6 space-y-6">
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div>
@@ -353,61 +300,66 @@ const EnhancedAdminDashboard: React.FC = () => {
 
             {/* Key Metrics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
-                        <IconUsers className="h-4 w-4 text-gray-500" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{data.totalCustomers.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">
-                            <IconTrendingUp className="inline w-3 h-3 text-green-500 mr-1" />
-                            +12% from last month
-                        </p>
-                    </CardContent>
-                </Card>
+                <StatCard
+                    icon={faUsers}
+                    title="Total Customers"
+                    value={totalCustomers.toLocaleString()}
+                    color="blue"
+                    delay={0.1}
+                />
+                <StatCard
+                    icon={faTruck}
+                    title="Active Providers"
+                    value={totalProviders.toLocaleString()}
+                    color="purple"
+                    delay={0.2}
+                />
+                <StatCard
+                    icon={faBox}
+                    title="Active Service Requests"
+                    value={activeServiceRequests.toLocaleString()}
+                    color="green"
+                    delay={0.3}
+                />
+                <StatCard
+                    icon={faDollarSign}
+                    title="Total Revenue"
+                    value={`${Ghc(totalRevenue.toLocaleString())}`}
+                    color="indigo"
+                    delay={0.4}
+                />
+            </div>
 
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Active Providers</CardTitle>
-                        <IconTruck className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{data.totalProviders}</div>
-                        <p className="text-xs text-muted-foreground">
-                            <IconTrendingUp className="inline w-3 h-3 text-green-500 mr-1" />
-                            +5% from last month
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
-                        <IconPackage className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{data.activeJobs}</div>
-                        <p className="text-xs text-muted-foreground">
-                            <IconClock className="inline w-3 h-3 text-blue-500 mr-1" />
-                            In progress
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                        <IconCurrencyDollar className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">${data.totalRevenue.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">
-                            <IconTrendingUp className="inline w-3 h-3 text-green-500 mr-1" />
-                            +{data.revenueGrowth}% from last month
-                        </p>
-                    </CardContent>
-                </Card>
+            {/* Additional Metrics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <StatCard
+                    icon={faCheck}
+                    title="Completed Requests"
+                    value={completedServiceRequests.toLocaleString()}
+                    color="green"
+                    delay={0.5}
+                />
+                <StatCard
+                    icon={faRecycle}
+                    title="Smart Bins"
+                    value={totalBins.toLocaleString()}
+                    color="green"
+                    delay={0.6}
+                />
+                <StatCard
+                    icon={faWifi}
+                    title="Sensors"
+                    value={totalSensors.toLocaleString()}
+                    color="yellow"
+                    delay={0.7}
+                />
+                <StatCard
+                    icon={faClock}
+                    title="Online Bins"
+                    value={`${onlineBins}/${totalBins}`}
+                    color="blue"
+                    delay={0.8}
+                />
             </div>
 
             {/* Charts Section */}
@@ -435,7 +387,7 @@ const EnhancedAdminDashboard: React.FC = () => {
                     <CardContent>
                         <ReactApexChart
                             options={jobStatusChartOptions}
-                            series={[data.completedJobs, data.activeJobs, 12, 3]}
+                            series={[data?.completedJobs || 0, data?.activeJobs || 0, 12, 3]}
                             type="donut"
                             height={300}
                         />
@@ -451,62 +403,71 @@ const EnhancedAdminDashboard: React.FC = () => {
                         <div className="flex space-x-2">
                             <Badge variant="outline" className="text-green-500">
                                 <IconCircleCheck className="w-3 h-3 mr-1" />
-                                {binDataFinal.filter(bin => bin.status === 'online').length} Online
+                                {onlineBins} Online
                             </Badge>
                             <Badge variant="outline" className="text-red-500">
                                 <IconAlertTriangle className="w-3 h-3 mr-1" />
-                                {binDataFinal.filter(bin => bin.alerts.length > 0).length} Alerts
+                                {highFillBins} High Fill Level
                             </Badge>
                         </div>
                     </div>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {binDataFinal.map((bin) => (
+                        {Array.isArray(binDataFinal) && binDataFinal.length > 0 ? binDataFinal.slice(0, 6).map((bin) => (
                             <div key={bin.id} className="border rounded-lg p-4 space-y-3">
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <h4 className="font-medium">{bin.location}</h4>
-                                        <p className={`text-sm ${getStatusColor(bin.status)}`}>
-                                            {bin.status.charAt(0).toUpperCase() + bin.status.slice(1)}
-                                        </p>
+                                        <h4 className="font-medium">{bin.name}</h4>
+                                        <p className="text-sm text-gray-600">{bin.area}</p>
                                     </div>
-                                    <Badge variant={bin.status === 'online' ? 'default' : 'destructive'}>
-                                        {bin.status}
+                                    <Badge variant={bin.is_online ? 'default' : 'destructive'}>
+                                        {bin.is_online ? 'Online' : 'Offline'}
                                     </Badge>
                                 </div>
                                 
                                 <div className="space-y-2">
                                     <div className="flex justify-between text-sm">
                                         <span>Fill Level</span>
-                                        <span>{bin.fillLevel}%</span>
+                                        <span>{bin.fill_level}%</span>
                                     </div>
-                                    <Progress value={bin.fillLevel} className="h-2" />
+                                    <Progress value={bin.fill_level} className="h-2" />
                                     
-                                    <div className="flex justify-between text-sm">
-                                        <span>Battery</span>
-                                        <span>{bin.batteryLevel}%</span>
-                                    </div>
-                                    <Progress value={bin.batteryLevel} className="h-2" />
+                                    {bin.battery_level !== null && (
+                                        <>
+                                            <div className="flex justify-between text-sm">
+                                                <span>Battery</span>
+                                                <span>{bin.battery_level}%</span>
+                                            </div>
+                                            <Progress value={bin.battery_level} className="h-2" />
+                                        </>
+                                    )}
                                     
-                                    <div className="flex justify-between text-sm">
-                                        <span>Temperature</span>
-                                        <span>{bin.temperature}°C</span>
-                                    </div>
+                                    {bin.signal_strength !== null && (
+                                        <div className="flex justify-between text-sm">
+                                            <span>Signal Strength</span>
+                                            <span>{bin.signal_strength}%</span>
+                                        </div>
+                                    )}
                                 </div>
                                 
-                                {bin.alerts.length > 0 && (
+                                {bin.fill_level > 80 && (
                                     <div className="text-sm text-red-600">
                                         <IconAlertTriangle className="inline w-3 h-3 mr-1" />
-                                        {bin.alerts.join(', ')}
+                                        High fill level alert
                                     </div>
                                 )}
                                 
                                 <div className="text-xs text-gray-500">
-                                    Last updated: {bin.lastUpdated}
+                                    {bin.last_reading_at ? `Last updated: ${bin.last_reading_at}` : 'No recent readings'}
                                 </div>
                             </div>
-                        ))}
+                        )) : (
+                            <div className="col-span-full text-center py-8">
+                                <IconRecycle className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                                <p className="text-gray-600 dark:text-gray-400">No smart bins data available</p>
+                            </div>
+                        )}
                     </div>
                 </CardContent>
             </Card>
@@ -520,7 +481,7 @@ const EnhancedAdminDashboard: React.FC = () => {
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            {activityDataFinal.map((activity) => (
+                            {activityDataFinal.length > 0 ? activityDataFinal.map((activity) => (
                                 <div key={activity.id} className="flex items-start space-x-3 p-3 border rounded-lg">
                                     <div className={`w-2 h-2 rounded-full mt-2 ${getPriorityColor(activity.priority)}`} />
                                     <div className="flex-1">
@@ -533,7 +494,12 @@ const EnhancedAdminDashboard: React.FC = () => {
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                            )) : (
+                                <div className="text-center py-8">
+                                    <IconActivity className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                                    <p className="text-gray-600 dark:text-gray-400">No activity data available</p>
+                                </div>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -545,7 +511,7 @@ const EnhancedAdminDashboard: React.FC = () => {
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            {complianceDataFinal.map((alert) => (
+                            {Array.isArray(complianceDataFinal) && complianceDataFinal.length > 0 ? complianceDataFinal.map((alert) => (
                                 <div key={alert.id} className="p-3 border rounded-lg">
                                     <div className="flex justify-between items-start">
                                         <div>
@@ -563,7 +529,12 @@ const EnhancedAdminDashboard: React.FC = () => {
                                         </Badge>
                                     </div>
                                 </div>
-                            ))}
+                            )) : (
+                                <div className="text-center py-8">
+                                    <IconShield className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                                    <p className="text-gray-600 dark:text-gray-400">No compliance alerts available</p>
+                                </div>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -588,10 +559,10 @@ const EnhancedAdminDashboard: React.FC = () => {
                                 <span className="text-xs">Provider Management</span>
                             </Button>
                         </Link>
-                        <Link to="/admin/jobs">
+                        <Link to="/admin/service-requests">
                             <Button variant="outline" className="w-full h-20 flex flex-col">
                                 <IconPackage className="w-6 h-6 mb-2" />
-                                <span className="text-xs">Job Management</span>
+                                <span className="text-xs">Service Requests</span>
                             </Button>
                         </Link>
                         <Link to="/admin/revenue">
@@ -616,6 +587,7 @@ const EnhancedAdminDashboard: React.FC = () => {
                 </CardContent>
             </Card>
         </div>
+        </ErrorBoundary>
     );
 };
 

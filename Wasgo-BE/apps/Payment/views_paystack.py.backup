@@ -1,0 +1,480 @@
+"""
+Paystack Payment Views
+"""
+import json
+import uuid
+from decimal import Decimal
+from django.conf import settings
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse, HttpResponse
+from rest_framework import viewsets, status, permissions
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny, IsAuthenticated
+
+from .models_paystack import (
+    PaystackPayment, PaystackPaymentMethod, PaystackCustomer, 
+    PaymentWebhook, TransferRecipient, Transfer
+)
+from .serializer import PaymentSerializer
+from .paystack_service import PaystackService
+from apps.Request.models import Request
+from apps.User.models import User
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class PaystackPaymentViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for Paystack payment operations
+    """
+    queryset = PaystackPayment.objects.all()
+    serializer_class = PaymentSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.paystack_service = PaystackService()
+    
+    @action(detail=False, methods=['post'])
+    def initialize_payment(self, request):
+        """
+        Initialize a payment transaction
+        
+        Expected data:
+        {
+            "request_id": "uuid",
+            "amount": 5000.00,
+            "email": "user@example.com",
+            "callback_url": "https://yourapp.com/payment/callback",
+            "metadata": {...}
+        }
+        """
+        try:
+            data = request.data
+            user = request.user
+            
+            # Get request if provided
+            request_obj = None
+            if data.get('request_id'):
+                request_obj = get_object_or_404(Request, id=data['request_id'])
+            
+            # Generate unique reference
+            reference = f"WASGO-{uuid.uuid4().hex[:8].upper()}"
+            
+            # Prepare metadata
+            metadata = data.get('metadata', {})
+            metadata.update({
+                'user_id': str(user.id),
+                'request_id': str(request_obj.id) if request_obj else None,
+                'custom_fields': [
+                    {
+                        'display_name': 'Customer Name',
+                        'variable_name': 'customer_name',
+                        'value': f"{user.first_name} {user.last_name}"
+                    }
+                ]
+            })
+            
+            # Initialize transaction with Paystack
+            paystack_response = self.paystack_service.initialize_transaction(
+                email=data.get('email', user.email),
+                amount=Decimal(str(data['amount'])),
+                reference=reference,
+                callback_url=data.get('callback_url'),
+                metadata=metadata,
+                channels=data.get('channels', ['card', 'bank', 'ussd', 'mobile_money'])
+            )
+            
+            # Create payment record
+            payment = Payment.objects.create(
+                user=user,
+                request=request_obj,
+                reference=reference,
+                amount=Decimal(str(data['amount'])),
+                currency=data.get('currency', 'NGN'),
+                status='pending',
+                payment_type=data.get('payment_type', 'full_payment'),
+                authorization_url=paystack_response['authorization_url'],
+                access_code=paystack_response['access_code'],
+                metadata=metadata,
+                description=data.get('description', '')
+            )
+            
+            return Response({
+                'success': True,
+                'message': 'Payment initialized successfully',
+                'data': {
+                    'payment_id': payment.id,
+                    'reference': reference,
+                    'authorization_url': paystack_response['authorization_url'],
+                    'access_code': paystack_response['access_code']
+                }
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error initializing payment: {str(e)}")
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['get'])
+    def verify_payment(self, request):
+        """
+        Verify a payment transaction
+        
+        Query params:
+        ?reference=WASGO-XXXXX
+        """
+        try:
+            reference = request.query_params.get('reference')
+            
+            if not reference:
+                return Response({
+                    'success': False,
+                    'message': 'Reference is required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Get payment record
+            payment = get_object_or_404(Payment, reference=reference)
+            
+            # Verify with Paystack
+            paystack_response = self.paystack_service.verify_transaction(reference)
+            
+            # Update payment record
+            if paystack_response['status'] == 'success':
+                payment.status = 'success'
+                payment.paid_at = timezone.now()
+                payment.transaction_id = paystack_response.get('id')
+                payment.channel = paystack_response.get('channel')
+                payment.ip_address = paystack_response.get('ip_address')
+                payment.fees = Decimal(str(paystack_response.get('fees', 0))) / 100  # Convert from kobo
+                payment.gateway_response = paystack_response.get('gateway_response')
+                
+                # Save authorization for reuse if card payment
+                if paystack_response.get('authorization'):
+                    auth = paystack_response['authorization']
+                    if auth.get('reusable'):
+                        PaymentMethod.objects.update_or_create(
+                            user=payment.user,
+                            authorization_code=auth['authorization_code'],
+                            defaults={
+                                'payment_type': 'card',
+                                'last4': auth.get('last4'),
+                                'exp_month': auth.get('exp_month'),
+                                'exp_year': auth.get('exp_year'),
+                                'card_type': auth.get('card_type'),
+                                'bank': auth.get('bank'),
+                                'country_code': auth.get('country_code'),
+                                'brand': auth.get('brand', '').lower(),
+                                'reusable': auth.get('reusable', False),
+                                'signature': auth.get('signature'),
+                                'bin': auth.get('bin'),
+                            }
+                        )
+            else:
+                payment.status = 'failed'
+                payment.failed_at = timezone.now()
+                payment.gateway_response = paystack_response.get('gateway_response', 'Payment verification failed')
+            
+            payment.message = paystack_response.get('message')
+            payment.save()
+            
+            return Response({
+                'success': True,
+                'message': 'Payment verified successfully',
+                'data': {
+                    'payment_id': payment.id,
+                    'reference': payment.reference,
+                    'status': payment.status,
+                    'amount': float(payment.amount),
+                    'currency': payment.currency,
+                    'paid_at': payment.paid_at.isoformat() if payment.paid_at else None
+                }
+            }, status=status.HTTP_200_OK)
+            
+        except Payment.DoesNotExist:
+            return Response({
+                'success': False,
+                'message': 'Payment not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error verifying payment: {str(e)}")
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['post'])
+    def charge_authorization(self, request):
+        """
+        Charge a saved card/authorization
+        
+        Expected data:
+        {
+            "authorization_code": "AUTH_xxxxx",
+            "amount": 5000.00,
+            "email": "user@example.com",
+            "request_id": "uuid" (optional)
+        }
+        """
+        try:
+            data = request.data
+            user = request.user
+            
+            # Generate unique reference
+            reference = f"WASGO-{uuid.uuid4().hex[:8].upper()}"
+            
+            # Get request if provided
+            request_obj = None
+            if data.get('request_id'):
+                request_obj = get_object_or_404(Request, id=data['request_id'])
+            
+            # Charge authorization
+            paystack_response = self.paystack_service.charge_authorization(
+                authorization_code=data['authorization_code'],
+                email=data.get('email', user.email),
+                amount=Decimal(str(data['amount'])),
+                reference=reference,
+                metadata=data.get('metadata', {})
+            )
+            
+            # Create payment record
+            payment_method = PaymentMethod.objects.filter(
+                authorization_code=data['authorization_code']
+            ).first()
+            
+            payment = Payment.objects.create(
+                user=user,
+                request=request_obj,
+                payment_method=payment_method,
+                reference=reference,
+                amount=Decimal(str(data['amount'])),
+                currency=data.get('currency', 'NGN'),
+                status='success' if paystack_response['status'] == 'success' else 'failed',
+                payment_type=data.get('payment_type', 'full_payment'),
+                transaction_id=paystack_response.get('id'),
+                channel=paystack_response.get('channel'),
+                gateway_response=paystack_response.get('gateway_response'),
+                message=paystack_response.get('message'),
+                paid_at=timezone.now() if paystack_response['status'] == 'success' else None,
+                metadata=data.get('metadata', {})
+            )
+            
+            return Response({
+                'success': True,
+                'message': 'Payment processed successfully',
+                'data': {
+                    'payment_id': payment.id,
+                    'reference': reference,
+                    'status': payment.status,
+                    'amount': float(payment.amount),
+                    'currency': payment.currency
+                }
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error charging authorization: {str(e)}")
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['get'])
+    def payment_methods(self, request):
+        """Get user's saved payment methods"""
+        try:
+            user = request.user
+            methods = PaymentMethod.objects.filter(
+                user=user,
+                is_active=True,
+                reusable=True
+            )
+            
+            data = []
+            for method in methods:
+                data.append({
+                    'id': method.id,
+                    'type': method.payment_type,
+                    'last4': method.last4,
+                    'brand': method.brand,
+                    'bank': method.bank,
+                    'exp_month': method.exp_month,
+                    'exp_year': method.exp_year,
+                    'is_default': method.is_default,
+                    'authorization_code': method.authorization_code
+                })
+            
+            return Response({
+                'success': True,
+                'data': data
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error fetching payment methods: {str(e)}")
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['post'])
+    def create_refund(self, request):
+        """
+        Create a refund for a payment
+        
+        Expected data:
+        {
+            "reference": "WASGO-XXXXX",
+            "amount": 2000.00 (optional, for partial refund),
+            "reason": "Customer request"
+        }
+        """
+        try:
+            data = request.data
+            reference = data.get('reference')
+            
+            # Get payment
+            payment = get_object_or_404(Payment, reference=reference)
+            
+            if payment.status != 'success':
+                return Response({
+                    'success': False,
+                    'message': 'Only successful payments can be refunded'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Create refund with Paystack
+            refund_amount = Decimal(str(data.get('amount', payment.amount)))
+            
+            paystack_response = self.paystack_service.create_refund(
+                transaction_reference=reference,
+                amount=refund_amount if refund_amount < payment.amount else None,
+                customer_note=data.get('reason', ''),
+                merchant_note=f"Refund by {request.user.email}"
+            )
+            
+            # Update payment record
+            if refund_amount >= payment.amount:
+                payment.status = 'refunded'
+            else:
+                payment.status = 'partially_refunded'
+            
+            payment.refunded_at = timezone.now()
+            payment.refund_amount = refund_amount
+            payment.refund_reason = data.get('reason', '')
+            payment.refund_reference = paystack_response.get('reference')
+            payment.save()
+            
+            return Response({
+                'success': True,
+                'message': 'Refund processed successfully',
+                'data': {
+                    'payment_id': payment.id,
+                    'refund_amount': float(refund_amount),
+                    'status': payment.status
+                }
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error creating refund: {str(e)}")
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def paystack_webhook(request):
+    """
+    Handle Paystack webhook events
+    """
+    try:
+        # Verify webhook signature
+        paystack_service = PaystackService()
+        signature = request.META.get('HTTP_X_PAYSTACK_SIGNATURE', '')
+        
+        if not paystack_service.verify_webhook_signature(
+            request.body.decode('utf-8'),
+            signature
+        ):
+            logger.warning("Invalid Paystack webhook signature")
+            return JsonResponse({'status': 'error', 'message': 'Invalid signature'}, status=400)
+        
+        # Parse webhook data
+        data = json.loads(request.body)
+        event = data.get('event')
+        webhook_data = data.get('data', {})
+        
+        # Store webhook event
+        webhook = PaymentWebhook.objects.create(
+            event=event,
+            reference=webhook_data.get('reference', ''),
+            payload=data
+        )
+        
+        # Process based on event type
+        if event == 'charge.success':
+            # Update payment status
+            reference = webhook_data.get('reference')
+            if reference:
+                try:
+                    payment = Payment.objects.get(reference=reference)
+                    payment.status = 'success'
+                    payment.paid_at = timezone.now()
+                    payment.transaction_id = webhook_data.get('id')
+                    payment.channel = webhook_data.get('channel')
+                    payment.gateway_response = webhook_data.get('gateway_response')
+                    payment.save()
+                    
+                    # Update request status if applicable
+                    if payment.request:
+                        payment.request.payment_status = 'paid'
+                        payment.request.save()
+                    
+                except Payment.DoesNotExist:
+                    logger.error(f"Payment not found for reference: {reference}")
+        
+        elif event == 'charge.failed':
+            reference = webhook_data.get('reference')
+            if reference:
+                try:
+                    payment = Payment.objects.get(reference=reference)
+                    payment.status = 'failed'
+                    payment.failed_at = timezone.now()
+                    payment.gateway_response = webhook_data.get('gateway_response')
+                    payment.save()
+                except Payment.DoesNotExist:
+                    logger.error(f"Payment not found for reference: {reference}")
+        
+        elif event == 'refund.processed':
+            # Handle refund confirmation
+            reference = webhook_data.get('transaction_reference')
+            if reference:
+                try:
+                    payment = Payment.objects.get(reference=reference)
+                    payment.refunded_at = timezone.now()
+                    payment.save()
+                except Payment.DoesNotExist:
+                    logger.error(f"Payment not found for reference: {reference}")
+        
+        # Mark webhook as processed
+        webhook.processed = True
+        webhook.processed_at = timezone.now()
+        webhook.save()
+        
+        return JsonResponse({'status': 'success'}, status=200)
+        
+    except Exception as e:
+        logger.error(f"Error processing Paystack webhook: {str(e)}")
+        
+        if 'webhook' in locals():
+            webhook.error_message = str(e)
+            webhook.save()
+        
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

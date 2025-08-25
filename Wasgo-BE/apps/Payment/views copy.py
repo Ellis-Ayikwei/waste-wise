@@ -18,10 +18,10 @@ from .serializer import (
     CreateRefundSerializer,
 )
 from .stripe_service import StripeService
-from apps.Job.models import Job
-from apps.Job.serializers import JobSerializer
-from apps.Job.services import JobService
-from apps.Request.models import Request
+from apps.ServiceRequest.models import ServiceRequest
+from apps.ServiceRequest.serializers import ServiceRequestSerializer
+from apps.ServiceRequest.services import JobService
+from apps.ServiceRequest.models import ServiceRequest
 import uuid
 
 logger = logging.getLogger(__name__)
@@ -404,10 +404,10 @@ class PaymentViewSet(viewsets.ModelViewSet):
 
         try:
             # Get the request object
-            request_obj = Request.objects.get(id=request_id, user=user_id)
-        except Request.DoesNotExist:
+            request_obj = ServiceRequest.objects.get(id=request_id, user=user_id)
+        except ServiceRequest.DoesNotExist:
             return Response(
-                {"detail": "Request not found before checkout creation"},
+                {"detail": "ServiceRequest not found before checkout creation"},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -439,11 +439,11 @@ class PaymentViewSet(viewsets.ModelViewSet):
 
             # Get request with specific user
             try:
-                request_obj = Request.objects.get(id=request_id, user=actual_user)
+                request_obj = ServiceRequest.objects.get(id=request_id, user=actual_user)
                 print(f"Found request for user: {request_obj.id}")
-            except Request.DoesNotExist:
+            except ServiceRequest.DoesNotExist:
                 return Response(
-                    {"detail": "Request not found for this user"},
+                    {"detail": "ServiceRequest not found for this user"},
                     status=status.HTTP_404_NOT_FOUND,
                 )
         # Create checkout session

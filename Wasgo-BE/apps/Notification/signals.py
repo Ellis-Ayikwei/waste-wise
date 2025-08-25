@@ -8,7 +8,7 @@ from .services import NotificationService
 logger = logging.getLogger(__name__)
 
 
-@receiver(post_save, sender="Request.Request")
+@receiver(post_save, sender="ServiceRequest.ServiceRequest")
 def handle_request_created(sender, instance, created, **kwargs):
     """Send notification when a new request is created"""
     if created and instance.user:
@@ -21,7 +21,7 @@ def handle_request_created(sender, instance, created, **kwargs):
             logger.error(f"Error sending booking created notification: {str(e)}")
 
 
-@receiver(post_save, sender="Request.Request")
+@receiver(post_save, sender="ServiceRequest.ServiceRequest")
 def handle_request_status_change(sender, instance, created, **kwargs):
     """Send notification when request status changes"""
     if not created and instance.user:
@@ -61,7 +61,7 @@ def handle_request_status_change(sender, instance, created, **kwargs):
                         notification_type="booking_cancelled",
                         related_object_type="request",
                         related_object_id=instance.id,
-                        action_url=f"/requests/{instance.id}",
+                        action_url=f"/service-requests/{instance.id}",
                         priority="high",
                         request=instance,
                     )
@@ -196,7 +196,7 @@ def handle_provider_verification(sender, instance, created, **kwargs):
 #             logger.error(f"Error sending bid status notification: {str(e)}")
 
 
-@receiver(post_save, sender="Job.Job")
+@receiver(post_save, sender="ServiceRequest.ServiceRequest")
 def handle_job_status_change(sender, instance, created, **kwargs):
     """Send notification when job status changes"""
     if not created and instance.request and instance.request.user:
@@ -304,7 +304,7 @@ def handle_user_verification(sender, instance, created, **kwargs):
 
 
 # Signal to track original status for job status changes
-@receiver(pre_save, sender="Job.Job")
+@receiver(pre_save, sender="ServiceRequest.ServiceRequest")
 def track_job_status_changes(sender, instance, **kwargs):
     """Track original status before save"""
     if instance.pk:

@@ -490,7 +490,7 @@ class PricingConfigurationViewSet(viewsets.ModelViewSet):
                 }
 
                 # Create a request object for the pricing view
-                pricing_request = type("Request", (), {"data": price_data})()
+                pricing_request = type("ServiceRequest", (), {"data": price_data})()
                 response = self.calculate_price(pricing_request)
 
                 if response.status_code == 200:

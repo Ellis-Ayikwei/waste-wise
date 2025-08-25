@@ -9,7 +9,7 @@ from apps.Driver.models import Driver
 
 class Vehicle(Basemodel):
     """
-    Enhanced Vehicle model for tracking fleet vehicles in the MoreVans system.
+    Enhanced Vehicle model for tracking fleet vehicles in the Wasgo system.
     Includes UK-specific regulatory fields, business logic, and waste collection capabilities.
     """
 

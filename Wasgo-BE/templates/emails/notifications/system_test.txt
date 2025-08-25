@@ -7,6 +7,6 @@ Action: {{ action_text|default:"View Details" }} -> {{ action_url }}
 {% endif %}
 
 --
-{{ app_name|default:"MoreVans" }} {{ current_year }}
+{{ app_name|default:"Wasgo" }} {{ current_year }}
 
 

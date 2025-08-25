@@ -1,8 +1,8 @@
-# MoreVans Notification System Documentation
+# Wasgo Notification System Documentation
 
 ## Overview
 
-This document describes the comprehensive notification system implemented for the MoreVans platform. The system handles in-app notifications, email notifications, SMS (future), and push notifications (future) across various business events.
+This document describes the comprehensive notification system implemented for the Wasgo platform. The system handles in-app notifications, email notifications, SMS (future), and push notifications (future) across various business events.
 
 ## 🎯 Features Implemented
 
@@ -188,7 +188,7 @@ The notification system provides comprehensive REST API endpoints:
 - **Beautiful Styling** - Professional gradient designs
 - **Dynamic Content** - Context-aware content
 - **Action Buttons** - Call-to-action buttons
-- **Branding** - Consistent MoreVans branding
+- **Branding** - Consistent Wasgo branding
 - **Fallback Support** - Text versions for all templates
 
 ### Template Context Variables
@@ -442,4 +442,4 @@ For questions or issues with the notification system:
 
 **Last Updated**: January 2025  
 **Version**: 1.0  
-**Maintainer**: MoreVans Development Team
+**Maintainer**: Wasgo Development Team

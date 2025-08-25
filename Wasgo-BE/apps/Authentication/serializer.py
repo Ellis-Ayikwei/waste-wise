@@ -38,7 +38,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(write_only=True, required=True)
     first_name = serializers.CharField(required=True)
     last_name = serializers.CharField(required=True)
-    # phone_number = serializers.CharField(required=False, allow_blank=True)
+    phone_number = serializers.CharField(required=True)
     # user_type = serializers.ChoiceField(
     #     choices=User.USER_TYPE_CHOICES,
     #     default='customer'
@@ -46,7 +46,14 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("email", "password", "password2", "first_name", "last_name")
+        fields = (
+            "email",
+            "password",
+            "password2",
+            "first_name",
+            "last_name",
+            "phone_number",
+        )
 
     def validate(self, attrs):
         # Check if passwords match
@@ -78,7 +85,7 @@ class RegisterSerializer(serializers.ModelSerializer):
                 password=validated_data["password"],
                 first_name=validated_data.get("first_name", ""),
                 last_name=validated_data.get("last_name", ""),
-                # phone_number=validated_data.get('phone_number', ''),
+                phone_number=validated_data.get("phone_number", ""),
                 # user_type=validated_data.get('user_type', 'customer')
             )
 
@@ -179,66 +186,80 @@ class LoginWithOTPSerializer(serializers.Serializer):
 class MFALoginVerifySerializer(serializers.Serializer):
     """Serializer for MFA login verification"""
 
-    email = serializers.EmailField()
+    email_or_phone = serializers.CharField(
+        help_text="Enter your email address or phone number"
+    )
     otp_code = serializers.CharField(max_length=6, min_length=6)
 
 
 class MFALoginSerializer(serializers.Serializer):
     """Serializer for MFA login verification"""
 
-    email = serializers.EmailField()
+    email_or_phone = serializers.CharField(
+        help_text="Enter your email address or phone number"
+    )
     password = serializers.CharField(
         style={"input_type": "password"}, trim_whitespace=False
     )
 
     def validate(self, attrs):
-        email = attrs.get("email")
+        email_or_phone = attrs.get("email_or_phone")
         password = attrs.get("password")
 
-        logger.info(f"Login attempt for email: {email}")
+        logger.info(f"MFA Login attempt for email_or_phone: {email_or_phone}")
 
-        if not email or not password:
-            logger.warning("Login attempt without email or password")
-            msg = _('Must include "email" and "password".')
+        if not email_or_phone or not password:
+            logger.warning("MFA Login attempt without email_or_phone or password")
+            msg = _('Must include "email_or_phone" and "password".')
             raise serializers.ValidationError(
                 {"detail": msg, "code": "missing_fields"}, code="authorization"
             )
 
         # Check if user exists before attempting authentication
         try:
-            user_exists = User.objects.filter(email__iexact=email.lower()).exists()
-            if not user_exists:
-                logger.warning(f"User with email {email} not found in database")
-                raise serializers.ValidationError(
-                    {"detail": "User not found", "code": "user_not_found"},
-                    code="authorization",
-                )
+            # Check if it's an email or phone number
+            if "@" in email_or_phone:
+                # It's an email
+                user_exists = User.objects.filter(
+                    email__iexact=email_or_phone.lower()
+                ).exists()
+                if not user_exists:
+                    logger.warning(
+                        f"User with email {email_or_phone} not found in database"
+                    )
+                    raise serializers.ValidationError(
+                        {"detail": "User not found", "code": "user_not_found"},
+                        code="authorization",
+                    )
+            else:
+                # It's a phone number
+                user_exists = User.objects.filter(phone_number=email_or_phone).exists()
+                if not user_exists:
+                    logger.warning(
+                        f"User with phone {email_or_phone} not found in database"
+                    )
+                    raise serializers.ValidationError(
+                        {"detail": "User not found", "code": "user_not_found"},
+                        code="authorization",
+                    )
         except Exception as e:
             logger.exception(f"Error checking user existence: {str(e)}")
 
-        # Try both email and email_or_phone parameters for authentication
-        # First attempt with email parameter
+        # Use the custom authentication backend that handles both email and phone
         user = authenticate(
             request=self.context.get("request"),
-            email=email.lower(),  # Ensure lowercase email
+            email_or_phone=(
+                email_or_phone.lower() if "@" in email_or_phone else email_or_phone
+            ),
             password=password,
         )
-
-        # If that fails, try with email_or_phone parameter
-        if not user:
-            logger.info(
-                f"First authentication attempt failed, trying with email_or_phone"
-            )
-            user = authenticate(
-                request=self.context.get("request"),
-                email_or_phone=email.lower(),  # Ensure lowercase
-                password=password,
-            )
 
         if user:
             # Check Django's is_active field first
             if not user.is_active:
-                logger.warning(f"User {email} is inactive (Django is_active=False)")
+                logger.warning(
+                    f"User {email_or_phone} is inactive (Django is_active=False)"
+                )
                 raise serializers.ValidationError(
                     "User account is disabled.",
                     code="inactive_account",
@@ -248,37 +269,37 @@ class MFALoginSerializer(serializers.Serializer):
             account_status = getattr(user, "account_status", "active")
 
             if account_status == "inactive":
-                logger.warning(f"User {email} has inactive account status")
+                logger.warning(f"User {email_or_phone} has inactive account status")
                 raise serializers.ValidationError(
                     "Your account is currently inactive. Please contact support to reactivate your account.",
                     code="account_inactive",
                 )
             elif account_status == "pending":
-                logger.warning(f"User {email} has pending account status")
+                logger.warning(f"User {email_or_phone} has pending account status")
                 raise serializers.ValidationError(
                     "Your account is pending approval. You will receive an email once your account is activated.",
                     code="account_pending",
                 )
             elif account_status == "suspended":
-                logger.warning(f"User {email} has suspended account status")
+                logger.warning(f"User {email_or_phone} has suspended account status")
                 raise serializers.ValidationError(
                     "Your account has been temporarily suspended. Please contact support for more information.",
                     code="account_suspended",
                 )
             elif account_status == "deleted":
-                logger.warning(f"User {email} has deleted account status")
+                logger.warning(f"User {email_or_phone} has deleted account status")
                 raise serializers.ValidationError(
                     "This account has been deleted. Please contact support if you believe this is an error.",
                     code="account_deleted",
                 )
             elif account_status == "banned":
-                logger.warning(f"User {email} has banned account status")
+                logger.warning(f"User {email_or_phone} has banned account status")
                 raise serializers.ValidationError(
                     "Your account has been permanently banned due to policy violations.",
                     code="account_banned",
                 )
             elif account_status == "expired":
-                logger.warning(f"User {email} has expired account status")
+                logger.warning(f"User {email_or_phone} has expired account status")
                 raise serializers.ValidationError(
                     "Your account has expired. Please renew your subscription or contact support.",
                     code="account_expired",
@@ -286,27 +307,33 @@ class MFALoginSerializer(serializers.Serializer):
             elif account_status != "active":
                 # Catch any other unexpected status values
                 logger.warning(
-                    f"User {email} has unknown account status: {account_status}"
+                    f"User {email_or_phone} has unknown account status: {account_status}"
                 )
                 raise serializers.ValidationError(
                     "Your account status is unknown. Please contact support for assistance.",
                     code="account_unknown_status",
                 )
 
-            logger.info(f"Authentication successful for {email}")
+            logger.info(f"MFA Authentication successful for {email_or_phone}")
         else:
             # Check if user exists but credentials are invalid
-            user_exists = User.objects.filter(email__iexact=email.lower()).exists()
+            if "@" in email_or_phone:
+                user_exists = User.objects.filter(
+                    email__iexact=email_or_phone.lower()
+                ).exists()
+            else:
+                user_exists = User.objects.filter(phone_number=email_or_phone).exists()
+
             if not user_exists:
-                logger.warning(f"User with email {email} not found in database")
+                logger.warning(f"User with {email_or_phone} not found in database")
                 raise serializers.ValidationError(
-                    {"detail": "User not found 11", "code": "user_not_found"},
+                    {"detail": "User not found", "code": "user_not_found"},
                     code="authorization",
                 )
             else:
                 # User exists but password is wrong
                 logger.warning(
-                    f"Authentication failed for {email} - invalid credentials"
+                    f"MFA Authentication failed for {email_or_phone} - invalid credentials"
                 )
                 raise serializers.ValidationError(
                     {"detail": "Invalid password", "code": "invalid_credentials"},
@@ -318,77 +345,93 @@ class MFALoginSerializer(serializers.Serializer):
 
 
 class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+    email_or_phone = serializers.CharField(
+        help_text="Enter your email address or phone number"
+    )
     password = serializers.CharField(
         style={"input_type": "password"}, trim_whitespace=False
     )
 
     def validate(self, attrs):
-        email = attrs.get("email")
+        email_or_phone = attrs.get("email_or_phone")
         password = attrs.get("password")
 
-        logger.info(f"Login attempt for email: {email}")
+        logger.info(f"Login attempt for email_or_phone: {email_or_phone}")
 
-        if not email or not password:
-            logger.warning("Login attempt without email or password")
-            msg = _('Must include "email" and "password".')
+        if not email_or_phone or not password:
+            logger.warning("Login attempt without email_or_phone or password")
+            msg = _('Must include "email_or_phone" and "password".')
             raise serializers.ValidationError(
                 {"detail": msg, "code": "missing_fields"}, code="authorization"
             )
 
         # Check if user exists before attempting authentication
         try:
-            user_exists = User.objects.filter(email__iexact=email.lower()).exists()
-            if not user_exists:
-                logger.warning(f"User with email {email} not found in database")
-                raise serializers.ValidationError(
-                    {"detail": "User not found", "code": "user_not_found"},
-                    code="authorization",
-                )
+            # Check if it's an email or phone number
+            if "@" in email_or_phone:
+                # It's an email
+                user_exists = User.objects.filter(
+                    email__iexact=email_or_phone.lower()
+                ).exists()
+                if not user_exists:
+                    logger.warning(
+                        f"User with email {email_or_phone} not found in database"
+                    )
+                    raise serializers.ValidationError(
+                        {"detail": "User not found", "code": "user_not_found"},
+                        code="authorization",
+                    )
+            else:
+                # It's a phone number
+                user_exists = User.objects.filter(phone_number=email_or_phone).exists()
+                if not user_exists:
+                    logger.warning(
+                        f"User with phone {email_or_phone} not found in database"
+                    )
+                    raise serializers.ValidationError(
+                        {"detail": "User not found", "code": "user_not_found"},
+                        code="authorization",
+                    )
         except Exception as e:
             logger.exception(f"Error checking user existence: {str(e)}")
 
-        # Try both email and email_or_phone parameters for authentication
-        # First attempt with email parameter
+        # Use the custom authentication backend that handles both email and phone
         user = authenticate(
             request=self.context.get("request"),
-            email=email.lower(),
+            email_or_phone=(
+                email_or_phone.lower() if "@" in email_or_phone else email_or_phone
+            ),
             password=password,
         )
-
-        # If that fails, try with email_or_phone parameter
-        if not user:
-            logger.info(
-                f"First authentication attempt failed, trying with email_or_phone"
-            )
-            user = authenticate(
-                request=self.context.get("request"),
-                email_or_phone=email.lower(),  # Ensure lowercase
-                password=password,
-            )
 
         if user:
             # Make sure the user is active
             if not user.is_active:
-                logger.warning(f"User {email} is inactive")
+                logger.warning(f"User {email_or_phone} is inactive")
                 raise serializers.ValidationError(
                     {"detail": "User account is disabled.", "code": "inactive_account"},
                     code="authorization",
                 )
-            logger.info(f"Authentication successful for {email}")
+            logger.info(f"Authentication successful for {email_or_phone}")
         else:
             # Check if user exists but credentials are invalid
-            user_exists = User.objects.filter(email__iexact=email.lower()).exists()
+            if "@" in email_or_phone:
+                user_exists = User.objects.filter(
+                    email__iexact=email_or_phone.lower()
+                ).exists()
+            else:
+                user_exists = User.objects.filter(phone_number=email_or_phone).exists()
+
             if not user_exists:
-                logger.warning(f"User with email {email} not found in database")
+                logger.warning(f"User with {email_or_phone} not found in database")
                 raise serializers.ValidationError(
-                    {"detail": "User not found 11", "code": "user_not_found"},
+                    {"detail": "User not found", "code": "user_not_found"},
                     code="authorization",
                 )
             else:
                 # User exists but password is wrong
                 logger.warning(
-                    f"Authentication failed for {email} - invalid credentials"
+                    f"Authentication failed for {email_or_phone} - invalid credentials"
                 )
                 raise serializers.ValidationError(
                     {"detail": "Invalid password", "code": "invalid_credentials"},

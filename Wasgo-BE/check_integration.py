@@ -76,7 +76,7 @@ def check_integration():
         'corsheaders',
         'apps.Authentication',
         'apps.Payment',
-        'apps.Request',
+        'apps.ServiceRequest',
         'apps.Location',
         'apps.User',
     ]
@@ -120,13 +120,13 @@ def check_integration():
     print("\n7. Checking Models...")
     
     try:
-        from apps.Payment.models_paystack import Payment, PaymentMethod, PaystackCustomer
-        from apps.Request.models import Request
+        from apps.Payment.models_paystack import PaystackPayment, PaystackPaymentMethod, PaystackCustomer
+        from apps.ServiceRequest.models import ServiceRequest
         from apps.User.models import User
         from apps.Location.models import Location
         
         print("   ✓ Payment models loaded")
-        print("   ✓ Request model loaded")
+        print("   ✓ ServiceRequest model loaded")
         print("   ✓ User model loaded")
         print("   ✓ Location model loaded")
         
@@ -143,7 +143,7 @@ def check_integration():
         ('token_obtain_pair', 'auth/login/'),
         ('token_refresh', 'auth/refresh_token/'),
         ('payment-list', 'payments/'),
-        ('request-list', 'requests/'),
+        ('request-list', 'service-requests/'),
     ]
     
     for name, path in endpoints_to_check:

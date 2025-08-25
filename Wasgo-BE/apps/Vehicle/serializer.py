@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Vehicle, VehicleImages, VehicleDocuments
+from .models import Vehicle, VehicleImages
 from apps.Driver.serializer import DriverSerializer
 from apps.Provider.serializer import ServiceProviderSerializer
 from apps.CommonItems.serializers import (
@@ -16,24 +16,12 @@ class VehicleImageSerializer(serializers.ModelSerializer):
         read_only_fields = ["created_at"]
 
 
-class VehicleDocumentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = VehicleDocuments
-        fields = [
-            "id",
-            "document_type",
-            "document",
-            "description",
-            "expiry_date",
-            "created_at",
-            "vehicle_id",
-        ]
-        read_only_fields = ["created_at"]
+
 
 
 class VehicleSerializer(serializers.ModelSerializer):
     photos = VehicleImageSerializer(many=True, read_only=True)
-    documents = VehicleDocumentSerializer(many=True, read_only=True)
+
     provider = ServiceProviderSerializer(read_only=True)
     vehicle_category = VehicleCategorySerializer(read_only=True)
     vehicle_type = VehicleTypeSerializer(read_only=True)
@@ -126,7 +114,6 @@ class VehicleSerializer(serializers.ModelSerializer):
             "vehicle_type_id",
             "primary_driver_id",
             "photos",
-            "documents",
             "created_at",
             "updated_at",
         ]
@@ -183,18 +170,4 @@ class VehicleImageDetailSerializer(serializers.ModelSerializer):
         read_only_fields = ["created_at", "updated_at"]
 
 
-class VehicleDocumentDetailSerializer(serializers.ModelSerializer):
 
-    class Meta:
-        model = VehicleDocuments
-        fields = [
-            "id",
-            "vehicle_id",
-            "document_type",
-            "document",
-            "description",
-            "expiry_date",
-            "created_at",
-            "updated_at",
-        ]
-        read_only_fields = ["created_at", "updated_at"]

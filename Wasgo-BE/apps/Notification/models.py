@@ -5,18 +5,18 @@ from apps.User.models import User
 
 class Notification(Basemodel):
     NOTIFICATION_TYPES = [
-        # Booking/Request Related
+        # Booking/ServiceRequest Related
         ("booking_created", "Booking Created"),
         ("booking_confirmed", "Booking Confirmed"),
         ("booking_cancelled", "Booking Cancelled"),
-        ("request_update", "Request Status Update"),
-        # Provider/Job Related
-        ("provider_accepted", "Provider Accepted Job"),
+        ("request_update", "ServiceRequest Status Update"),
+        # Provider/ServiceRequest Related
+        ("provider_accepted", "Provider Accepted ServiceRequest"),
         ("provider_assigned", "Provider Assigned"),
-        ("job_started", "Job Started"),
-        ("job_in_transit", "Job In Transit"),
-        ("job_completed", "Job Completed"),
-        ("job_cancelled", "Job Cancelled"),
+        ("job_started", "ServiceRequest Started"),
+        ("job_in_transit", "ServiceRequest In Transit"),
+        ("job_completed", "ServiceRequest Completed"),
+        ("job_cancelled", "ServiceRequest Cancelled"),
         # Account/Verification Related
         ("account_verified", "Account Verified"),
         ("provider_verified", "Provider Account Verified"),
@@ -69,7 +69,7 @@ class Notification(Basemodel):
         ("collection_efficiency_report", "Collection Efficiency Report"),
         ("route_optimization_suggestion", "Route Optimization Suggestion"),
         ("waste_volume_forecast", "Waste Volume Forecast"),
-        ("emergency_collection_request", "Emergency Collection Request"),
+        ("emergency_collection_request", "Emergency Collection ServiceRequest"),
         ("scheduled_maintenance_reminder", "Scheduled Maintenance Reminder"),
         ("bin_sensor_alert", "Bin Sensor Alert"),
         ("collection_delay_notification", "Collection Delay Notification"),

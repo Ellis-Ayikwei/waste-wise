@@ -28,8 +28,8 @@ const ERROR_MESSAGES = {
     FORGOT_PASSWORD_FAILED: 'Failed to request password reset. Please try again.',
 };
 
-export const LoginUser = createAsyncThunk('auth/LoginUser', async ({ email, password, extra }: { email?: string; password: string; extra?: any }, { rejectWithValue }) => {
-    const payload = { email, password };
+export const LoginUser = createAsyncThunk('auth/LoginUser', async ({ email_or_phone, password, extra }: { email_or_phone: string; password: string; extra?: any }, { rejectWithValue }) => {
+    const payload = { email_or_phone, password };
 
     try {
         const response = await authAxiosInstance.post('/login/', payload);
@@ -66,11 +66,24 @@ export const LoginUser = createAsyncThunk('auth/LoginUser', async ({ email, pass
         ShowRequestError(error);
         console.error('Error during login:', error);
 
-        const parser = new DOMParser();
-        const errorData = error.response.data;
-        const doc = parser.parseFromString(errorData, 'text/html');
-        const errorMess = doc.querySelector('body')?.innerText ?? 'An error occurred';
-        const errorMessage = errorMess.split('\n')[1];
+        // Handle different error response formats
+        let errorMessage = 'An error occurred';
+        
+        if (error.response?.data) {
+            if (typeof error.response.data === 'string') {
+                // Handle HTML error responses
+                const parser = new DOMParser();
+                const errorData = error.response.data;
+                const doc = parser.parseFromString(errorData, 'text/html');
+                const errorMess = doc.querySelector('body')?.innerText ?? 'An error occurred';
+                errorMessage = errorMess.split('\n')[1] || errorMess;
+            } else if (error.response.data.detail) {
+                // Handle JSON error responses
+                errorMessage = error.response.data.detail;
+            } else if (error.response.data.message) {
+                errorMessage = error.response.data.message;
+            }
+        }
 
         return rejectWithValue(errorMessage);
     }
@@ -78,13 +91,13 @@ export const LoginUser = createAsyncThunk('auth/LoginUser', async ({ email, pass
 
 
 export const MfaLoginUser = createAsyncThunk('auth/MfaLoginUser', async (
-    { email, password, extra }: { email: string; password: string; extra?: any },
+    { email_or_phone, password, extra }: { email_or_phone: string; password: string; extra?: any },
     { rejectWithValue }
 ) => {
     // Attach device context for trusted-device fast-path
     const { device_id, device_name, fingerprint, device_info } = getDeviceInfo();
     getOrCreateDeviceId();
-    const payload = { email, password, device_id, device_name, fingerprint, device_info };
+    const payload = { email_or_phone, password, device_id, device_name, fingerprint, device_info };
 
     try {
         const response = await authAxiosInstance.post('/mfa/login/', payload);
@@ -100,14 +113,14 @@ export const MfaLoginUser = createAsyncThunk('auth/MfaLoginUser', async (
             if (extra && extra.signIn) {
                 const { signIn } = extra;
                 
-        const isSignedIn = signIn({
-            auth: {
-                token: accessToken,
-                type: 'Bearer',
-            },
-            refresh: refreshToken,
-            userState: user,
-        });
+                const isSignedIn = signIn({
+                    auth: {
+                        token: accessToken,
+                        type: 'Bearer',
+                    },
+                    refresh: refreshToken,
+                    userState: user,
+                });
                 localStorage.setItem('userId', user?.id);
                 if (!isSignedIn) {
                     throw new Error('Frontend sign-in failed');
@@ -139,7 +152,27 @@ export const MfaLoginUser = createAsyncThunk('auth/MfaLoginUser', async (
 
     } catch (error: any) {
         console.error('MFA Login Error:', error);
-        return rejectWithValue(error);
+        
+        // Handle different error response formats
+        let errorMessage = 'MFA login failed. Please try again.';
+        
+        if (error.response?.data) {
+            if (typeof error.response.data === 'string') {
+                // Handle HTML error responses
+                const parser = new DOMParser();
+                const errorData = error.response.data;
+                const doc = parser.parseFromString(errorData, 'text/html');
+                const errorMess = doc.querySelector('body')?.innerText ?? 'An error occurred';
+                errorMessage = errorMess.split('\n')[1] || errorMess;
+            } else if (error.response.data.detail) {
+                // Handle JSON error responses
+                errorMessage = error.response.data.detail;
+            } else if (error.response.data.message) {
+                errorMessage = error.response.data.message;
+            }
+        }
+        
+        return rejectWithValue(errorMessage);
     }
 });
 
@@ -148,7 +181,7 @@ export const VerifyMfaLogin = createAsyncThunk(
     'auth/VerifyMfaLogin',
     async (
         {
-            email,
+            email_or_phone,
             otp_code,
             extra,
             trust_device,
@@ -159,7 +192,7 @@ export const VerifyMfaLogin = createAsyncThunk(
             session_id,
             device_info,
         }: {
-            email?: string;
+            email_or_phone?: string;
             otp_code: string;
             extra?: any;
             trust_device?: boolean;
@@ -173,7 +206,7 @@ export const VerifyMfaLogin = createAsyncThunk(
         { rejectWithValue }
     ) => {
     const payload: any = {
-        email,
+        email_or_phone,
         user_id,
         session_id,
         otp_code,
@@ -192,7 +225,7 @@ export const VerifyMfaLogin = createAsyncThunk(
         const refreshToken = response?.headers['x-refresh-token'];
         console.log('the response...............SS', accessToken, refreshToken);
 
-        const user = response.data;
+        const user = response.data.user; // Backend returns { user: {...} }
 
         // if (!accessToken |.............| !refreshToken) {
         //     console.error('Error: Missing tokens from server response');
@@ -217,16 +250,28 @@ export const VerifyMfaLogin = createAsyncThunk(
 
         return user;
     } catch (error: any) {
-        // ShowRequestError(error);
-        console.error('Error during login:', error);
+        console.error('Error during MFA verification:', error);
 
-        const parser = new DOMParser();
-        const errorData = error.response.data;
-        const doc = parser.parseFromString(errorData, 'text/html');
-        const errorMess = doc.querySelector('body')?.innerText ?? 'An error occurred';
-        const errorMessage = errorMess.split('\n')[1];
+        // Handle different error response formats
+        let errorMessage = 'MFA verification failed. Please try again.';
+        
+        if (error.response?.data) {
+            if (typeof error.response.data === 'string') {
+                // Handle HTML error responses
+                const parser = new DOMParser();
+                const errorData = error.response.data;
+                const doc = parser.parseFromString(errorData, 'text/html');
+                const errorMess = doc.querySelector('body')?.innerText ?? 'An error occurred';
+                errorMessage = errorMess.split('\n')[1] || errorMess;
+            } else if (error.response.data.detail) {
+                // Handle JSON error responses
+                errorMessage = error.response.data.detail;
+            } else if (error.response.data.message) {
+                errorMessage = error.response.data.message;
+            }
+        }
 
-        return rejectWithValue(error);
+        return rejectWithValue(errorMessage);
     }
 });
 
@@ -249,8 +294,25 @@ export const LogoutUser = createAsyncThunk('auth/LogoutUser', async (extra: any,
 
 export const RegisterUser = createAsyncThunk(
     'auth/RegisterUser',
-    async ({ userOrEmail, password, confirm_password, first_name, last_name, phone_number, accountType }: { userOrEmail: { email?: string; username?: string }; password: string; confirm_password: string, first_name: string, last_name: string, phone_number: string, accountType: string }, { rejectWithValue }) => {
-        const payload = { ...userOrEmail, password, first_name, last_name, password2: confirm_password, phone_number, account_type: accountType };
+    async ({ email, password, password2, first_name, last_name, phone_number, accountType }: { 
+        email: string; 
+        password: string; 
+        password2: string; 
+        first_name: string; 
+        last_name: string; 
+        phone_number: string; 
+        accountType: string 
+    }, { rejectWithValue }) => {
+        const payload = { 
+            email, 
+            password, 
+            password2, 
+            first_name, 
+            last_name, 
+            phone_number, 
+            account_type: accountType 
+        };
+        
         try {
             const response = await authAxiosInstance.post('/register/', payload);
             return response.data;
@@ -258,11 +320,24 @@ export const RegisterUser = createAsyncThunk(
             ShowRequestError(error);
             console.error('Error during register:', error);
     
-            const parser = new DOMParser();
-            const errorData = error.response.data;
-            const doc = parser.parseFromString(errorData, 'text/html');
-            const errorMess = doc.querySelector('body')?.innerText ?? 'An error occurred';
-            const errorMessage = errorMess.split('\n')[1];
+            // Handle different error response formats
+            let errorMessage = 'Registration failed. Please try again.';
+            
+            if (error.response?.data) {
+                if (typeof error.response.data === 'string') {
+                    // Handle HTML error responses
+                    const parser = new DOMParser();
+                    const errorData = error.response.data;
+                    const doc = parser.parseFromString(errorData, 'text/html');
+                    const errorMess = doc.querySelector('body')?.innerText ?? 'An error occurred';
+                    errorMessage = errorMess.split('\n')[1] || errorMess;
+                } else if (error.response.data.message) {
+                    // Handle JSON error responses
+                    errorMessage = error.response.data.message;
+                } else if (error.response.data.detail) {
+                    errorMessage = error.response.data.detail;
+                }
+            }
     
             return rejectWithValue(errorMessage);
         }

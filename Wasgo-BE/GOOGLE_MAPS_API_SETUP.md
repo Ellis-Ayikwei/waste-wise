@@ -24,7 +24,7 @@ GOOGLE_MAPS_API_KEY=your-actual-google-maps-api-key-here
 OPENWEATHERMAP_API_KEY=your-openweathermap-api-key-here
 
 # Database Settings
-DB_NAME=morevans
+DB_NAME=wasgo
 DB_USER=postgres
 DB_PASSWORD=@Toshib123
 DB_HOST=localhost

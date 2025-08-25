@@ -14,11 +14,14 @@ import {
     IconUserCheck,
     IconUsers,
 } from '@tabler/icons-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUsers, faCheck, faBuilding, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import IconLoader from '../../../components/Icon/IconLoader';
 import DraggableDataTable, { ColumnDefinition } from '../../../components/ui/DraggableDataTable';
 import FilterSelect from '../../../components/ui/FilterSelect';
+import StatCard from '../../../components/ui/statCard';
 import axiosInstance from '../../../services/axiosInstance';
 
 interface UserAccount {
@@ -418,50 +421,34 @@ const UserManagement: React.FC = () => {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
-                            <IconUsers className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Total Users</p>
-                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{users.length}</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-xl">
-                            <IconCheck className="w-6 h-6 text-green-600 dark:text-green-400" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Active Users</p>
-                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{users.filter((u) => u.account_status === 'active').length}</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
-                            <IconBuilding className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Providers</p>
-                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{users.filter((u) => u.user_type === 'provider').length}</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl">
-                            <IconAlertTriangle className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Pending Review</p>
-                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{users.filter((u) => u.account_status === 'pending').length}</p>
-                        </div>
-                    </div>
-                </div>
+                <StatCard
+                    icon={faUsers}
+                    title="Total Users"
+                    value={users.length}
+                    color="blue"
+                    delay={0.1}
+                />
+                <StatCard
+                    icon={faCheck}
+                    title="Active Users"
+                    value={users.filter((u) => u.account_status === 'active').length}
+                    color="green"
+                    delay={0.2}
+                />
+                <StatCard
+                    icon={faBuilding}
+                    title="Providers"
+                    value={users.filter((u) => u.user_type === 'provider').length}
+                    color="purple"
+                    delay={0.3}
+                />
+                <StatCard
+                    icon={faExclamationTriangle}
+                    title="Pending Review"
+                    value={users.filter((u) => u.account_status === 'pending').length}
+                    color="yellow"
+                    delay={0.4}
+                />
             </div>
 
             {/* DraggableDataTable */}

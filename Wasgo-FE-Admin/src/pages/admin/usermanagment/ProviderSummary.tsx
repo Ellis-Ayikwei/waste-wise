@@ -28,7 +28,7 @@ export const ProviderSummary: React.FC<ProviderSummaryProps> = ({ provider }) =>
           <div className="md:w-3/4">
             <div className="flex flex-col md:flex-row md:justify-between">
               <div>
-                <h3 className="text-2xl font-bold text-gray-900">{provider.company_name}</h3>
+                <h3 className="text-2xl font-bold text-gray-900">{provider.business_name}</h3>
                 <div className="flex items-center mt-2 space-x-2">
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClass(provider.user.account_status)}`}>
                     {provider.user.account_status}
@@ -79,7 +79,11 @@ export const ProviderSummary: React.FC<ProviderSummaryProps> = ({ provider }) =>
                 <MapPin className="text-gray-400 w-4 h-4 mt-1 mr-3" />
                 <div>
                   <div className="text-xs text-gray-500">Location</div>
-                  <div className="text-sm">{provider.base_location || 'N/A'}</div>
+                  <div className="text-sm">
+                    {typeof provider.base_location === 'object' && provider.base_location?.coordinates ? 
+                      `${provider.base_location.coordinates[1]}, ${provider.base_location.coordinates[0]}` : 
+                      (typeof provider.base_location === 'string' ? provider.base_location : 'N/A')}
+                  </div>
                 </div>
               </div>
             </div>

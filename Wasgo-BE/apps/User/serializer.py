@@ -1,6 +1,6 @@
 # Update your serializer in apps/User/serializer.py
 
-from apps.User.models import User, Address, UserActivity
+from apps.User.models import User, Address, UserActivity, Document, Availability
 from rest_framework import serializers
 from django.contrib.auth.models import Group, Permission
 
@@ -128,6 +128,7 @@ class UserSerializer(serializers.ModelSerializer):
     user_permissions = serializers.SerializerMethodField(read_only=True)
     roles = serializers.SerializerMethodField(read_only=True)
     user_activities = serializers.SerializerMethodField(read_only=True)
+    bins = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
@@ -147,6 +148,7 @@ class UserSerializer(serializers.ModelSerializer):
             "user_permissions",
             "roles",
             "user_activities",
+            "bins",
         )
         read_only_fields = (
             "rating",
@@ -156,6 +158,86 @@ class UserSerializer(serializers.ModelSerializer):
             "user_permissions",
             "roles",
             "user_activities",
+            "bins",
+        )
+
+    def get_roles(self, obj):
+        return [group.name for group in obj.groups.all()]
+
+    def get_user_permissions(self, obj):
+        # Get all effective permissions (direct + group)
+        perms = obj.get_user_permissions() | obj.get_group_permissions()
+        # Get Permission objects for all these codenames
+        from django.contrib.auth.models import Permission
+
+        permissions = Permission.objects.filter(
+            codename__in=[p.split(".")[-1] for p in perms]
+        )
+        return PermissionSerializer(permissions, many=True).data
+
+    def get_user_activities(self, obj):
+        print("getting user activities for user", obj.user_type)
+        from .serializer import UserActivitySerializer
+
+        activities = obj.activities.order_by("-created_at")[:10]
+        return UserActivitySerializer(activities, many=True).data
+
+    def get_bins(self, obj):
+        """Get user's bins if they are a customer"""
+        if obj.user_type == "customer":
+            try:
+                from apps.WasteBin.serializers import SmartBinListSerializer
+                from apps.WasteBin.models import SmartBin
+
+                bins = SmartBin.objects.filter(user=obj)
+                return SmartBinListSerializer(bins, many=True).data
+            except ImportError:
+                # Fallback if WasteBin app is not available
+                return []
+        return []
+
+
+class UserDetailSerializer(serializers.ModelSerializer):
+    """Detailed user serializer with customer profile and bins"""
+
+    groups = GroupSerializer(many=True, read_only=True)
+    user_permissions = serializers.SerializerMethodField(read_only=True)
+    roles = serializers.SerializerMethodField(read_only=True)
+    user_activities = serializers.SerializerMethodField(read_only=True)
+    bins = serializers.SerializerMethodField(read_only=True)
+    customer_profile = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+            "phone_number",
+            "profile_picture",
+            "rating",
+            "user_type",
+            "account_status",
+            "last_active",
+            "date_joined",
+            "groups",
+            "user_permissions",
+            "roles",
+            "user_activities",
+            "bins",
+            "customer_profile",
+        )
+        read_only_fields = (
+            "rating",
+            "last_active",
+            "date_joined",
+            "groups",
+            "user_permissions",
+            "roles",
+            "user_activities",
+            "bins",
+            "customer_profile",
         )
 
     def get_roles(self, obj):
@@ -178,6 +260,37 @@ class UserSerializer(serializers.ModelSerializer):
         activities = obj.activities.order_by("-created_at")[:10]
         return UserActivitySerializer(activities, many=True).data
 
+    def get_bins(self, obj):
+        """Get user's bins if they are a customer"""
+        if obj.user_type == "customer":
+            try:
+                from apps.WasteBin.serializers import SmartBinListSerializer
+                from apps.WasteBin.models import SmartBin
+
+                bins = SmartBin.objects.filter(user=obj)
+                return SmartBinListSerializer(bins, many=True).data
+            except ImportError:
+                # Fallback if WasteBin app is not available
+                return []
+        return []
+
+    def get_customer_profile(self, obj):
+        """Get customer profile if user is a customer"""
+        print("trying to get customer profile for user", obj.user_type)
+        if obj.user_type == "customer":
+            try:
+                from apps.Customer.models import CustomerProfile
+                from apps.Customer.serializers import CustomerProfileSerializer
+
+                customer_profile = CustomerProfile.objects.filter(user=obj).first()
+                if customer_profile:
+                    return CustomerProfileSerializer(customer_profile).data
+                return None
+            except ImportError:
+                # Fallback if Customer app is not available
+                return None
+        return None
+
 
 class AddressSerializer(serializers.ModelSerializer):
     class Meta:
@@ -198,7 +311,16 @@ class AddressSerializer(serializers.ModelSerializer):
 class UserActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = UserActivity
-        fields = ["id", "user", "activity_type", "request", "created_at", "details"]
+        fields = [
+            "id",
+            "user",
+            "activity_type",
+            "description",
+            "metadata",
+            "ip_address",
+            "user_agent",
+            "created_at",
+        ]
         read_only_fields = ["created_at"]
 
 
@@ -236,3 +358,101 @@ class BulkUserGroupSerializer(serializers.Serializer):
                 raise serializers.ValidationError(f"Groups not found: {missing_ids}")
 
         return value
+
+
+# Document Serializers
+class DocumentSerializer(serializers.ModelSerializer):
+    """Serializer for Document model"""
+
+    class Meta:
+        model = Document
+        fields = [
+            "id",
+            "content_type",
+            "object_id",
+            "document_type",
+            "document_number",
+            "title",
+            "description",
+            "document_front",
+            "document_back",
+            "issue_date",
+            "expiry_date",
+            "status",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "created_at",
+            "updated_at",
+            "status",
+        ]
+
+
+class DocumentVerificationSerializer(serializers.ModelSerializer):
+    """Serializer for document verification"""
+
+    class Meta:
+        model = Document
+        fields = [
+            "id",
+            "status",
+        ]
+        read_only_fields = ["status"]
+
+
+class DocumentRejectionSerializer(serializers.ModelSerializer):
+    """Serializer for document rejection"""
+
+    class Meta:
+        model = Document
+        fields = ["id", "status"]
+        read_only_fields = ["status"]
+
+
+# Availability Serializers
+class AvailabilitySerializer(serializers.ModelSerializer):
+    """Serializer for Availability model"""
+
+    class Meta:
+        model = Availability
+        fields = [
+            "id",
+            "content_type",
+            "object_id",
+            "date",
+            "time_slots",
+            "is_available",
+            "max_bookings",
+            "current_bookings",
+            "notes",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["created_at", "updated_at", "current_bookings"]
+
+
+class AvailabilityBookingSerializer(serializers.ModelSerializer):
+    """Serializer for availability booking"""
+
+    class Meta:
+        model = Availability
+        fields = ["id", "current_bookings", "is_available"]
+
+
+class AvailabilityReleaseSerializer(serializers.ModelSerializer):
+    """Serializer for availability release"""
+
+    class Meta:
+        model = Availability
+        fields = ["id", "current_bookings", "is_available"]
+
+
+class UserDetailWithDocumentsSerializer(UserSerializer):
+    """Extended user serializer with documents and availability"""
+
+    documents = DocumentSerializer(many=True, read_only=True)
+    availability_slots = AvailabilitySerializer(many=True, read_only=True)
+
+    class Meta(UserSerializer.Meta):
+        fields = UserSerializer.Meta.fields + ("documents", "availability_slots")

@@ -126,30 +126,25 @@ const About: React.FC = () => {
 
     const team = [
         {
-            name: 'Kwame Mensah',
-            role: 'CEO & Founder',
-            image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80',
-            bio: 'Environmental engineer with 15 years experience in sustainable development',
+            name: 'Ellis Armah Ayikwei',
+            role: 'Ceo and Development Lead',
+            image: '/assets/images/aboutimages/ellis.jpg',
+            bio: 'Full-stack software engineer and AI enthusiast with expertise in React, Python, and scalable SaaS solutions.',
         },
         {
-            name: 'Ama Osei',
-            role: 'CTO',
-            image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80',
-            bio: 'Tech innovator specializing in IoT solutions for environmental challenges',
+            name: 'Ntim Kwame Frimpong',
+            role: 'Project Lead',
+            image: '/assets/images/aboutimages/kwame.jpg',
+            bio: 'Innovative project strategist with a strong focus on emerging technologies and sustainable digital solutions.',
         },
         {
-            name: 'Kofi Asante',
-            role: 'Head of Operations',
-            image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80',
-            bio: 'Logistics expert with a passion for optimizing waste collection systems',
-        },
-        {
-            name: 'Akosua Boateng',
-            role: 'Head of Sustainability',
-            image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80',
-            bio: 'Environmental scientist driving our carbon reduction initiatives',
+            name: 'Henry Tetteh',
+            role: 'Document Lead',
+            image: '/assets/images/aboutimages/henry.jpg',
+            bio: 'Detail-oriented documentation and logistics coordinator dedicated to ensuring clarity, structure, and project efficiency.',
         },
     ];
+    
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
@@ -448,7 +443,7 @@ const About: React.FC = () => {
                         </p>
                     </motion.div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {team.map((member, index) => (
                             <motion.div
                                 key={index}

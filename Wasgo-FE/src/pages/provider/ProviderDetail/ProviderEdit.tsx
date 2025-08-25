@@ -559,7 +559,7 @@ const ProviderEdit: React.FC = () => {
                       <input
                         type="text"
                         name="base_location"
-                        value={formData.base_location || ''}
+                        value={formData.base_location.point || ''}
                         onChange={handleInputChange}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                         placeholder="City, Country"

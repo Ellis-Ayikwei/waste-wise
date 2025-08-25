@@ -16,7 +16,7 @@ const ProviderJobDetail: React.FC = () => {
         const fetchServiceRequest = async () => {
             try {
                 setLoading(true);
-                const response = await axiosInstance.get(`/api/service-requests/${id}`);
+                const response = await axiosInstance.get(`/service-requests/${id}`);
                 setRequest(response.data);
                 setStatus(response.data.status);
                 setError(null);
@@ -35,7 +35,7 @@ const ProviderJobDetail: React.FC = () => {
 
     const handleStatusChange = async (newStatus: string) => {
         try {
-            await axiosInstance.patch(`/api/service-requests/${id}/status`, { status: newStatus });
+            await axiosInstance.patch(`/service-requests/${id}/status`, { status: newStatus });
             setStatus(newStatus);
         } catch (err) {
             console.error('Error updating status:', err);

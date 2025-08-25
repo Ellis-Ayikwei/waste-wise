@@ -8,20 +8,69 @@ import {
     IconRefresh,
     IconDownload
 } from '@tabler/icons-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faExclamationTriangle, faCheck, faBell } from '@fortawesome/free-solid-svg-icons';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import StatCard from '../../../components/ui/statCard';
 import { setPageTitle } from '../../../store/themeConfigSlice';
+import useSwr from 'swr';
+import fetcher from '../../../services/fetcher';
+
+// Interface for bin data
+interface SmartBinData {
+    id: string;
+    bin_id: string;
+    name: string;
+    latitude: number;
+    longitude: number;
+    address: string;
+    area: string;
+    fill_level: number;
+    fill_status: string;
+    status: string;
+    bin_type: number;
+    bin_type_display: string;
+    user_id: string | null;
+    user_name: string | null;
+    sensor_id: string | null;
+    battery_level: number | null;
+    signal_strength: number | null;
+    is_online: boolean;
+    last_reading_at: string | null;
+}
 
 const BinAlerts: React.FC = () => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(true);
+
+    // Fetch bin data
+    const { data: binData, isLoading } = useSwr<SmartBinData[]>('bins/', fetcher);
 
     useEffect(() => {
         dispatch(setPageTitle('Bin Alerts'));
         setLoading(false);
     }, [dispatch]);
 
-    if (loading) {
+    // Process bin data
+    let binDataFinal: SmartBinData[] = [];
+    if (binData) {
+        if (Array.isArray(binData)) {
+            binDataFinal = binData;
+        } else if (typeof binData === 'object' && binData !== null && 'results' in binData && Array.isArray((binData as any).results)) {
+            binDataFinal = (binData as any).results;
+        } else if (typeof binData === 'object' && binData !== null && 'data' in binData && Array.isArray((binData as any).data)) {
+            binDataFinal = (binData as any).data;
+        }
+    }
+
+    // Calculate alert statistics
+    const activeAlerts = binDataFinal.filter(bin => bin.fill_level > 80).length;
+    const criticalAlerts = binDataFinal.filter(bin => bin.fill_level > 90).length;
+    const resolvedAlerts = binDataFinal.filter(bin => bin.fill_level <= 50).length; // Assuming resolved when fill level is low
+    const totalAlerts = activeAlerts + resolvedAlerts;
+
+    if (loading || isLoading) {
         return (
             <div className="min-h-[400px] flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
@@ -54,46 +103,34 @@ const BinAlerts: React.FC = () => {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Active Alerts</CardTitle>
-                        <IconAlertTriangle className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">13</div>
-                        <p className="text-xs text-muted-foreground">Unresolved alerts</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Critical</CardTitle>
-                        <IconAlertTriangle className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">3</div>
-                        <p className="text-xs text-muted-foreground">High priority</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Resolved</CardTitle>
-                        <IconCheck className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">47</div>
-                        <p className="text-xs text-muted-foreground">Today</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Today</CardTitle>
-                        <IconBell className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">60</div>
-                        <p className="text-xs text-muted-foreground">All alerts</p>
-                    </CardContent>
-                </Card>
+                <StatCard
+                    icon={faExclamationTriangle}
+                    title="Active Alerts"
+                    value={activeAlerts.toString()}
+                    color="red"
+                    delay={0.1}
+                />
+                <StatCard
+                    icon={faExclamationTriangle}
+                    title="Critical"
+                    value={criticalAlerts.toString()}
+                    color="orange"
+                    delay={0.2}
+                />
+                <StatCard
+                    icon={faCheck}
+                    title="Resolved"
+                    value={resolvedAlerts.toString()}
+                    color="green"
+                    delay={0.3}
+                />
+                <StatCard
+                    icon={faBell}
+                    title="Total Today"
+                    value={totalAlerts.toString()}
+                    color="blue"
+                    delay={0.4}
+                />
             </div>
 
             {/* Content */}

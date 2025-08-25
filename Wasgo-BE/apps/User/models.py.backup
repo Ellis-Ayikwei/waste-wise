@@ -1,0 +1,706 @@
+from django.contrib.auth.models import AbstractUser
+from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.conf import settings
+from django.utils import timezone
+import uuid
+from django.contrib.gis.db import models as gis_models
+from django.db.models import JSONField
+from django.contrib.auth.models import AbstractUser, Group, Permission
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+
+from datetime import datetime, time
+from http import client
+from math import prod
+from operator import add
+import random
+from django.db import models
+from django.forms import model_to_dict
+from django.contrib.auth.models import AbstractUser, BaseUserManager
+import uuid
+
+from apps.Basemodel.models import Basemodel
+
+
+# accounts/managers.py or accounts/models.py
+from django.contrib.auth.models import BaseUserManager
+
+
+class CustomUserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError("The Email field must be set")
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(
+        self, email, password=None, **extra_fields
+    ):  # Remove username parameter
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("is_active", True)
+        extra_fields.setdefault("user_type", "admin")
+
+        if extra_fields.get("is_staff") is not True:
+            raise ValueError("Superuser must have is_staff=True.")
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError("Superuser must have is_superuser=True.")
+
+        return self.create_user(
+            email, password, **extra_fields
+        )  # Pass only email, not username
+
+
+class User(AbstractUser):
+    USER_TYPE_CHOICES = [
+        ("customer", "Customer"),
+        ("provider", "Service Provider"),
+        ("admin", "Admin"),
+    ]
+
+    ACCOUNT_STATUS_CHOICES = [
+        ("active", "Active"),
+        ("inactive", "Inactive"),
+        ("pending", "Pending"),
+        ("suspended", "Suspended"),
+        ("deleted", "Deleted"),
+        ("banned", "Banned"),
+        ("expired", "Expired"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    email = models.EmailField(unique=True)
+    phone_number = models.CharField(max_length=15)
+    user_addresses = models.OneToOneField(
+        "Address", on_delete=models.SET_NULL, null=True, blank=True, related_name="user_address"
+    )
+    profile_picture = models.ImageField(
+        upload_to="profile_pics/", null=True, blank=True
+    )
+    rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
+    stripe_customer_id = models.CharField(max_length=100, null=True, blank=True)
+    notification_preferences = models.JSONField(default=dict)
+    last_active = models.DateTimeField(null=True)
+    device_tokens = models.JSONField(default=list)
+    user_type = models.CharField(
+        max_length=20, choices=USER_TYPE_CHOICES, default="customer"
+    )
+    account_status = models.CharField(
+        max_length=20, choices=ACCOUNT_STATUS_CHOICES, default="active"
+    )
+
+    username = None
+
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = []
+
+    objects = CustomUserManager()
+
+    groups = models.ManyToManyField(
+        Group,
+        verbose_name="groups",
+        blank=True,
+        help_text="The groups this user belongs to.",
+        related_name="custom_user_set",
+        related_query_name="user",
+    )
+    user_permissions = models.ManyToManyField(
+        Permission,
+        verbose_name="user permissions",
+        blank=True,
+        help_text="Specific permissions for this user.",
+        related_name="custom_user_set",
+        related_query_name="user",
+    )
+
+    class Meta:
+        db_table = "users"
+        verbose_name = "User"
+        verbose_name_plural = "Users"
+
+    def __str__(self):
+        return self.email
+
+    def get_full_name(self):
+        return f"{self.first_name} {self.last_name}".strip() or self.email
+
+    def get_short_name(self):
+        return self.first_name or self.email
+
+    def get_active_requests(self):
+        """Get all active requests for the user"""
+        from Request.models import Request
+
+        return Request.objects.filter(
+            user=self, status__in=["pending", "accepted", "in_transit"]
+        )
+
+    def get_completed_requests(self):
+        """Get all completed requests for the user"""
+        from Request.models import Request
+
+        return Request.objects.filter(user=self, status="completed")
+
+    def get_assigned_requests(self):
+        """Get all requests assigned to the user"""
+        from Request.models import Request
+
+        return Request.objects.filter(user=self, status__in=["accepted", "in_transit"])
+
+    # def get_bidding_requests(self):  # Removed - bidding system eliminated
+    #     """Get all requests in bidding state"""
+    #     from Request.models import Request
+
+    #     return Request.objects.filter(user=self, status="bidding")
+
+    def get_completed_trips(self):
+        """Get all completed trips for the user"""
+        from Request.models import Request
+
+        return Request.objects.filter(user=self, status="completed")
+
+    def get_pending_payments(self):
+        """Get all pending payments for the user"""
+        from Payment.models import Payment
+
+        return Payment.objects.filter(user=self, status="pending")
+
+    def get_total_spent(self):
+        """Get total amount spent by the user"""
+        from Payment.models import Payment
+
+        return (
+            Payment.objects.filter(user=self, status="completed").aggregate(
+                total=models.Sum("amount")
+            )["total"]
+            or 0
+        )
+
+    def get_rating_count(self):
+        """Get number of ratings received"""
+        from Review.models import Rating
+
+        return Rating.objects.filter(
+            content_type=ContentType.objects.get_for_model(self), object_id=self.id
+        ).count()
+
+    def get_average_rating(self):
+        """Get average rating received"""
+        from Review.models import Rating
+
+        result = Rating.objects.filter(
+            content_type=ContentType.objects.get_for_model(self), object_id=self.id
+        ).aggregate(avg=models.Avg("overall_rating"))
+        return result["avg"] or 0.0
+
+    def update_rating(self):
+        """Update user's average rating"""
+        self.rating = self.get_average_rating()
+        self.save(update_fields=["rating"])
+
+    def is_verified(self):
+        """Check if user is verified"""
+        return self.account_status == "active" and self.is_active
+
+    def can_make_requests(self):
+        """Check if user can make new requests"""
+        return self.is_verified() and self.user_type in ["customer", "provider"]
+
+    def can_provide_services(self):
+        """Check if user can provide services"""
+        return self.is_verified() and self.user_type == "provider"
+
+
+class Address(Basemodel):
+    """User address information"""
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="user_address")
+    address_line1 = models.CharField(max_length=255)
+    address_line2 = models.CharField(max_length=255, blank=True)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    postcode = models.CharField(max_length=20)
+    country = models.CharField(max_length=100, default="United Kingdom")
+
+    # GIS Location
+    coordinates = gis_models.PointField(srid=4326, null=True, blank=True)
+    latitude = models.DecimalField(
+        max_digits=9, decimal_places=6, null=True, blank=True
+    )
+    longitude = models.DecimalField(
+        max_digits=9, decimal_places=6, null=True, blank=True
+    )
+
+    class Meta:
+        db_table = "user_addresses"
+        verbose_name = "User Address"
+        verbose_name_plural = "User Addresses"
+
+    def __str__(self):
+        return f"{self.user.email} - {self.address_line1}, {self.city}"
+
+    def save(self, *args, **kwargs):
+        # Auto-populate coordinates from lat/lng if available
+        if self.latitude and self.longitude and not self.coordinates:
+            from django.contrib.gis.geos import Point
+
+            self.coordinates = Point(float(self.longitude), float(self.latitude))
+
+        # Auto-populate lat/lng from coordinates if available
+        elif self.coordinates and (not self.latitude or not self.longitude):
+            self.latitude = self.coordinates.y
+            self.longitude = self.coordinates.x
+
+        super().save(*args, **kwargs)
+
+
+class UserActivity(Basemodel):
+    """Track user activity and engagement"""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="activities")
+    activity_type = models.CharField(
+        max_length=50, help_text="Type of activity performed"
+    )
+    description = models.TextField(blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True)
+
+    class Meta:
+        db_table = "user_activities"
+        verbose_name = "User Activity"
+        verbose_name_plural = "User Activities"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["user", "activity_type"]),
+            models.Index(fields=["created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.user.email} - {self.activity_type} - {self.created_at}"
+
+
+class Document(Basemodel):
+    """Unified document system for all entities (drivers, vehicles, providers, etc.)"""
+
+    DOCUMENT_TYPES = [
+        # Driver Documents
+        ("driver_license", "Driving License"),
+        ("cpc", "CPC Qualification Card"),
+        ("tacho", "Tachograph Card"),
+        ("adr", "ADR Certificate"),
+        ("medical", "Medical Certificate"),
+        # Vehicle Documents
+        ("log_book", "Log Book"),
+        ("mot", "MOT Certificate"),
+        ("v5", "V5 Document"),
+        ("vehicle_insurance", "Vehicle Insurance"),
+        ("service_book", "Service Book"),
+        # Provider Documents
+        ("business_license", "Business License"),
+        ("waste_license", "Waste Collection License"),
+        ("environmental_permit", "Environmental Permit"),
+        ("insurance_certificate", "Insurance Certificate"),
+        ("vat_certificate", "VAT Certificate"),
+        # General Documents
+        ("id_document", "ID Document"),
+        ("employment_contract", "Employment Contract"),
+        ("training_certificate", "Training Certificate"),
+        ("other", "Other Document"),
+    ]
+
+    DOCUMENT_STATUS = [
+        ("pending", "Pending Verification"),
+        ("verified", "Verified"),
+        ("rejected", "Rejected"),
+        ("expired", "Expired"),
+    ]
+
+    # Polymorphic relationship - can belong to any entity
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.UUIDField()
+    owner = GenericForeignKey("content_type", "object_id")
+
+    # Document details
+    document_type = models.CharField(max_length=30, choices=DOCUMENT_TYPES)
+    document_number = models.CharField(
+        max_length=100, blank=True, help_text="Document reference number"
+    )
+    title = models.CharField(max_length=200, help_text="Document title")
+    description = models.TextField(blank=True, help_text="Document description")
+
+    # File uploads
+    document_front = models.FileField(
+        upload_to="documents/%Y/%m/",
+        blank=True,
+        null=True,
+        help_text="Front side of document",
+    )
+    document_back = models.FileField(
+        upload_to="documents/%Y/%m/",
+        blank=True,
+        null=True,
+        help_text="Back side of document (if applicable)",
+    )
+
+    # Dates
+    issue_date = models.DateField(
+        null=True, blank=True, help_text="Document issue date"
+    )
+    expiry_date = models.DateField(
+        null=True, blank=True, help_text="Document expiry date"
+    )
+
+    # Verification
+    status = models.CharField(max_length=20, choices=DOCUMENT_STATUS, default="pending")
+    is_verified = models.BooleanField(
+        default=False, help_text="Whether document has been verified"
+    )
+    verified_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="verified_documents",
+    )
+    verified_at = models.DateTimeField(null=True, blank=True)
+    verification_notes = models.TextField(
+        blank=True, help_text="Notes from verification process"
+    )
+    rejection_reason = models.TextField(
+        blank=True, help_text="Reason for rejection if applicable"
+    )
+
+    # Additional metadata
+    has_two_sides = models.BooleanField(
+        default=False, help_text="Whether document has front and back sides"
+    )
+    is_required = models.BooleanField(
+        default=True, help_text="Whether this document is required"
+    )
+    priority = models.CharField(
+        max_length=10,
+        choices=[
+            ("low", "Low"),
+            ("medium", "Medium"),
+            ("high", "High"),
+            ("critical", "Critical"),
+        ],
+        default="medium",
+        help_text="Document priority level",
+    )
+
+    class Meta:
+        db_table = "documents"
+        verbose_name = "Document"
+        verbose_name_plural = "Documents"
+        ordering = ["-created_at"]
+        unique_together = ["content_type", "object_id", "document_type"]
+        indexes = [
+            models.Index(fields=["document_type"]),
+            models.Index(fields=["status"]),
+            models.Index(fields=["expiry_date"]),
+            models.Index(fields=["content_type", "object_id"]),
+        ]
+
+    def __str__(self):
+        return f"{self.get_document_type_display()} - {self.owner} - {self.status}"
+
+    def save(self, *args, **kwargs):
+        # Auto-set has_two_sides if back document is uploaded
+        if self.document_back:
+            self.has_two_sides = True
+
+        # Auto-verify if verified_by is set
+        if self.verified_by and not self.is_verified:
+            from django.utils import timezone
+
+            self.is_verified = True
+            self.verified_at = timezone.now()
+            self.status = "verified"
+
+        super().save(*args, **kwargs)
+
+    @property
+    def is_expired(self):
+        """Check if document is expired"""
+        if self.expiry_date:
+            from django.utils import timezone
+
+            return self.expiry_date < timezone.now().date()
+        return False
+
+    @property
+    def days_until_expiry(self):
+        """Get days until document expires"""
+        if self.expiry_date:
+            from django.utils import timezone
+
+            delta = self.expiry_date - timezone.now().date()
+            return delta.days
+        return None
+
+    @property
+    def needs_renewal(self):
+        """Check if document needs renewal (expires within 30 days)"""
+        days = self.days_until_expiry
+        return days is not None and days <= 30
+
+    def verify(self, verified_by, notes=""):
+        """Verify this document"""
+        from django.utils import timezone
+
+        self.is_verified = True
+        self.verified_by = verified_by
+        self.verified_at = timezone.now()
+        self.status = "verified"
+        self.save()
+
+    def reject(self, reason=""):
+        """Reject this document"""
+        self.status = "rejected"
+        self.rejection_reason = reason
+        self.is_verified = False
+        self.save()
+
+    def mark_expired(self):
+        """Mark document as expired"""
+        self.status = "expired"
+        self.save()
+
+    @classmethod
+    def get_expiring_soon(cls, days=30):
+        """Get documents expiring within specified days"""
+        from django.utils import timezone
+        from datetime import timedelta
+
+        expiry_date = timezone.now().date() + timedelta(days=days)
+        return cls.objects.filter(expiry_date__lte=expiry_date, status="verified")
+
+    @classmethod
+    def get_expired(cls):
+        """Get all expired documents"""
+        from django.utils import timezone
+
+        return cls.objects.filter(
+            expiry_date__lt=timezone.now().date(), status="verified"
+        )
+
+
+class Availability(Basemodel):
+    """Unified availability system for all entities (providers, drivers, etc.)"""
+
+    AVAILABILITY_TYPES = [
+        ("provider", "Provider Availability"),
+        ("driver", "Driver Availability"),
+        ("vehicle", "Vehicle Availability"),
+    ]
+
+    # Polymorphic relationship - can belong to any entity
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.UUIDField()
+    owner = GenericForeignKey("content_type", "object_id")
+
+    # Availability type and context
+    availability_type = models.CharField(max_length=20, choices=AVAILABILITY_TYPES)
+
+    # Schedule information
+    day_of_week = models.IntegerField(
+        choices=[
+            (0, "Monday"),
+            (1, "Tuesday"),
+            (2, "Wednesday"),
+            (3, "Thursday"),
+            (4, "Friday"),
+            (5, "Saturday"),
+            (6, "Sunday"),
+        ],
+        help_text="Day of the week (0=Monday, 6=Sunday)",
+    )
+    start_time = models.TimeField(help_text="Start time for this availability slot")
+    end_time = models.TimeField(help_text="End time for this availability slot")
+
+    # Availability status
+    is_available = models.BooleanField(
+        default=True, help_text="Whether this slot is available"
+    )
+    is_recurring = models.BooleanField(
+        default=True, help_text="Whether this is a recurring weekly slot"
+    )
+
+    # Specific date (for one-time availability)
+    specific_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Specific date for one-time availability (leave blank for recurring)",
+    )
+
+    # Capacity and limits
+    max_jobs = models.PositiveIntegerField(
+        default=1, help_text="Maximum number of jobs that can be scheduled in this slot"
+    )
+    current_bookings = models.PositiveIntegerField(
+        default=0, help_text="Current number of bookings in this slot"
+    )
+
+    # Service areas and restrictions
+    service_areas = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of service area IDs this availability applies to",
+    )
+    vehicle_types = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of vehicle types that can be used in this slot",
+    )
+
+    # Additional metadata
+    notes = models.TextField(
+        blank=True, help_text="Additional notes about this availability"
+    )
+    priority = models.CharField(
+        max_length=10,
+        choices=[
+            ("low", "Low"),
+            ("medium", "Medium"),
+            ("high", "High"),
+        ],
+        default="medium",
+        help_text="Priority level for this availability slot",
+    )
+
+    class Meta:
+        db_table = "availability"
+        verbose_name = "Availability"
+        verbose_name_plural = "Availability Slots"
+        ordering = ["day_of_week", "start_time"]
+        unique_together = [
+            ["content_type", "object_id", "day_of_week", "start_time", "specific_date"]
+        ]
+        indexes = [
+            models.Index(fields=["availability_type"]),
+            models.Index(fields=["day_of_week"]),
+            models.Index(fields=["is_available"]),
+            models.Index(fields=["specific_date"]),
+            models.Index(fields=["content_type", "object_id"]),
+        ]
+
+    def __str__(self):
+        if self.specific_date:
+            return (
+                f"{self.owner} - {self.specific_date} {self.start_time}-{self.end_time}"
+            )
+        else:
+            days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+            return f"{self.owner} - {days[self.day_of_week]} {self.start_time}-{self.end_time}"
+
+    @property
+    def is_fully_booked(self):
+        """Check if this slot is fully booked"""
+        return self.current_bookings >= self.max_jobs
+
+    @property
+    def available_capacity(self):
+        """Get available capacity in this slot"""
+        return max(0, self.max_jobs - self.current_bookings)
+
+    @property
+    def duration_hours(self):
+        """Get duration of this slot in hours"""
+        from datetime import datetime
+
+        start = datetime.combine(datetime.today(), self.start_time)
+        end = datetime.combine(datetime.today(), self.end_time)
+        duration = end - start
+        return duration.total_seconds() / 3600
+
+    def can_accept_job(self, job_type=None, service_area=None):
+        """Check if this slot can accept a new job"""
+        if not self.is_available or self.is_fully_booked:
+            return False
+
+        # Check service area restrictions
+        if service_area and self.service_areas:
+            if service_area not in self.service_areas:
+                return False
+
+        # Check vehicle type restrictions
+        if job_type and self.vehicle_types:
+            if job_type not in self.vehicle_types:
+                return False
+
+        return True
+
+    def book_slot(self):
+        """Book this availability slot"""
+        if not self.is_fully_booked:
+            self.current_bookings += 1
+            self.save(update_fields=["current_bookings"])
+            return True
+        return False
+
+    def release_slot(self):
+        """Release this availability slot"""
+        if self.current_bookings > 0:
+            self.current_bookings -= 1
+            self.save(update_fields=["current_bookings"])
+            return True
+        return False
+
+    @classmethod
+    def get_available_slots(cls, owner, date=None, start_time=None, end_time=None):
+        """Get available slots for an owner on a specific date/time"""
+        from django.utils import timezone
+        from datetime import datetime
+
+        if date is None:
+            date = timezone.now().date()
+
+        # Get day of week for the date
+        day_of_week = date.weekday()
+
+        queryset = cls.objects.filter(
+            content_type=ContentType.objects.get_for_model(owner),
+            object_id=owner.id,
+            is_available=True,
+        )
+
+        # Filter by recurring slots or specific date
+        queryset = queryset.filter(
+            models.Q(is_recurring=True, day_of_week=day_of_week)
+            | models.Q(specific_date=date)
+        )
+
+        # Filter by time if provided
+        if start_time:
+            queryset = queryset.filter(start_time__gte=start_time)
+        if end_time:
+            queryset = queryset.filter(end_time__lte=end_time)
+
+        return queryset.filter(current_bookings__lt=models.F("max_jobs"))
+
+    @classmethod
+    def create_recurring_schedule(cls, owner, availability_type, schedule_data):
+        """Create recurring availability schedule for an owner"""
+        slots = []
+        for day_data in schedule_data:
+            for time_slot in day_data.get("time_slots", []):
+                slot = cls.objects.create(
+                    content_type=ContentType.objects.get_for_model(owner),
+                    object_id=owner.id,
+                    availability_type=availability_type,
+                    day_of_week=day_data["day_of_week"],
+                    start_time=time_slot["start_time"],
+                    end_time=time_slot["end_time"],
+                    max_jobs=time_slot.get("max_jobs", 1),
+                    service_areas=day_data.get("service_areas", []),
+                    vehicle_types=day_data.get("vehicle_types", []),
+                    notes=day_data.get("notes", ""),
+                )
+                slots.append(slot)
+        return slots

@@ -87,7 +87,7 @@ export const ProviderHeader: React.FC<ProviderHeaderProps> = ({ provider, onActi
                 <div className="absolute -top-16 left-6">
                     <div className="relative">
                         {provider.user.profile_picture ? (
-                            <img src={provider.user.profile_picture} alt={provider.company_name} className="w-32 h-32 rounded-2xl border-4 border-white dark:border-gray-800 shadow-lg object-cover" />
+                            <img src={provider.user.profile_picture} alt={provider.business_name} className="w-32 h-32 rounded-2xl border-4 border-white dark:border-gray-800 shadow-lg object-cover" />
                         ) : (
                             <div className="w-32 h-32 rounded-2xl border-4 border-white dark:border-gray-800 shadow-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                                 <Building className="w-12 h-12 text-white" />
@@ -114,24 +114,24 @@ export const ProviderHeader: React.FC<ProviderHeaderProps> = ({ provider, onActi
                             {/* Company Name and Rating */}
                             <div className="flex items-start justify-between mb-6">
                                 <div className="flex-1">
-                                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">{provider.company_name}</h1>
+                                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">{provider.business_name}</h1>
                                     <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
                                         <div className="flex items-center gap-2">
                                             <Building className="w-4 h-4" />
                                             <span className="capitalize">{provider.business_type?.replace('_', ' ')}</span>
                                         </div>
-                                        {provider.founded_year && (
+                                        {provider.user.date_joined && (
                                             <div className="flex items-center gap-2">
                                                 <Calendar className="w-4 h-4" />
-                                                <span>Est. {provider.founded_year}</span>
+                                                <span>Joined {new Date(provider.user.date_joined).getFullYear()}</span>
                                             </div>
                                         )}
                                     </div>
 
                                     {/* Business Description */}
-                                    {provider.business_description && (
+                                    {provider.business_name && (
                                         <div className="mb-6">
-                                            <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm">{provider.business_description}</p>
+                                            <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm">{provider.business_name}</p>
                                         </div>
                                     )}
                                 </div>
@@ -167,7 +167,11 @@ export const ProviderHeader: React.FC<ProviderHeaderProps> = ({ provider, onActi
                                 {provider.base_location && (
                                     <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                                         <MapPin className="w-4 h-4 text-red-500 flex-shrink-0" />
-                                        <span className="truncate">{provider.base_location}</span>
+                                        <span className="truncate">
+                                            {typeof provider.base_location === 'object' && provider.base_location?.coordinates ? 
+                                              `${provider.base_location.coordinates[1]}, ${provider.base_location.coordinates[0]}` : 
+                                              (typeof provider.base_location === 'string' ? provider.base_location : 'N/A')}
+                                        </span>
                                     </div>
                                 )}
                             </div>

@@ -1,6 +1,6 @@
-# MoreVans Payment Integration with Stripe Checkout
+# Wasgo Payment Integration with Stripe Checkout
 
-This document explains how to use the Stripe Checkout integration for the MoreVans platform.
+This document explains how to use the Stripe Checkout integration for the Wasgo platform.
 
 ## Overview
 
@@ -107,7 +107,7 @@ Authorization: Bearer <token>
   "metadata": {
     "user_id": "123",
     "request_id": "456",
-    "platform": "morevans"
+    "platform": "wasgo"
   },
   "payment_intent": "pi_..."
 }

@@ -16,12 +16,12 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from .models_paystack import (
-    Payment, PaymentMethod, PaystackCustomer, 
+    PaystackPayment, PaystackPaymentMethod, PaystackCustomer, 
     PaymentWebhook, TransferRecipient, Transfer
 )
 from .serializer import PaymentSerializer
 from .paystack_service import PaystackService
-from apps.Request.models import Request
+from apps.ServiceRequest.models import ServiceRequest
 from apps.User.models import User
 
 import logging
@@ -34,7 +34,7 @@ class SecurePaystackPaymentViewSet(viewsets.ModelViewSet):
     Secure ViewSet for Paystack payment operations
     All sensitive operations handled server-side
     """
-    queryset = Payment.objects.all()
+    queryset = PaystackPayment.objects.all()
     serializer_class = PaymentSerializer
     permission_classes = [IsAuthenticated]
     
@@ -72,7 +72,7 @@ class SecurePaystackPaymentViewSet(viewsets.ModelViewSet):
             # Get request if provided
             request_obj = None
             if data.get('request_id'):
-                request_obj = get_object_or_404(Request, id=data['request_id'])
+                request_obj = get_object_or_404(ServiceRequest, id=data['request_id'])
                 # Verify user owns this request
                 if request_obj.user != user:
                     return Response({
@@ -108,7 +108,7 @@ class SecurePaystackPaymentViewSet(viewsets.ModelViewSet):
             )
             
             # Create payment record
-            payment = Payment.objects.create(
+            payment = PaystackPayment.objects.create(
                 user=user,
                 request=request_obj,
                 reference=reference,
@@ -192,7 +192,7 @@ class SecurePaystackPaymentViewSet(viewsets.ModelViewSet):
             # Get request if provided
             request_obj = None
             if data.get('request_id'):
-                request_obj = get_object_or_404(Request, id=data['request_id'])
+                request_obj = get_object_or_404(ServiceRequest, id=data['request_id'])
                 # Verify user owns this request
                 if request_obj.user != user:
                     return Response({

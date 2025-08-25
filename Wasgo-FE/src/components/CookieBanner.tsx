@@ -126,7 +126,7 @@ const CookieBanner: React.FC = () => {
                             // Main Banner View
                             <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
                                 <div className="flex items-start gap-4">
-                                    <FontAwesomeIcon icon={faCookie} className="text-3xl text-blue-600 mt-1" />
+                                    <FontAwesomeIcon icon={faCookie} className="text-3xl text-green-600 mt-1" />
                                     <div>
                                         <h3 className="text-lg font-semibold text-gray-900 mb-2">
                                             We use cookies to enhance your experience
@@ -134,7 +134,7 @@ const CookieBanner: React.FC = () => {
                                         <p className="text-sm text-gray-600 max-w-2xl">
                                             We use cookies and similar technologies to help personalize content, tailor and measure ads, 
                                             and provide a better experience. By clicking accept, you agree to this, as outlined in our{' '}
-                                            <Link to="/privacy-policy" className="text-blue-600 hover:underline">
+                                            <Link to="/privacy-policy" className="text-green-600 hover:underline">
                                                 Privacy Policy
                                             </Link>.
                                         </p>
@@ -157,7 +157,7 @@ const CookieBanner: React.FC = () => {
                                     </button>
                                     <button
                                         onClick={handleAcceptAll}
-                                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                                        className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
                                     >
                                         <FontAwesomeIcon icon={faCheck} />
                                         Accept All
@@ -194,7 +194,7 @@ const CookieBanner: React.FC = () => {
                                                             disabled={!cookie.canDisable}
                                                             className="sr-only peer"
                                                         />
-                                                        <div className={`w-11 h-6 ${!cookie.canDisable ? 'bg-gray-300' : 'bg-gray-200'} peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600`}></div>
+                                                        <div className={`w-11 h-6 ${!cookie.canDisable ? 'bg-gray-300' : 'bg-gray-200'} peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600`}></div>
                                                     </label>
                                                 </div>
                                             </div>
@@ -218,7 +218,7 @@ const CookieBanner: React.FC = () => {
                                         </button>
                                         <button
                                             onClick={handleAcceptSelected}
-                                            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                                            className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
                                         >
                                             Save Preferences
                                         </button>

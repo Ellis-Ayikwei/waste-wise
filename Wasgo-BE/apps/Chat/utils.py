@@ -90,7 +90,7 @@ def create_bid_conversation(bid):
             if hasattr(bid.job.request, 'user'):
                 participants.append(bid.job.request.user)
     
-    title = f"Bid Discussion - {bid.job.title if bid.job else 'Unknown Job'}"
+    title = f"Bid Discussion - {bid.job.title if bid.job else 'Unknown ServiceRequest'}"
     
     return create_conversation_for_object(
         bid,
@@ -106,7 +106,7 @@ def create_job_conversation(job):
     Create a conversation for a job
     
     Args:
-        job: Job instance
+        job: ServiceRequest instance
     
     Returns:
         Conversation instance
@@ -123,7 +123,7 @@ def create_job_conversation(job):
         if hasattr(job.assigned_provider, 'user'):
             participants.append(job.assigned_provider.user)
     
-    title = f"Job Discussion - {job.title or job.job_number}"
+    title = f"ServiceRequest Discussion - {job.title or job.request_id}"
     
     return create_conversation_for_object(
         job,
@@ -139,7 +139,7 @@ def create_request_conversation(request_obj):
     Create a conversation for a request
     
     Args:
-        request_obj: Request instance
+        request_obj: ServiceRequest instance
     
     Returns:
         Conversation instance
@@ -150,7 +150,7 @@ def create_request_conversation(request_obj):
     if hasattr(request_obj, 'user'):
         participants.append(request_obj.user)
     
-    title = f"Request Discussion - {request_obj.tracking_number}"
+    title = f"ServiceRequest Discussion - {request_obj.tracking_number}"
     
     return create_conversation_for_object(
         request_obj,
@@ -186,7 +186,7 @@ def create_support_conversation(user, support_type='general', title=None):
         participants.append(support_staff)
     
     conversation = Conversation.objects.create(
-        title=title or f"Support Request - {support_type.title()}",
+        title=title or f"Support ServiceRequest - {support_type.title()}",
         conversation_type='support',
         metadata={'support_type': support_type}
     )

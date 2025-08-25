@@ -12,7 +12,7 @@ class Rating(Basemodel):
         ("service", "Service Rating"),
         ("provider", "Provider Rating"),
         ("shipment", "Shipment Rating"),
-        ("job", "Job Rating"),
+        ("job", "ServiceRequest Rating"),
         ("waste_collection", "Waste Collection Rating"),
     ]
 
@@ -179,7 +179,7 @@ class Rating(Basemodel):
 
 
 # Legacy model for backward compatibility - will be removed after migration
-class ServiceReview(models.Model):
+class ServiceReview(Basemodel):
     """Legacy ServiceReview model - kept for backward compatibility during migration"""
 
     contract = models.OneToOneField(

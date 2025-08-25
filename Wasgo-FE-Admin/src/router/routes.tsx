@@ -1,7 +1,6 @@
 import { lazy, useEffect, useState } from 'react';
-import AdminDashboard from '../pages/admin/AdminDashboard';
 import EnhancedAdminDashboard from '../pages/admin/EnhancedAdminDashboard';
-import SmartBinManagement from '../pages/admin/SmartBinManagement';
+import SmartBinManagement from '../pages/admin/SmartBins/SmartBinManagement';
 import AnalyticsReporting from '../pages/admin/AnalyticsReporting';
 // import Homepage from '../pages/website-preauth/Homepage';
 // import HowItWorks from '../pages/website-preauth/HowItWorks';
@@ -78,20 +77,13 @@ import ProviderForm from '../pages/admin/ProviderForm';
 import AdminForm from '../pages/admin/AdminForm';
 
 // Import new admin management pages
-import JobManagement from '../pages/admin/JobManagement/JobManagement';
-import AdminBookingDetail from '../pages/admin/BookingDetail';
-import AdminJobDetail from '../pages/admin/JobManagement/JobDetails/JobDetail';
-import EnhancedBookingDetail from '../pages/admin/BookingManagement/bookingDetail/EnhancedBookingDetail';
+
+
 import UserView from '../pages/admin/usermanagment/UserView';
 import DriverDetail from '../pages/admin/DriverDetail';
 import EditDriver from '../pages/admin/EditDriver';
 import CommonItems from '../pages/admin/CommonItems/index'
 
-// Import new service request pages
-import NewRequests from '../pages/admin/ServiceRequests/NewRequests';
-import ScheduledRequests from '../pages/admin/ServiceRequests/ScheduledRequests';
-import ActiveRequests from '../pages/admin/ServiceRequests/ActiveRequests';
-import RequestHistory from '../pages/admin/ServiceRequests/RequestHistory';
 
 // Import new rewards pages
 import RewardPrograms from '../pages/admin/RewardsLoyalty/RewardPrograms';
@@ -100,8 +92,13 @@ import PointsSystem from '../pages/admin/RewardsLoyalty/PointsSystem';
 import Redemptions from '../pages/admin/RewardsLoyalty/Redemptions';
 
 // Import new smart bins pages
-import BinOverview from '../pages/admin/SmartBins/BinOverview';
+import BinOverview from '../pages/admin/SmartBins/BinManagement';
 import BinAlerts from '../pages/admin/SmartBins/BinAlerts';
+import BinDetail from '../pages/admin/SmartBins/BinDetail/BinDetail';
+
+// Import sensors page
+import Sensors from '../pages/admin/Sensors/Sensors';
+import SensorDetail from '../pages/admin/Sensors/SensorDetail/SensorDetail';
 
 import CreateUser from '../pages/admin/usermanagment/createUser';
 import CreateJob from '../pages/admin/CreateJob';
@@ -110,7 +107,16 @@ import AddEditVehiclePage from '../pages/admin/ProviderManagement/ProviderDetail
 import ViewVehiclePage from '../pages/admin/ProviderManagement/ProviderDetail/tabs/vehiclesTab/ViewVehiclePage';
 import ProviderEdit from '../pages/admin/ProviderManagement/ProviderDetail/ProviderEdit';
 import RolesPermissions from '../pages/admin/usermanagment/RolesPermissions';
-import BookingManagement from '../pages/admin/BookingManagement/BookingManagement';
+
+import BinManagement from '../pages/admin/SmartBins/BinManagement';
+import ServiceRequestManagement from '../pages/admin/ServiceRequests/ServiceRequestManagement';
+import ServiceRequestDetail from '../pages/admin/ServiceRequests/servicerequestDetail/ServiceRequestDetail';
+
+// Import recycling center components
+import RecyclingCentersIndex from '../pages/admin/RecyclingCenters/RecylingCenters';
+import RecyclingCenterDetail from '../pages/admin/RecyclingCenters/RecyclingCenterDetail';
+import RecyclingCenterForm from '../pages/admin/RecyclingCenters/RecyclingCenterForm';
+
 
 const userRole = localStorage.getItem('userRole') || '';
 const isAdmin = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
@@ -128,7 +134,7 @@ const ConditionalDashboard = () => {
     }
 
     if (isAdmin) {
-        return <AdminDashboard />;
+        return <EnhancedAdminDashboard />;
     }
 
     // if (personalUsers.includes(userRole)) {
@@ -646,43 +652,7 @@ const routes = [
         ),
         layout: 'admin',
     },
-    {
-        path: '/admin/bookings',
-        element: <BookingManagement />,
-        layout: 'default',
-    },
-    {
-        path: '/admin/bookings/:id',
-        element: <EnhancedBookingDetail />,
-        layout: 'default',
-    },
-    {
-        path: '/admin/jobs',
-        element: <JobManagement />,
-        layout: 'default',
-    },
-    {
-        path: '/admin/jobs/new',
-        element: <CreateJob />,
-        layout: 'default',
-    },
-    {
-        path: '/admin/jobs/:id',
-        element: (
-            
-                <AdminJobDetail />
-        ),
-        layout: 'admin',
-    },
-    {
-        path: '/admin/jobs/:id/edit',
-        element: (
-            <ProtectedRoute adminOnly>
-                <AdminJobDetail />
-            </ProtectedRoute>
-        ),
-        layout: 'admin',
-    },
+
     {
         path: '/admin/revenue',
         element: <RevenueManagement />,
@@ -718,15 +688,15 @@ const routes = [
         element: <SupportTickets />,
         layout: 'default',
     },
-    {
-        path: '/admin/smart-bins',
-        element: (
-            <ProtectedRoute adminOnly>
-                <SmartBinManagement />
-            </ProtectedRoute>
-        ),
-        layout: 'admin',
-    },
+    // {
+    //     path: '/admin/smart-bins',
+    //     element: (
+    //         <ProtectedRoute adminOnly>
+    //             <SmartBinManagement />
+    //         </ProtectedRoute>
+    //     ),
+    //     layout: 'admin',
+    // },
     {
         path: '/admin/analytics',
         element: (
@@ -820,10 +790,28 @@ const routes = [
 
     // Smart Bins Routes
     {
-        path: '/admin/smart-bins/overview',
+        path: '/admin/smart-bins',
         element: (
             <ProtectedRoute adminOnly>
-                <BinOverview />
+                <BinManagement />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/sensors',
+        element: (
+            <ProtectedRoute adminOnly>
+                <Sensors />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/sensors/:id',
+        element: (
+            <ProtectedRoute adminOnly>
+                <SensorDetail />
             </ProtectedRoute>
         ),
         layout: 'admin',
@@ -855,40 +843,50 @@ const routes = [
         ),
         layout: 'admin',
     },
+    {
+        path: '/admin/smart-bins/:id',
+        element: (
+            <ProtectedRoute adminOnly>
+                <BinDetail />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/sensors',
+        element: (
+            <ProtectedRoute adminOnly>
+                <Sensors /> 
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
 
-    // Service Requests Routes
+    // Service Requests Routes (Unified)
     {
-        path: '/admin/requests/new',
+        path: '/admin/service-requests',
         element: (
             <ProtectedRoute adminOnly>
-                <NewRequests />
+                <ServiceRequestManagement />
             </ProtectedRoute>
         ),
         layout: 'admin',
     },
     {
-        path: '/admin/requests/scheduled',
+        path: '/admin/service-requests/all',
         element: (
             <ProtectedRoute adminOnly>
-                <ScheduledRequests />
+                <ServiceRequestManagement />
             </ProtectedRoute>
         ),
         layout: 'admin',
     },
+    
     {
-        path: '/admin/requests/active',
+        path: '/admin/service-requests/:id',
         element: (
             <ProtectedRoute adminOnly>
-                <ActiveRequests />
-            </ProtectedRoute>
-        ),
-        layout: 'admin',
-    },
-    {
-        path: '/admin/requests/history',
-        element: (
-            <ProtectedRoute adminOnly>
-                <RequestHistory />
+                <ServiceRequestDetail />
             </ProtectedRoute>
         ),
         layout: 'admin',
@@ -1027,44 +1025,27 @@ const routes = [
         ),
         layout: 'admin',
     },
-    {
-        path: '/admin/fleet/routes',
-        element: (
-            <ProtectedRoute adminOnly>
-                <BookingManagement />
-            </ProtectedRoute>
-        ),
-        layout: 'admin',
-    },
-    {
-        path: '/admin/fleet/tracking',
-        element: (
-            <ProtectedRoute adminOnly>
-                <BookingManagement />
-            </ProtectedRoute>
-        ),
-        layout: 'admin',
-    },
+   
 
-    // Rewards Routes
-    {
-        path: '/admin/rewards/programs',
-        element: (
-            <ProtectedRoute adminOnly>
-                <RewardPrograms />
-            </ProtectedRoute>
-        ),
-        layout: 'admin',
-    },
-    {
-        path: '/admin/rewards/badges',
-        element: (
-            <ProtectedRoute adminOnly>
-                <BadgeManagement />
-            </ProtectedRoute>
-        ),
-        layout: 'admin',
-    },
+    // // Rewards Routes
+    // {
+    //     path: '/admin/rewards/programs',
+    //     element: (
+    //         <ProtectedRoute adminOnly>
+    //             <RewardPrograms />
+    //         </ProtectedRoute>
+    //     ),
+    //     layout: 'admin',
+    // },
+    // {
+    //     path: '/admin/rewards/badges',
+    //     element: (
+    //         <ProtectedRoute adminOnly>
+    //             <BadgeManagement />
+    //         </ProtectedRoute>
+    //     ),
+    //     layout: 'admin',
+    // },
     {
         path: '/admin/rewards/points',
         element: (
@@ -1086,10 +1067,55 @@ const routes = [
 
     // Recycling Centers Routes
     {
+        path: '/admin/recycling-centers',
+        element: (
+            <ProtectedRoute adminOnly>
+                <RecyclingCentersIndex />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/recycling',
+        element: (
+            <ProtectedRoute adminOnly>
+                <RecyclingCentersIndex />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/recycling-centers/create',
+        element: (
+            <ProtectedRoute adminOnly>
+                <RecyclingCenterForm />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/recycling-centers/:id',
+        element: (
+            <ProtectedRoute adminOnly>
+                <RecyclingCenterDetail />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
+        path: '/admin/recycling-centers/:id/edit',
+        element: (
+            <ProtectedRoute adminOnly>
+                <RecyclingCenterForm />
+            </ProtectedRoute>
+        ),
+        layout: 'admin',
+    },
+    {
         path: '/admin/recycling/centers',
         element: (
             <ProtectedRoute adminOnly>
-                <EnhancedAdminDashboard />
+                <RecyclingCentersIndex />
             </ProtectedRoute>
         ),
         layout: 'admin',

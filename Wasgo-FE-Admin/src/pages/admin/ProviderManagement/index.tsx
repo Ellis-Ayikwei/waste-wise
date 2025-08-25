@@ -33,7 +33,8 @@ import IconLoader from '../../../components/Icon/IconLoader';
 import { useSelector } from 'react-redux';
 import { useDispatch } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFilter, faSort, faSearch, faUser, faEnvelope, faPhone, faCalendarAlt, faEdit, faTrash, faEye, faSpinner, faTruck, faBuilding } from '@fortawesome/free-solid-svg-icons';
+import { faFilter, faSort, faSearch, faUser, faEnvelope, faPhone, faCalendarAlt, faEdit, faTrash, faEye, faSpinner, faTruck, faBuilding, faCheckCircle, faClock, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import StatCard from '../../../components/ui/statCard';
 import { Provider } from '../../types/provider';
 import { fetchProviders, deleteProvider, updateProvider } from '../../store/slices/providerSlice';
 import { RootState } from '../../../store';
@@ -62,29 +63,68 @@ interface Provider {
     phone_number: string;
   };
   business_type: 'limited' | 'sole_trader' | 'partnership';
-  company_name: string;
-  company_reg_number: string;
-  vat_registered: boolean;
+  business_name: string;
+  registration_number: string;
   vat_number: string;
-  business_description: string;
-  service_categories: Array<{
-    id: string;
-    name: string;
-  }>;
-  specializations: Array<{
-    id: string;
-    name: string;
-  }>;
-  service_image: string | null;
-  hourly_rate: number | null;
-  accepts_instant_bookings: boolean;
-  service_radius_km: number;
-  insurance_policies: InsurancePolicy[];
-  minimum_job_value: number | null;
+  phone: string;
+  email: string;
+  website: string;
+  address_line1: string;
+  address_line2: string;
+  city: string;
+  county: string;
+  postcode: string;
+  country: string;
+  base_location: { type: string; coordinates: [number, number] } | null;
+  service_area: any;
+  max_service_radius_km: number;
+  waste_license_number: string;
+  waste_license_expiry: string | null;
+  environmental_permit_number: string;
+  environmental_permit_expiry: string | null;
+  waste_types_handled: string[];
+  waste_categories: string[];
+  collection_methods: string[];
+  vehicle_fleet_size: number;
+  daily_collection_capacity_kg: number | null;
+  has_compaction_equipment: boolean;
+  has_recycling_facilities: boolean;
+  service_hours_start: string | null;
+  service_hours_end: string | null;
+  emergency_collection_available: boolean;
+  weekend_collection_available: boolean;
+  public_liability_insurance: boolean;
+  public_liability_amount: number | null;
+  employers_liability_insurance: boolean;
+  employers_liability_amount: number | null;
+  vehicle_insurance: boolean;
+  vehicle_insurance_amount: number | null;
   verification_status: 'unverified' | 'pending' | 'verified' | 'premium';
-  last_verified: string | null;
+  verified_at: string | null;
+  verified_by: string | null;
+  verification_notes: string;
+  is_active: boolean;
+  is_available: boolean;
+  rating: string;
+  total_jobs_completed: number;
+  total_weight_collected_kg: string;
+  total_recycled_kg: string;
+  collection_efficiency_rating: string;
+  average_response_time_minutes: number;
+  completion_rate: string;
+  commission_rate: string;
+  balance: string;
+  total_earnings: string;
+  auto_accept_jobs: boolean;
+  max_distance_km: number;
+  min_job_value: string;
+  notification_enabled: boolean;
+  vehicle_count: number;
+  last_active: string | null;
+  average_rating: number;
+  completed_bookings_count: number;
   created_at: string;
-  service_areas: ServiceArea[];
+  updated_at: string;
 }
 
 const ProviderManagementContent: React.FC = () => {
@@ -116,7 +156,6 @@ const ProviderManagementContent: React.FC = () => {
       setError(null);
       
       // First sync the providers
-      await axiosInstance.post("providers/sync_provider_users/");
       
       // Then fetch the updated list
       const response = await axiosInstance.get('/providers/');
@@ -138,6 +177,21 @@ const ProviderManagementContent: React.FC = () => {
       setLoading(false);
     }
   };
+
+
+  const syncProviders = async () => {
+    try {
+      const response = await axiosInstance.post("providers/sync_provider_users/");
+      if (response.status === 200) {
+        showMessage("Providers updated successfully");
+        await fetchProviders(); // Refresh the list
+      } 
+    } catch (error) {
+      showRequestError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   const filterProviders = () => {
     if (!Array.isArray(providers)) {
@@ -150,9 +204,9 @@ const ProviderManagementContent: React.FC = () => {
     // Apply search term filter
     if (searchTerm.trim() !== '') {
       filtered = filtered.filter(provider => 
-        provider?.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        provider?.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         provider?.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        provider?.company_reg_number?.toLowerCase().includes(searchTerm.toLowerCase())
+        provider?.registration_number?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
     
@@ -265,21 +319,13 @@ const ProviderManagementContent: React.FC = () => {
       render: (provider: Provider) => (
         <div className="flex items-center">
           <div className="flex-shrink-0 h-10 w-10">
-            {provider.service_image ? (
-              <img
-                className="h-10 w-10 rounded-full object-cover"
-                src={provider.service_image}
-                alt={provider.company_name || 'Provider'}
-              />
-            ) : (
-              <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-gray-500" />
-              </div>
-            )}
+            <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+              <Building2 className="w-5 h-5 text-gray-500" />
+            </div>
           </div>
           <div className="ml-4">
             <div className="text-sm font-medium text-gray-900">
-              {provider.company_name || 'Unnamed Company'}
+              {provider.business_name || 'Unnamed Company'}
             </div>
             <div className="text-sm text-gray-500 flex items-center">
               <Mail className="w-4 h-4 mr-1" />
@@ -312,10 +358,10 @@ const ProviderManagementContent: React.FC = () => {
           <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getVerificationBadgeClass(provider.verification_status || 'unverified')}`}>
             {(provider.verification_status || 'unverified').replace('_', ' ')}
           </span>
-          {provider.last_verified && (
+          {provider.verified_at && (
             <div className="text-xs text-gray-500 mt-1 flex items-center">
               <Clock className="w-3 h-3 mr-1" />
-              {new Date(provider.last_verified).toLocaleDateString()}
+              {new Date(provider.verified_at).toLocaleDateString()}
             </div>
           )}
         </div>
@@ -328,10 +374,10 @@ const ProviderManagementContent: React.FC = () => {
       render: (provider: Provider) => (
         <div>
           <div className="text-sm text-gray-900">
-            {provider.service_radius_km || 0}km radius
+            {provider.max_service_radius_km || 0}km radius
           </div>
           <div className="text-xs text-gray-500">
-            {(provider.service_areas || []).length} defined areas
+            {(provider.service_area || []).length} defined areas
           </div>
         </div>
       ),
@@ -442,7 +488,7 @@ const ProviderManagementContent: React.FC = () => {
         <h2 className="text-xl font-semibold mb-4 md:mb-0">Provider Management</h2>
         <div className="flex gap-4">
           <button
-            onClick={handleSync}
+            onClick={syncProviders}
             className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center justify-center"
             disabled={loading}
           >
@@ -465,6 +511,38 @@ const ProviderManagementContent: React.FC = () => {
             Add Provider
           </button>
         </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <StatCard
+          icon={faBuilding}
+          title="Total Providers"
+          value={providers.length}
+          color="blue"
+          delay={0.1}
+        />
+        <StatCard
+          icon={faCheckCircle}
+          title="Verified Providers"
+          value={providers.filter(p => p.verification_status === 'verified').length}
+          color="green"
+          delay={0.2}
+        />
+        <StatCard
+          icon={faClock}
+          title="Pending Verification"
+          value={providers.filter(p => p.verification_status === 'pending').length}
+          color="yellow"
+          delay={0.3}
+        />
+        <StatCard
+          icon={faExclamationTriangle}
+          title="Unverified"
+          value={providers.filter(p => p.verification_status === 'unverified').length}
+          color="red"
+          delay={0.4}
+        />
       </div>
       
       <div className="bg-white shadow-sm rounded-lg overflow-hidden mb-6">

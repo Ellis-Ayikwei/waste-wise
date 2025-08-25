@@ -1,4 +1,4 @@
-{{ app_name|default:"MoreVans" }}
+{{ app_name|default:"Wasgo" }}
 ==============================================
 
 Hello {{ user_name }}!
@@ -28,9 +28,9 @@ View receipt: {{ action_url }}
 WHAT'S NEXT?
 Your booking is now being processed and you'll receive updates as your service progresses.
 
-Need help? Contact our support team at support@morevans.com
+Need help? Contact our support team at support@wasgo.com
 
 ---
 This is an automated message, please do not reply to this email.
 
-© {{ current_year }} {{ app_name|default:"MoreVans" }}. All rights reserved.
+© {{ current_year }} {{ app_name|default:"Wasgo" }}. All rights reserved.

@@ -63,7 +63,7 @@ const ProviderDetail: React.FC = () => {
     const handleSuspendProvider = async () => {
         const confirmed = await confirmDialog({
             title: 'Suspend Provider',
-            body: `Are you sure you want to suspend ${provider?.company_name}? This will prevent them from accessing the platform and accepting new jobs.`,
+            body: `Are you sure you want to suspend ${provider?.business_name}? This will prevent them from accessing the platform and accepting new jobs.`,
             note: 'The provider will be notified of this action and can contact support for reinstatement.',
             finalQuestion: 'Do you want to proceed with suspending this provider?',
             type: 'warning',

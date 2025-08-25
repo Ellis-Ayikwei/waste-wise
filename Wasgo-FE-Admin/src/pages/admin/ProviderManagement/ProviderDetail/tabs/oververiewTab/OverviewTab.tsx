@@ -14,6 +14,24 @@ import {
 } from 'lucide-react';
 import { formatDate, formatPhoneNumber, getStatusBadgeClass } from '../../utils';
 
+interface Provider {
+  id: string;
+  user: {
+    id: string;
+    email: string;
+    phone_number: string;
+    date_joined: string;
+  };
+  base_location: { type: string; coordinates: [number, number] } | null;
+  website: string;
+  verification_status: string;
+  average_rating: number;
+  completed_bookings_count: number;
+  last_active: string | null;
+  reviews: any[];
+  payments: Array<{ amount: number }>;
+}
+
 interface OverviewTabProps {
   provider: Provider;
 }
@@ -34,7 +52,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ provider }) => {
               <div className="space-y-3">
                 <div className="flex items-center">
                   <MapPin className="w-4 h-4 text-gray-400 mr-2" />
-                  <span className="text-sm text-gray-600">{provider.base_location || 'N/A'}</span>
+                  <span className="text-sm text-gray-600">
+                    {typeof provider.base_location === 'object' && provider.base_location?.coordinates ? 
+                      `${provider.base_location.coordinates[1]}, ${provider.base_location.coordinates[0]}` : 
+                      (typeof provider.base_location === 'string' ? provider.base_location : 'N/A')}
+                  </span>
                 </div>
                 <div className="flex items-center">
                   <Phone className="w-4 h-4 text-gray-400 mr-2" />

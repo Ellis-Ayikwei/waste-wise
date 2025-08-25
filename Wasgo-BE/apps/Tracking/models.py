@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.gis.db import models as gis_models
+from django.core.validators import MinValueValidator, MaxValueValidator
 from apps.Basemodel.models import Basemodel
 
 
@@ -15,15 +16,10 @@ class TrackingUpdate(Basemodel):
         ("environmental", "Environmental Impact Update"),
     ]
 
-    request = models.ForeignKey(
-        "Request.Request", on_delete=models.CASCADE, related_name="tracking_updates"
-    )
-    job = models.ForeignKey(
-        "Job.Job",
+    service_request = models.ForeignKey(
+        "ServiceRequest.ServiceRequest",
         on_delete=models.CASCADE,
         related_name="tracking_updates",
-        null=True,
-        blank=True,
     )
     update_type = models.CharField(max_length=20, choices=UPDATE_TYPES)
 
@@ -140,11 +136,11 @@ class TrackingUpdate(Basemodel):
         indexes = [
             models.Index(fields=["update_type"]),
             models.Index(fields=["created_at"]),
-            models.Index(fields=["request", "created_at"]),
+            models.Index(fields=["service_request", "created_at"]),
         ]
 
     def __str__(self):
-        return f"{self.update_type} - {self.request} - {self.created_at}"
+        return f"{self.update_type} - {self.service_request} - {self.created_at}"
 
 
 class WasteCollectionTracking(Basemodel):
@@ -163,7 +159,7 @@ class WasteCollectionTracking(Basemodel):
     ]
 
     pickup_request = models.ForeignKey(
-        "Request.Request",  # Updated - moved from WasteProvider to Request app
+        "ServiceRequest.ServiceRequest",  # Updated - moved from WasteProvider to ServiceRequest app
         on_delete=models.CASCADE,
         related_name="collection_tracking",
     )
@@ -238,7 +234,7 @@ class BinTracking(Basemodel):
 
     # Bin status
     fill_level = models.IntegerField(
-        validators=[models.MinValueValidator(0), models.MaxValueValidator(100)]
+        validators=[MinValueValidator(0), MaxValueValidator(100)]
     )
     fill_status = models.CharField(max_length=20)
     temperature = models.FloatField(null=True, blank=True)

@@ -1,0 +1,367 @@
+from django.db import models
+from django.contrib.gis.db import models as gis_models
+from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.exceptions import ValidationError
+from apps.Basemodel.models import Basemodel
+from apps.User.models import User
+
+
+class WasteCategory(Basemodel):
+    """Categories of waste that providers can specialize in"""
+
+    CATEGORY_CHOICES = [
+        ("general", "General Trash Collection"),
+        ("plastic", "Plastic-only Collection"),
+        ("metal", "Scrap Metal Collection"),
+        ("ewaste", "E-Waste Collection"),
+        ("organic", "Organic Waste Collection"),
+        ("hazardous", "Hazardous Waste"),
+        ("paper", "Paper & Cardboard"),
+        ("glass", "Glass Collection"),
+        ("construction", "Construction Debris"),
+        ("textile", "Textile & Clothing"),
+    ]
+
+    code = models.CharField(max_length=20, choices=CATEGORY_CHOICES, unique=True)
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    icon = models.CharField(max_length=50, blank=True)
+    base_price_per_kg = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    is_active = models.BooleanField(default=True)
+    requires_special_license = models.BooleanField(default=False)
+
+    def __str__(self):
+        return str(self.name)
+
+    class Meta:
+        db_table = "waste_categories"
+        verbose_name = "Waste Category"
+        verbose_name_plural = "Waste Categories"
+
+
+class ServiceProvider(Basemodel):
+    """Enhanced Service Provider model with waste management capabilities"""
+
+    BUSINESS_TYPES = [
+        ("limited_company", _("Limited Company")),
+        ("sole_trader", _("Sole Trader")),
+        ("partnership", _("Partnership")),
+        ("waste_collection", _("Waste Collection Company")),
+        ("recycling_center", _("Recycling Center")),
+        ("landfill_operator", _("Landfill Operator")),
+        ("transfer_station", _("Transfer Station")),
+    ]
+
+    VERIFICATION_STATUS = [
+        ("pending", _("Pending Verification")),
+        ("verified", _("Verified")),
+        ("rejected", _("Rejected")),
+        ("suspended", _("Suspended")),
+    ]
+
+    # Basic Information
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="service_provider"
+    )
+    business_name = models.CharField(max_length=200)
+    business_type = models.CharField(
+        max_length=20, choices=BUSINESS_TYPES, default="limited_company"
+    )
+    registration_number = models.CharField(max_length=50, blank=True)
+    vat_number = models.CharField(max_length=50, blank=True)
+
+    # Contact Information
+    phone = models.CharField(max_length=20)
+    email = models.EmailField()
+    website = models.URLField(blank=True)
+
+    # Address Information
+    address_line1 = models.CharField(max_length=255)
+    address_line2 = models.CharField(max_length=255, blank=True)
+    city = models.CharField(max_length=100)
+    county = models.CharField(max_length=100)
+    postcode = models.CharField(max_length=20)
+    country = models.CharField(max_length=100, default="United Kingdom")
+
+    # GIS Location
+    base_location = gis_models.PointField(
+        srid=4326, help_text="Provider's base location"
+    )
+    service_area = gis_models.PolygonField(
+        srid=4326, null=True, blank=True, help_text="Geographic service area"
+    )
+    max_service_radius_km = models.IntegerField(
+        default=50, help_text=_("Maximum service radius from base location (km)")
+    )
+
+    # --- Waste Management Specific Fields ---
+    waste_license_number = models.CharField(
+        max_length=100, blank=True, help_text="Waste collection license number"
+    )
+    waste_license_expiry = models.DateField(
+        null=True, blank=True, help_text="Waste collection license expiry date"
+    )
+    environmental_permit_number = models.CharField(
+        max_length=100, blank=True, help_text="Environmental permit number"
+    )
+    environmental_permit_expiry = models.DateField(
+        null=True, blank=True, help_text="Environmental permit expiry date"
+    )
+
+    # Waste Collection Capabilities
+    waste_types_handled = models.JSONField(
+        default=list, blank=True, help_text="Types of waste this provider can handle"
+    )
+    waste_categories = models.ManyToManyField(
+        WasteCategory, related_name="providers", blank=True
+    )
+    collection_methods = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Collection methods available (manual, automated, etc.)",
+    )
+    vehicle_fleet_size = models.IntegerField(
+        default=0, help_text="Number of waste collection vehicles"
+    )
+    daily_collection_capacity_kg = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Daily waste collection capacity in kg",
+    )
+    has_compaction_equipment = models.BooleanField(
+        default=False, help_text="Provider has waste compaction equipment"
+    )
+    has_recycling_facilities = models.BooleanField(
+        default=False, help_text="Provider has recycling facilities"
+    )
+
+    # Service Availability
+    service_hours_start = models.TimeField(
+        null=True, blank=True, help_text="Start time for waste collection services"
+    )
+    service_hours_end = models.TimeField(
+        null=True, blank=True, help_text="End time for waste collection services"
+    )
+    emergency_collection_available = models.BooleanField(
+        default=False, help_text="Provider offers emergency waste collection"
+    )
+    weekend_collection_available = models.BooleanField(
+        default=False, help_text="Provider offers weekend waste collection"
+    )
+
+    # --- Insurance & Certifications ---
+    public_liability_insurance = models.BooleanField(default=False)
+    public_liability_amount = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    employers_liability_insurance = models.BooleanField(default=False)
+    employers_liability_amount = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    vehicle_insurance = models.BooleanField(default=False)
+    vehicle_insurance_amount = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+
+    # --- Verification & Status ---
+    verification_status = models.CharField(
+        max_length=20, choices=VERIFICATION_STATUS, default="pending"
+    )
+    verified_at = models.DateTimeField(null=True, blank=True)
+    verified_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="verified_providers",
+    )
+    verification_notes = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    is_available = models.BooleanField(default=True)
+
+    # --- Performance Metrics ---
+    rating = models.DecimalField(
+        max_digits=3,
+        decimal_places=2,
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+    )
+    total_jobs_completed = models.IntegerField(default=0)
+    total_weight_collected_kg = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        help_text="Total waste collected in kg",
+    )
+    total_recycled_kg = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        help_text="Total waste recycled in kg",
+    )
+    collection_efficiency_rating = models.DecimalField(
+        max_digits=3,
+        decimal_places=1,
+        default=0.0,
+        help_text="Collection efficiency rating (0-10)",
+    )
+    average_response_time_minutes = models.IntegerField(
+        default=0, help_text="Average response time in minutes"
+    )
+    completion_rate = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=100,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+    )
+
+    # --- Financial Information ---
+    commission_rate = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=15,
+        help_text="Platform commission percentage",
+    )
+    balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    total_earnings = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    # --- Settings ---
+    auto_accept_jobs = models.BooleanField(default=False)
+    max_distance_km = models.IntegerField(
+        default=10, help_text="Maximum distance willing to travel"
+    )
+    min_job_value = models.DecimalField(max_digits=10, decimal_places=2, default=10)
+    notification_enabled = models.BooleanField(default=True)
+
+    # --- Legacy Fields ---
+    vehicle_count = models.PositiveIntegerField(default=0)
+    last_active = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.business_name} - {self.get_business_type_display()}"
+
+    class Meta:
+        db_table = "service_providers"
+        verbose_name = _("Service Provider")
+        verbose_name_plural = _("Service Providers")
+        indexes = [
+            models.Index(fields=["verification_status"]),
+            models.Index(fields=["business_type"]),
+            models.Index(fields=["waste_license_number"]),
+            models.Index(fields=["is_active", "is_available"]),
+            models.Index(fields=["base_location"]),
+        ]
+
+    def update_metrics(self):
+        """Update provider metrics based on completed jobs"""
+        from apps.Job.models import Job
+
+        completed_jobs = Job.objects.filter(assigned_provider=self, status="completed")
+
+        self.total_jobs_completed = completed_jobs.count()
+        self.total_weight_collected_kg = (
+            completed_jobs.aggregate(total=models.Sum("actual_weight_kg"))["total"] or 0
+        )
+
+        # Calculate average rating
+        ratings = completed_jobs.exclude(rating__isnull=True).aggregate(
+            avg_rating=models.Avg("rating")
+        )
+        self.rating = ratings["avg_rating"] or 0
+
+        self.save()
+
+    def is_available_for_job(self):
+        """Check if provider is available for new jobs"""
+        return (
+            self.is_available
+            and self.verification_status == "verified"
+            and self.base_location is not None
+        )
+
+    @property
+    def is_waste_provider(self):
+        """Check if this provider offers waste collection services"""
+        return self.business_type in [
+            "waste_collection",
+            "recycling_center",
+            "landfill_operator",
+            "transfer_station",
+        ]
+
+    @property
+    def license_expired(self):
+        """Check if waste license is expired"""
+        if self.waste_license_expiry:
+            return self.waste_license_expiry < timezone.now().date()
+        return False
+
+    @property
+    def environmental_permit_expired(self):
+        """Check if environmental permit is expired"""
+        if self.environmental_permit_expiry:
+            return self.environmental_permit_expiry < timezone.now().date()
+        return False
+
+    def clean(self):
+        if not self.base_location and not (
+            self.address_line1 and self.city and self.postcode
+        ):
+            raise ValidationError(
+                _("Either base location or complete address must be provided.")
+            )
+
+
+# ProviderAvailability model removed - functionality merged into unified Availability model in User app
+
+
+class ProviderEarnings(Basemodel):
+    """Track provider earnings and payouts"""
+
+    TRANSACTION_TYPES = [
+        ("job_payment", "Job Payment"),
+        ("tip", "Customer Tip"),
+        ("bonus", "Performance Bonus"),
+        ("withdrawal", "Withdrawal"),
+        ("commission", "Platform Commission"),
+        ("refund", "Refund"),
+    ]
+
+    provider = models.ForeignKey(
+        ServiceProvider, on_delete=models.CASCADE, related_name="earnings"
+    )
+    job = models.ForeignKey("Job.Job", on_delete=models.SET_NULL, null=True, blank=True)
+    request = models.ForeignKey(
+        "Request.Request", on_delete=models.SET_NULL, null=True, blank=True
+    )
+    transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    balance_after = models.DecimalField(max_digits=10, decimal_places=2)
+    description = models.TextField(blank=True)
+    reference = models.CharField(max_length=100, blank=True)
+    is_settled = models.BooleanField(default=False)
+    settled_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "provider_earnings"
+        ordering = ["-created_at"]
+
+
+# ProviderRating model removed - functionality merged into unified Rating model in Review app
+
+
+class ServiceProviderThrough(Basemodel):
+    """Through model for ServiceProvider and Services many-to-many relationship"""
+
+    service_provider = models.ForeignKey(ServiceProvider, on_delete=models.CASCADE)
+    service = models.ForeignKey("Services.Services", on_delete=models.CASCADE)
+    is_active = models.BooleanField(default=True)
+    commission_rate = models.DecimalField(max_digits=5, decimal_places=2, default=15)
+
+    class Meta:
+        db_table = "service_provider_through"
+        unique_together = ["service_provider", "service"]

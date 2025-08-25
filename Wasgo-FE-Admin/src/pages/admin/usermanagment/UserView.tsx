@@ -73,7 +73,7 @@ interface SecurityEvent {
 
 type AccountStatus = 'active' | 'pending' | 'suspended' | 'inactive';
 
-interface UserAccount {
+export interface UserAccount {
   id: string;
   email: string;
   phone_number: string;
@@ -247,14 +247,19 @@ const UserView: React.FC = () => {
 
   const handleSave = async () => {
     console.log("clicked")
-    if (!editedUser) return;
-    
+    console.log("editedUser is null", editedUser)
+    if (!editedUser) {
+      console.log("editedUser is null", editedUser)
+      return;
+    }
     if (!validateUser(editedUser)) {
+      console.log("validationErrors", validationErrors)
       return;
     }
 
     try {
       setSaving(true);
+      console.log("editedUser", editedUser)
       
       // Create a complete user object with all state
       const updatedUser = {
@@ -486,12 +491,13 @@ const UserView: React.FC = () => {
   };
 
   const handleOverviewSave = (updatedUser: UserAccount) => {
-    setUser(updatedUser);
     setEditedUser(updatedUser);
+    handleSave();
   };
 
   const handleOverviewCancel = () => {
     setIsEditing(false);
+    setEditedUser(user);
   };
 
   const handleSecuritySave = (updatedUser: UserAccount) => {
@@ -526,8 +532,8 @@ const UserView: React.FC = () => {
       case 'overview':
         return (
           <UserOverview
-            user={user}
-            setUser={setUser}
+            user={isEditing ? editedUser : user}
+            setUser={isEditing ? setEditedUser : setUser}
             isEditing={isEditing}
             setIsEditing={setIsEditing}
             onSave={handleOverviewSave}

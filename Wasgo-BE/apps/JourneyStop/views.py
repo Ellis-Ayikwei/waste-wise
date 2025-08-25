@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 from .models import JourneyStop
 from .serializers import JourneyStopSerializer
-from apps.Request.models import Request
+from apps.ServiceRequest.models import ServiceRequest
 from apps.Location.models import Location
 
 

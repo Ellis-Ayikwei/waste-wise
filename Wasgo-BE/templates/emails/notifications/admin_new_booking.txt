@@ -1,4 +1,4 @@
-{{ app_name|default:"MoreVans" }} - ADMIN NOTIFICATION
+{{ app_name|default:"Wasgo" }} - ADMIN NOTIFICATION
 ==============================================
 
 Hello {{ user_name }}!
@@ -52,10 +52,10 @@ Admin Panel: {{ admin_dashboard_url }}
 Booking Details: {{ booking_details_url }}
 {% endif %}
 
-Admin Support: admin@morevans.com
-System Issues: tech@morevans.com
+Admin Support: admin@wasgo.com
+System Issues: tech@wasgo.com
 
 ---
 This is an automated admin notification, please do not reply to this email.
 
-© {{ current_year }} {{ app_name|default:"MoreVans" }} Admin Panel. All rights reserved.
+© {{ current_year }} {{ app_name|default:"Wasgo" }} Admin Panel. All rights reserved.

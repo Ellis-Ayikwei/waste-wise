@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import aluminiLogo from './morevans.png'; // Adjust path to your image
+import aluminiLogo from './wasgonormal.png'; // Adjust path to your image
 
 interface IconLoaderProps {
     className?: string;
@@ -11,10 +11,22 @@ interface IconLoaderProps {
     fullScreen?: boolean;
 }
 
-const IconLoader: FC<IconLoaderProps> = ({ className = '', fill = false, duotone = true, imageSize = 80, spinnerSize = 90, borderColor = '#1976d2', fullScreen = false }) => {
+const IconLoader: FC<IconLoaderProps> = ({ className = '', fill = false, duotone = true, imageSize = 80, spinnerSize = 90, borderColor = '#00D100', fullScreen = false }) => {
     return (
         <div className={fullScreen ? 'flex items-center justify-center h-screen' : 'inline-flex items-center justify-center'}>
             <div className="relative">
+                {/* Pulsing background */}
+                <div
+                    className="absolute inset-0 animate-ping rounded-full opacity-20"
+                    style={{
+                        backgroundColor: borderColor,
+                        width: `${spinnerSize + 20}px`,
+                        height: `${spinnerSize + 20}px`,
+                        top: '-10px',
+                        left: '-10px',
+                    }}
+                ></div>
+                
                 {/* The spinner with fixed styling */}
                 <div
                     className={`animate-spin ${className}`}

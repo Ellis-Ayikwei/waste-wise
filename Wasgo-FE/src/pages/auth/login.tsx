@@ -27,6 +27,7 @@ import toast from 'react-hot-toast';
 import useSignIn from 'react-auth-kit/hooks/useSignIn';
 // import { loginUser } from '../../store/authSlice';
 import { AppDispatch, IRootState } from '../../store';
+import { LoginUser } from '../../store/authSlice';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -35,7 +36,7 @@ const Login = () => {
     const { loading, error } = useSelector((state: IRootState) => state.auth);
     
     const [formData, setFormData] = useState({
-        email: '',
+        email_or_phone: '',
         password: '',
         rememberMe: false,
     });
@@ -55,10 +56,10 @@ const Login = () => {
     const validateForm = () => {
         const newErrors: any = {};
         
-        if (!formData.email) {
-            newErrors.email = 'Email is required';
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            newErrors.email = 'Email is invalid';
+        if (!formData.email_or_phone) {
+            newErrors.email_or_phone = 'Email or Phone is required';
+        } else if (!/\S+@\S+\.\S+/.test(formData.email_or_phone) && !/^\+?[0-9]{10,15}$/.test(formData.email_or_phone)) {
+            newErrors.email_or_phone = 'Email or Phone is invalid';
         }
         
         if (!formData.password) {
@@ -78,22 +79,22 @@ const Login = () => {
             return;
         }
 
-        // try {
-        //     const result = await dispatch(loginUser({
-        //         email: formData.email,
-        //         password: formData.password,
-        //         signIn,
-        //     })).unwrap();
+        try {
+            const result = await dispatch(LoginUser({
+                email_or_phone: formData.email_or_phone,
+                password: formData.password,
+                extra: { signIn },
+            })).unwrap();
 
-        //     toast.success('Login successful! Redirecting...');
+            toast.success('Login successful! Redirecting...');
             
-        //     // Redirect based on user type
-        //     setTimeout(() => {
-        //         navigate(userType === 'provider' ? '/provider/dashboard' : '/dashboard');
-        //     }, 1000);
-        // } catch (err: any) {
-        //     toast.error(err.message || 'Login failed. Please try again.');
-        // }
+            // Redirect based on user type
+            setTimeout(() => {
+                navigate(userType === 'provider' ? '/provider/dashboard' : '/dashboard');
+            }, 1000);
+        } catch (err: any) {
+            toast.error(err.message || 'Login failed. Please try again.');
+        }
     };
 
     const handleSocialLogin = (provider: string) => {
@@ -196,30 +197,30 @@ const Login = () => {
                         {/* Email Field */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Email Address
+                                Email Address or Phone Number
                             </label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <Mail className="text-gray-400" size={16} />
                                 </div>
                                 <input
-                                    type="email"
-                                    name="email"
-                                    value={formData.email}
+                                    type="text"
+                                    name="email_or_phone"
+                                    value={formData.email_or_phone}
                                     onChange={handleInputChange}
                                     className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${
-                                        errors.email ? 'border-red-500' : 'border-gray-300'
+                                        errors.email_or_phone ? 'border-red-500' : 'border-gray-300'
                                     }`}
-                                    placeholder="your.email@example.com"
+                                    placeholder="your.email@example.com or +233555123456"
                                 />
                             </div>
-                            {errors.email && (
+                            {errors.email_or_phone && (
                                 <motion.p 
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     className="text-red-500 text-sm mt-1"
                                 >
-                                    {errors.email}
+                                    {errors.email_or_phone}
                                 </motion.p>
                             )}
                         </div>

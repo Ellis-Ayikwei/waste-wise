@@ -1,4 +1,4 @@
-{{ app_name|default:"MoreVans" }}
+{{ app_name|default:"Wasgo" }}
 ==============================================
 
 Congratulations {{ user_name }}!
@@ -29,11 +29,11 @@ Go to Provider Dashboard: {{ action_url }}
 {% endif %}
 
 READY TO START EARNING?
-Check out available jobs in your area and start building your MoreVans reputation today!
+Check out available jobs in your area and start building your Wasgo reputation today!
 
-Need help getting started? Contact our provider support at providers@morevans.com
+Need help getting started? Contact our provider support at providers@wasgo.com
 
 ---
 This is an automated message, please do not reply to this email.
 
-© {{ current_year }} {{ app_name|default:"MoreVans" }}. All rights reserved.
+© {{ current_year }} {{ app_name|default:"Wasgo" }}. All rights reserved.

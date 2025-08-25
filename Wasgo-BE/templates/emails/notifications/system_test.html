@@ -8,15 +8,15 @@
     <div style="max-width: 600px; margin: 0 auto; padding: 16px;">
       <div style="text-align:center; margin-bottom: 12px;">
         <span style="display:inline-block; background:#ffffff; padding:8px 12px; border-radius:8px;">
-          <img src="https://morevans.sfo3.cdn.digitaloceanspaces.com/email%20images%20/morevanstextdark.png" alt="MoreVans" style="height:40px; display:block;" />
+          <img src="https://wasgo.sfo3.cdn.digitaloceanspaces.com/email%20images%20/wasgotextdark.png" alt="Wasgo" style="height:40px; display:block;" />
         </span>
       </div>
-      <h2 style="color:#2E2787; margin-bottom: 8px;">{{ title|default:"System Test" }}</h2>
+      <h2 style="color:#22C55E; margin-bottom: 8px;">{{ title|default:"System Test" }}</h2>
       <p style="line-height:1.5;">{{ message|default:"This is a test notification from the system." }}</p>
 
       {% if action_url %}
       <p>
-        <a href="{{ action_url }}" style="display:inline-block; padding:10px 16px; background:#2E2787; color:#fff; text-decoration:none; border-radius:4px;">
+        <a href="{{ action_url }}" style="display:inline-block; padding:10px 16px; background:#22C55E; color:#fff; text-decoration:none; border-radius:4px;">
           {{ action_text|default:"View Details" }}
         </a>
       </p>
@@ -24,7 +24,7 @@
 
       <hr style="border:none; border-top:1px solid #e5e5e5; margin: 24px 0;" />
       <p style="font-size: 12px; color:#666;">
-        Sent by {{ app_name|default:"MoreVans" }} • {{ current_year }}
+        Sent by {{ app_name|default:"Wasgo" }} • {{ current_year }}
       </p>
     </div>
   </body>

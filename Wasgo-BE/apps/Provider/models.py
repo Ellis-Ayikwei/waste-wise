@@ -8,7 +8,7 @@ from apps.Basemodel.models import Basemodel
 from apps.User.models import User
 
 
-class WasteCategory(models.Model):
+class WasteCategory(Basemodel):
     """Categories of waste that providers can specialize in"""
 
     CATEGORY_CHOICES = [
@@ -73,7 +73,7 @@ class ServiceProvider(Basemodel):
     vat_number = models.CharField(max_length=50, blank=True)
 
     # Contact Information
-    phone = models.CharField(max_length=20)
+    phone = models.CharField(max_length=25)
     email = models.EmailField()
     website = models.URLField(blank=True)
 
@@ -82,8 +82,8 @@ class ServiceProvider(Basemodel):
     address_line2 = models.CharField(max_length=255, blank=True)
     city = models.CharField(max_length=100)
     county = models.CharField(max_length=100)
-    postcode = models.CharField(max_length=20)
-    country = models.CharField(max_length=100, default="United Kingdom")
+    postcode = models.CharField(max_length=200)
+    country = models.CharField(max_length=100, default="Ghana")
 
     # GIS Location
     base_location = gis_models.PointField(
@@ -258,9 +258,11 @@ class ServiceProvider(Basemodel):
 
     def update_metrics(self):
         """Update provider metrics based on completed jobs"""
-        from apps.Job.models import Job
+        from apps.ServiceRequest.models import ServiceRequest
 
-        completed_jobs = Job.objects.filter(assigned_provider=self, status="completed")
+        completed_jobs = ServiceRequest.objects.filter(
+            assigned_provider=self, status="completed"
+        )
 
         self.total_jobs_completed = completed_jobs.count()
         self.total_weight_collected_kg = (
@@ -323,7 +325,7 @@ class ProviderEarnings(Basemodel):
     """Track provider earnings and payouts"""
 
     TRANSACTION_TYPES = [
-        ("job_payment", "Job Payment"),
+        ("job_payment", "ServiceRequest Payment"),
         ("tip", "Customer Tip"),
         ("bonus", "Performance Bonus"),
         ("withdrawal", "Withdrawal"),
@@ -334,9 +336,12 @@ class ProviderEarnings(Basemodel):
     provider = models.ForeignKey(
         ServiceProvider, on_delete=models.CASCADE, related_name="earnings"
     )
-    job = models.ForeignKey("Job.Job", on_delete=models.SET_NULL, null=True, blank=True)
-    request = models.ForeignKey(
-        "Request.Request", on_delete=models.SET_NULL, null=True, blank=True
+    service_request = models.ForeignKey(
+        "ServiceRequest.ServiceRequest",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="earnings_records",
     )
     transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
     amount = models.DecimalField(max_digits=10, decimal_places=2)

@@ -28,7 +28,7 @@ const ERROR_MESSAGES = {
 };
 
 export const LoginUser = createAsyncThunk('auth/LoginUser', async ({ email, password, extra }: { email?: string; password: string; extra?: any }, { rejectWithValue }) => {
-    const payload = { email, password };
+    const payload = { email_or_phone:email, password };
 
     try {
         const response = await authAxiosInstance.post('/login/', payload);
@@ -60,8 +60,13 @@ export const LoginUser = createAsyncThunk('auth/LoginUser', async ({ email, pass
             throw new Error('Frontend sign-in failed');
         }
 
+        console.log("login successfull")
+
         return user;
     } catch (error: any) {
+
+        console.log(error)
+
 
         const parser = new DOMParser();
         const errorData = error.response.data;
@@ -69,7 +74,7 @@ export const LoginUser = createAsyncThunk('auth/LoginUser', async ({ email, pass
         const errorMess = doc.querySelector('body')?.innerText ?? 'An error occurred';
         const errorMessage = errorMess.split('\n')[1];
 
-        return rejectWithValue(errorMessage);
+        return rejectWithValue(error);
     }
 });
 

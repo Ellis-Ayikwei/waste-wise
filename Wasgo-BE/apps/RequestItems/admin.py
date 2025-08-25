@@ -9,7 +9,7 @@
 #     readonly_fields = ('created_at', 'updated_at')
 
 #     fieldsets = (
-#         ('Request Item Information', {
+#         ('ServiceRequest Item Information', {
 #             'fields': ('request', 'item', 'quantity', 'weight')
 #         }),
 #         ('Details', {

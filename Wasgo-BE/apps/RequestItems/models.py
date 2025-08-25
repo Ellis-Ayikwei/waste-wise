@@ -1,13 +1,13 @@
 from django.db import models
 from apps.Basemodel.models import Basemodel
 from apps.CommonItems.models import ItemCategory
-from apps.Request.models import Request
+from apps.ServiceRequest.models import ServiceRequest
 
 
 class RequestItem(Basemodel):
     """Individual items within a request"""
 
-    request = models.ForeignKey(Request, on_delete=models.CASCADE, related_name="items")
+    request = models.ForeignKey(ServiceRequest, on_delete=models.CASCADE, related_name="items")
     category = models.ForeignKey(ItemCategory, on_delete=models.PROTECT)
     name = models.CharField(max_length=100, default="Unnamed Item")
     description = models.TextField(blank=True)
@@ -38,11 +38,11 @@ class RequestItem(Basemodel):
 
     def __str__(self):
         return (
-            f"{self.name} ({self.quantity}) - Request: {self.request.tracking_number}"
+            f"{self.name} ({self.quantity}) - ServiceRequest: {self.request.tracking_number}"
         )
 
     class Meta:
         db_table = "request_item"
         managed = True
-        verbose_name = "Request Item"
-        verbose_name_plural = "Request Items"
+        verbose_name = "ServiceRequest Item"
+        verbose_name_plural = "ServiceRequest Items"

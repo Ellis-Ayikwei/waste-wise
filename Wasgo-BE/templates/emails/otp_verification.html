@@ -20,7 +20,7 @@
             background-color: #ffffff;
         }
         .header {
-            background: linear-gradient(135deg, #2E2787 0%, #4A3F9C 100%);
+            background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
             color: white;
             padding: 40px 20px 30px;
             text-align: center;
@@ -59,11 +59,11 @@
             padding: 40px 20px;
             background-color: white;
             border-radius: 0 0 12px 12px;
-            box-shadow: 0 4px 20px rgba(46, 39, 135, 0.1);
+            box-shadow: 0 4px 20px rgba(34, 197, 94, 0.1);
         }
         .otp-box {
-            background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%);
-            border: 2px solid #2E2787;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border: 2px solid #22C55E;
             border-radius: 12px;
             padding: 30px 20px;
             margin: 30px 0;
@@ -77,38 +77,38 @@
             left: -2px;
             right: -2px;
             bottom: -2px;
-            background: linear-gradient(135deg, #2E2787, #4A3F9C);
+            background: linear-gradient(135deg, #22C55E, #16A34A);
             border-radius: 12px;
             z-index: -1;
         }
         .otp-code {
             font-size: 42px;
             font-weight: bold;
-            color: #2E2787;
+            color: #22C55E;
             letter-spacing: 12px;
             margin: 15px 0;
-            text-shadow: 0 2px 4px rgba(46, 39, 135, 0.2);
+            text-shadow: 0 2px 4px rgba(34, 197, 94, 0.2);
         }
         .button {
             display: inline-block;
             padding: 16px 40px;
-            background: linear-gradient(135deg, #2E2787 0%, #4A3F9C 100%);
+            background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
             color: white;
             text-decoration: none;
             border-radius: 8px;
             font-weight: 600;
             margin-top: 20px;
-            box-shadow: 0 4px 15px rgba(46, 39, 135, 0.3);
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
             transition: all 0.3s ease;
         }
         .button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(46, 39, 135, 0.4);
+            box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
         }
         .footer {
             margin-top: 40px;
             padding-top: 30px;
-            border-top: 2px solid #f0f2ff;
+            border-top: 2px solid #dcfce7;
             text-align: center;
             color: #666;
             font-size: 14px;
@@ -128,7 +128,7 @@
             margin-right: 8px;
         }
         .brand-color {
-            color: #2E2787;
+            color: #22C55E;
         }
         @media only screen and (max-width: 600px) {
             .container {
@@ -157,14 +157,14 @@
         <div class="header">
             <div class="header-content">
                 <div class="logo">
-                    <img src="https://morevans.sfo3.cdn.digitaloceanspaces.com/email%20images%20/morevanstextdark.png" alt="{{ app_name|default:'MoreVans' }}" />
+                    <img src="https://wasgo.sfo3.cdn.digitaloceanspaces.com/email%20images%20/wasgotextdark.png" alt="{{ app_name|default:'Wasgo' }}" />
                 </div>
-                <h1>{{ app_name|default:"MoreVans" }}</h1>
+                <h1>{{ app_name|default:"Wasgo" }}</h1>
                 <p>Secure Verification</p>
             </div>
         </div>
         <div class="content">
-            <h2 style="color: #2E2787; margin-bottom: 20px;">Hello {{ user_name|default:"there" }}! 👋</h2>
+            <h2 style="color: #22C55E; margin-bottom: 20px;">Hello {{ user_name|default:"there" }}! 👋</h2>
             
             <p style="font-size: 16px; line-height: 1.7; color: #555;">{{ message }}</p>
             
@@ -188,7 +188,7 @@
             <div class="footer">
                 <p>This is an automated message, please do not reply to this email.</p>
                 <p>If you didn't request this code, please ignore this email or contact our support team.</p>
-                <p style="margin-top: 20px; font-weight: 600; color: #2E2787;">&copy; {{ current_year }} {{ app_name|default:"MoreVans" }}. All rights reserved.</p>
+                <p style="margin-top: 20px; font-weight: 600; color: #22C55E;">&copy; {{ current_year }} {{ app_name|default:"Wasgo" }}. All rights reserved.</p>
             </div>
         </div>
     </div>

@@ -236,7 +236,7 @@ class LoginAPIView(APIView):
             from apps.User.models import UserActivity
 
             UserActivity.objects.create(
-                user=user, activity_type="login", details={"ip": ip}
+                user=user, activity_type="login", metadata={"ip": ip}
             )
 
             # Update last login timestamp
@@ -356,7 +356,7 @@ class PasswordRecoveryAPIView(APIView):
         # Send password reset email
         try:
             send_mail(
-                subject="Password Reset Request",
+                subject="Password Reset ServiceRequest",
                 message=f"Click the following link to reset your password: {reset_url}",
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[user.email],
@@ -680,7 +680,7 @@ class RevokeAllTrustedDevicesView(APIView):
 #     def post(self, request):
 #         print("TokenRefreshView", request.headers)
 #         # Detailed header logging
-#         logger.debug("=== Token Refresh Request Headers ===")
+#         logger.debug("=== Token Refresh ServiceRequest Headers ===")
 #         for header, value in request.headers.items():
 #             logger.debug(f"{header}: {value}")
 #         logger.debug("=====================================")
@@ -1440,7 +1440,7 @@ class MFALoginView(APIView):
                                     {
                                         "message": error_detail,
                                         "error_code": "NOT_ACTIVATED",
-                                        "support_email": "support@morevans.com",
+                                        "support_email": "support@wasgo.com",
                                     },
                                     status=status.HTTP_403_FORBIDDEN,
                                 )
@@ -1452,7 +1452,7 @@ class MFALoginView(APIView):
                                     {
                                         "message": error_detail,
                                         "error_code": "ACCOUNT_DISABLED",
-                                        "support_email": "support@morevans.com",
+                                        "support_email": "support@wasgo.com",
                                     },
                                     status=status.HTTP_403_FORBIDDEN,
                                 )
@@ -1464,7 +1464,7 @@ class MFALoginView(APIView):
                                     {
                                         "message": error_detail,
                                         "error_code": "ACCOUNT_INACTIVE",
-                                        "support_email": "support@morevans.com",
+                                        "support_email": "support@wasgo.com",
                                     },
                                     status=status.HTTP_403_FORBIDDEN,
                                 )
@@ -1488,7 +1488,7 @@ class MFALoginView(APIView):
                                     {
                                         "message": error_detail,
                                         "error_code": "ACCOUNT_SUSPENDED",
-                                        "support_email": "support@morevans.com",
+                                        "support_email": "support@wasgo.com",
                                     },
                                     status=status.HTTP_403_FORBIDDEN,
                                 )
@@ -1500,7 +1500,7 @@ class MFALoginView(APIView):
                                     {
                                         "message": error_detail,
                                         "error_code": "ACCOUNT_DELETED",
-                                        "support_email": "support@morevans.com",
+                                        "support_email": "support@wasgo.com",
                                     },
                                     status=status.HTTP_410_GONE,
                                 )
@@ -1512,7 +1512,7 @@ class MFALoginView(APIView):
                                     {
                                         "message": error_detail,
                                         "error_code": "ACCOUNT_BANNED",
-                                        "support_email": "support@morevans.com",
+                                        "support_email": "support@wasgo.com",
                                     },
                                     status=status.HTTP_403_FORBIDDEN,
                                 )
@@ -1525,7 +1525,7 @@ class MFALoginView(APIView):
                                         "message": error_detail,
                                         "error_code": "ACCOUNT_EXPIRED",
                                         "action_required": "RENEW_SUBSCRIPTION",
-                                        "support_email": "support@morevans.com",
+                                        "support_email": "support@wasgo.com",
                                     },
                                     status=status.HTTP_402_PAYMENT_REQUIRED,
                                 )
@@ -1537,7 +1537,7 @@ class MFALoginView(APIView):
                                     {
                                         "message": error_detail,
                                         "error_code": "ACCOUNT_UNKNOWN_STATUS",
-                                        "support_email": "support@morevans.com",
+                                        "support_email": "support@wasgo.com",
                                     },
                                     status=status.HTTP_403_FORBIDDEN,
                                 )

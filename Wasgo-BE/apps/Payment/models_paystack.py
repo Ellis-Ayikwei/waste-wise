@@ -3,7 +3,7 @@ Payment models updated for Paystack integration
 """
 from django.db import models
 from apps.Basemodel.models import Basemodel
-from apps.Request.models import Request
+from apps.ServiceRequest.models import ServiceRequest
 from apps.User.models import User
 
 
@@ -29,7 +29,7 @@ class PaystackCustomer(Basemodel):
         return f"{self.user.email} - {self.customer_code}"
 
 
-class PaymentMethod(Basemodel):
+class PaystackPaymentMethod(Basemodel):
     """Model to store user payment methods for Paystack integration"""
 
     PAYMENT_TYPES = [
@@ -48,7 +48,7 @@ class PaymentMethod(Basemodel):
     ]
 
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="payment_methods"
+        User, on_delete=models.CASCADE, related_name="paystack_payment_methods"
     )
     payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPES)
     is_default = models.BooleanField(default=False)
@@ -77,7 +77,7 @@ class PaymentMethod(Basemodel):
     bank_name = models.CharField(max_length=100, null=True, blank=True)
 
     class Meta:
-        db_table = "payment_method"
+        db_table = "paystack_payment_method"
         managed = True
         ordering = ["-created_at"]
 
@@ -89,7 +89,7 @@ class PaymentMethod(Basemodel):
         return f"{self.user.email} - {self.payment_type}"
 
 
-class Payment(Basemodel):
+class PaystackPayment(Basemodel):
     """Payment transaction model for Paystack"""
     
     PAYMENT_STATUS = [
@@ -120,13 +120,13 @@ class Payment(Basemodel):
     ]
 
     request = models.ForeignKey(
-        Request, on_delete=models.CASCADE, related_name="payments", null=True, blank=True
+        ServiceRequest, on_delete=models.CASCADE, related_name="paystack_payments", null=True, blank=True
     )
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="user_payments"
     )
     payment_method = models.ForeignKey(
-        PaymentMethod, on_delete=models.SET_NULL, null=True, blank=True
+        PaystackPaymentMethod, on_delete=models.SET_NULL, null=True, blank=True
     )
     
     # Payment details
@@ -169,7 +169,7 @@ class Payment(Basemodel):
     refund_reason = models.TextField(blank=True)
 
     class Meta:
-        db_table = "payment"
+        db_table = "paystack_payment"
         managed = True
         ordering = ["-created_at"]
         indexes = [

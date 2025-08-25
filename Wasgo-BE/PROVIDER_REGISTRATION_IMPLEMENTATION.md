@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the complete implementation of the provider registration system for MoreVans, which handles user creation, provider profile creation, and address management in a single API endpoint.
+This document outlines the complete implementation of the provider registration system for Wasgo, which handles user creation, provider profile creation, and address management in a single API endpoint.
 
 ## Key Components
 

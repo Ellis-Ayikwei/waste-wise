@@ -1,8 +1,8 @@
-# MoreVans Chat System Documentation
+# Wasgo Chat System Documentation
 
 ## Overview
 
-The MoreVans chat system provides real-time messaging capabilities across the entire platform, enabling communication between users in various contexts including bidding negotiations, job discussions, support tickets, and dispute resolution.
+The Wasgo chat system provides real-time messaging capabilities across the entire platform, enabling communication between users in various contexts including bidding negotiations, job discussions, support tickets, and dispute resolution.
 
 ## Features
 

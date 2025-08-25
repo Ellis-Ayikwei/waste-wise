@@ -178,6 +178,7 @@ const UserOverview: React.FC<UserOverviewProps> = ({ user, setUser, isEditing, s
           </div>
         </div>
       </div>
+      
       {/* Provider Information Card - Only show when user type is provider */}
       {(user.user_type === 'provider') && (
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
@@ -195,6 +196,7 @@ const UserOverview: React.FC<UserOverviewProps> = ({ user, setUser, isEditing, s
           </div>
         </div>
       )}
+      
       {/* Address Information Card */}
       {user.user_addresses && (
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
@@ -211,6 +213,24 @@ const UserOverview: React.FC<UserOverviewProps> = ({ user, setUser, isEditing, s
               {renderInput('Country', 'country', user.user_addresses.country, 'text', true, handleAddressChange)}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Action Buttons */}
+      {isEditing && (
+        <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => onSave(user)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            Save Changes
+          </button>
         </div>
       )}
     </div>

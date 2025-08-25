@@ -137,7 +137,7 @@ class Driver(Basemodel):
     # Driver status
     STATUS_CHOICES = [
         ("available", "Available"),
-        ("on_job", "On Job"),
+        ("on_job", "On ServiceRequest"),
         ("off_duty", "Off Duty"),
         ("on_break", "On Break"),
         ("unavailable", "Unavailable"),

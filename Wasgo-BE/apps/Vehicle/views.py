@@ -4,13 +4,11 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
-from .models import Vehicle, VehicleImages, VehicleDocuments
+from .models import Vehicle, VehicleImages
 from .serializer import (
     VehicleSerializer,
     VehicleImageSerializer,
-    VehicleDocumentSerializer,
     VehicleImageDetailSerializer,
-    VehicleDocumentDetailSerializer,
 )
 
 
@@ -24,11 +22,11 @@ class VehicleViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
-        print("CREATE - Request data:", request.data)
+        print("CREATE - ServiceRequest data:", request.data)
         return super().create(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
-        print("UPDATE - Request data:", request.data)
+        print("UPDATE - ServiceRequest data:", request.data)
         return super().update(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -64,7 +62,7 @@ class VehicleViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
 
         elif request.method == "POST":
-            print("PHOTOS POST - Request data:", request.data)
+            print("PHOTOS POST - ServiceRequest data:", request.data)
             # Check if we already have 5 photos
             existing_photos = VehicleImages.objects.filter(vehicle=vehicle).count()
             if existing_photos >= 5:
@@ -74,24 +72,6 @@ class VehicleViewSet(viewsets.ModelViewSet):
                 )
 
             serializer = VehicleImageDetailSerializer(data=request.data)
-            if serializer.is_valid():
-                serializer.save(vehicle=vehicle)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=True, methods=["get", "post"])
-    def documents(self, request, pk=None):
-        """Manage vehicle documents"""
-        vehicle = self.get_object()
-
-        if request.method == "GET":
-            documents = VehicleDocuments.objects.filter(vehicle=vehicle)
-            serializer = VehicleDocumentDetailSerializer(documents, many=True)
-            return Response(serializer.data)
-
-        elif request.method == "POST":
-            print("DOCUMENTS POST - Request data:", request.data)
-            serializer = VehicleDocumentDetailSerializer(data=request.data)
             if serializer.is_valid():
                 serializer.save(vehicle=vehicle)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -136,11 +116,11 @@ class VehicleImageViewSet(viewsets.ModelViewSet):
     """ViewSet for managing vehicle photos"""
 
     def create(self, request, *args, **kwargs):
-        print("CREATE - Request data:", request.data)
+        print("CREATE - ServiceRequest data:", request.data)
         return super().create(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
-        print("UPDATE - Request data:", request.data)
+        print("UPDATE - ServiceRequest data:", request.data)
         return super().update(request, *args, **kwargs)
 
     queryset = VehicleImages.objects.all()
@@ -153,22 +133,6 @@ class VehicleImageViewSet(viewsets.ModelViewSet):
         if vehicle_id:
             queryset = queryset.filter(vehicle_id=vehicle_id)
         return queryset
-
-
-class VehicleDocumentViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing vehicle documents"""
-
-    def create(self, request, *args, **kwargs):
-        print("CREATE - Request data:", request.data)
-        return super().create(request, *args, **kwargs)
-
-    def update(self, request, *args, **kwargs):
-        print("UPDATE - Request data:", request.data)
-        return super().update(request, *args, **kwargs)
-
-    queryset = VehicleDocuments.objects.all()
-    serializer_class = VehicleDocumentDetailSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         queryset = VehicleDocuments.objects.all()

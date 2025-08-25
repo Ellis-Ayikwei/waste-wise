@@ -27,21 +27,33 @@ import { useDispatch } from 'react-redux';
 import { AppDispatch } from '../../store';
 
 interface RegisterFormValues {
-    phone: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    phone_number: string;
     password: string;
-    confirmPassword: string;
+    password2: string;
     termsAccepted: boolean;
 }
 
 const RegisterSchema = Yup.object().shape({
-    phone: Yup.string()
-        .matches(/^[0-9]{10}$/, 'Phone number must be 10 digits')
+    email: Yup.string()
+        .email('Email must be a valid email address')
+        .required('Email is required'),
+    first_name: Yup.string()
+        .min(2, 'First name must be at least 2 characters')
+        .required('First name is required'),
+    last_name: Yup.string()
+        .min(2, 'Last name must be at least 2 characters')
+        .required('Last name is required'),
+    phone_number: Yup.string()
+        .matches(/^[0-9]{10,15}$/, 'Phone number must be 10-15 digits')
         .required('Phone number is required'),
     password: Yup.string()
         .min(8, 'Password must be at least 8 characters')
         .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character')
         .required('Password is required'),
-    confirmPassword: Yup.string()
+    password2: Yup.string()
         .oneOf([Yup.ref('password')], 'Passwords must match')
         .required('Confirm password is required'),
     termsAccepted: Yup.boolean().oneOf([true], 'You must accept the terms and conditions'),
@@ -61,12 +73,12 @@ const Register: React.FC = () => {
 
             const resultAction = await dispatch(
                 RegisterUser({
-                    userOrEmail: { username: values.phone },
+                    email: values.email,
                     password: values.password,
-                    confirm_password: values.confirmPassword,
-                    first_name: '',
-                    last_name: '',
-                    phone_number: values.phone,
+                    password2: values.password2,
+                    first_name: values.first_name,
+                    last_name: values.last_name,
+                    phone_number: values.phone_number,
                     accountType: 'user', // Default to user account
                 })
             ).unwrap();
@@ -74,7 +86,7 @@ const Register: React.FC = () => {
             if (resultAction.success) {
                 navigate('/verify-account', {
                     state: {
-                        phone: values.phone,
+                        phone: values.phone_number,
                         type: 'registration',
                         accountType: 'user',
                     },
@@ -148,9 +160,12 @@ const Register: React.FC = () => {
                     {/* Registration Form */}
                     <Formik
                         initialValues={{
-                            phone: '',
+                            email: '',
+                            first_name: '',
+                            last_name: '',
+                            phone_number: '',
                             password: '',
-                            confirmPassword: '',
+                            password2: '',
                             termsAccepted: false,
                         }}
                         validationSchema={RegisterSchema}
@@ -158,7 +173,64 @@ const Register: React.FC = () => {
                     >
                         {({ isSubmitting, errors, touched, values }) => (
                             <Form className="space-y-5">
-                                {/* Phone Field */}
+                                {/* Email Field */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <User className="text-gray-400" size={16} />
+                                        </div>
+                                        <Field
+                                            name="email"
+                                            type="email"
+                                            className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${
+                                                errors.email && touched.email ? 'border-red-500' : 'border-gray-300'
+                                            }`}
+                                            placeholder="Enter your email address"
+                                        />
+                                    </div>
+                                    <ErrorMessage name="email" component="p" className="text-red-500 text-sm mt-1" />
+                                </div>
+
+                                {/* First Name Field */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <User className="text-gray-400" size={16} />
+                                        </div>
+                                        <Field
+                                            name="first_name"
+                                            type="text"
+                                            className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${
+                                                errors.first_name && touched.first_name ? 'border-red-500' : 'border-gray-300'
+                                            }`}
+                                            placeholder="Enter your first name"
+                                        />
+                                    </div>
+                                    <ErrorMessage name="first_name" component="p" className="text-red-500 text-sm mt-1" />
+                                </div>
+
+                                {/* Last Name Field */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <User className="text-gray-400" size={16} />
+                                        </div>
+                                        <Field
+                                            name="last_name"
+                                            type="text"
+                                            className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${
+                                                errors.last_name && touched.last_name ? 'border-red-500' : 'border-gray-300'
+                                            }`}
+                                            placeholder="Enter your last name"
+                                        />
+                                    </div>
+                                    <ErrorMessage name="last_name" component="p" className="text-red-500 text-sm mt-1" />
+                                </div>
+
+                                {/* Phone Number Field */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
                                     <div className="relative">
@@ -166,15 +238,15 @@ const Register: React.FC = () => {
                                             <Phone className="text-gray-400" size={16} />
                                         </div>
                                         <Field
-                                            name="phone"
+                                            name="phone_number"
                                             type="tel"
                                             className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${
-                                                errors.phone && touched.phone ? 'border-red-500' : 'border-gray-300'
+                                                errors.phone_number && touched.phone_number ? 'border-red-500' : 'border-gray-300'
                                             }`}
                                             placeholder="Enter your phone number"
                                         />
                                     </div>
-                                    <ErrorMessage name="phone" component="p" className="text-red-500 text-sm mt-1" />
+                                    <ErrorMessage name="phone_number" component="p" className="text-red-500 text-sm mt-1" />
                                 </div>
 
                                 {/* Password Fields */}
@@ -215,10 +287,10 @@ const Register: React.FC = () => {
                                                 <Lock className="text-gray-400" size={16} />
                                             </div>
                                             <Field
-                                                name="confirmPassword"
+                                                name="password2"
                                                 type={showConfirmPassword ? 'text' : 'password'}
                                                 className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${
-                                                    errors.confirmPassword && touched.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                                                    errors.password2 && touched.password2 ? 'border-red-500' : 'border-gray-300'
                                                 }`}
                                                 placeholder="Confirm password"
                                             />
@@ -234,7 +306,7 @@ const Register: React.FC = () => {
                                                 )}
                                             </button>
                                         </div>
-                                        <ErrorMessage name="confirmPassword" component="p" className="text-red-500 text-sm mt-1" />
+                                        <ErrorMessage name="password2" component="p" className="text-red-500 text-sm mt-1" />
                                     </div>
                                 </div>
 

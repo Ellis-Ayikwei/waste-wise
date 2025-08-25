@@ -1,12 +1,168 @@
 from rest_framework import serializers
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
-from .models import BinType, SmartBin, SensorReading, BinAlert
+from django.contrib.auth import get_user_model
+from .models import BinType, SmartBin, Sensor, SensorReading, BinAlert
+
+User = get_user_model()
 
 
 class BinTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = BinType
         fields = "__all__"
+
+
+class SensorSerializer(serializers.ModelSerializer):
+    """Serializer for Sensor model"""
+
+    sensor_type_display = serializers.CharField(
+        source="get_sensor_type_display", read_only=True
+    )
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
+    category_display = serializers.CharField(
+        source="get_category_display", read_only=True
+    )
+    needs_maintenance = serializers.BooleanField(read_only=True)
+    needs_calibration = serializers.BooleanField(read_only=True)
+    age_days = serializers.IntegerField(read_only=True)
+    remaining_warranty_days = serializers.IntegerField(read_only=True)
+    health_score = serializers.IntegerField(read_only=True)
+    readings_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Sensor
+        fields = "__all__"
+        read_only_fields = ["created_at", "updated_at", "sensor_id"]
+
+    def get_readings_count(self, obj):
+        """Get the number of readings for this sensor"""
+        return obj.readings.count()
+
+
+class SensorReadingSerializer(serializers.ModelSerializer):
+    bin_name = serializers.CharField(source="bin.name", read_only=True)
+    bin_number = serializers.CharField(source="bin.bin_number", read_only=True)
+    sensor_number = serializers.CharField(source="sensor.sensor_number", read_only=True)
+    sensor_type = serializers.CharField(source="sensor.sensor_type", read_only=True)
+
+    # Location coordinates from bin
+    latitude = serializers.SerializerMethodField()
+    longitude = serializers.SerializerMethodField()
+    location = serializers.SerializerMethodField()
+
+    # Location coordinates from raw_data if available
+    raw_latitude = serializers.SerializerMethodField()
+    raw_longitude = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SensorReading
+        fields = "__all__"
+        read_only_fields = ["created_at", "updated_at"]
+
+    def get_latitude(self, obj):
+        """Get latitude from bin location"""
+        if obj.bin and obj.bin.location:
+            return obj.bin.location.y  # Django PointField uses y for latitude
+        return None
+
+    def get_longitude(self, obj):
+        """Get longitude from bin location"""
+        if obj.bin and obj.bin.location:
+            return obj.bin.location.x  # Django PointField uses x for longitude
+        return None
+
+    def get_location(self, obj):
+        """Get location as GeoJSON point"""
+        if obj.bin and obj.bin.location:
+            return {
+                "type": "Point",
+                "coordinates": [obj.bin.location.x, obj.bin.location.y],
+            }
+        return None
+
+    def get_raw_latitude(self, obj):
+        """Get latitude from raw_data if available"""
+        if obj.raw_data and "location" in obj.raw_data:
+            return obj.raw_data["location"].get("lat")
+        return None
+
+    def get_raw_longitude(self, obj):
+        """Get longitude from raw_data if available"""
+        if obj.raw_data and "location" in obj.raw_data:
+            return obj.raw_data["location"].get("lng")
+        return None
+
+
+class SensorDetailSerializer(serializers.ModelSerializer):
+    """Detailed serializer for Sensor with readings"""
+
+    sensor_type_display = serializers.CharField(
+        source="get_sensor_type_display", read_only=True
+    )
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
+    category_display = serializers.CharField(
+        source="get_category_display", read_only=True
+    )
+    needs_maintenance = serializers.BooleanField(read_only=True)
+    needs_calibration = serializers.BooleanField(read_only=True)
+    age_days = serializers.IntegerField(read_only=True)
+    remaining_warranty_days = serializers.IntegerField(read_only=True)
+    health_score = serializers.IntegerField(read_only=True)
+    readings_count = serializers.SerializerMethodField()
+    recent_readings = serializers.SerializerMethodField()
+    assigned_bin = serializers.SerializerMethodField()
+    sensor_readings = SensorReadingSerializer(
+        source="readings", many=True, read_only=True
+    )
+
+    class Meta:
+        model = Sensor
+        fields = "__all__"
+        read_only_fields = ["created_at", "updated_at", "sensor_id"]
+
+    def get_readings_count(self, obj):
+        """Get the number of readings for this sensor"""
+        return obj.readings.count()
+
+    def get_recent_readings(self, obj):
+        """Get recent readings for this sensor"""
+        recent_readings = obj.readings.select_related("bin").order_by("-timestamp")[:10]
+        return [
+            {
+                "id": reading.id,
+                "timestamp": reading.timestamp,
+                "fill_level": reading.fill_level,
+                "weight_kg": reading.weight_kg,
+                "temperature": reading.temperature,
+                "battery_level": reading.battery_level,
+                "signal_strength": reading.signal_strength,
+                "bin_number": reading.bin.bin_number,
+                "bin_name": reading.bin.name,
+                "latitude": reading.bin.location.y if reading.bin.location else None,
+                "longitude": reading.bin.location.x if reading.bin.location else None,
+                "location": (
+                    {
+                        "type": "Point",
+                        "coordinates": [reading.bin.location.x, reading.bin.location.y],
+                    }
+                    if reading.bin.location
+                    else None
+                ),
+            }
+            for reading in recent_readings
+        ]
+
+    def get_assigned_bin(self, obj):
+        """Get the bin this sensor is assigned to"""
+        if hasattr(obj, "assigned_bin") and obj.assigned_bin:
+            return {
+                "id": obj.assigned_bin.id,
+                "bin_number": obj.assigned_bin.bin_number,
+                "name": obj.assigned_bin.name,
+                "fill_level": obj.assigned_bin.fill_level,
+                "status": obj.assigned_bin.status,
+            }
+        return None
 
 
 class SmartBinSerializer(GeoFeatureModelSerializer):
@@ -18,26 +174,74 @@ class SmartBinSerializer(GeoFeatureModelSerializer):
     needs_collection = serializers.BooleanField(read_only=True)
     needs_maintenance = serializers.BooleanField(read_only=True)
 
+    # Make bin_number optional since it's auto-generated
+    bin_number = serializers.CharField(required=False, allow_blank=True)
+
+    # Include sensor information
+    sensor = SensorSerializer(read_only=True)
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        required=False,
+        allow_null=True,
+        help_text="Primary key UUID of the user who owns this bin",
+    )
+    sensor_id = serializers.PrimaryKeyRelatedField(
+        source="sensor",
+        queryset=Sensor.objects.all(),
+        required=False,
+        allow_null=True,
+        help_text="Primary key UUID of the sensor to attach to this bin (not the sensor_id string)",
+    )
+
+    # Add computed fields from sensor
+    battery_level = serializers.SerializerMethodField()
+    signal_strength = serializers.SerializerMethodField()
+    is_online = serializers.SerializerMethodField()
+
     class Meta:
         model = SmartBin
         geo_field = "location"
         fields = "__all__"
         read_only_fields = ["created_at", "updated_at"]
 
+    def get_battery_level(self, obj):
+        """Get battery level from sensor if available"""
+        return obj.get_battery_level()
+
+    def get_signal_strength(self, obj):
+        """Get signal strength from sensor if available"""
+        return obj.get_signal_strength()
+
+    def get_is_online(self, obj):
+        """Get current online status"""
+        # Update the online status and return it
+        obj.check_and_set_online()
+        return obj.is_online
+
 
 class SmartBinListSerializer(GeoFeatureModelSerializer):
-    """Lightweight serializer for bin lists"""
+    """Lightweight serializer for bin lists with GeoJSON format"""
 
     bin_type_display = serializers.CharField(
         source="bin_type.get_name_display", read_only=True
     )
+    user_id = serializers.UUIDField(source="user.id", read_only=True, allow_null=True)
+    user_name = serializers.CharField(
+        source="user.username", read_only=True, allow_null=True
+    )
+    sensor_id = serializers.UUIDField(
+        source="sensor.id", read_only=True, allow_null=True
+    )
+    battery_level = serializers.SerializerMethodField()
+    signal_strength = serializers.SerializerMethodField()
+    is_online = serializers.SerializerMethodField()
 
     class Meta:
         model = SmartBin
         geo_field = "location"
         fields = [
             "id",
-            "bin_id",
+            "bin_number",
             "name",
             "location",
             "address",
@@ -47,20 +251,98 @@ class SmartBinListSerializer(GeoFeatureModelSerializer):
             "status",
             "bin_type",
             "bin_type_display",
+            "user_id",
+            "user_name",
+            "sensor_id",
             "battery_level",
             "signal_strength",
+            "is_online",
             "last_reading_at",
         ]
 
+    def get_battery_level(self, obj):
+        """Get battery level from sensor if available"""
+        return obj.get_battery_level()
 
-class SensorReadingSerializer(serializers.ModelSerializer):
-    bin_name = serializers.CharField(source="bin.name", read_only=True)
-    bin_id = serializers.CharField(source="bin.bin_id", read_only=True)
+    def get_signal_strength(self, obj):
+        """Get signal strength from sensor if available"""
+        return obj.get_signal_strength()
+
+    def get_is_online(self, obj):
+        """Get current online status"""
+        # Update the online status and return it
+        obj.check_and_set_online()
+        return obj.is_online
+
+
+class SmartBinListJSONSerializer(serializers.ModelSerializer):
+    """Regular JSON serializer for bin lists (non-GeoJSON)"""
+
+    bin_type_display = serializers.CharField(
+        source="bin_type.get_name_display", read_only=True
+    )
+    user_id = serializers.UUIDField(source="user.id", read_only=True, allow_null=True)
+    user_name = serializers.CharField(
+        source="user.username", read_only=True, allow_null=True
+    )
+    sensor_id = serializers.UUIDField(
+        source="sensor.id", read_only=True, allow_null=True
+    )
+    battery_level = serializers.SerializerMethodField()
+    signal_strength = serializers.SerializerMethodField()
+    is_online = serializers.SerializerMethodField()
+    latitude = serializers.SerializerMethodField()
+    longitude = serializers.SerializerMethodField()
 
     class Meta:
-        model = SensorReading
-        fields = "__all__"
-        read_only_fields = ["created_at", "updated_at"]
+        model = SmartBin
+        fields = [
+            "id",
+            "bin_number",
+            "name",
+            "latitude",
+            "longitude",
+            "address",
+            "area",
+            "fill_level",
+            "fill_status",
+            "status",
+            "bin_type",
+            "bin_type_display",
+            "user_id",
+            "user_name",
+            "sensor_id",
+            "battery_level",
+            "signal_strength",
+            "is_online",
+            "last_reading_at",
+        ]
+
+    def get_battery_level(self, obj):
+        """Get battery level from sensor if available"""
+        return obj.get_battery_level()
+
+    def get_signal_strength(self, obj):
+        """Get signal strength from sensor if available"""
+        return obj.get_signal_strength()
+
+    def get_latitude(self, obj):
+        """Get latitude from location"""
+        if obj.location:
+            return obj.location.y
+        return None
+
+    def get_longitude(self, obj):
+        """Get longitude from location"""
+        if obj.location:
+            return obj.location.x
+        return None
+
+    def get_is_online(self, obj):
+        """Get current online status"""
+        # Update the online status and return it
+        obj.check_and_set_online()
+        return obj.is_online
 
 
 class SensorDataInputSerializer(serializers.Serializer):
@@ -81,7 +363,9 @@ class SensorDataInputSerializer(serializers.Serializer):
 
 class BinAlertSerializer(serializers.ModelSerializer):
     bin_name = serializers.CharField(source="bin.name", read_only=True)
-    bin_id = serializers.CharField(source="bin.bin_id", read_only=True)
+    bin_number = serializers.CharField(source="bin.bin_number", read_only=True)
+    sensor_number = serializers.CharField(source="sensor.sensor_number", read_only=True)
+    sensor_type = serializers.CharField(source="sensor.sensor_type", read_only=True)
     alert_type_display = serializers.CharField(
         source="get_alert_type_display", read_only=True
     )
@@ -98,8 +382,8 @@ class BinAlertSerializer(serializers.ModelSerializer):
         read_only_fields = ["created_at", "updated_at", "resolved_at"]
 
 
-# CitizenReportSerializer moved to Request app
-# CollectionRouteSerializer moved to Job app
+# CitizenReportSerializer moved to ServiceRequest app
+# CollectionRouteSerializer moved to ServiceRequest app
 # WasteAnalyticsSerializer moved to Analytics app
 
 
@@ -117,7 +401,7 @@ class BinStatusSummarySerializer(serializers.Serializer):
 
 
 class NearestBinSerializer(serializers.Serializer):
-    """Request serializer for finding nearest bins"""
+    """ServiceRequest serializer for finding nearest bins"""
 
     latitude = serializers.FloatField(required=True)
     longitude = serializers.FloatField(required=True)

@@ -22,8 +22,11 @@ import {
     IconFilter,
     IconRefresh,
 } from '@tabler/icons-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUsers, faUserGroup, faShield, faUserCheck } from '@fortawesome/free-solid-svg-icons';
 import { usePermissionService } from '../../../hooks/usePermissionService';
-import type { Group, GroupDetail, Permission, UserWithGroups, PermissionsByContentType } from '../../services/permissionService';
+import type { Group, GroupDetail, Permission, UserWithGroups, PermissionsByContentType } from '../../../services/permissionService';
+import StatCard from '../../../components/ui/statCard';
 
 interface RoleStats {
     totalRoles: number;
@@ -284,53 +287,34 @@ const RolesPermissions: React.FC = () => {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
-                            <IconUsersGroup className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Total Roles</p>
-                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalRoles}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg">
-                            <IconUserCheck className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Active Groups</p>
-                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.activeGroups}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg">
-                            <IconShield className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Permissions</p>
-                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.permissions}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg">
-                            <IconUsers className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Assigned Users</p>
-                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.assignedUsers}</p>
-                        </div>
-                    </div>
-                </div>
+                <StatCard
+                    icon={faUserGroup}
+                    title="Total Roles"
+                    value={stats.totalRoles}
+                    color="blue"
+                    delay={0.1}
+                />
+                <StatCard
+                    icon={faUserCheck}
+                    title="Active Groups"
+                    value={stats.activeGroups}
+                    color="green"
+                    delay={0.2}
+                />
+                <StatCard
+                    icon={faShield}
+                    title="Permissions"
+                    value={stats.permissions}
+                    color="purple"
+                    delay={0.3}
+                />
+                <StatCard
+                    icon={faUsers}
+                    title="Assigned Users"
+                    value={stats.assignedUsers}
+                    color="orange"
+                    delay={0.4}
+                />
             </div>
 
             {/* Tab Navigation */}

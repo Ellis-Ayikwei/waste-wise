@@ -171,7 +171,7 @@ const Navbar: React.FC<NavbarProps> = ({ isScrolled: propIsScrolled }) => {
                             {/* Emergency Contact */}
                             <a 
                                 href="tel:+233201234567" 
-                                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
+                                className={`hidden xl:flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
                                     scrolled
                                         ? 'bg-green-50 text-green-700 hover:bg-green-100'
                                         : 'bg-white/10 text-white hover:bg-white/20'
@@ -238,7 +238,7 @@ const Navbar: React.FC<NavbarProps> = ({ isScrolled: propIsScrolled }) => {
                                     >
                                         <Link
                                             to="/register"
-                                            className="px-6 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-full font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+                                            className="hidden xl:flex px-6 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-full font-medium shadow-lg hover:shadow-xl transition-all duration-300"
                                         >
                                             Get Started
                                         </Link>

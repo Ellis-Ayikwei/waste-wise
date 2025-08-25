@@ -17,6 +17,8 @@ import {
     IconCheck,
     IconBrandStripe,
 } from '@tabler/icons-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faDollarSign, faPercent, faExchangeAlt, faReceipt, faClock, faUndo, faCreditCard, faChartLine } from '@fortawesome/free-solid-svg-icons';
 import { Bar, Line, Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Title, Tooltip, Legend } from 'chart.js';
 import useSWR, { mutate } from 'swr';
@@ -24,6 +26,8 @@ import fetcher from '../../services/fetcher';
 import axiosInstance from '../../services/axiosInstance';
 import showMessage from '../../helper/showMessage';
 import showRequestError from '../../helper/showRequestError';
+import StatCard from '../../components/ui/statCard';
+import Ghc from '../../helper/CurrencyFormatter';
 
 // Register ChartJS components
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Title, Tooltip, Legend);
@@ -542,13 +546,7 @@ const RevenueManagement: React.FC = () => {
         }).format(date);
     };
 
-    const formatCurrency = (amount: number): string => {
-        return new Intl.NumberFormat('en-GB', {
-            style: 'currency',
-            currency: 'GBP',
-            minimumFractionDigits: 2,
-        }).format(amount);
-    };
+    const formatCurrency = Ghc;
 
     // Loading state
     if (loading) {
@@ -646,75 +644,65 @@ const RevenueManagement: React.FC = () => {
             {revenueStats && (
                 <div className="mb-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                            <div className="flex items-center">
-                                <div className="p-3 rounded-full bg-blue-100 text-blue-500 mr-4">
-                                    <IconCurrencyDollar size={24} />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-500 font-medium">Total Revenue</p>
-                                    <p className="text-2xl font-bold">{formatCurrency(revenueStats.totalRevenue)}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                            <div className="flex items-center">
-                                <div className="p-3 rounded-full bg-green-100 text-green-500 mr-4">
-                                    <IconPercentage size={24} />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-500 font-medium">Platform Fees</p>
-                                    <p className="text-2xl font-bold">{formatCurrency(revenueStats.platformFees)}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                            <div className="flex items-center">
-                                <div className="p-3 rounded-full bg-purple-100 text-purple-500 mr-4">
-                                    <IconArrowsExchange size={24} />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-500 font-medium">Provider Payouts</p>
-                                    <p className="text-2xl font-bold">{formatCurrency(revenueStats.providerPayouts)}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                            <div className="flex items-center">
-                                <div className="p-3 rounded-full bg-yellow-100 text-yellow-500 mr-4">
-                                    <IconReceipt size={24} />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-500 font-medium">Net Income</p>
-                                    <p className="text-2xl font-bold">{formatCurrency(revenueStats.netIncome)}</p>
-                                </div>
-                            </div>
-                        </div>
+                        <StatCard
+                            icon={faDollarSign}
+                            title="Total Revenue"
+                            value={formatCurrency(revenueStats.totalRevenue)}
+                            color="blue"
+                            delay={0.1}
+                        />
+                        <StatCard
+                            icon={faPercent}
+                            title="Platform Fees"
+                            value={formatCurrency(revenueStats.platformFees)}
+                            color="green"
+                            delay={0.2}
+                        />
+                        <StatCard
+                            icon={faExchangeAlt}
+                            title="Provider Payouts"
+                            value={formatCurrency(revenueStats.providerPayouts)}
+                            color="purple"
+                            delay={0.3}
+                        />
+                        <StatCard
+                            icon={faReceipt}
+                            title="Net Income"
+                            value={formatCurrency(revenueStats.netIncome)}
+                            color="yellow"
+                            delay={0.4}
+                        />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                            <p className="text-sm text-gray-500 font-medium">Pending Payments</p>
-                            <p className="text-xl font-bold">{formatCurrency(revenueStats.pendingPayments)}</p>
-                        </div>
-
-                        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                            <p className="text-sm text-gray-500 font-medium">Refunds Issued</p>
-                            <p className="text-xl font-bold">{formatCurrency(revenueStats.refundsIssued)}</p>
-                        </div>
-
-                        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                            <p className="text-sm text-gray-500 font-medium">Transaction Count</p>
-                            <p className="text-xl font-bold">{revenueStats.transactionCount}</p>
-                        </div>
-
-                        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                            <p className="text-sm text-gray-500 font-medium">Avg. Booking Value</p>
-                            <p className="text-xl font-bold">{formatCurrency(revenueStats.averageBookingValue)}</p>
-                        </div>
+                        <StatCard
+                            icon={faClock}
+                            title="Pending Payments"
+                            value={formatCurrency(revenueStats.pendingPayments)}
+                            color="indigo"
+                            delay={0.5}
+                        />
+                        <StatCard
+                            icon={faUndo}
+                            title="Refunds Issued"
+                            value={formatCurrency(revenueStats.refundsIssued)}
+                            color="red"
+                            delay={0.6}
+                        />
+                        <StatCard
+                            icon={faCreditCard}
+                            title="Transaction Count"
+                            value={revenueStats.transactionCount}
+                            color="blue"
+                            delay={0.7}
+                        />
+                        <StatCard
+                            icon={faChartLine}
+                            title="Avg. Booking Value"
+                            value={formatCurrency(revenueStats.averageBookingValue)}
+                            color="green"
+                            delay={0.8}
+                        />
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -1033,7 +1021,7 @@ const RevenueManagement: React.FC = () => {
                                 <p className="text-sm text-gray-600">{formatCurrency(parseFloat(selectedPayment!.amount))}</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-2">Refund Amount (£)</label>
+                                <label className="block text-sm font-medium mb-2">Refund Amount (GHS)</label>
                                 <input
                                     type="number"
                                     value={refundAmount}

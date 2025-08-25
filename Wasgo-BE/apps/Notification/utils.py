@@ -44,7 +44,7 @@ class NotificationTemplateRenderer:
                 "message": notification.message,
                 "action_url": notification.action_url,
                 "action_text": notification.action_text or "View Details",
-                "app_name": "MoreVans",
+                "app_name": "Wasgo",
                 "current_year": datetime.now().year,
                 "notification_data": notification.data or {},
                 **extra_context,
@@ -99,14 +99,14 @@ class NotificationFormatter:
     def format_notification_title(notification_type: str, context: Dict) -> str:
         """Generate formatted title based on notification type and context"""
         title_formats = {
-            "booking_created": "Booking Request Created",
+            "booking_created": "Booking ServiceRequest Created",
             "booking_confirmed": "Booking Confirmed!",
             "booking_cancelled": "Booking Cancelled",
-            "provider_accepted": "Provider Accepted Your Job",
+            "provider_accepted": "Provider Accepted Your ServiceRequest",
             "provider_assigned": "Provider Assigned",
-            "job_started": "Your Job Has Started",
+            "job_started": "Your ServiceRequest Has Started",
             "job_in_transit": "Items In Transit",
-            "job_completed": "Job Completed Successfully",
+            "job_completed": "ServiceRequest Completed Successfully",
             "account_verified": "Account Verified!",
             "provider_verified": "Provider Account Verified!",
             "payment_confirmed": "Payment Confirmed",
@@ -146,7 +146,7 @@ class NotificationFormatter:
             "job_completed": f"Your job has been completed successfully! Please take a moment to rate your experience.",
             "account_verified": f"Congratulations! Your account has been fully verified and is now active.",
             "provider_verified": f"Your provider account has been verified! You can now start accepting job assignments.",  # Updated - bidding system eliminated
-            "payment_confirmed": f"Your payment has been processed successfully. Thank you for choosing MoreVans!",
+            "payment_confirmed": f"Your payment has been processed successfully. Thank you for choosing Wasgo!",
             "payment_failed": f"We couldn't process your payment. Please update your payment method or try again.",
             "deposit_received": f"We've received your deposit payment. Your booking is now confirmed and being processed.",
             "bid_received": f"You've received a new bid on your job! Review the details and choose the best provider for your needs.",
@@ -154,11 +154,11 @@ class NotificationFormatter:
             "bid_rejected": f"Your bid wasn't selected this time, but don't worry - there are many more opportunities available.",
             "message_received": f"You have a new message waiting for you. Click to view and respond.",
             "review_received": f"You've received a new review from a customer. See what they had to say about your service!",
-            "rating_reminder": f"How was your recent experience with MoreVans? We'd love to hear your feedback!",
+            "rating_reminder": f"How was your recent experience with Wasgo? We'd love to hear your feedback!",
         }
 
         base_message = messages.get(
-            notification_type, "You have a new notification from MoreVans."
+            notification_type, "You have a new notification from Wasgo."
         )
 
         # Add context-specific information

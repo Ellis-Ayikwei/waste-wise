@@ -76,7 +76,7 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=15)
     user_addresses = models.OneToOneField(
-        "Address", on_delete=models.SET_NULL, null=True, blank=True, related_name="user"
+        "Address", on_delete=models.SET_NULL, null=True, blank=True, related_name="user_address"
     )
     profile_picture = models.ImageField(
         upload_to="profile_pics/", null=True, blank=True
@@ -133,35 +133,35 @@ class User(AbstractUser):
 
     def get_active_requests(self):
         """Get all active requests for the user"""
-        from Request.models import Request
+        from ServiceRequest.models import ServiceRequest
 
-        return Request.objects.filter(
+        return ServiceRequest.objects.filter(
             user=self, status__in=["pending", "accepted", "in_transit"]
         )
 
     def get_completed_requests(self):
         """Get all completed requests for the user"""
-        from Request.models import Request
+        from ServiceRequest.models import ServiceRequest
 
-        return Request.objects.filter(user=self, status="completed")
+        return ServiceRequest.objects.filter(user=self, status="completed")
 
     def get_assigned_requests(self):
         """Get all requests assigned to the user"""
-        from Request.models import Request
+        from ServiceRequest.models import ServiceRequest
 
-        return Request.objects.filter(user=self, status__in=["accepted", "in_transit"])
+        return ServiceRequest.objects.filter(user=self, status__in=["accepted", "in_transit"])
 
     # def get_bidding_requests(self):  # Removed - bidding system eliminated
     #     """Get all requests in bidding state"""
-    #     from Request.models import Request
+    #     from ServiceRequest.models import ServiceRequest
 
-    #     return Request.objects.filter(user=self, status="bidding")
+    #     return ServiceRequest.objects.filter(user=self, status="bidding")
 
     def get_completed_trips(self):
         """Get all completed trips for the user"""
-        from Request.models import Request
+        from ServiceRequest.models import ServiceRequest
 
-        return Request.objects.filter(user=self, status="completed")
+        return ServiceRequest.objects.filter(user=self, status="completed")
 
     def get_pending_payments(self):
         """Get all pending payments for the user"""
@@ -218,7 +218,7 @@ class User(AbstractUser):
 class Address(Basemodel):
     """User address information"""
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="address")
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="user_address")
     address_line1 = models.CharField(max_length=255)
     address_line2 = models.CharField(max_length=255, blank=True)
     city = models.CharField(max_length=100)
@@ -619,7 +619,7 @@ class Availability(Basemodel):
         duration = end - start
         return duration.total_seconds() / 3600
 
-    def can_accept_job(self, job_type=None, service_area=None):
+    def can_accept_job(self, service_type=None, service_area=None):
         """Check if this slot can accept a new job"""
         if not self.is_available or self.is_fully_booked:
             return False
@@ -630,8 +630,8 @@ class Availability(Basemodel):
                 return False
 
         # Check vehicle type restrictions
-        if job_type and self.vehicle_types:
-            if job_type not in self.vehicle_types:
+        if service_type and self.vehicle_types:
+            if service_type not in self.vehicle_types:
                 return False
 
         return True

@@ -21,48 +21,53 @@ export const getCookie = (name: string): string | undefined => {
     }
 };
 
-// Get JWT token from localStorage (Django JWT approach)
-export const getJWTToken = (): string | null => {
-    return localStorage.getItem('access_token');
-};
-
-// Get refresh token from localStorage
-export const getRefreshToken = (): string | null => {
-    return localStorage.getItem('refresh_token');
-};
-
-// Set JWT token in localStorage
-export const setJWTToken = (token: string): void => {
-    localStorage.setItem('access_token', token);
-};
-
-// Set refresh token in localStorage
-export const setRefreshToken = (token: string): void => {
-    localStorage.setItem('refresh_token', token);
-};
-
-// Remove JWT tokens
-export const removeJWTTokens = (): void => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-};
+// Function to ensure cookies are properly set before trying to access them
+// export const waitForCookie = async (name: string, maxWaitTime = 2000, checkInterval = 100): Promise<string | undefined> => {
+//     return new Promise((resolve) => {
+//         const startTime = Date.now();
+        
+//         const checkCookie = () => {
+//             const cookie = getCookie(name);
+//             if (cookie) {
+//                 resolve(cookie);
+//                 return;
+//             }
+            
+//             const elapsed = Date.now() - startTime;
+//             if (elapsed >= maxWaitTime) {
+//                 console.warn(`Timeout waiting for cookie: ${name}`);
+//                 resolve(undefined);
+//                 return;
+//             }
+            
+//             setTimeout(checkCookie, checkInterval);
+//         };
+        
+//         checkCookie();
+//     });
+// };
 
 const authAxiosInstance = axios.create({
     baseURL: authApiUrl,
-    withCredentials: false, // Changed to false for JWT
+    withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
-// Enhanced interceptor with JWT token handling
+// Enhanced interceptor with better error handling
 authAxiosInstance.interceptors.request.use(
     (config) => {
         try {
-            const token = getJWTToken();
+            const token = getCookie('_auth');
+            const refreshToken = getCookie('_auth_refresh');
             
             if (token) {
-                config.headers.Authorization = `Bearer ${token}`;
+                config.headers.Authorization = token;
+            }
+            
+            if (refreshToken) {
+                config.headers['X-Refresh-Token'] = refreshToken;
             }
 
             // Add user ID to request data if it exists
@@ -85,57 +90,24 @@ authAxiosInstance.interceptors.request.use(
     }
 );
 
-// Add response interceptor for JWT token refresh
+// Add response interceptor to log cookies
 authAxiosInstance.interceptors.response.use(
     (response) => {
         try {
-            // Check for new tokens in response headers
-            const newAccessToken = response.headers['new-access-token'];
-            const newRefreshToken = response.headers['new-refresh-token'];
-            
-            if (newAccessToken) {
-                setJWTToken(newAccessToken);
-            }
-            if (newRefreshToken) {
-                setRefreshToken(newRefreshToken);
+            // Check for Set-Cookie header
+            const setCookieHeader = response.headers['set-cookie'];
+            if (setCookieHeader) {
+                console.log('Set-Cookie header found:', setCookieHeader);
             }
             
             return response;
         } catch (error) {
             console.error('Response interceptor error:', error);
-            return response;
+            return Promise.reject(error);
         }
     },
-    async (error) => {
-        const originalRequest = error.config;
-        
-        // If 401 error and we haven't tried to refresh yet
-        if (error.response?.status === 401 && !originalRequest._retry) {
-            originalRequest._retry = true;
-            
-            try {
-                const refreshToken = getRefreshToken();
-                if (refreshToken) {
-                    // Try to refresh the token
-                    const response = await axios.post(`${authApiUrl}/refresh_token/`, {
-                        refresh: refreshToken
-                    });
-                    
-                    if (response.data.access) {
-                        setJWTToken(response.data.access);
-                        originalRequest.headers.Authorization = `Bearer ${response.data.access}`;
-                        return authAxiosInstance(originalRequest);
-                    }
-                }
-            } catch (refreshError) {
-                console.error('Token refresh failed:', refreshError);
-                // Clear tokens and redirect to login
-                removeJWTTokens();
-                window.location.href = '/login';
-                return Promise.reject(refreshError);
-            }
-        }
-        
+    (error) => {
+        console.error('Response interceptor error:', error);
         return Promise.reject(error);
     }
 );

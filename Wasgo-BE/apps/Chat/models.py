@@ -16,13 +16,13 @@ def chat_attachment_upload_path(instance, filename):
 class Conversation(Basemodel):
     """
     Represents a chat conversation that can be linked to any model
-    (Job, Bid, Request, Dispute, etc.)
+    (ServiceRequest, Bid, ServiceRequest, Dispute, etc.)
     """
     CONVERSATION_TYPES = [
         ('direct', 'Direct Message'),
-        ('job', 'Job Discussion'),
+        ('job', 'ServiceRequest Discussion'),
         ('bid', 'Bid Negotiation'),
-        ('request', 'Request Discussion'),
+        ('request', 'ServiceRequest Discussion'),
         ('support', 'Support Chat'),
         ('dispute', 'Dispute Resolution'),
         ('general', 'General Chat'),

@@ -26,7 +26,7 @@ def log_user_login(sender, user, request, **kwargs):
     UserActivity.objects.create(
         user=user,
         activity_type="login",
-        details={"ip": request.META.get("REMOTE_ADDR")},
+        metadata={"ip": request.META.get("REMOTE_ADDR")},
     )
 
 
@@ -35,5 +35,5 @@ def log_user_logout(sender, user, request, **kwargs):
     UserActivity.objects.create(
         user=user,
         activity_type="logout",
-        details={"ip": request.META.get("REMOTE_ADDR")},
+        metadata={"ip": request.META.get("REMOTE_ADDR")},
     )

@@ -1,19 +1,25 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    UserViewSet,
+    UserManagementViewSet,
     AddressViewSet,
     UserActivityViewSet,
     DocumentViewSet,
     AvailabilityViewSet,
+    GroupManagementViewSet,
+    PermissionManagementViewSet,
+    UserGroupManagementViewSet,
 )
 
 router = DefaultRouter()
-router.register(r"users", UserViewSet, basename="user")
+router.register(r"users", UserManagementViewSet, basename="user")
 router.register(r"addresses", AddressViewSet, basename="address")
 router.register(r"activities", UserActivityViewSet, basename="user-activity")
 router.register(r"documents", DocumentViewSet, basename="document")
 router.register(r"availability", AvailabilityViewSet, basename="availability")
+router.register(r"groups", GroupManagementViewSet, basename="group")
+router.register(r"permissions", PermissionManagementViewSet, basename="permission")
+router.register(r"user-groups", UserGroupManagementViewSet, basename="user-group")
 
 urlpatterns = [
     path("", include(router.urls)),

@@ -25,7 +25,7 @@ def setup_sendgrid():
     try:
         # Create message
         message = Mail(
-            from_email="noreply@morevans.com",  # Update with your verified sender
+            from_email="noreply@wasgo.com",  # Update with your verified sender
             to_emails="ellisarmahayikwei@gmail.com",
             subject="SendGrid Web API Test Email",
             html_content="<strong>This is a test email from SendGrid Web API</strong>",
@@ -55,14 +55,14 @@ def get_django_settings():
 # SendGrid Email Configuration (Web API)
 EMAIL_BACKEND = 'sendgrid_backend.SendgridBackend'
 SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
-DEFAULT_FROM_EMAIL = 'noreply@morevans.com'  # Your verified sender
+DEFAULT_FROM_EMAIL = 'noreply@wasgo.com'  # Your verified sender
 SENDGRID_TRACK_CLICKS_PLAIN = False
 SENDGRID_TRACK_CLICKS_HTML = False
 SENDGRID_TRACK_OPENS = False
 
 # Add to your .env file:
 # SENDGRID_API_KEY=your_sendgrid_api_key_here
-# DEFAULT_FROM_EMAIL=noreply@morevans.com
+# DEFAULT_FROM_EMAIL=noreply@wasgo.com
 """
     )
 
@@ -71,7 +71,7 @@ def create_env_example():
     """Create example environment file"""
     env_content = """# SendGrid Configuration
 SENDGRID_API_KEY=your_sendgrid_api_key_here
-DEFAULT_FROM_EMAIL=noreply@morevans.com
+DEFAULT_FROM_EMAIL=noreply@wasgo.com
 """
 
     with open(".env.example", "w") as f:

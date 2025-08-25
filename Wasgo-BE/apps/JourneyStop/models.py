@@ -1,6 +1,6 @@
 from django.db import models
 from apps.Basemodel.models import Basemodel
-from apps.Request.models import Request
+from apps.ServiceRequest.models import ServiceRequest
 from apps.Location.models import Location
 
 
@@ -31,7 +31,7 @@ class JourneyStop(Basemodel):
         ("boxes_parcels", "Boxes/Parcels"),
     ]
 
-    request = models.ForeignKey(Request, on_delete=models.CASCADE, related_name="stops")
+    request = models.ForeignKey(ServiceRequest, on_delete=models.CASCADE, related_name="stops")
     location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name="stops")
     external_id = models.CharField(max_length=100, blank=True)
     type = models.CharField(max_length=20, choices=TYPE_CHOICES)

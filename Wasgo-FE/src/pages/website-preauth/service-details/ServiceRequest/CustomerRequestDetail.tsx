@@ -15,7 +15,7 @@ const CustomerRequestDetail: React.FC = () => {
         const fetchServiceRequest = async () => {
             try {
                 setLoading(true);
-                const response = await axiosInstance.get(`/api/service-requests/${id}`);
+                const response = await axiosInstance.get(`/service-requests/${id}`);
                 setRequest(response.data);
                 setError(null);
             } catch (err) {

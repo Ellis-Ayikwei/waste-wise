@@ -3,14 +3,6 @@ from rest_framework.exceptions import APIException
 from rest_framework import status
 from .models import (
     ServiceProvider,
-    ServiceArea,
-    InsurancePolicy,
-    ProviderDocument,
-    ProviderReview,
-    ProviderPayment,
-    SavedJob,
-    WatchedJob,
-    ServiceProviderAddress,
 )
 
 from apps.User.serializer import UserSerializer
@@ -32,175 +24,12 @@ class EmailAlreadyExistsException(APIException):
 logger = logging.getLogger(__name__)
 
 
-class ServiceAreaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ServiceArea
-        fields = ["id", "name", "area", "is_primary", "price_multiplier"]
-
-
-class InsurancePolicySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = InsurancePolicy
-        fields = [
-            "id",
-            "policy_type",
-            "coverage_amount",
-            "policy_number",
-            "expiry_date",
-        ]
-
-
-class ProviderDocumentSerializer(serializers.ModelSerializer):
-    front_url = serializers.SerializerMethodField()
-    back_url = serializers.SerializerMethodField()
-    name = serializers.SerializerMethodField()
-    type = serializers.SerializerMethodField()
-    issue_date = serializers.DateField()
-    expiry_date = serializers.DateField()
-    has_two_sides = serializers.BooleanField()
-    status = serializers.ChoiceField(
-        choices=ProviderDocument.DOCUMENT_STATUS, default="pending"
-    )
-
-    class Meta:
-        model = ProviderDocument
-        fields = [
-            "id",
-            "document_type",
-            "document_front",
-            "document_back",
-            "front_url",
-            "back_url",
-            "has_two_sides",
-            "name",
-            "type",
-            "issue_date",
-            "expiry_date",
-            "has_two_sides",
-            "reference_number",
-            "notes",
-            "is_verified",
-            "rejection_reason",
-            "status",
-            "created_at",
-            "updated_at",
-        ]
-        read_only_fields = [
-            "created_at",
-            "updated_at",
-            "is_verified",
-            "rejection_reason",
-            "status",
-        ]
-
-    def get_front_url(self, obj):
-        if obj.document_front:
-            return self.context["request"].build_absolute_uri(obj.document_front.url)
-        return None
-
-    def get_back_url(self, obj):
-        if obj.document_back:
-            return self.context["request"].build_absolute_uri(obj.document_back.url)
-        return None
-
-    def get_name(self, obj):
-        return obj.get_document_type_display()
-
-    def get_type(self, obj):
-        return obj.document_type
-
-    def validate(self, data):
-        document_type = data.get("document_type")
-        has_two_sides = data.get("has_two_sides", False)
-        document_back = data.get("document_back")
-
-        # Get the document type info from the choices
-        document_types = dict(ProviderDocument.DOCUMENT_TYPES)
-
-        # Validate two-sided documents
-        if has_two_sides and not document_back:
-            raise serializers.ValidationError(
-                "Back side document is required for two-sided documents."
-            )
-
-        # Validate expiry date is after issue date
-        issue_date = data.get("issue_date")
-        expiry_date = data.get("expiry_date")
-        if issue_date and expiry_date and expiry_date <= issue_date:
-            raise serializers.ValidationError(
-                "Expiry date must be after the issue date."
-            )
-
-        return data
-
-
-class ProviderReviewSerializer(serializers.ModelSerializer):
-    customer_name = serializers.SerializerMethodField()
-
-    class Meta:
-        model = ProviderReview
-        fields = [
-            "id",
-            "customer",
-            "customer_name",
-            "rating",
-            "comment",
-            "created_at",
-            "is_verified",
-        ]
-
-    def get_customer_name(self, obj):
-        return obj.customer.get_full_name() if obj.customer else "Anonymous"
-
-
-class ProviderPaymentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProviderPayment
-        fields = [
-            "id",
-            "transaction_id",
-            "amount",
-            "payment_type",
-            "status",
-            "created_at",
-            "completed_at",
-            "notes",
-        ]
-
-
 class ServiceProviderSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
-    service_areas = ServiceAreaSerializer(many=True, read_only=True)
-    insurance_policies = InsurancePolicySerializer(many=True, read_only=True)
-    documents = ProviderDocumentSerializer(many=True, read_only=True)
-    reviews = ProviderReviewSerializer(many=True, read_only=True)
-    payments = ProviderPaymentSerializer(many=True, read_only=True)
 
-    # FIXED: Use CharField for input, handle conversion in to_internal_value
-    founded_year = serializers.CharField(
-        required=False, allow_blank=True, allow_null=True
-    )
-    minimum_job_value = serializers.CharField(
-        required=False, allow_blank=True, allow_null=True
-    )
-    payment_methods = serializers.CharField(
-        required=False, allow_blank=True, allow_null=True
-    )
-    service_categories = serializers.CharField(
-        required=False, allow_blank=True, allow_null=True
-    )
-    service_image = serializers.ImageField(
-        required=False, allow_null=True, allow_empty_file=True
-    )
-    specializations = serializers.CharField(
-        required=False, allow_blank=True, allow_null=True
-    )
-
-    # Computed fields
+    # Computed fields (using actual model fields)
     average_rating = serializers.SerializerMethodField()
     completed_bookings_count = serializers.SerializerMethodField()
-    vehicle_count = serializers.SerializerMethodField()
-    last_active = serializers.SerializerMethodField()
 
     class Meta:
         model = ServiceProvider
@@ -210,42 +39,66 @@ class ServiceProviderSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "business_type",
-            "company_name",
-            "company_reg_number",
-            "vat_registered",
+            "business_name",
+            "registration_number",
             "vat_number",
-            "business_description",
+            "phone",
+            "email",
             "website",
-            "founded_year",
-            "operating_areas",
-            "contact_person_name",
-            "contact_person_position",
-            "contact_person_email",
-            "contact_person_phone",
-            "bank_account_holder",
-            "bank_name",
-            "bank_account_number",
-            "bank_routing_number",
-            "service_categories",
-            "specializations",
-            "service_image",
+            "address_line1",
+            "address_line2",
+            "city",
+            "county",
+            "postcode",
+            "country",
             "base_location",
-            "hourly_rate",
-            "accepts_instant_bookings",
-            "service_radius_km",
-            "insurance_policies",
-            "payment_methods",
-            "minimum_job_value",
+            "service_area",
+            "max_service_radius_km",
+            "waste_license_number",
+            "waste_license_expiry",
+            "environmental_permit_number",
+            "environmental_permit_expiry",
+            "waste_types_handled",
+            "waste_categories",
+            "collection_methods",
+            "vehicle_fleet_size",
+            "daily_collection_capacity_kg",
+            "has_compaction_equipment",
+            "has_recycling_facilities",
+            "service_hours_start",
+            "service_hours_end",
+            "emergency_collection_available",
+            "weekend_collection_available",
+            "public_liability_insurance",
+            "public_liability_amount",
+            "employers_liability_insurance",
+            "employers_liability_amount",
+            "vehicle_insurance",
+            "vehicle_insurance_amount",
             "verification_status",
-            "last_verified",
-            "service_areas",
-            "documents",
-            "reviews",
-            "payments",
-            "average_rating",
-            "completed_bookings_count",
+            "verified_at",
+            "verified_by",
+            "verification_notes",
+            "is_active",
+            "is_available",
+            "rating",
+            "total_jobs_completed",
+            "total_weight_collected_kg",
+            "total_recycled_kg",
+            "collection_efficiency_rating",
+            "average_response_time_minutes",
+            "completion_rate",
+            "commission_rate",
+            "balance",
+            "total_earnings",
+            "auto_accept_jobs",
+            "max_distance_km",
+            "min_job_value",
+            "notification_enabled",
             "vehicle_count",
             "last_active",
+            "average_rating",
+            "completed_bookings_count",
         ]
         read_only_fields = [
             "id",
@@ -254,8 +107,6 @@ class ServiceProviderSerializer(serializers.ModelSerializer):
             "user",
             "average_rating",
             "completed_bookings_count",
-            "vehicle_count",
-            "last_active",
         ]
 
     def to_internal_value(self, data):
@@ -263,114 +114,7 @@ class ServiceProviderSerializer(serializers.ModelSerializer):
         # Make a copy to avoid modifying the original data
         data = data.copy() if hasattr(data, "copy") else dict(data)
 
-        # Define empty values
-        empty_values = [None, "", "null", "undefined", "NULL", "Null", " ", "  "]
-
-        # Preprocess founded_year
-        if "founded_year" in data:
-            value = data["founded_year"]
-            if value in empty_values or (
-                isinstance(value, str) and value.strip() in empty_values
-            ):
-                data["founded_year"] = None
-            elif isinstance(value, str) and value.strip():
-                try:
-                    data["founded_year"] = int(value)
-                except (ValueError, TypeError):
-                    data["founded_year"] = None
-            elif value is not None:
-                # Handle non-string values
-                try:
-                    data["founded_year"] = int(value)
-                except (ValueError, TypeError):
-                    data["founded_year"] = None
-
-        # Preprocess minimum_job_value
-        if "minimum_job_value" in data:
-            value = data["minimum_job_value"]
-            if value in empty_values or (
-                isinstance(value, str) and value.strip() in empty_values
-            ):
-                data["minimum_job_value"] = None
-            elif isinstance(value, str) and value.strip():
-                try:
-                    data["minimum_job_value"] = float(value)
-                except (ValueError, TypeError):
-                    data["minimum_job_value"] = None
-            elif value is not None:
-                # Handle non-string values
-                try:
-                    data["minimum_job_value"] = float(value)
-                except (ValueError, TypeError):
-                    data["minimum_job_value"] = None
-
-        # Preprocess base_location (GIS PointField)
-        if "base_location" in data:
-            value = data["base_location"]
-            if value in empty_values or (
-                isinstance(value, str) and value.strip() in empty_values
-            ):
-                data["base_location"] = None
-            elif isinstance(value, str) and value.strip():
-                try:
-                    import json
-
-                    coords = json.loads(value)
-                    if isinstance(coords, list) and len(coords) == 2:
-                        from django.contrib.gis.geos import Point
-
-                        data["base_location"] = Point(
-                            float(coords[0]), float(coords[1])
-                        )
-                    else:
-                        data["base_location"] = None
-                except (json.JSONDecodeError, ValueError, TypeError, ImportError):
-                    data["base_location"] = None
-
-        # FIXED: Preprocess list fields with better handling
-        list_fields = ["payment_methods", "service_categories", "specializations"]
-        for field_name in list_fields:
-            if field_name in data:
-                value = data[field_name]
-
-                # Handle None and empty values
-                if value in empty_values:
-                    data[field_name] = "[]"  # Convert to empty JSON array string
-                # Handle lists - convert to JSON string
-                elif isinstance(value, list):
-                    try:
-                        import json
-
-                        data[field_name] = json.dumps(value)
-                    except (TypeError, ValueError):
-                        data[field_name] = "[]"
-                # Handle strings
-                elif isinstance(value, str):
-                    if value.strip() in empty_values:
-                        data[field_name] = "[]"
-                    else:
-                        # Keep as is if it's already a string
-                        data[field_name] = value
-                # Handle other data types - convert to JSON string
-                else:
-                    try:
-                        import json
-
-                        data[field_name] = (
-                            json.dumps(value) if value is not None else "[]"
-                        )
-                    except (TypeError, ValueError):
-                        data[field_name] = "[]"
-
-        # Preprocess service_image
-        if "service_image" in data:
-            value = data["service_image"]
-            if value in empty_values or (
-                isinstance(value, str) and value.strip() in empty_values
-            ):
-                data["service_image"] = None
-
-        # Call the parent method with preprocessed data
+        # Add any custom preprocessing here if needed
         return super().to_internal_value(data)
 
     def to_representation(self, instance):
@@ -379,56 +123,21 @@ class ServiceProviderSerializer(serializers.ModelSerializer):
 
         # Handle ManyToMany fields properly for output
         try:
-            # Service categories
+            # Waste categories
             if (
-                hasattr(instance, "service_categories")
-                and instance.service_categories.exists()
+                hasattr(instance, "waste_categories")
+                and instance.waste_categories.exists()
             ):
-                from apps.Services.serializers import ServiceCategorySerializer
-
-                data["service_categories"] = ServiceCategorySerializer(
-                    instance.service_categories.all(), many=True
-                ).data
+                data["waste_categories"] = [
+                    {"id": cat.id, "name": cat.name}
+                    for cat in instance.waste_categories.all()
+                ]
             else:
-                data["service_categories"] = []
+                data["waste_categories"] = []
 
-            # Specializations
-            if (
-                hasattr(instance, "specializations")
-                and instance.specializations.exists()
-            ):
-                from apps.Services.serializers import ServiceCategorySerializer
-
-                data["specializations"] = ServiceCategorySerializer(
-                    instance.specializations.all(), many=True
-                ).data
-            else:
-                data["specializations"] = []
-
-            # Payment methods
-            if (
-                hasattr(instance, "payment_methods")
-                and instance.payment_methods.exists()
-            ):
-                try:
-                    from apps.Payment.serializers import PaymentMethodSerializer
-
-                    data["payment_methods"] = PaymentMethodSerializer(
-                        instance.payment_methods.all(), many=True
-                    ).data
-                except ImportError:
-                    # If PaymentMethodSerializer doesn't exist, just return IDs
-                    data["payment_methods"] = [
-                        pm.id for pm in instance.payment_methods.all()
-                    ]
-            else:
-                data["payment_methods"] = []
-
-        except ImportError:
-            # Fallback: return empty lists if serializers don't exist
-            data["service_categories"] = []
-            data["specializations"] = []
-            data["payment_methods"] = []
+        except Exception:
+            # Fallback: return empty list if there's an error
+            data["waste_categories"] = []
 
         return data
 
@@ -436,160 +145,14 @@ class ServiceProviderSerializer(serializers.ModelSerializer):
         return getattr(obj, "rating", 0)
 
     def get_completed_bookings_count(self, obj):
-        return getattr(obj, "completed_bookings", 0)
-
-    def get_vehicle_count(self, obj):
-        return getattr(obj, "vehicle_count", 0)
-
-    def get_last_active(self, obj):
-        return getattr(obj, "last_active", None)
+        return getattr(obj, "total_jobs_completed", 0)
 
     def update(self, instance, validated_data):
-        # Extract ManyToMany data
-        service_categories_data = validated_data.pop("service_categories", None)
-        specializations_data = validated_data.pop("specializations", None)
-        payment_methods_data = validated_data.pop("payment_methods", None)
-
-        # Update the instance with non-ManyToMany fields
+        # Update the instance with validated data
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
-
-        # Update ManyToMany fields
-        if service_categories_data is not None:
-            from apps.Services.models import ServiceCategory
-
-            if isinstance(service_categories_data, list):
-                categories = ServiceCategory.objects.filter(
-                    id__in=service_categories_data
-                )
-                instance.service_categories.set(categories)
-
-        if specializations_data is not None:
-            from apps.Services.models import ServiceCategory
-
-            if isinstance(specializations_data, list):
-                specializations = ServiceCategory.objects.filter(
-                    id__in=specializations_data
-                )
-                instance.specializations.set(specializations)
-
-        if payment_methods_data is not None:
-            try:
-                from apps.Payment.models import PaymentMethod
-
-                if isinstance(payment_methods_data, list):
-                    payment_methods = PaymentMethod.objects.filter(
-                        id__in=payment_methods_data
-                    )
-                    instance.payment_methods.set(payment_methods)
-            except ImportError:
-                pass
-
         return instance
-
-    def validate_payment_methods(self, value):
-        """Handle payment_methods validation"""
-        return self._process_list_field(value)
-
-    def validate_service_categories(self, value):
-        """Handle service_categories validation"""
-        return self._process_list_field(value)
-
-    def validate_specializations(self, value):
-        """Handle specializations validation"""
-        return self._process_list_field(value)
-
-    def _process_list_field(self, value):
-        """Common processing for list fields"""
-        empty_values = [None, "", "null", "undefined", "NULL", "Null", " ", "  "]
-
-        # Handle empty values
-        if value in empty_values or (
-            isinstance(value, str) and value.strip() in empty_values
-        ):
-            return []
-
-        # If it's already a list, return it
-        if isinstance(value, list):
-            return value
-
-        # If it's a string, try to parse it
-        if isinstance(value, str):
-            if value.strip() == "":
-                return []
-            try:
-                import json
-
-                parsed = json.loads(value)
-                return (
-                    parsed
-                    if isinstance(parsed, list)
-                    else [parsed] if parsed is not None else []
-                )
-            except (json.JSONDecodeError, TypeError):
-                items = [item.strip() for item in value.split(",") if item.strip()]
-                return [int(item) for item in items if item.isdigit()] if items else []
-
-        return []
-
-
-class SavedJobSerializer(serializers.ModelSerializer):
-    job_details = serializers.SerializerMethodField()
-
-    class Meta:
-        model = SavedJob
-        fields = ["id", "job", "job_details", "saved_at", "notes"]
-
-    def get_job_details(self, obj):
-        from apps.Job.serializers import JobSerializer
-
-        return JobSerializer(obj.job).data
-
-
-class WatchedJobSerializer(serializers.ModelSerializer):
-    job_details = serializers.SerializerMethodField()
-
-    class Meta:
-        model = WatchedJob
-        fields = [
-            "id",
-            "job",
-            "job_details",
-            "started_watching",
-            "notify",
-            "notification_preferences",
-        ]
-
-    def get_job_details(self, obj):
-        from apps.Job.serializers import JobSerializer
-
-        return JobSerializer(obj.job).data
-
-
-class ServiceProviderAddressSerializer(serializers.ModelSerializer):
-    """Serializer for ServiceProviderAddress model"""
-
-    class Meta:
-        model = ServiceProviderAddress
-        fields = [
-            "id",
-            "address_type",
-            "address_line_1",
-            "address_line_2",
-            "city",
-            "postcode",
-            "state",
-            "country",
-            "business_name",
-            "is_primary",
-            "is_verified",
-            "is_active",
-            "verification_date",
-            "verification_method",
-            "notes",
-        ]
-        read_only_fields = ["id", "verification_date"]
 
 
 class ProviderRegistrationSerializer(serializers.Serializer):
@@ -726,7 +289,7 @@ class ProviderRegistrationSerializer(serializers.Serializer):
             # Create provider
             provider_data = {
                 "user": user,
-                "company_name": validated_data["business_name"],
+                "business_name": validated_data["business_name"],
                 "business_type": validated_data["business_type"],
                 "vat_registered": validated_data["vat_registered"].lower() == "yes",
                 "vehicle_count": self._parse_vehicle_count(
@@ -736,79 +299,6 @@ class ProviderRegistrationSerializer(serializers.Serializer):
 
             provider = ServiceProvider.objects.create(**provider_data)
 
-            # Create addresses
-            addresses = []
-
-            # Home address (always created)
-            home_address_data = {
-                "provider": provider,
-                "address_type": "home",
-                "address_line_1": self._to_lowercase(validated_data["address_line_1"]),
-                "address_line_2": self._to_lowercase(
-                    validated_data.get("address_line_2", "")
-                ),
-                "city": self._to_lowercase(validated_data["city"]),
-                "postcode": self._to_lowercase(validated_data["postcode"]),
-                "country": self._to_lowercase(validated_data["country"]),
-                "is_primary": True,  # Home address is primary by default
-                "is_verified": True,  # Auto-verify for registration
-                "verification_method": "manual_verification",
-            }
-
-            home_address = ServiceProviderAddress.objects.create(**home_address_data)
-            addresses.append(home_address)
-
-            # Business address (if separate business address is selected)
-            if validated_data.get("has_separate_business_address"):
-                business_address_data = {
-                    "provider": provider,
-                    "address_type": "business",
-                    "address_line_1": self._to_lowercase(
-                        validated_data["business_address_line_1"]
-                    ),
-                    "address_line_2": self._to_lowercase(
-                        validated_data.get("business_address_line_2", "")
-                    ),
-                    "city": self._to_lowercase(validated_data["business_city"]),
-                    "postcode": self._to_lowercase(validated_data["business_postcode"]),
-                    "country": self._to_lowercase(validated_data["business_country"]),
-                    "business_name": validated_data["business_name"],
-                    "is_primary": False,
-                    "is_verified": True,
-                    "verification_method": "manual_verification",
-                }
-
-                business_address = ServiceProviderAddress.objects.create(
-                    **business_address_data
-                )
-                addresses.append(business_address)
-
-            # Non-UK address (if non-UK address is selected)
-            if validated_data.get("has_non_uk_address"):
-                non_uk_address_data = {
-                    "provider": provider,
-                    "address_type": "non_uk",
-                    "address_line_1": self._to_lowercase(
-                        validated_data["non_uk_address_line_1"]
-                    ),
-                    "address_line_2": self._to_lowercase(
-                        validated_data.get("non_uk_address_line_2", "")
-                    ),
-                    "city": self._to_lowercase(validated_data["non_uk_city"]),
-                    "postcode": self._to_lowercase(
-                        validated_data["non_uk_postal_code"]
-                    ),
-                    "country": self._to_lowercase(validated_data["non_uk_country"]),
-                    "is_primary": False,
-                    "is_verified": True,
-                    "verification_method": "manual_verification",
-                }
-
-                non_uk_address = ServiceProviderAddress.objects.create(
-                    **non_uk_address_data
-                )
-                addresses.append(non_uk_address)
-
             logger.info(
                 f"Provider registration completed: User ID {user.id}, Provider ID {provider.id}"
             )
@@ -816,7 +306,6 @@ class ProviderRegistrationSerializer(serializers.Serializer):
             return {
                 "user": user,
                 "provider": provider,
-                "addresses": addresses,
                 "work_types": validated_data.get("work_types", []),
             }
 
@@ -913,9 +402,6 @@ class ProviderRegistrationSerializer(serializers.Serializer):
             return {
                 "user": UserSerializer(instance["user"]).data,
                 "provider": ServiceProviderSerializer(instance["provider"]).data,
-                "addresses": ServiceProviderAddressSerializer(
-                    instance["addresses"], many=True
-                ).data,
                 "message": "Provider registration successful. Please verify your email to activate your account.",
             }
         return super().to_representation(instance)

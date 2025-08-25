@@ -1,6 +1,6 @@
 from django.db import models
 from apps.Basemodel.models import Basemodel
-from apps.Request.models import Request
+from apps.ServiceRequest.models import ServiceRequest
 from apps.User.models import User
 
 
@@ -22,7 +22,7 @@ class Dispute(Basemodel):
         ("closed", "Closed"),
     ]
 
-    request = models.ForeignKey(Request, on_delete=models.CASCADE)
+    request = models.ForeignKey(ServiceRequest, on_delete=models.CASCADE)
     raised_by = models.ForeignKey(User, on_delete=models.CASCADE)
     dispute_type = models.CharField(max_length=20, choices=DISPUTE_TYPES)
     description = models.TextField()
