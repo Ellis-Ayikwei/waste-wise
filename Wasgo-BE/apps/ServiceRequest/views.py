@@ -584,140 +584,138 @@ class CitizenReportViewSet(viewsets.ModelViewSet):
 
 class RecyclingCenterViewSet(viewsets.ModelViewSet):
     """ViewSet for recycling center operations"""
-    
+
     queryset = RecyclingCenter.objects.all()
     serializer_class = RecyclingCenterSerializer
     permission_classes = [permissions.AllowAny]  # Temporarily allow all for testing
     authentication_classes = []
-    
+
     def get_serializer_class(self):
         """Return appropriate serializer based on action"""
         if self.action == "list":
             return RecyclingCenterListSerializer
         return RecyclingCenterSerializer
-    
+
     def get_queryset(self):
         """Filter queryset based on search and filters"""
         queryset = RecyclingCenter.objects.all()
-        
+
         # Search
-        search = self.request.query_params.get('search')
+        search = self.request.query_params.get("search")
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(address__icontains=search) |
-                Q(city__icontains=search)
+                Q(name__icontains=search)
+                | Q(address__icontains=search)
+                | Q(city__icontains=search)
             )
-        
+
         # Status filter
-        status_filter = self.request.query_params.get('status')
+        status_filter = self.request.query_params.get("status")
         if status_filter:
             queryset = queryset.filter(status=status_filter)
-        
+
         # City filter
-        city_filter = self.request.query_params.get('city')
+        city_filter = self.request.query_params.get("city")
         if city_filter:
             queryset = queryset.filter(city=city_filter)
-        
+
         # State filter
-        state_filter = self.request.query_params.get('state')
+        state_filter = self.request.query_params.get("state")
         if state_filter:
             queryset = queryset.filter(state=state_filter)
-        
+
         return queryset
-    
-    @action(detail=True, methods=['get'])
+
+    @action(detail=True, methods=["get"])
     def service_requests(self, request, pk=None):
         """Get service requests for this recycling center"""
         center = self.get_object()
-        
+
         # Get service requests that reference this center
         service_requests = ServiceRequest.objects.filter(
             recycling_center=center
-        ).order_by('-created_at')
-        
+        ).order_by("-created_at")
+
         # Apply filters
-        status_filter = request.query_params.get('status')
+        status_filter = request.query_params.get("status")
         if status_filter:
             service_requests = service_requests.filter(status=status_filter)
-        
+
         # Serialize requests
         serializer = ServiceRequestSerializer(service_requests, many=True)
-        
-        return Response({
-            'count': service_requests.count(),
-            'results': serializer.data
-        })
-    
-    @action(detail=True, methods=['get'])
+
+        return Response({"count": service_requests.count(), "results": serializer.data})
+
+    @action(detail=True, methods=["get"])
     def statistics(self, request, pk=None):
         """Get statistics for this recycling center"""
         center = self.get_object()
-        
+
         # Get date range (default to last 30 days)
-        days = int(request.query_params.get('days', 30))
+        days = int(request.query_params.get("days", 30))
         start_date = timezone.now() - timedelta(days=days)
-        
+
         # Get service requests in date range
         recent_requests = ServiceRequest.objects.filter(
-            recycling_center=center,
-            created_at__gte=start_date
+            recycling_center=center, created_at__gte=start_date
         )
-        
+
         # Calculate statistics
         stats = recent_requests.aggregate(
-            total_requests=Count('id'),
-            completed_requests=Count('id', filter=Q(status='completed')),
-            cancelled_requests=Count('id', filter=Q(status='cancelled')),
-            total_revenue=Sum('final_price')
+            total_requests=Count("id"),
+            completed_requests=Count("id", filter=Q(status="completed")),
+            cancelled_requests=Count("id", filter=Q(status="cancelled")),
+            total_revenue=Sum("final_price"),
         )
-        
-        return Response({
-            'period': f'Last {days} days',
-            'total_requests': stats['total_requests'] or 0,
-            'completed_requests': stats['completed_requests'] or 0,
-            'cancelled_requests': stats['cancelled_requests'] or 0,
-            'total_revenue': float(stats['total_revenue'] or 0),
-            'current_utilization': center.current_utilization,
-            'capacity': float(center.capacity),
-            'available_capacity': center.available_capacity
-        })
-    
-    @action(detail=False, methods=['get'])
+
+        return Response(
+            {
+                "period": f"Last {days} days",
+                "total_requests": stats["total_requests"] or 0,
+                "completed_requests": stats["completed_requests"] or 0,
+                "cancelled_requests": stats["cancelled_requests"] or 0,
+                "total_revenue": float(stats["total_revenue"] or 0),
+                "current_utilization": center.current_utilization,
+                "capacity": float(center.capacity),
+                "available_capacity": center.available_capacity,
+            }
+        )
+
+    @action(detail=False, methods=["get"])
     def nearest(self, request):
         """Find nearest recycling centers to a location"""
         from django.contrib.gis.geos import Point
         from django.contrib.gis.db.models.functions import Distance
         from django.contrib.gis.measure import D
-        
+
         # Get location parameters
-        latitude = request.query_params.get('latitude')
-        longitude = request.query_params.get('longitude')
-        radius_km = float(request.query_params.get('radius_km', 10))
-        max_results = int(request.query_params.get('max_results', 10))
-        
+        latitude = request.query_params.get("latitude")
+        longitude = request.query_params.get("longitude")
+        radius_km = float(request.query_params.get("radius_km", 10))
+        max_results = int(request.query_params.get("max_results", 10))
+
         if not latitude or not longitude:
             return Response(
-                {'error': 'latitude and longitude are required'},
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": "latitude and longitude are required"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
-        
+
         # Create point from coordinates
         user_location = Point(float(longitude), float(latitude), srid=4326)
-        
+
         # Find centers within radius
         queryset = (
-            RecyclingCenter.objects.filter(status='active')
-            .annotate(distance=Distance('coordinates', user_location))
+            RecyclingCenter.objects.filter(status="active")
+            .annotate(distance=Distance("coordinates", user_location))
             .filter(distance__lte=D(km=radius_km))
-            .order_by('distance')[:max_results]
+            .order_by("distance")[:max_results]
         )
-        
+
         # Serialize with distance
         centers_data = []
         for center in queryset:
             center_dict = RecyclingCenterListSerializer(center).data
-            center_dict['distance_km'] = round(center.distance.km, 2)
+            center_dict["distance_km"] = round(center.distance.km, 2)
             centers_data.append(center_dict)
-        
+
         return Response(centers_data)

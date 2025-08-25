@@ -533,3 +533,4 @@ const RecyclingCenterForm = () => {
 };
 
 export default RecyclingCenterForm;
+
