@@ -1,688 +1,671 @@
-# Wasgo Entity Relationship Diagram (ERD)
+# Wasgo Entity Relationship Diagram (ERD) - Chen's Notation
 
 ## Database Schema Overview
 Wasgo uses PostgreSQL with PostGIS extension for geospatial capabilities. The Django backend implements a comprehensive data model for smart waste management operations in Ghana.
 
-## Complete Entity Relationship Diagram
+## Complete Entity Relationship Diagram - Chen's Notation
 
 ```mermaid
-erDiagram
-    %% User Management Entities
-    User {
-        uuid user_id PK
-        string email UK
-        string phone
-        string user_type
-        string first_name
-        string last_name
-        boolean is_verified
-        datetime created_at
-        datetime updated_at
-    }
+graph TB
+    %% Entities (Rectangles)
+    User[User]
+    SmartBin[SmartBin]
+    BinType[BinType]
+    Sensor[Sensor]
+    SensorReading[SensorReading]
+    BinAlert[BinAlert]
+    ServiceRequest[ServiceRequest]
+    Driver[Driver]
+    Vehicle[Vehicle]
+    ServiceProvider[ServiceProvider]
+    Payment[Payment]
+    Zone[Zone]
+    Notification[Notification]
+    CollectionSchedule[CollectionSchedule]
+    CollectionAssignment[CollectionAssignment]
+    CollectionRecord[CollectionRecord]
+    DriverLocation[DriverLocation]
+
+    %% Relationships (Diamonds)
+    owns{owns}
+    creates{creates}
+    makes{makes}
+    receives{receives}
+    has_type{has_type}
+    equipped_with{equipped_with}
+    generates{generates}
+    produces{produces}
+    assigned_to{assigned_to}
+    handled_by{handled_by}
+    uses{uses}
+    requires{requires}
+    works_for{works_for}
+    tracks_location{tracks_location}
+    performs{performs}
+    drives{drives}
+    employs{employs}
+    owns_vehicle{owns}
+    services{services}
+    located_in{located_in}
+    contains{contains}
+    has_schedule{has_schedule}
+    assigns{assigns}
+    includes{includes}
+    pays_for{pays_for}
+    about_bin{about}
+    about_request{about}
+    collected_in{collected_in}
+
+    %% Entity Relationships
+    User -->|1:N| owns --> SmartBin
+    User -->|1:N| creates --> ServiceRequest
+    User -->|1:N| makes --> Payment
+    User -->|1:N| receives --> Notification
     
-    %% Waste Bin Management Entities
-    BinType {
-        int bin_type_id PK
-        string name UK
-        string description
-        string color_code
-        int capacity_liters
-        string icon
-    }
+    SmartBin -->|N:1| has_type --> BinType
+    SmartBin -->|1:1| equipped_with --> Sensor
+    SmartBin -->|1:N| generates --> BinAlert
+    SmartBin -->|1:N| collected_in --> CollectionRecord
+    SmartBin -->|N:1| located_in --> Zone
     
-    SmartBin {
-        uuid bin_id PK
-        string bin_number UK
-        string name
-        point location
-        string address
-        string area
-        string city
-        string status
-        string fill_status
-        int current_fill_level
-        decimal capacity_kg
-        decimal current_weight_kg
-        datetime last_collected
-        datetime next_collection
-        datetime created_at
-    }
+    Sensor -->|1:N| produces --> SensorReading
     
-    Sensor {
-        uuid sensor_id PK
-        string sensor_code UK
-        string sensor_type
-        string manufacturer
-        string model
-        boolean is_active
-        boolean is_online
-        int battery_level
-        int signal_strength
-        datetime last_reading
-        string mqtt_topic
-    }
+    ServiceRequest -->|N:1| assigned_to --> ServiceProvider
+    ServiceRequest -->|N:1| handled_by --> Driver
+    ServiceRequest -->|N:1| uses --> Vehicle
+    ServiceRequest -->|1:1| requires --> Payment
     
-    SensorReading {
-        uuid reading_id PK
-        uuid sensor_id FK
-        int fill_level
-        decimal weight_kg
-        decimal temperature
-        decimal humidity
-        int battery_level
-        point location
-        datetime timestamp
-        json raw_data
-    }
+    Driver -->|N:1| works_for --> ServiceProvider
+    Driver -->|1:N| tracks_location --> DriverLocation
+    Driver -->|1:N| performs --> CollectionAssignment
+    Driver -->|N:1| drives --> Vehicle
     
-    BinAlert {
-        uuid alert_id PK
-        uuid bin_id FK
-        string alert_type
-        string severity
-        string message
-        boolean is_resolved
-        datetime created_at
-        datetime resolved_at
-    }
+    Vehicle -->|N:1| owns_vehicle --> ServiceProvider
     
-    %% Service Request Management
-    ServiceRequest {
-        uuid request_id PK
-        string request_number UK
-        uuid customer_id FK
-        string service_type
-        string waste_type
-        point pickup_location
-        string pickup_address
-        date requested_date
-        string requested_time_slot
-        string status
-        decimal estimated_weight_kg
-        decimal estimated_cost
-        decimal final_cost
-        datetime completed_at
-        string payment_status
-    }
+    ServiceProvider -->|1:N| employs --> Driver
+    ServiceProvider -->|1:N| owns_vehicle --> Vehicle
+    ServiceProvider -->|1:N| services --> Zone
     
-    %% Driver and Vehicle Management
-    Driver {
-        uuid driver_id PK
-        string name
-        string email UK
-        string phone
-        string license_number UK
-        date license_expiry
-        uuid provider_id FK
-        string employment_type
-        boolean is_available
-        boolean is_on_duty
-        point current_location
-        decimal rating
-        datetime created_at
-    }
+    Zone -->|1:N| contains --> SmartBin
+    Zone -->|1:N| has_schedule --> CollectionSchedule
+    Zone -->|1:N| assigns --> CollectionAssignment
     
-    Vehicle {
-        uuid vehicle_id PK
-        string registration UK
-        string make
-        string model
-        int year
-        string vehicle_category
-        string fuel_type
-        int payload_capacity_kg
-        decimal load_volume_m3
-        boolean has_gps_tracking
-        boolean is_active
-        point current_location
-        int odometer_km
-    }
+    CollectionAssignment -->|1:N| includes --> CollectionRecord
     
-    DriverLocation {
-        uuid location_id PK
-        uuid driver_id FK
-        point location
-        decimal speed_kmh
-        int heading
-        datetime timestamp
-        boolean is_moving
-        int battery_level
-    }
+    Payment -->|N:1| pays_for --> ServiceRequest
     
-    %% Provider Management
-    ServiceProvider {
-        uuid provider_id PK
-        string company_name
-        string registration_number UK
-        string email
-        string phone
-        point headquarters_location
-        string headquarters_address
-        json service_areas
-        int fleet_size
-        int driver_count
-        boolean is_active
-        decimal rating
-    }
+    Notification -->|N:1| about_bin --> SmartBin
+    Notification -->|N:1| about_request --> ServiceRequest
+```
+
+## Detailed Chen's Notation ERD with Attributes
+
+### User Management System
+
+```mermaid
+graph TB
+    %% Entity
+    User[User]
     
-    %% Collection Management
-    CollectionSchedule {
-        uuid schedule_id PK
-        uuid zone_id FK
-        string day_of_week
-        string time_slot
-        string frequency
-        boolean is_active
-        datetime created_at
-    }
+    %% Attributes (Ovals)
+    user_id((user_id))
+    email((email))
+    phone((phone))
+    user_type((user_type))
+    first_name((first_name))
+    last_name((last_name))
+    password_hash((password_hash))
+    is_verified((is_verified))
+    is_active((is_active))
+    profile_image((profile_image))
+    address((address))
+    city((city))
+    postal_code((postal_code))
+    created_at((created_at))
+    updated_at((updated_at))
     
-    CollectionAssignment {
-        uuid assignment_id PK
-        uuid driver_id FK
-        uuid zone_id FK
-        date assigned_date
-        datetime start_time
-        datetime end_time
-        string status
-        int total_bins_collected
-        string notes
-    }
-    
-    CollectionRecord {
-        uuid record_id PK
-        uuid assignment_id FK
-        uuid bin_id FK
-        datetime collected_at
-        decimal weight_kg
-        int fill_level_before
-        string photo_proof
-        string notes
-    }
-    
-    %% Zone Management
-    Zone {
-        uuid zone_id PK
-        string zone_name
-        string zone_code UK
-        polygon boundary
-        string zone_type
-        uuid provider_id FK
-        int population_estimate
-        decimal area_sq_km
-        int total_bins
-    }
-    
-    %% Payment Management
-    Payment {
-        uuid payment_id PK
-        string transaction_id UK
-        uuid user_id FK
-        uuid service_request_id FK
-        decimal amount
-        string currency
-        string payment_method
-        string status
-        string mobile_money_provider
-        string mobile_money_number
-        datetime initiated_at
-        datetime completed_at
-        string reference
-    }
-    
-    %% Notification Management
-    Notification {
-        uuid notification_id PK
-        uuid user_id FK
-        string notification_type
-        string title
-        string message
-        json channels
-        boolean is_sent
-        boolean is_read
-        datetime sent_at
-        datetime read_at
-        json data
-    }
+    %% Primary Key (Underlined)
+    user_id -.->|PK| User
+    email -.->|UK| User
+    phone -.-> User
+    user_type -.-> User
+    first_name -.-> User
+    last_name -.-> User
+    password_hash -.-> User
+    is_verified -.-> User
+    is_active -.-> User
+    profile_image -.-> User
+    address -.-> User
+    city -.-> User
+    postal_code -.-> User
+    created_at -.-> User
+    updated_at -.-> User
     
     %% Relationships
-    User ||--o{ ServiceRequest : creates
-    User ||--o{ Payment : makes
-    User ||--o{ Notification : receives
-    User ||--o{ SmartBin : owns
+    owns{owns}
+    creates{creates}
+    makes{makes}
+    receives{receives}
     
-    SmartBin }o--|| BinType : has_type
-    SmartBin ||--o| Sensor : equipped_with
-    SmartBin ||--o{ BinAlert : generates
-    SmartBin ||--o{ CollectionRecord : collected_in
-    SmartBin }o--|| Zone : located_in
-    
-    Sensor ||--o{ SensorReading : produces
-    
-    ServiceRequest }o--|| ServiceProvider : assigned_to
-    ServiceRequest }o--o| Driver : handled_by
-    ServiceRequest }o--o| Vehicle : uses
-    ServiceRequest ||--o| Payment : requires
-    
-    Driver }o--|| ServiceProvider : works_for
-    Driver ||--o{ DriverLocation : tracks_location
-    Driver ||--o{ CollectionAssignment : performs
-    Driver }o--o| Vehicle : drives
-    
-    Vehicle }o--|| ServiceProvider : owned_by
-    
-    ServiceProvider ||--o{ Driver : employs
-    ServiceProvider ||--o{ Vehicle : owns
-    ServiceProvider ||--o{ Zone : services
-    
-    Zone ||--o{ SmartBin : contains
-    Zone ||--o{ CollectionSchedule : has_schedule
-    Zone ||--o{ CollectionAssignment : assigns
-    
-    CollectionAssignment ||--o{ CollectionRecord : includes
-    
-    Payment }o--|| ServiceRequest : pays_for
-    
-    Notification }o--o| SmartBin : about_bin
-    Notification }o--o| ServiceRequest : about_request
+    User -->|1:N| owns
+    User -->|1:N| creates
+    User -->|1:N| makes
+    User -->|1:N| receives
 ```
 
-## Entity Groups
+### Smart Bin & IoT System
 
-### 1. Core User & Authentication
 ```mermaid
-erDiagram
-    User {
-        uuid user_id PK
-        string email UK
-        string phone
-        string user_type "customer|driver|admin|provider"
-        string first_name
-        string last_name
-        string password_hash
-        boolean is_verified
-        boolean is_active
-        string profile_image
-        string address
-        string city
-        string postal_code
-        datetime last_login
-        datetime created_at
-        datetime updated_at
-    }
+graph TB
+    %% Entities
+    SmartBin[SmartBin]
+    BinType[BinType]
+    Sensor[Sensor]
+    SensorReading[SensorReading]
+    BinAlert[BinAlert]
     
-    UserProfile {
-        uuid profile_id PK
-        uuid user_id FK
-        json notification_preferences
-        string language "en|tw|ga"
-        string timezone
-        boolean sms_enabled
-        boolean email_enabled
-        boolean push_enabled
-    }
+    %% SmartBin Attributes
+    bin_id((bin_id))
+    bin_number((bin_number))
+    bin_name((name))
+    location((location))
+    bin_address((address))
+    area((area))
+    bin_city((city))
+    status((status))
+    fill_status((fill_status))
+    current_fill_level((current_fill_level))
+    capacity_kg((capacity_kg))
+    current_weight_kg((current_weight_kg))
+    last_collected((last_collected))
+    next_collection((next_collection))
+    qr_code((qr_code))
     
-    User ||--|| UserProfile : has
+    bin_id -.->|PK| SmartBin
+    bin_number -.->|UK| SmartBin
+    bin_name -.-> SmartBin
+    location -.-> SmartBin
+    bin_address -.-> SmartBin
+    area -.-> SmartBin
+    bin_city -.-> SmartBin
+    status -.-> SmartBin
+    fill_status -.-> SmartBin
+    current_fill_level -.-> SmartBin
+    capacity_kg -.-> SmartBin
+    current_weight_kg -.-> SmartBin
+    last_collected -.-> SmartBin
+    next_collection -.-> SmartBin
+    qr_code -.->|UK| SmartBin
+    
+    %% BinType Attributes
+    type_id((type_id))
+    type_name((name))
+    description((description))
+    color_code((color_code))
+    capacity_liters((capacity_liters))
+    icon((icon))
+    
+    type_id -.->|PK| BinType
+    type_name -.->|UK| BinType
+    description -.-> BinType
+    color_code -.-> BinType
+    capacity_liters -.-> BinType
+    icon -.-> BinType
+    
+    %% Sensor Attributes
+    sensor_id((sensor_id))
+    sensor_code((sensor_code))
+    sensor_type((sensor_type))
+    manufacturer((manufacturer))
+    model((model))
+    firmware_version((firmware_version))
+    is_active((is_active))
+    is_online((is_online))
+    battery_level((battery_level))
+    signal_strength((signal_strength))
+    mqtt_topic((mqtt_topic))
+    
+    sensor_id -.->|PK| Sensor
+    sensor_code -.->|UK| Sensor
+    sensor_type -.-> Sensor
+    manufacturer -.-> Sensor
+    model -.-> Sensor
+    firmware_version -.-> Sensor
+    is_active -.-> Sensor
+    is_online -.-> Sensor
+    battery_level -.-> Sensor
+    signal_strength -.-> Sensor
+    mqtt_topic -.-> Sensor
+    
+    %% Relationships
+    has_type{has_type}
+    equipped_with{equipped_with}
+    generates{generates}
+    produces{produces}
+    
+    SmartBin -->|N:1| has_type --> BinType
+    SmartBin -->|1:1| equipped_with --> Sensor
+    SmartBin -->|1:N| generates --> BinAlert
+    Sensor -->|1:N| produces --> SensorReading
 ```
 
-### 2. Smart Bin & IoT System
+### Service Request System
+
 ```mermaid
-erDiagram
-    SmartBin {
-        uuid bin_id PK
-        string bin_number UK "BIN-ACC-001"
-        string name
-        uuid bin_type_id FK
-        uuid user_id FK "null for public"
-        uuid sensor_id FK
-        point location "PostGIS"
-        string address
-        string area
-        string city "default: Accra"
-        string region "default: Greater Accra"
-        string status "active|inactive|maintenance|full"
-        string fill_status "empty|low|medium|high|full"
-        int current_fill_level "0-100"
-        decimal capacity_kg
-        decimal current_weight_kg
-        string qr_code UK
-        datetime last_collected
-        datetime next_collection
-        boolean is_public
-        datetime created_at
-    }
+graph TB
+    %% Entity
+    ServiceRequest[ServiceRequest]
     
-    Sensor {
-        uuid sensor_id PK
-        string sensor_code UK "SENS-001"
-        string sensor_type "ultrasonic|weight|temperature|gps"
-        string manufacturer
-        string model
-        string firmware_version
-        boolean is_active
-        boolean is_online
-        int battery_level "0-100"
-        int signal_strength "0-100"
-        datetime last_calibration
-        datetime next_calibration
-        string mqtt_topic
-        datetime last_reading
-        int reading_interval_minutes "default: 15"
-    }
+    %% Attributes
+    request_id((request_id))
+    request_number((request_number))
+    service_type((service_type))
+    waste_type((waste_type))
+    pickup_location((pickup_location))
+    pickup_address((pickup_address))
+    requested_date((requested_date))
+    requested_time_slot((requested_time_slot))
+    sr_status((status))
+    estimated_weight_kg((estimated_weight_kg))
+    actual_weight_kg((actual_weight_kg))
+    sr_description((description))
+    photos((photos))
+    estimated_cost((estimated_cost))
+    final_cost((final_cost))
+    payment_status((payment_status))
+    completed_at((completed_at))
     
-    SensorReading {
-        uuid reading_id PK
-        uuid sensor_id FK
-        string reading_type
-        int fill_level "0-100"
-        decimal weight_kg
-        decimal temperature "Celsius"
-        decimal humidity "percentage"
-        int battery_level
-        int signal_strength
-        point location
-        json raw_data
-        datetime timestamp
-        boolean is_anomaly
-    }
+    request_id -.->|PK| ServiceRequest
+    request_number -.->|UK| ServiceRequest
+    service_type -.-> ServiceRequest
+    waste_type -.-> ServiceRequest
+    pickup_location -.-> ServiceRequest
+    pickup_address -.-> ServiceRequest
+    requested_date -.-> ServiceRequest
+    requested_time_slot -.-> ServiceRequest
+    sr_status -.-> ServiceRequest
+    estimated_weight_kg -.-> ServiceRequest
+    actual_weight_kg -.-> ServiceRequest
+    sr_description -.-> ServiceRequest
+    photos -.-> ServiceRequest
+    estimated_cost -.-> ServiceRequest
+    final_cost -.-> ServiceRequest
+    payment_status -.-> ServiceRequest
+    completed_at -.-> ServiceRequest
     
-    SmartBin ||--o| Sensor : has
-    Sensor ||--o{ SensorReading : generates
+    %% Relationships
+    assigned_to{assigned_to}
+    handled_by{handled_by}
+    uses{uses}
+    requires{requires}
+    
+    ServiceRequest -->|N:1| assigned_to
+    ServiceRequest -->|N:1| handled_by
+    ServiceRequest -->|N:1| uses
+    ServiceRequest -->|1:1| requires
 ```
 
-### 3. Service Request System
+### Driver & Vehicle System
+
 ```mermaid
-erDiagram
-    ServiceRequest {
-        uuid request_id PK
-        string request_number UK "SR-2024-0001"
-        uuid customer_id FK
-        uuid provider_id FK
-        uuid driver_id FK
-        uuid vehicle_id FK
-        string service_type "waste_collection|recycling|hazardous"
-        string waste_type "general|recyclable|organic|hazardous"
-        string status "pending|accepted|assigned|en_route|completed"
-        point pickup_location
-        string pickup_address
-        date requested_date
-        string requested_time_slot "morning|afternoon|evening"
-        datetime scheduled_date
-        decimal estimated_weight_kg
-        decimal actual_weight_kg
-        string description
-        json photos "array of URLs"
-        decimal estimated_cost
-        decimal final_cost
-        string payment_status "pending|paid|failed"
-        datetime completed_at
-        json completion_photos
-        string notes
-        datetime created_at
-    }
+graph TB
+    %% Entities
+    Driver[Driver]
+    Vehicle[Vehicle]
+    DriverLocation[DriverLocation]
     
-    RequestItem {
-        uuid item_id PK
-        uuid request_id FK
-        string item_type
-        int quantity
-        decimal weight_estimate
-        string photo_url
-        string notes
-    }
+    %% Driver Attributes
+    driver_id((driver_id))
+    driver_name((name))
+    driver_email((email))
+    driver_phone((phone))
+    license_number((license_number))
+    license_expiry((license_expiry))
+    employment_type((employment_type))
+    is_available((is_available))
+    is_on_duty((is_on_duty))
+    driver_location((location))
+    rating((rating))
+    total_trips((total_trips))
     
-    ServiceRequest ||--o{ RequestItem : contains
+    driver_id -.->|PK| Driver
+    driver_name -.-> Driver
+    driver_email -.->|UK| Driver
+    driver_phone -.-> Driver
+    license_number -.->|UK| Driver
+    license_expiry -.-> Driver
+    employment_type -.-> Driver
+    is_available -.-> Driver
+    is_on_duty -.-> Driver
+    driver_location -.-> Driver
+    rating -.-> Driver
+    total_trips -.-> Driver
+    
+    %% Vehicle Attributes
+    vehicle_id((vehicle_id))
+    registration((registration))
+    make((make))
+    v_model((model))
+    year((year))
+    vehicle_category((vehicle_category))
+    fuel_type((fuel_type))
+    payload_capacity_kg((payload_capacity_kg))
+    load_volume_m3((load_volume_m3))
+    has_gps_tracking((has_gps_tracking))
+    v_is_active((is_active))
+    current_location((current_location))
+    odometer_km((odometer_km))
+    
+    vehicle_id -.->|PK| Vehicle
+    registration -.->|UK| Vehicle
+    make -.-> Vehicle
+    v_model -.-> Vehicle
+    year -.-> Vehicle
+    vehicle_category -.-> Vehicle
+    fuel_type -.-> Vehicle
+    payload_capacity_kg -.-> Vehicle
+    load_volume_m3 -.-> Vehicle
+    has_gps_tracking -.-> Vehicle
+    v_is_active -.-> Vehicle
+    current_location -.-> Vehicle
+    odometer_km -.-> Vehicle
+    
+    %% Relationships
+    works_for{works_for}
+    tracks_location{tracks_location}
+    drives{drives}
+    
+    Driver -->|N:1| works_for
+    Driver -->|1:N| tracks_location --> DriverLocation
+    Driver -->|N:1| drives --> Vehicle
 ```
 
-### 4. Driver & Vehicle Fleet
+### Payment System
+
 ```mermaid
-erDiagram
-    Driver {
-        uuid driver_id PK
-        string name
-        string email UK
-        string phone
-        date date_of_birth
-        string national_id UK
-        string address
-        point location "current GPS"
-        datetime last_location_update
-        uuid provider_id FK
-        string employment_type "employee|contractor"
-        date date_started
-        string license_number UK
-        date license_expiry
-        json license_categories
-        boolean is_available
-        boolean is_on_duty
-        uuid current_assignment FK
-        int total_trips
-        decimal rating "1-5"
-        datetime created_at
-    }
+graph TB
+    %% Entity
+    Payment[Payment]
     
-    Vehicle {
-        uuid vehicle_id PK
-        string registration UK "GR-1234-20"
-        string make
-        string model
-        int year
-        string vehicle_category "truck|van|compactor"
-        string fuel_type "diesel|petrol|electric"
-        int seats
-        int payload_capacity_kg
-        decimal load_volume_m3
-        json waste_types_handled
-        boolean has_compaction_system
-        boolean has_gps_tracking
-        uuid provider_id FK
-        uuid assigned_driver FK
-        boolean is_active
-        boolean is_available
-        point current_location
-        date last_maintenance
-        date next_maintenance_due
-        int odometer_km
-        datetime created_at
-    }
+    %% Attributes
+    payment_id((payment_id))
+    transaction_id((transaction_id))
+    amount((amount))
+    currency((currency))
+    payment_method((payment_method))
+    p_status((status))
+    mobile_money_provider((mobile_money_provider))
+    mobile_money_number((mobile_money_number))
+    initiated_at((initiated_at))
+    completed_at((completed_at))
+    reference((reference))
+    receipt_url((receipt_url))
     
-    Driver }o--o| Vehicle : drives
+    payment_id -.->|PK| Payment
+    transaction_id -.->|UK| Payment
+    amount -.-> Payment
+    currency -.-> Payment
+    payment_method -.-> Payment
+    p_status -.-> Payment
+    mobile_money_provider -.-> Payment
+    mobile_money_number -.-> Payment
+    initiated_at -.-> Payment
+    completed_at -.-> Payment
+    reference -.-> Payment
+    receipt_url -.-> Payment
+    
+    %% Relationships
+    pays_for{pays_for}
+    made_by{made_by}
+    
+    Payment -->|N:1| pays_for
+    Payment -->|N:1| made_by
 ```
 
-### 5. Payment & Billing
+## Cardinality and Participation Constraints
+
+### Notation Legend
+- **1:1** - One-to-One relationship
+- **1:N** - One-to-Many relationship
+- **M:N** - Many-to-Many relationship
+- **Total Participation** (double line): Entity must participate in relationship
+- **Partial Participation** (single line): Entity may or may not participate
+
+### Key Relationships with Cardinality
+
 ```mermaid
-erDiagram
-    Payment {
-        uuid payment_id PK
-        string transaction_id UK
-        uuid user_id FK
-        uuid service_request_id FK
-        decimal amount
-        string currency "GHS"
-        string payment_method "cash|mobile_money|card"
-        string status "pending|processing|completed|failed"
-        string mobile_money_provider "mtn|vodafone|airteltigo"
-        string mobile_money_number
-        datetime initiated_at
-        datetime completed_at
-        string reference
-        string receipt_url
-        json metadata
-    }
+graph LR
+    %% One-to-One
+    SmartBin ---|1:1| equipped_with{equipped_with} ---|1:1| Sensor
+    ServiceRequest ---|1:1| requires{requires} ---|1:1| Payment
     
-    Invoice {
-        uuid invoice_id PK
-        string invoice_number UK
-        uuid payment_id FK
-        uuid customer_id FK
-        decimal subtotal
-        decimal tax_amount
-        decimal total_amount
-        string status "draft|sent|paid|overdue"
-        date due_date
-        datetime sent_at
-        datetime paid_at
-        string pdf_url
-    }
+    %% One-to-Many
+    User ---|1| owns{owns} ---|N| SmartBin
+    Sensor ---|1| produces{produces} ---|N| SensorReading
+    SmartBin ---|1| generates{generates} ---|N| BinAlert
+    Driver ---|1| tracks{tracks_location} ---|N| DriverLocation
+    ServiceProvider ---|1| employs{employs} ---|N| Driver
+    Zone ---|1| contains{contains} ---|N| SmartBin
     
-    Payment ||--o| Invoice : generates
+    %% Many-to-One
+    SmartBin ---|N| has_type{has_type} ---|1| BinType
+    ServiceRequest ---|N| assigned_to{assigned_to} ---|1| ServiceProvider
+    Driver ---|N| works_for{works_for} ---|1| ServiceProvider
+    Vehicle ---|N| owned_by{owned_by} ---|1| ServiceProvider
+    
+    %% Many-to-Many (resolved with junction tables)
+    CollectionAssignment ---|M| includes{includes} ---|N| CollectionRecord
 ```
 
-## Key Database Indexes
+## Weak Entities
 
-### Geospatial Indexes (PostGIS)
-```sql
--- Spatial indexes for location-based queries
-CREATE INDEX idx_smartbin_location ON smartbin USING GIST(location);
-CREATE INDEX idx_servicerequest_location ON servicerequest USING GIST(pickup_location);
-CREATE INDEX idx_driver_location ON driver USING GIST(location);
-CREATE INDEX idx_vehicle_location ON vehicle USING GIST(current_location);
-CREATE INDEX idx_zone_boundary ON zone USING GIST(boundary);
-CREATE INDEX idx_provider_hq ON serviceprovider USING GIST(headquarters_location);
+```mermaid
+graph TB
+    %% Strong Entity
+    SmartBin[SmartBin]
+    
+    %% Weak Entities (double rectangle in Chen's notation)
+    SensorReading[[SensorReading]]
+    BinAlert[[BinAlert]]
+    
+    %% Identifying Relationships (double diamond)
+    produces{{produces}}
+    generates{{generates}}
+    
+    %% Relationships
+    SmartBin -->|1| generates --> |N| BinAlert
+    Sensor -->|1| produces --> |N| SensorReading
+    
+    %% Weak entity attributes
+    reading_timestamp((timestamp))
+    reading_value((value))
+    alert_timestamp((timestamp))
+    alert_message((message))
+    
+    reading_timestamp -.-> SensorReading
+    reading_value -.-> SensorReading
+    alert_timestamp -.-> BinAlert
+    alert_message -.-> BinAlert
 ```
 
-### Performance Indexes
-```sql
--- Frequently queried fields
-CREATE INDEX idx_smartbin_status ON smartbin(status) WHERE status != 'inactive';
-CREATE INDEX idx_smartbin_fill_level ON smartbin(current_fill_level) WHERE current_fill_level > 70;
-CREATE INDEX idx_servicerequest_status ON servicerequest(status) WHERE status NOT IN ('completed', 'cancelled');
-CREATE INDEX idx_driver_available ON driver(is_available, is_on_duty) WHERE is_available = true;
-CREATE INDEX idx_vehicle_available ON vehicle(is_available, is_active) WHERE is_active = true;
-CREATE INDEX idx_payment_status ON payment(status) WHERE status = 'pending';
-CREATE INDEX idx_sensorreading_timestamp ON sensorreading(timestamp DESC);
-CREATE INDEX idx_binalert_unresolved ON binalert(is_resolved) WHERE is_resolved = false;
+## Specialization/Generalization Hierarchy
+
+```mermaid
+graph TB
+    %% Supertype
+    User[User]
+    
+    %% ISA relationship (triangle)
+    ISA{ISA}
+    
+    %% Subtypes
+    Customer[Customer]
+    Driver[Driver]
+    Administrator[Administrator]
+    
+    %% Hierarchy
+    User --> ISA
+    ISA --> Customer
+    ISA --> Driver
+    ISA --> Administrator
+    
+    %% Specialized attributes
+    subscription_plan((subscription_plan))
+    license_number((license_number))
+    admin_level((admin_level))
+    
+    subscription_plan -.-> Customer
+    license_number -.-> Driver
+    admin_level -.-> Administrator
 ```
 
-### Foreign Key Indexes
-```sql
--- Automatic FK indexes
-CREATE INDEX idx_smartbin_user ON smartbin(user_id);
-CREATE INDEX idx_smartbin_bintype ON smartbin(bin_type_id);
-CREATE INDEX idx_smartbin_sensor ON smartbin(sensor_id);
-CREATE INDEX idx_sensorreading_sensor ON sensorreading(sensor_id);
-CREATE INDEX idx_servicerequest_customer ON servicerequest(customer_id);
-CREATE INDEX idx_driver_provider ON driver(provider_id);
-CREATE INDEX idx_vehicle_provider ON vehicle(provider_id);
-CREATE INDEX idx_payment_user ON payment(user_id);
-CREATE INDEX idx_notification_user ON notification(user_id);
+## Multi-valued Attributes
+
+```mermaid
+graph TB
+    %% Entity
+    ServiceProvider[ServiceProvider]
+    
+    %% Single-valued attributes
+    provider_id((provider_id))
+    company_name((company_name))
+    
+    %% Multi-valued attributes (double oval)
+    service_areas(((service_areas)))
+    services_offered(((services_offered)))
+    waste_types_handled(((waste_types_handled)))
+    
+    provider_id -.->|PK| ServiceProvider
+    company_name -.-> ServiceProvider
+    service_areas -.-> ServiceProvider
+    services_offered -.-> ServiceProvider
+    waste_types_handled -.-> ServiceProvider
 ```
 
-## Data Integrity Constraints
+## Composite Attributes
 
-### Check Constraints
-```sql
--- Value range constraints
-ALTER TABLE smartbin ADD CONSTRAINT chk_fill_level 
-    CHECK (current_fill_level >= 0 AND current_fill_level <= 100);
-
-ALTER TABLE sensor ADD CONSTRAINT chk_battery_level 
-    CHECK (battery_level >= 0 AND battery_level <= 100);
-
-ALTER TABLE driver ADD CONSTRAINT chk_rating 
-    CHECK (rating >= 0 AND rating <= 5);
-
-ALTER TABLE payment ADD CONSTRAINT chk_amount 
-    CHECK (amount > 0);
-
-ALTER TABLE vehicle ADD CONSTRAINT chk_year 
-    CHECK (year >= 1990 AND year <= EXTRACT(YEAR FROM CURRENT_DATE) + 1);
+```mermaid
+graph TB
+    %% Entity
+    SmartBin[SmartBin]
+    
+    %% Composite attribute
+    location((location))
+    
+    %% Component attributes
+    latitude((latitude))
+    longitude((longitude))
+    altitude((altitude))
+    
+    location -.-> SmartBin
+    latitude -.-> location
+    longitude -.-> location
+    altitude -.-> location
+    
+    %% Another composite attribute
+    address_comp((address))
+    street((street))
+    area_comp((area))
+    city_comp((city))
+    postal((postal_code))
+    
+    address_comp -.-> SmartBin
+    street -.-> address_comp
+    area_comp -.-> address_comp
+    city_comp -.-> address_comp
+    postal -.-> address_comp
 ```
 
-### Unique Constraints
-```sql
--- Business rules
-ALTER TABLE smartbin ADD CONSTRAINT uk_bin_sensor 
-    UNIQUE (sensor_id) WHERE sensor_id IS NOT NULL;
+## Derived Attributes
 
-ALTER TABLE driver ADD CONSTRAINT uk_driver_user 
-    UNIQUE (user_id) WHERE user_id IS NOT NULL;
-
-ALTER TABLE vehicle ADD CONSTRAINT uk_vehicle_driver 
-    UNIQUE (assigned_driver) WHERE assigned_driver IS NOT NULL;
+```mermaid
+graph TB
+    %% Entity
+    SmartBin[SmartBin]
+    
+    %% Regular attributes
+    capacity_kg((capacity_kg))
+    current_weight_kg((current_weight_kg))
+    
+    %% Derived attribute (dashed oval)
+    fill_percentage((fill_percentage))
+    
+    capacity_kg -.-> SmartBin
+    current_weight_kg -.-> SmartBin
+    fill_percentage -.->|derived| SmartBin
+    
+    %% Formula notation
+    Note[fill_percentage = current_weight_kg / capacity_kg * 100]
 ```
 
-### Triggers
+## Complete Chen's ERD Legend
+
+| Symbol | Meaning |
+|--------|---------|
+| Rectangle `[ ]` | Entity |
+| Double Rectangle `[[ ]]` | Weak Entity |
+| Diamond `{ }` | Relationship |
+| Double Diamond `{{ }}` | Identifying Relationship |
+| Oval `( )` | Attribute |
+| Double Oval `(( ))` | Multi-valued Attribute |
+| Dashed Oval | Derived Attribute |
+| Underlined Attribute | Primary Key |
+| Triangle | ISA (Generalization) |
+| Lines | Participation |
+| Double Lines | Total Participation |
+| 1, N, M | Cardinality |
+
+## Key Constraints in Chen's Notation
+
+1. **Participation Constraints**
+   - Total: Every SmartBin MUST have a BinType
+   - Partial: A User MAY own SmartBins
+
+2. **Cardinality Constraints**
+   - (1,1): A SmartBin has exactly one Sensor
+   - (0,N): A User can create zero or many ServiceRequests
+   - (1,N): A Sensor produces at least one SensorReading
+
+3. **Key Constraints**
+   - Primary Key: Uniquely identifies entity instances
+   - Foreign Key: References another entity
+   - Unique Key: Alternative key constraint
+
+## Database Implementation Notes
+
+### PostgreSQL with PostGIS Implementation
 ```sql
--- Auto-update bin status based on fill level
-CREATE OR REPLACE FUNCTION update_bin_status()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF NEW.current_fill_level >= 80 THEN
-        NEW.fill_status = 'full';
-        NEW.status = 'full';
-    ELSIF NEW.current_fill_level >= 60 THEN
-        NEW.fill_status = 'high';
-    ELSIF NEW.current_fill_level >= 40 THEN
-        NEW.fill_status = 'medium';
-    ELSIF NEW.current_fill_level >= 20 THEN
-        NEW.fill_status = 'low';
-    ELSE
-        NEW.fill_status = 'empty';
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_update_bin_status
-    BEFORE INSERT OR UPDATE OF current_fill_level ON smartbin
-    FOR EACH ROW EXECUTE FUNCTION update_bin_status();
-```
-
-## PostGIS Spatial Queries Examples
-
-### Find Nearest Bins
-```sql
--- Find bins within 1km radius
-SELECT 
-    bin_number,
-    name,
-    current_fill_level,
-    ST_Distance(location, ST_MakePoint(%s, %s)::geography) as distance_meters
-FROM smartbin
-WHERE ST_DWithin(location, ST_MakePoint(%s, %s)::geography, 1000)
-    AND status = 'active'
-ORDER BY distance_meters;
-```
-
-### Zone-based Queries
-```sql
--- Get all bins in a zone
-SELECT b.* 
-FROM smartbin b
-JOIN zone z ON ST_Contains(z.boundary, b.location)
-WHERE z.zone_id = %s;
-
--- Count bins by zone
-SELECT 
-    z.zone_name,
-    COUNT(b.bin_id) as bin_count,
-    AVG(b.current_fill_level) as avg_fill_level
-FROM zone z
-LEFT JOIN smartbin b ON ST_Contains(z.boundary, b.location)
-GROUP BY z.zone_id, z.zone_name;
-```
-
-### Service Area Coverage
-```sql
--- Check if location is in service area
-SELECT sp.* 
-FROM serviceprovider sp
-WHERE ST_Contains(
-    ST_GeomFromGeoJSON(sp.service_areas->0),
-    ST_MakePoint(%s, %s)
+-- Entity tables based on Chen's notation
+CREATE TABLE users (
+    user_id UUID PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    phone VARCHAR(20),
+    user_type VARCHAR(20) CHECK (user_type IN ('customer', 'driver', 'admin', 'provider')),
+    -- other attributes
 );
-```
 
-### Driver Route Tracking
-```sql
--- Get driver's route for the day
-SELECT 
-    ST_MakeLine(location ORDER BY timestamp) as route,
-    SUM(ST_Distance(
-        location,
-        LAG(location) OVER (ORDER BY timestamp)
-    )) as total_distance
-FROM driverlocation
-WHERE driver_id = %s
-    AND DATE(timestamp) = CURRENT_DATE;
+CREATE TABLE smart_bins (
+    bin_id UUID PRIMARY KEY,
+    bin_number VARCHAR(50) UNIQUE NOT NULL,
+    bin_type_id INTEGER REFERENCES bin_types(type_id),
+    user_id UUID REFERENCES users(user_id),
+    location GEOMETRY(Point, 4326),
+    -- other attributes
+);
+
+-- Relationship tables for M:N relationships
+CREATE TABLE collection_assignments_bins (
+    assignment_id UUID REFERENCES collection_assignments(assignment_id),
+    bin_id UUID REFERENCES smart_bins(bin_id),
+    PRIMARY KEY (assignment_id, bin_id)
+);
+
+-- Weak entity with composite key
+CREATE TABLE sensor_readings (
+    sensor_id UUID REFERENCES sensors(sensor_id),
+    timestamp TIMESTAMP,
+    fill_level INTEGER,
+    -- other attributes
+    PRIMARY KEY (sensor_id, timestamp)
+);
 ```
