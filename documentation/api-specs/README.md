@@ -1,20 +1,27 @@
-# API Specifications
+# Wasgo API Specifications
 
 ## Overview
-RESTful API design following OpenAPI 3.0 specification for the Task Management System.
+RESTful API design for the Wasgo Smart Waste Management System built with Django REST Framework. The API supports IoT device communication, mobile applications, and web interfaces for waste management operations in Ghana.
 
 ## Base URL
 ```
-Production: https://api.taskmanager.com/v1
-Staging: https://staging-api.taskmanager.com/v1
-Development: http://localhost:3000/api/v1
+Production: https://api.wasgo.com/api/v1
+Staging: https://staging-api.wasgo.com/api/v1
+Development: http://localhost:8000/api/v1
 ```
 
 ## Authentication
-All API requests require authentication using JWT tokens except for auth endpoints.
+The API uses JWT (JSON Web Token) authentication for secure access.
 
 ```http
 Authorization: Bearer <access_token>
+```
+
+### Token Endpoints
+```http
+POST /api/v1/auth/login/
+POST /api/v1/auth/refresh/
+POST /api/v1/auth/logout/
 ```
 
 ## Common Headers
@@ -22,7 +29,8 @@ Authorization: Bearer <access_token>
 Content-Type: application/json
 Accept: application/json
 X-Request-ID: <uuid>
-X-Client-Version: 1.0.0
+X-Client-Version: 2.0.0
+X-Device-Type: web|mobile|iot
 ```
 
 ## Response Format
@@ -41,920 +49,778 @@ X-Client-Version: 1.0.0
 {
   "success": false,
   "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Validation failed",
-    "details": [
-      {
-        "field": "email",
-        "message": "Invalid email format"
-      }
-    ]
+    "code": "BIN_NOT_FOUND",
+    "message": "Smart bin not found",
+    "details": {
+      "bin_id": "BIN-ACC-001"
+    }
   },
-  "timestamp": "2024-01-15T10:30:00Z",
-  "request_id": "550e8400-e29b-41d4-a716-446655440000"
+  "timestamp": "2024-01-15T10:30:00Z"
 }
 ```
 
 ## API Endpoints
 
-### 1. Authentication Endpoints
+### 1. Smart Bin Management
 
-#### POST /auth/register
-Register a new user account.
-
-**Request Body:**
-```json
-{
-  "email": "user@example.com",
-  "password": "SecurePass123!",
-  "first_name": "John",
-  "last_name": "Doe",
-  "phone": "+1234567890"
-}
+#### Get All Smart Bins
+```http
+GET /api/v1/bins/
 ```
-
-**Response:** `201 Created`
-```json
-{
-  "success": true,
-  "data": {
-    "user": {
-      "user_id": "550e8400-e29b-41d4-a716-446655440000",
-      "email": "user@example.com",
-      "first_name": "John",
-      "last_name": "Doe",
-      "created_at": "2024-01-15T10:30:00Z"
-    },
-    "message": "Verification email sent"
-  }
-}
-```
-
----
-
-#### POST /auth/login
-Authenticate user and receive tokens.
-
-**Request Body:**
-```json
-{
-  "email": "user@example.com",
-  "password": "SecurePass123!",
-  "remember_me": true
-}
-```
-
-**Response:** `200 OK`
-```json
-{
-  "success": true,
-  "data": {
-    "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "refresh_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "expires_in": 900,
-    "user": {
-      "user_id": "550e8400-e29b-41d4-a716-446655440000",
-      "email": "user@example.com",
-      "first_name": "John",
-      "last_name": "Doe",
-      "role": "developer"
-    }
-  }
-}
-```
-
----
-
-#### POST /auth/refresh
-Refresh access token using refresh token.
-
-**Request Body:**
-```json
-{
-  "refresh_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
-```
-
-**Response:** `200 OK`
-```json
-{
-  "success": true,
-  "data": {
-    "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "expires_in": 900
-  }
-}
-```
-
----
-
-#### POST /auth/logout
-Invalidate current session.
-
-**Response:** `200 OK`
-```json
-{
-  "success": true,
-  "message": "Logged out successfully"
-}
-```
-
----
-
-#### POST /auth/forgot-password
-Request password reset email.
-
-**Request Body:**
-```json
-{
-  "email": "user@example.com"
-}
-```
-
-**Response:** `200 OK`
-```json
-{
-  "success": true,
-  "message": "If the email exists, a reset link has been sent"
-}
-```
-
----
-
-#### POST /auth/reset-password
-Reset password using token.
-
-**Request Body:**
-```json
-{
-  "token": "reset_token_here",
-  "new_password": "NewSecurePass123!"
-}
-```
-
-**Response:** `200 OK`
-```json
-{
-  "success": true,
-  "message": "Password reset successfully"
-}
-```
-
----
-
-### 2. User Endpoints
-
-#### GET /users/profile
-Get current user profile.
-
-**Response:** `200 OK`
-```json
-{
-  "success": true,
-  "data": {
-    "user_id": "550e8400-e29b-41d4-a716-446655440000",
-    "email": "user@example.com",
-    "first_name": "John",
-    "last_name": "Doe",
-    "avatar_url": "https://cdn.example.com/avatars/user.jpg",
-    "phone": "+1234567890",
-    "role": "developer",
-    "created_at": "2024-01-15T10:30:00Z",
-    "last_login": "2024-01-20T09:00:00Z"
-  }
-}
-```
-
----
-
-#### PUT /users/profile
-Update user profile.
-
-**Request Body:**
-```json
-{
-  "first_name": "John",
-  "last_name": "Smith",
-  "phone": "+9876543210",
-  "notification_preferences": {
-    "email": true,
-    "push": false,
-    "sms": false
-  }
-}
-```
-
-**Response:** `200 OK`
-
----
-
-#### POST /users/avatar
-Upload user avatar.
-
-**Request:** `multipart/form-data`
-```
-avatar: [binary file data]
-```
-
-**Response:** `200 OK`
-```json
-{
-  "success": true,
-  "data": {
-    "avatar_url": "https://cdn.example.com/avatars/new-avatar.jpg"
-  }
-}
-```
-
----
-
-### 3. Project Endpoints
-
-#### GET /projects
-List all projects for the user.
 
 **Query Parameters:**
-- `page` (integer): Page number (default: 1)
-- `limit` (integer): Items per page (default: 20)
-- `search` (string): Search term
-- `status` (string): Filter by status (active, archived)
-- `sort` (string): Sort field (name, created_at, updated_at)
-- `order` (string): Sort order (asc, desc)
+- `status` (string): active, inactive, maintenance, full, offline
+- `fill_level_min` (integer): Minimum fill level (0-100)
+- `fill_level_max` (integer): Maximum fill level (0-100)
+- `area` (string): Area/neighborhood name
+- `lat` (float): Latitude for proximity search
+- `lng` (float): Longitude for proximity search
+- `radius` (integer): Search radius in meters (default: 1000)
 
-**Response:** `200 OK`
+**Response:**
 ```json
 {
   "success": true,
   "data": {
-    "projects": [
+    "bins": [
       {
-        "project_id": "123e4567-e89b-12d3-a456-426614174000",
-        "project_key": "PROJ",
-        "name": "Website Redesign",
-        "description": "Redesign company website",
-        "owner": {
-          "user_id": "550e8400-e29b-41d4-a716-446655440000",
-          "name": "John Doe"
+        "bin_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        "bin_number": "BIN-ACC-001",
+        "name": "Main Street Bin 1",
+        "bin_type": {
+          "id": 1,
+          "name": "general",
+          "color_code": "#808080"
         },
+        "location": {
+          "type": "Point",
+          "coordinates": [-0.1870, 5.6037]
+        },
+        "address": "123 Main Street, Accra",
+        "area": "Osu",
+        "city": "Accra",
         "status": "active",
-        "member_count": 5,
-        "task_count": 42,
-        "created_at": "2024-01-01T00:00:00Z"
-      }
-    ],
-    "pagination": {
-      "page": 1,
-      "limit": 20,
-      "total": 100,
-      "pages": 5
-    }
-  }
-}
-```
-
----
-
-#### GET /projects/:id
-Get project details.
-
-**Response:** `200 OK`
-```json
-{
-  "success": true,
-  "data": {
-    "project_id": "123e4567-e89b-12d3-a456-426614174000",
-    "project_key": "PROJ",
-    "name": "Website Redesign",
-    "description": "Complete redesign of company website",
-    "owner": {
-      "user_id": "550e8400-e29b-41d4-a716-446655440000",
-      "name": "John Doe",
-      "email": "john@example.com"
-    },
-    "visibility": "private",
-    "status": "active",
-    "start_date": "2024-01-01",
-    "end_date": "2024-06-30",
-    "members": [
-      {
-        "user_id": "user_id_1",
-        "name": "Jane Smith",
-        "role": "developer",
-        "joined_at": "2024-01-02T00:00:00Z"
-      }
-    ],
-    "statistics": {
-      "total_tasks": 42,
-      "completed_tasks": 15,
-      "in_progress_tasks": 10,
-      "overdue_tasks": 2
-    },
-    "created_at": "2024-01-01T00:00:00Z",
-    "updated_at": "2024-01-15T10:30:00Z"
-  }
-}
-```
-
----
-
-#### POST /projects
-Create a new project.
-
-**Request Body:**
-```json
-{
-  "name": "New Project",
-  "description": "Project description",
-  "visibility": "private",
-  "start_date": "2024-02-01",
-  "end_date": "2024-08-31",
-  "members": [
-    {
-      "user_id": "user_id_1",
-      "role": "developer"
-    }
-  ]
-}
-```
-
-**Response:** `201 Created`
-
----
-
-#### PUT /projects/:id
-Update project details.
-
-**Request Body:**
-```json
-{
-  "name": "Updated Project Name",
-  "description": "Updated description",
-  "status": "active",
-  "end_date": "2024-09-30"
-}
-```
-
-**Response:** `200 OK`
-
----
-
-#### DELETE /projects/:id
-Archive a project.
-
-**Response:** `200 OK`
-
----
-
-#### POST /projects/:id/members
-Add members to project.
-
-**Request Body:**
-```json
-{
-  "members": [
-    {
-      "user_id": "user_id_2",
-      "role": "developer"
-    },
-    {
-      "email": "newuser@example.com",
-      "role": "viewer"
-    }
-  ]
-}
-```
-
-**Response:** `200 OK`
-
----
-
-### 4. Task Endpoints
-
-#### GET /tasks
-List tasks with filters.
-
-**Query Parameters:**
-- `project_id` (string): Filter by project
-- `sprint_id` (string): Filter by sprint
-- `assignee` (string): Filter by assignee user_id
-- `status` (string): Filter by status (todo, in_progress, review, done)
-- `priority` (string): Filter by priority (low, medium, high, critical)
-- `search` (string): Search in title and description
-- `due_date_from` (date): Filter by due date range start
-- `due_date_to` (date): Filter by due date range end
-
-**Response:** `200 OK`
-```json
-{
-  "success": true,
-  "data": {
-    "tasks": [
-      {
-        "task_id": "task_id_1",
-        "task_key": "PROJ-123",
-        "title": "Implement user authentication",
-        "description": "Add JWT authentication",
-        "status": "in_progress",
-        "priority": "high",
-        "story_points": 5,
-        "assignees": [
-          {
-            "user_id": "user_id_1",
-            "name": "John Doe",
-            "avatar_url": "https://..."
-          }
-        ],
-        "project": {
-          "project_id": "project_id_1",
-          "name": "Website Redesign"
-        },
-        "sprint": {
-          "sprint_id": "sprint_id_1",
-          "name": "Sprint 1"
-        },
-        "due_date": "2024-02-15T23:59:59Z",
-        "created_at": "2024-01-15T10:30:00Z"
-      }
-    ],
-    "pagination": {
-      "page": 1,
-      "limit": 20,
-      "total": 150
-    }
-  }
-}
-```
-
----
-
-#### GET /tasks/:id
-Get task details.
-
-**Response:** `200 OK`
-```json
-{
-  "success": true,
-  "data": {
-    "task_id": "task_id_1",
-    "task_key": "PROJ-123",
-    "title": "Implement user authentication",
-    "description": "Add JWT authentication to the application",
-    "status": "in_progress",
-    "priority": "high",
-    "task_type": "feature",
-    "story_points": 5,
-    "estimated_hours": 8,
-    "actual_hours": 4.5,
-    "assignees": [
-      {
-        "user_id": "user_id_1",
-        "name": "John Doe",
-        "avatar_url": "https://..."
-      }
-    ],
-    "reporter": {
-      "user_id": "user_id_2",
-      "name": "Jane Smith"
-    },
-    "project": {
-      "project_id": "project_id_1",
-      "name": "Website Redesign",
-      "key": "PROJ"
-    },
-    "sprint": {
-      "sprint_id": "sprint_id_1",
-      "name": "Sprint 1",
-      "status": "active"
-    },
-    "labels": ["backend", "authentication"],
-    "attachments": [
-      {
-        "attachment_id": "attach_1",
-        "file_name": "design.pdf",
-        "file_size": 1024000,
-        "file_url": "https://...",
-        "uploaded_by": "John Doe",
-        "created_at": "2024-01-16T10:00:00Z"
-      }
-    ],
-    "comments_count": 5,
-    "watchers": ["user_id_3", "user_id_4"],
-    "due_date": "2024-02-15T23:59:59Z",
-    "created_at": "2024-01-15T10:30:00Z",
-    "updated_at": "2024-01-20T14:20:00Z"
-  }
-}
-```
-
----
-
-#### POST /tasks
-Create a new task.
-
-**Request Body:**
-```json
-{
-  "project_id": "project_id_1",
-  "title": "New Feature Implementation",
-  "description": "Detailed description here",
-  "task_type": "feature",
-  "priority": "medium",
-  "story_points": 3,
-  "estimated_hours": 6,
-  "assignees": ["user_id_1", "user_id_2"],
-  "labels": ["frontend", "ui"],
-  "due_date": "2024-02-28T23:59:59Z",
-  "sprint_id": "sprint_id_1"
-}
-```
-
-**Response:** `201 Created`
-
----
-
-#### PUT /tasks/:id
-Update task details.
-
-**Request Body:**
-```json
-{
-  "title": "Updated Task Title",
-  "description": "Updated description",
-  "status": "review",
-  "priority": "high",
-  "assignees": ["user_id_3"],
-  "due_date": "2024-03-01T23:59:59Z"
-}
-```
-
-**Response:** `200 OK`
-
----
-
-#### PATCH /tasks/:id/status
-Update task status only.
-
-**Request Body:**
-```json
-{
-  "status": "done",
-  "comment": "Task completed successfully"
-}
-```
-
-**Response:** `200 OK`
-
----
-
-#### DELETE /tasks/:id
-Delete a task.
-
-**Response:** `204 No Content`
-
----
-
-### 5. Comment Endpoints
-
-#### GET /tasks/:taskId/comments
-Get task comments.
-
-**Query Parameters:**
-- `page` (integer): Page number
-- `limit` (integer): Items per page
-
-**Response:** `200 OK`
-```json
-{
-  "success": true,
-  "data": {
-    "comments": [
-      {
-        "comment_id": "comment_1",
-        "content": "This looks good to me",
-        "author": {
-          "user_id": "user_id_1",
-          "name": "John Doe",
-          "avatar_url": "https://..."
-        },
-        "mentions": ["user_id_2"],
-        "is_edited": false,
-        "created_at": "2024-01-20T10:00:00Z",
-        "replies": [
-          {
-            "comment_id": "comment_2",
-            "content": "Thanks for the review",
-            "author": {
-              "user_id": "user_id_2",
-              "name": "Jane Smith"
-            },
-            "created_at": "2024-01-20T10:30:00Z"
-          }
-        ]
-      }
-    ],
-    "pagination": {
-      "page": 1,
-      "limit": 20,
-      "total": 5
-    }
-  }
-}
-```
-
----
-
-#### POST /tasks/:taskId/comments
-Add comment to task.
-
-**Request Body:**
-```json
-{
-  "content": "Please review this implementation @user_id_2",
-  "parent_id": null
-}
-```
-
-**Response:** `201 Created`
-
----
-
-### 6. Sprint Endpoints
-
-#### GET /projects/:projectId/sprints
-List project sprints.
-
-**Response:** `200 OK`
-```json
-{
-  "success": true,
-  "data": {
-    "sprints": [
-      {
-        "sprint_id": "sprint_1",
-        "sprint_number": 1,
-        "name": "Sprint 1",
-        "goal": "Complete authentication module",
-        "status": "completed",
-        "start_date": "2024-01-01",
-        "end_date": "2024-01-14",
-        "capacity": 100,
-        "completed_points": 85,
-        "task_count": {
-          "total": 20,
-          "completed": 18,
-          "in_progress": 2
+        "fill_status": "medium",
+        "current_fill_level": 65,
+        "capacity_kg": 500.0,
+        "current_weight_kg": 325.0,
+        "last_collected": "2024-01-14T08:30:00Z",
+        "next_collection": "2024-01-16T08:00:00Z",
+        "sensor": {
+          "sensor_id": "SENS-001",
+          "is_online": true,
+          "battery_level": 85,
+          "signal_strength": 75,
+          "last_reading": "2024-01-15T10:25:00Z"
         }
+      }
+    ],
+    "total": 150,
+    "page": 1,
+    "page_size": 20
+  }
+}
+```
+
+#### Get Single Bin Details
+```http
+GET /api/v1/bins/{bin_id}/
+```
+
+#### Update Bin Status
+```http
+PATCH /api/v1/bins/{bin_id}/status/
+```
+
+**Request Body:**
+```json
+{
+  "status": "maintenance",
+  "reason": "Sensor replacement"
+}
+```
+
+#### Upload Sensor Reading
+```http
+POST /api/v1/bins/{bin_id}/sensor-data/
+```
+
+**Request Body:**
+```json
+{
+  "sensor_id": "SENS-001",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "readings": {
+    "fill_level": 75,
+    "weight_kg": 375.5,
+    "temperature": 28.5,
+    "humidity": 65.2,
+    "battery_level": 85,
+    "signal_strength": 75
+  },
+  "location": {
+    "lat": 5.6037,
+    "lng": -0.1870
+  }
+}
+```
+
+#### Get Bin Alerts
+```http
+GET /api/v1/bins/{bin_id}/alerts/
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "alerts": [
+      {
+        "alert_id": "alert-001",
+        "bin_id": "BIN-ACC-001",
+        "alert_type": "high_fill",
+        "severity": "high",
+        "message": "Bin is 85% full and requires collection",
+        "created_at": "2024-01-15T09:00:00Z",
+        "is_resolved": false
       }
     ]
   }
 }
 ```
 
----
+### 2. Service Request Management
 
-#### POST /projects/:projectId/sprints
-Create a new sprint.
+#### Create Service Request
+```http
+POST /api/v1/service-requests/
+```
 
 **Request Body:**
 ```json
 {
-  "name": "Sprint 2",
-  "goal": "Implement task management features",
-  "start_date": "2024-01-15",
-  "end_date": "2024-01-28",
-  "capacity": 120
-}
-```
-
-**Response:** `201 Created`
-
----
-
-#### PUT /sprints/:id/start
-Start a sprint.
-
-**Response:** `200 OK`
-
----
-
-#### PUT /sprints/:id/complete
-Complete a sprint.
-
-**Request Body:**
-```json
-{
-  "move_incomplete_to": "backlog"
-}
-```
-
-**Response:** `200 OK`
-
----
-
-### 7. Report Endpoints
-
-#### GET /reports/burndown
-Get burndown chart data.
-
-**Query Parameters:**
-- `sprint_id` (string): Sprint ID
-
-**Response:** `200 OK`
-```json
-{
-  "success": true,
-  "data": {
-    "sprint_id": "sprint_1",
-    "start_date": "2024-01-01",
-    "end_date": "2024-01-14",
-    "total_points": 100,
-    "ideal_line": [100, 92, 85, 77, 69, 61, 54, 46, 38, 31, 23, 15, 8, 0],
-    "actual_line": [100, 95, 88, 80, 75, 68, 60, 50, 42, 35, 25, 15, 10, 5],
-    "dates": ["2024-01-01", "2024-01-02", "..."]
-  }
-}
-```
-
----
-
-#### GET /reports/velocity
-Get team velocity data.
-
-**Query Parameters:**
-- `project_id` (string): Project ID
-- `sprints` (integer): Number of sprints (default: 6)
-
-**Response:** `200 OK`
-
----
-
-#### POST /reports/custom
-Generate custom report.
-
-**Request Body:**
-```json
-{
-  "type": "task_summary",
-  "filters": {
-    "project_id": "project_1",
-    "date_from": "2024-01-01",
-    "date_to": "2024-01-31"
+  "service_type": "waste_collection",
+  "waste_type": "general",
+  "pickup_location": {
+    "lat": 5.6037,
+    "lng": -0.1870
   },
-  "format": "pdf",
-  "email_to": "manager@example.com"
+  "pickup_address": "123 Independence Ave, Accra",
+  "requested_date": "2024-01-17",
+  "requested_time_slot": "morning",
+  "estimated_weight_kg": 50.0,
+  "description": "Large household waste for collection",
+  "photos": ["photo_url_1", "photo_url_2"],
+  "contact_phone": "+233201234567"
 }
 ```
 
-**Response:** `202 Accepted`
+**Response:**
 ```json
 {
   "success": true,
   "data": {
-    "report_id": "report_123",
-    "status": "processing",
-    "estimated_time": 30
+    "request_id": "SR-2024-0001",
+    "status": "pending",
+    "estimated_cost": 50.00,
+    "currency": "GHS",
+    "tracking_url": "https://wasgo.com/track/SR-2024-0001"
   }
 }
 ```
 
----
-
-### 8. Search Endpoints
-
-#### GET /search
-Global search across all entities.
+#### Get Service Requests
+```http
+GET /api/v1/service-requests/
+```
 
 **Query Parameters:**
-- `q` (string): Search query
-- `type` (string): Entity type (task, project, user)
-- `limit` (integer): Results per type
+- `status`: pending, accepted, assigned, en_route, in_progress, completed, cancelled
+- `service_type`: waste_collection, recycling, hazardous_waste, bin_maintenance
+- `date_from`: Start date (YYYY-MM-DD)
+- `date_to`: End date (YYYY-MM-DD)
+- `customer_id`: Customer UUID
 
-**Response:** `200 OK`
+#### Track Service Request
+```http
+GET /api/v1/service-requests/{request_id}/track/
+```
+
+**Response:**
 ```json
 {
   "success": true,
   "data": {
-    "results": {
-      "tasks": [
-        {
-          "task_id": "task_1",
-          "task_key": "PROJ-123",
-          "title": "Matching task",
-          "highlight": "...search term..."
-        }
-      ],
-      "projects": [],
-      "users": []
+    "request_id": "SR-2024-0001",
+    "status": "en_route",
+    "driver": {
+      "name": "Kofi Mensah",
+      "phone": "+233201234567",
+      "vehicle": {
+        "registration": "GR-1234-20",
+        "type": "waste_collection"
+      },
+      "current_location": {
+        "lat": 5.6050,
+        "lng": -0.1880
+      },
+      "estimated_arrival": "2024-01-15T11:30:00Z"
     },
-    "total_results": 15
+    "timeline": [
+      {
+        "status": "pending",
+        "timestamp": "2024-01-15T09:00:00Z"
+      },
+      {
+        "status": "accepted",
+        "timestamp": "2024-01-15T09:15:00Z"
+      },
+      {
+        "status": "assigned",
+        "timestamp": "2024-01-15T09:30:00Z",
+        "driver_id": "driver-001"
+      },
+      {
+        "status": "en_route",
+        "timestamp": "2024-01-15T10:00:00Z"
+      }
+    ]
   }
 }
 ```
 
----
+#### Update Service Request Status
+```http
+PATCH /api/v1/service-requests/{request_id}/status/
+```
 
-### 9. Notification Endpoints
+**Request Body:**
+```json
+{
+  "status": "completed",
+  "actual_weight_kg": 48.5,
+  "completion_photos": ["photo_url_1", "photo_url_2"],
+  "notes": "Collection completed successfully"
+}
+```
 
-#### GET /notifications
-Get user notifications.
+### 3. Driver Operations
+
+#### Driver Check-in
+```http
+POST /api/v1/drivers/check-in/
+```
+
+**Request Body:**
+```json
+{
+  "driver_id": "driver-001",
+  "location": {
+    "lat": 5.6037,
+    "lng": -0.1870
+  },
+  "vehicle_id": "vehicle-001",
+  "shift_type": "morning"
+}
+```
+
+#### Driver Check-out
+```http
+POST /api/v1/drivers/check-out/
+```
+
+**Request Body:**
+```json
+{
+  "driver_id": "driver-001",
+  "total_collections": 25,
+  "distance_traveled_km": 45.5,
+  "notes": "Completed all assigned collections"
+}
+```
+
+#### Update Driver Location
+```http
+PUT /api/v1/drivers/{driver_id}/location/
+```
+
+**Request Body:**
+```json
+{
+  "location": {
+    "lat": 5.6037,
+    "lng": -0.1870
+  },
+  "speed_kmh": 35.5,
+  "heading": 180,
+  "timestamp": "2024-01-15T10:30:00Z",
+  "battery_level": 75
+}
+```
+
+#### Get Driver Assignments
+```http
+GET /api/v1/drivers/{driver_id}/assignments/
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "assignments": [
+      {
+        "assignment_id": "assign-001",
+        "zone": {
+          "zone_id": "zone-osu",
+          "name": "Osu District",
+          "total_bins": 15
+        },
+        "bins": [
+          {
+            "bin_id": "BIN-ACC-001",
+            "bin_number": "BIN-ACC-001",
+            "location": {
+              "lat": 5.6037,
+              "lng": -0.1870
+            },
+            "fill_level": 85,
+            "priority": "high"
+          }
+        ],
+        "service_requests": [
+          {
+            "request_id": "SR-2024-0001",
+            "address": "123 Main St",
+            "service_type": "waste_collection"
+          }
+        ],
+        "status": "in_progress",
+        "start_time": "2024-01-15T08:00:00Z"
+      }
+    ]
+  }
+}
+```
+
+### 4. Vehicle Management
+
+#### Get Vehicle Fleet
+```http
+GET /api/v1/vehicles/
+```
 
 **Query Parameters:**
-- `unread` (boolean): Filter unread only
-- `type` (string): Notification type
+- `status`: active, maintenance, available
+- `vehicle_type`: waste_collection, recycling_truck, compactor
+- `provider_id`: Provider UUID
 
-**Response:** `200 OK`
+#### Get Vehicle Location
+```http
+GET /api/v1/vehicles/{vehicle_id}/location/
+```
 
----
-
-#### PUT /notifications/:id/read
-Mark notification as read.
-
-**Response:** `200 OK`
-
----
-
-#### PUT /notifications/mark-all-read
-Mark all notifications as read.
-
-**Response:** `200 OK`
-
----
-
-### 10. WebSocket Events
-
-#### Connection
-```javascript
-const socket = io('wss://api.taskmanager.com', {
-  auth: {
-    token: 'jwt_token_here'
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "vehicle_id": "vehicle-001",
+    "registration": "GR-1234-20",
+    "current_location": {
+      "lat": 5.6037,
+      "lng": -0.1870
+    },
+    "speed_kmh": 35.5,
+    "heading": 180,
+    "driver": {
+      "driver_id": "driver-001",
+      "name": "Kofi Mensah"
+    },
+    "last_update": "2024-01-15T10:30:00Z"
   }
-});
+}
 ```
 
-#### Events
-
-**Subscribe to project updates:**
-```javascript
-socket.emit('subscribe', { project_id: 'project_1' });
+#### Schedule Vehicle Maintenance
+```http
+POST /api/v1/vehicles/{vehicle_id}/maintenance/
 ```
 
-**Receive task updates:**
-```javascript
-socket.on('task.updated', (data) => {
-  console.log('Task updated:', data);
-});
+**Request Body:**
+```json
+{
+  "maintenance_type": "routine",
+  "scheduled_date": "2024-01-20",
+  "description": "Oil change and tire rotation",
+  "estimated_duration_hours": 4
+}
 ```
 
-**Available events:**
-- `task.created`
-- `task.updated`
-- `task.deleted`
-- `task.assigned`
-- `comment.added`
-- `sprint.started`
-- `sprint.completed`
-- `user.typing`
-- `user.online`
-- `user.offline`
+### 5. Payment Processing
 
-## Rate Limiting
+#### Initiate Payment
+```http
+POST /api/v1/payments/initiate/
+```
 
-| Endpoint Category | Rate Limit | Window |
-|------------------|------------|---------|
-| Authentication | 5 requests | 15 minutes |
-| Read Operations | 100 requests | 1 minute |
-| Write Operations | 30 requests | 1 minute |
-| File Uploads | 10 requests | 5 minutes |
-| Reports | 5 requests | 10 minutes |
+**Request Body:**
+```json
+{
+  "service_request_id": "SR-2024-0001",
+  "amount": 50.00,
+  "currency": "GHS",
+  "payment_method": "mobile_money",
+  "mobile_money_provider": "mtn",
+  "mobile_money_number": "+233201234567"
+}
+```
 
-## Status Codes
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "transaction_id": "TXN-2024-0001",
+    "status": "pending",
+    "ussd_code": "*170#",
+    "reference": "WASGO-SR-2024-0001",
+    "expires_at": "2024-01-15T11:00:00Z"
+  }
+}
+```
 
-| Code | Description |
-|------|-------------|
-| 200 | OK - Request successful |
-| 201 | Created - Resource created |
-| 202 | Accepted - Request accepted for processing |
-| 204 | No Content - Request successful, no content |
-| 400 | Bad Request - Invalid request data |
-| 401 | Unauthorized - Authentication required |
-| 403 | Forbidden - Access denied |
-| 404 | Not Found - Resource not found |
-| 409 | Conflict - Resource conflict |
-| 422 | Unprocessable Entity - Validation failed |
-| 429 | Too Many Requests - Rate limit exceeded |
-| 500 | Internal Server Error |
-| 503 | Service Unavailable |
+#### Verify Payment Status
+```http
+GET /api/v1/payments/{transaction_id}/status/
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "transaction_id": "TXN-2024-0001",
+    "status": "completed",
+    "amount": 50.00,
+    "currency": "GHS",
+    "payment_method": "mobile_money",
+    "provider": "mtn",
+    "completed_at": "2024-01-15T10:35:00Z",
+    "receipt_url": "https://wasgo.com/receipts/TXN-2024-0001"
+  }
+}
+```
+
+### 6. Analytics & Reporting
+
+#### Get Collection Statistics
+```http
+GET /api/v1/analytics/collections/
+```
+
+**Query Parameters:**
+- `period`: daily, weekly, monthly
+- `date_from`: Start date
+- `date_to`: End date
+- `zone_id`: Zone identifier
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "period": "weekly",
+    "total_collections": 350,
+    "total_weight_kg": 15750.5,
+    "bins_collected": 280,
+    "service_requests_completed": 70,
+    "average_fill_level": 72.5,
+    "collection_rate": 95.2,
+    "daily_breakdown": [
+      {
+        "date": "2024-01-08",
+        "collections": 50,
+        "weight_kg": 2250.0
+      }
+    ]
+  }
+}
+```
+
+#### Get Environmental Impact Report
+```http
+GET /api/v1/analytics/environmental-impact/
+```
+
+**Query Parameters:**
+- `month`: YYYY-MM
+- `zone_id`: Zone identifier (optional)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "month": "2024-01",
+    "waste_collected_tons": 450.5,
+    "waste_diverted_from_landfill_tons": 125.3,
+    "recycling_rate": 27.8,
+    "organic_waste_composted_tons": 85.2,
+    "plastic_recycled_kg": 3500,
+    "overflow_incidents": 5,
+    "illegal_dumping_reports": 12,
+    "environmental_score": 78.5
+  }
+}
+```
+
+#### Generate Zone Coverage Report
+```http
+POST /api/v1/analytics/zone-coverage/
+```
+
+**Request Body:**
+```json
+{
+  "zone_boundary": {
+    "type": "Polygon",
+    "coordinates": [[
+      [-0.1900, 5.6000],
+      [-0.1850, 5.6000],
+      [-0.1850, 5.6100],
+      [-0.1900, 5.6100],
+      [-0.1900, 5.6000]
+    ]]
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "total_bins": 45,
+    "active_bins": 42,
+    "coverage_percentage": 85.5,
+    "population_served": 15000,
+    "underserved_areas": [
+      {
+        "area": "North Section",
+        "recommended_bins": 3,
+        "population": 2000
+      }
+    ],
+    "heatmap_url": "https://wasgo.com/maps/coverage/zone-001"
+  }
+}
+```
+
+### 7. Notification Management
+
+#### Send Notification
+```http
+POST /api/v1/notifications/send/
+```
+
+**Request Body:**
+```json
+{
+  "user_id": "user-001",
+  "notification_type": "bin_full",
+  "title": "Bin Full Alert",
+  "message": "Bin BIN-ACC-001 is 90% full and requires immediate collection",
+  "channels": ["sms", "push", "in_app"],
+  "data": {
+    "bin_id": "BIN-ACC-001",
+    "fill_level": 90
+  }
+}
+```
+
+#### Get User Notifications
+```http
+GET /api/v1/notifications/
+```
+
+**Query Parameters:**
+- `user_id`: User identifier
+- `is_read`: true/false
+- `notification_type`: bin_full, collection_reminder, service_update
+- `limit`: Number of notifications (default: 20)
+
+### 8. IoT Device Management
+
+#### Register IoT Device
+```http
+POST /api/v1/iot/devices/register/
+```
+
+**Request Body:**
+```json
+{
+  "device_type": "bin_sensor",
+  "device_id": "SENS-NEW-001",
+  "manufacturer": "WasteWatch",
+  "model": "WW-Ultra-2000",
+  "firmware_version": "2.1.0",
+  "bin_id": "BIN-ACC-001"
+}
+```
+
+#### Get Device Status
+```http
+GET /api/v1/iot/devices/{device_id}/status/
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "device_id": "SENS-001",
+    "is_online": true,
+    "last_seen": "2024-01-15T10:30:00Z",
+    "battery_level": 85,
+    "signal_strength": 75,
+    "firmware_version": "2.1.0",
+    "uptime_hours": 720,
+    "total_readings": 8640,
+    "error_count": 2
+  }
+}
+```
 
 ## Error Codes
 
-| Code | Description |
-|------|-------------|
-| AUTH_FAILED | Authentication failed |
-| TOKEN_EXPIRED | Access token expired |
-| TOKEN_INVALID | Invalid token |
-| VALIDATION_ERROR | Request validation failed |
-| RESOURCE_NOT_FOUND | Requested resource not found |
-| PERMISSION_DENIED | Insufficient permissions |
-| DUPLICATE_RESOURCE | Resource already exists |
-| RATE_LIMIT_EXCEEDED | Too many requests |
-| SERVER_ERROR | Internal server error |
+| Code | HTTP Status | Description |
+|------|------------|-------------|
+| `AUTH_FAILED` | 401 | Authentication failed |
+| `PERMISSION_DENIED` | 403 | Insufficient permissions |
+| `BIN_NOT_FOUND` | 404 | Smart bin not found |
+| `SERVICE_REQUEST_NOT_FOUND` | 404 | Service request not found |
+| `DRIVER_NOT_FOUND` | 404 | Driver not found |
+| `VEHICLE_NOT_FOUND` | 404 | Vehicle not found |
+| `INVALID_LOCATION` | 400 | Invalid GPS coordinates |
+| `PAYMENT_FAILED` | 402 | Payment processing failed |
+| `SENSOR_OFFLINE` | 503 | Sensor is offline |
+| `RATE_LIMIT_EXCEEDED` | 429 | Too many requests |
+| `VALIDATION_ERROR` | 400 | Request validation failed |
+| `SERVER_ERROR` | 500 | Internal server error |
+
+## Rate Limiting
+
+| Endpoint Type | Rate Limit | Window |
+|--------------|------------|--------|
+| Authentication | 5 requests | 1 minute |
+| IoT Data Upload | 1000 requests | 1 minute |
+| General API | 100 requests | 1 minute |
+| Analytics/Reports | 10 requests | 1 minute |
+| Payment | 20 requests | 1 minute |
+
+## Pagination
+
+All list endpoints support pagination:
+
+```http
+GET /api/v1/bins/?page=2&page_size=20
+```
+
+**Response includes:**
+```json
+{
+  "data": {
+    "results": [...],
+    "total": 150,
+    "page": 2,
+    "page_size": 20,
+    "has_next": true,
+    "has_previous": true,
+    "next": "/api/v1/bins/?page=3&page_size=20",
+    "previous": "/api/v1/bins/?page=1&page_size=20"
+  }
+}
+```
+
+## Filtering
+
+Most endpoints support filtering via query parameters:
+
+```http
+GET /api/v1/bins/?status=active&fill_level_min=70&area=Osu
+```
+
+## Sorting
+
+Endpoints support sorting:
+
+```http
+GET /api/v1/bins/?ordering=-fill_level,created_at
+```
+
+Use `-` prefix for descending order.
+
+## Webhooks
+
+The API supports webhooks for real-time event notifications:
+
+### Available Events
+- `bin.full` - Bin reaches 80% capacity
+- `bin.overflow` - Bin exceeds 100% capacity
+- `sensor.offline` - Sensor goes offline
+- `payment.completed` - Payment successfully processed
+- `service.completed` - Service request completed
+- `driver.arrived` - Driver arrives at location
+
+### Webhook Payload
+```json
+{
+  "event": "bin.full",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "data": {
+    "bin_id": "BIN-ACC-001",
+    "fill_level": 85,
+    "location": {
+      "lat": 5.6037,
+      "lng": -0.1870
+    }
+  }
+}
+```
+
+## API Versioning
+
+The API uses URL versioning:
+- Current version: `v1`
+- Legacy support: 6 months after new version release
+- Deprecation notices: Via `X-API-Deprecated` header
+
+## SDK Support
+
+Official SDKs available for:
+- Python: `pip install wasgo-sdk`
+- JavaScript/Node: `npm install @wasgo/sdk`
+- React Native: `npm install @wasgo/mobile-sdk`
+- IoT (MicroPython): `upip install wasgo-iot`
+
+## Testing
+
+### Test Environment
+```
+Base URL: https://sandbox-api.wasgo.com/api/v1
+Test Credentials: Available in developer portal
+```
+
+### Test Data
+- Test bins: `BIN-TEST-001` to `BIN-TEST-100`
+- Test drivers: `driver-test-001` to `driver-test-010`
+- Test mobile money: Use number `+233200000000` for successful payments
+
+## Support
+
+- Documentation: https://docs.wasgo.com
+- Developer Portal: https://developers.wasgo.com
+- API Status: https://status.wasgo.com
+- Support Email: api-support@wasgo.com
