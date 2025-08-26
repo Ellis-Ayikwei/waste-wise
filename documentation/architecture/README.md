@@ -1,516 +1,534 @@
-# System Architecture
+# Wasgo System Architecture
 
 ## Overview
-The Task Management System follows a microservices-oriented architecture with clear separation of concerns, designed for scalability, maintainability, and high availability.
+The Wasgo Smart Waste Management System follows a microservices-oriented architecture designed to handle IoT data streams, real-time tracking, and geospatial operations for waste management in Ghana.
 
 ## Architecture Diagram
 
 ```mermaid
 graph TB
     subgraph "Client Layer"
-        Web["🌐 Web Application<br/>(React + TypeScript)"]
-        PWA["📱 Progressive Web App"]
+        Web["🌐 Public Website<br/>(React + TypeScript)"]
+        Admin["👨‍💼 Admin Dashboard<br/>(React + Material-UI)"]
+        Mobile["📱 Mobile Apps<br/>(React Native)"]
+        Driver["🚛 Driver App<br/>(React Native)"]
     end
     
     subgraph "API Gateway"
-        Gateway["🚪 API Gateway<br/>(Kong/nginx)"]
+        Gateway["🚪 API Gateway<br/>(nginx)"]
         RateLimit["⚡ Rate Limiter"]
-        Auth["🔐 Auth Middleware"]
+        Auth["🔐 JWT Auth"]
+        WAF["🛡️ Web Application Firewall"]
     end
     
-    subgraph "Application Services"
-        AuthService["👤 Auth Service<br/>(Node.js)"]
-        ProjectService["📁 Project Service<br/>(Node.js)"]
-        TaskService["📋 Task Service<br/>(Node.js)"]
-        NotificationService["🔔 Notification Service<br/>(Node.js)"]
-        ReportService["📊 Report Service<br/>(Node.js)"]
-        IntegrationService["🔗 Integration Service<br/>(Node.js)"]
+    subgraph "Django Application Services"
+        WasteBinService["🗑️ WasteBin Service<br/>(Django App)"]
+        ServiceRequestService["📋 ServiceRequest<br/>(Django App)"]
+        DriverService["🚛 Driver Service<br/>(Django App)"]
+        VehicleService["🚚 Vehicle Service<br/>(Django App)"]
+        PaymentService["💳 Payment Service<br/>(Django App)"]
+        NotificationService["🔔 Notification Service<br/>(Django App)"]
     end
     
-    subgraph "Real-time Layer"
-        WebSocket["🔄 WebSocket Server<br/>(Socket.io)"]
-        PubSub["📡 Redis PubSub"]
+    subgraph "IoT & Real-time Layer"
+        MQTT["📡 MQTT Broker<br/>(Mosquitto)"]
+        WebSocket["🔄 WebSocket Server<br/>(Django Channels)"]
+        StreamProcessor["⚡ Stream Processor<br/>(Apache Kafka)"]
     end
     
     subgraph "Data Layer"
-        PostgreSQL["🗄️ PostgreSQL<br/>(Primary DB)"]
-        Redis["💾 Redis<br/>(Cache & Sessions)"]
-        S3["☁️ AWS S3<br/>(File Storage)"]
-        ElasticSearch["🔍 ElasticSearch<br/>(Search Engine)"]
+        PostgreSQL["🗄️ PostgreSQL<br/>+ PostGIS"]
+        Redis["💾 Redis<br/>(Cache & PubSub)"]
+        S3["☁️ AWS S3<br/>(Media Storage)"]
+        TimeSeries["📊 InfluxDB<br/>(Sensor Data)"]
     end
     
     subgraph "External Services"
-        Email["📧 SendGrid"]
-        GitHub["🐙 GitHub API"]
-        Slack["💬 Slack API"]
-        Analytics["📈 Analytics"]
+        MobileMoney["💰 Mobile Money<br/>(MTN, Vodafone)"]
+        SMS["📱 SMS Gateway<br/>(Twilio/Africa's Talking)"]
+        Maps["🗺️ Google Maps API"]
+        GhanaPost["📍 Ghana Post GPS"]
     end
     
-    subgraph "Infrastructure"
-        LoadBalancer["⚖️ Load Balancer"]
-        CDN["🌍 CloudFlare CDN"]
-        Monitor["📊 Monitoring<br/>(Prometheus + Grafana)"]
-        Logs["📝 Logging<br/>(ELK Stack)"]
+    subgraph "IoT Devices"
+        SmartBins["🗑️ Smart Bins<br/>(Sensors)"]
+        GPS["📍 Vehicle GPS"]
     end
     
-    Web --> CDN
-    PWA --> CDN
-    CDN --> LoadBalancer
-    LoadBalancer --> Gateway
+    %% Client connections
+    Web --> Gateway
+    Admin --> Gateway
+    Mobile --> Gateway
+    Driver --> Gateway
     
-    Gateway --> Auth
-    Gateway --> RateLimit
+    %% Gateway to services
+    Gateway --> WasteBinService
+    Gateway --> ServiceRequestService
+    Gateway --> DriverService
+    Gateway --> VehicleService
+    Gateway --> PaymentService
     
-    Auth --> AuthService
-    Auth --> ProjectService
-    Auth --> TaskService
-    Auth --> NotificationService
-    Auth --> ReportService
-    Auth --> IntegrationService
+    %% IoT connections
+    SmartBins --> MQTT
+    GPS --> MQTT
+    MQTT --> StreamProcessor
+    StreamProcessor --> WasteBinService
     
-    Web <--> WebSocket
-    WebSocket <--> PubSub
-    PubSub <--> Redis
+    %% Real-time connections
+    WebSocket --> Redis
+    NotificationService --> WebSocket
     
-    AuthService --> PostgreSQL
-    AuthService --> Redis
+    %% Service to data layer
+    WasteBinService --> PostgreSQL
+    ServiceRequestService --> PostgreSQL
+    DriverService --> PostgreSQL
+    VehicleService --> PostgreSQL
+    PaymentService --> PostgreSQL
     
-    ProjectService --> PostgreSQL
-    ProjectService --> Redis
+    %% Cache connections
+    WasteBinService --> Redis
+    ServiceRequestService --> Redis
     
-    TaskService --> PostgreSQL
-    TaskService --> Redis
-    TaskService --> ElasticSearch
-    TaskService --> S3
+    %% Time series data
+    StreamProcessor --> TimeSeries
     
-    NotificationService --> PostgreSQL
-    NotificationService --> Email
-    NotificationService --> Slack
+    %% External service connections
+    PaymentService --> MobileMoney
+    NotificationService --> SMS
+    ServiceRequestService --> Maps
+    DriverService --> GhanaPost
     
-    ReportService --> PostgreSQL
-    ReportService --> S3
+    %% File storage
+    ServiceRequestService --> S3
+    DriverService --> S3
     
-    IntegrationService --> GitHub
-    IntegrationService --> Slack
-    
-    AuthService --> Monitor
-    ProjectService --> Monitor
-    TaskService --> Monitor
-    
-    AuthService --> Logs
-    ProjectService --> Logs
-    TaskService --> Logs
+    style Web fill:#e1f5fe
+    style SmartBins fill:#c8e6c9
+    style PostgreSQL fill:#fff3e0
+    style MQTT fill:#f3e5f5
 ```
 
-## Technology Stack
+## Component Details
 
-### Frontend
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| Framework | React 18 | UI framework |
-| Language | TypeScript 5 | Type safety |
-| State Management | Redux Toolkit | Global state |
-| Routing | React Router v6 | Navigation |
-| UI Library | Material-UI v5 | Component library |
-| Forms | React Hook Form | Form handling |
-| HTTP Client | Axios | API communication |
-| WebSocket | Socket.io-client | Real-time updates |
-| Charts | Recharts | Data visualization |
-| Testing | Jest + React Testing Library | Unit/Integration tests |
+### 1. Client Applications
 
-### Backend
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| Runtime | Node.js 20 LTS | JavaScript runtime |
-| Framework | Express.js | Web framework |
-| Language | TypeScript 5 | Type safety |
-| ORM | Prisma | Database ORM |
-| Authentication | JWT + Passport.js | Auth management |
-| Validation | Joi | Input validation |
-| WebSocket | Socket.io | Real-time communication |
-| Queue | Bull | Job queue |
-| Testing | Jest + Supertest | Unit/Integration tests |
+#### Public Website (React)
+- **Purpose**: Customer portal for service requests
+- **Tech Stack**: React 18, TypeScript, Redux Toolkit
+- **Features**:
+  - Service request creation
+  - Request tracking
+  - Payment processing
+  - Bin location maps
 
-### Database & Storage
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| Primary DB | PostgreSQL 15 | Relational data |
-| Cache | Redis 7 | Caching & sessions |
-| Search | ElasticSearch 8 | Full-text search |
-| File Storage | AWS S3 | Object storage |
-| CDN | CloudFlare | Static content delivery |
+#### Admin Dashboard (React)
+- **Purpose**: System management and monitoring
+- **Tech Stack**: React, Material-UI, Recharts
+- **Features**:
+  - Real-time bin monitoring
+  - Driver management
+  - Analytics dashboards
+  - Report generation
 
-### Infrastructure
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| Container | Docker | Containerization |
-| Orchestration | Kubernetes | Container orchestration |
-| CI/CD | GitHub Actions | Automation |
-| Monitoring | Prometheus + Grafana | Metrics & visualization |
-| Logging | ELK Stack | Log aggregation |
-| API Gateway | Kong | API management |
-| Load Balancer | nginx | Traffic distribution |
+#### Mobile Apps (React Native)
+- **Purpose**: Customer and driver mobile applications
+- **Tech Stack**: React Native, Expo
+- **Features**:
+  - Offline support
+  - Push notifications
+  - GPS tracking
+  - Camera integration
 
-## Architectural Patterns
+### 2. Backend Services (Django)
 
-### 1. Microservices Architecture
+#### Core Django Applications
+```python
+INSTALLED_APPS = [
+    # Core apps
+    'apps.WasteBin',
+    'apps.ServiceRequest',
+    'apps.Driver',
+    'apps.Vehicle',
+    'apps.Provider',
+    'apps.Payment',
+    'apps.Notification',
+    'apps.Location',
+    
+    # Supporting apps
+    'apps.Authentication',
+    'apps.Analytics',
+    'apps.Tracking',
+    
+    # Third-party
+    'rest_framework',
+    'django.contrib.gis',
+    'channels',
+    'corsheaders',
+]
+```
+
+#### API Structure
+```
+/api/v1/
+├── /bins/              # Smart bin management
+├── /service-requests/  # Service requests
+├── /drivers/          # Driver operations
+├── /vehicles/         # Fleet management
+├── /payments/         # Payment processing
+├── /analytics/        # Analytics endpoints
+└── /notifications/    # Notification management
+```
+
+### 3. IoT Infrastructure
+
+#### MQTT Broker Configuration
 ```yaml
-Services:
-  auth-service:
-    responsibilities:
-      - User authentication
-      - Token management
-      - Password management
-    database: PostgreSQL
-    cache: Redis
-    
-  project-service:
-    responsibilities:
-      - Project CRUD
-      - Team management
-      - Project settings
-    database: PostgreSQL
-    cache: Redis
-    
-  task-service:
-    responsibilities:
-      - Task CRUD
-      - Comments
-      - Attachments
-    database: PostgreSQL
-    cache: Redis
-    search: ElasticSearch
-    
-  notification-service:
-    responsibilities:
-      - Email notifications
-      - In-app notifications
-      - Push notifications
-    database: PostgreSQL
-    queue: Redis/Bull
-    
-  report-service:
-    responsibilities:
-      - Report generation
-      - Analytics
-      - Exports
-    database: PostgreSQL (read replica)
-    storage: S3
+# mosquitto.conf
+listener 8883
+protocol mqtt
+cafile /etc/mosquitto/ca.crt
+certfile /etc/mosquitto/server.crt
+keyfile /etc/mosquitto/server.key
+require_certificate true
+
+# Topic structure
+# sensors/{bin_id}/readings
+# vehicles/{vehicle_id}/location
+# alerts/{type}/{id}
 ```
 
-### 2. Event-Driven Architecture
-```javascript
-// Event Bus Implementation
-class EventBus {
-  events = {
-    'task.created': ['notification-service', 'activity-service'],
-    'task.updated': ['notification-service', 'search-service'],
-    'task.assigned': ['notification-service', 'email-service'],
-    'sprint.started': ['notification-service', 'metrics-service'],
-    'sprint.completed': ['report-service', 'metrics-service'],
-    'user.registered': ['email-service', 'analytics-service'],
-    'project.created': ['activity-service', 'search-service']
-  }
-}
+#### Sensor Data Pipeline
+```python
+# Stream processing pipeline
+class SensorDataProcessor:
+    def process_reading(self, data):
+        # 1. Validate data
+        validated = self.validate_sensor_data(data)
+        
+        # 2. Store in time-series DB
+        self.store_time_series(validated)
+        
+        # 3. Update bin status
+        self.update_bin_status(validated)
+        
+        # 4. Check alert conditions
+        self.check_alerts(validated)
+        
+        # 5. Broadcast updates
+        self.broadcast_updates(validated)
 ```
 
-### 3. CQRS Pattern
-```typescript
-// Command Side
-interface CreateTaskCommand {
-  projectId: string;
-  title: string;
-  description: string;
-  assignees: string[];
-}
+### 4. Database Architecture
 
-// Query Side
-interface TaskQueryModel {
-  id: string;
-  title: string;
-  status: string;
-  assignees: User[];
-  comments: Comment[];
-  // Denormalized for performance
-  projectName: string;
-  sprintName: string;
-}
+#### PostgreSQL with PostGIS
+```sql
+-- Enable PostGIS extension
+CREATE EXTENSION postgis;
+
+-- Example spatial index
+CREATE INDEX idx_bins_location 
+ON wastebin_smartbin 
+USING GIST(location);
+
+-- Spatial query example
+SELECT * FROM wastebin_smartbin
+WHERE ST_DWithin(
+    location,
+    ST_MakePoint(%s, %s)::geography,
+    1000  -- 1km radius
+);
 ```
 
-### 4. Repository Pattern
-```typescript
-interface TaskRepository {
-  create(task: CreateTaskDTO): Promise<Task>;
-  findById(id: string): Promise<Task>;
-  findByProject(projectId: string): Promise<Task[]>;
-  update(id: string, updates: UpdateTaskDTO): Promise<Task>;
-  delete(id: string): Promise<void>;
+#### Redis Caching Strategy
+```python
+# Cache configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+        'KEY_PREFIX': 'wasgo',
+        'TIMEOUT': 300,  # 5 minutes default
+    }
 }
 
-class PostgresTaskRepository implements TaskRepository {
-  // Implementation
-}
+# Cache usage patterns
+@cache_page(60 * 5)  # Cache for 5 minutes
+def get_bin_status(request, bin_id):
+    pass
 
-class CachedTaskRepository implements TaskRepository {
-  constructor(
-    private repository: TaskRepository,
-    private cache: RedisCache
-  ) {}
-  // Caching decorator implementation
-}
+# Real-time data (30 seconds)
+cache.set(f'driver_location_{driver_id}', location, 30)
 ```
 
-## Security Architecture
+### 5. Security Architecture
 
-### Authentication & Authorization
+#### Authentication & Authorization
+```python
+# JWT Configuration
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'ALGORITHM': 'HS256',
+}
+
+# Permission Classes
+class IsOwnerOrAdmin(BasePermission):
+    def has_object_permission(self, request, view, obj):
+        return obj.user == request.user or request.user.is_staff
+```
+
+#### API Security
+- Rate limiting: 100 requests/minute per user
+- DDoS protection via CloudFlare
+- Input validation and sanitization
+- SQL injection prevention (Django ORM)
+- XSS protection (Django templates)
+- CSRF protection enabled
+
+### 6. Scaling Strategy
+
+#### Horizontal Scaling
 ```yaml
-Authentication:
-  type: JWT
-  algorithm: RS256
-  access_token_ttl: 15m
-  refresh_token_ttl: 7d
-  
-Authorization:
-  type: RBAC
-  roles:
-    - admin
-    - project_manager
-    - developer
-    - viewer
-  
-  permissions:
-    admin: ["*"]
-    project_manager: ["project.*", "task.*", "sprint.*"]
-    developer: ["task.read", "task.update", "comment.*"]
-    viewer: ["*.read"]
+# docker-compose.yml
+services:
+  django:
+    image: wasgo/backend
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+    environment:
+      - DATABASE_URL=postgresql://...
+      - REDIS_URL=redis://...
 ```
 
-### Security Layers
-1. **Network Security**
-   - HTTPS/TLS 1.3
-   - Web Application Firewall (WAF)
-   - DDoS protection (CloudFlare)
+#### Load Balancing
+```nginx
+upstream django_backend {
+    least_conn;
+    server backend1:8000;
+    server backend2:8000;
+    server backend3:8000;
+}
 
-2. **Application Security**
-   - Input validation
-   - SQL injection prevention (Parameterized queries)
-   - XSS protection (Content Security Policy)
-   - CSRF tokens
-   - Rate limiting
-
-3. **Data Security**
-   - Encryption at rest (AES-256)
-   - Encryption in transit (TLS)
-   - Database encryption
-   - Secure file storage (S3 with encryption)
-
-## Scalability Strategy
-
-### Horizontal Scaling
-```yaml
-Service Replicas:
-  auth-service: 2-4 instances
-  project-service: 2-6 instances
-  task-service: 4-10 instances
-  notification-service: 2-4 instances
-  report-service: 1-3 instances
-  
-Auto-scaling Rules:
-  CPU: > 70% for 5 minutes
-  Memory: > 80% for 5 minutes
-  Request Rate: > 1000 req/s
+server {
+    location /api/ {
+        proxy_pass http://django_backend;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
 ```
 
-### Caching Strategy
-```javascript
-// Multi-level caching
-const cacheLevels = {
-  L1: 'Browser Cache (Service Worker)',
-  L2: 'CDN Cache (CloudFlare)',
-  L3: 'Application Cache (Redis)',
-  L4: 'Database Cache (Query Cache)'
-};
+### 7. Monitoring & Observability
 
-// Cache TTLs
-const cacheTTL = {
-  staticAssets: '1 year',
-  userProfile: '1 hour',
-  projectList: '5 minutes',
-  taskList: '1 minute',
-  realtimeData: 'no-cache'
-};
+#### Metrics Collection
+```python
+# Prometheus metrics
+from prometheus_client import Counter, Histogram
+
+request_count = Counter(
+    'wasgo_requests_total',
+    'Total requests',
+    ['method', 'endpoint']
+)
+
+request_latency = Histogram(
+    'wasgo_request_duration_seconds',
+    'Request latency',
+    ['method', 'endpoint']
+)
 ```
 
-### Database Optimization
-1. **Read Replicas**
-   - Master: Write operations
-   - Replica 1: Read operations
-   - Replica 2: Analytics & Reports
-
-2. **Partitioning**
-   ```sql
-   -- Partition by project
-   CREATE TABLE tasks_partition (
-     LIKE tasks INCLUDING ALL
-   ) PARTITION BY HASH (project_id);
-   
-   -- Partition by date
-   CREATE TABLE activity_logs_partition (
-     LIKE activity_logs INCLUDING ALL
-   ) PARTITION BY RANGE (created_at);
-   ```
-
-3. **Indexing Strategy**
-   ```sql
-   -- Composite indexes for common queries
-   CREATE INDEX idx_tasks_project_status 
-     ON tasks(project_id, status);
-   
-   CREATE INDEX idx_tasks_assignee_status 
-     ON task_assignees(user_id, task_id);
-   ```
-
-## Deployment Architecture
-
-### Container Strategy
-```dockerfile
-# Multi-stage build
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-
-FROM node:20-alpine
-WORKDIR /app
-COPY --from=builder /app/node_modules ./node_modules
-COPY . .
-EXPOSE 3000
-CMD ["node", "dist/index.js"]
+#### Logging Strategy
+```python
+LOGGING = {
+    'version': 1,
+    'handlers': {
+        'file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': '/var/log/wasgo/django.log',
+            'maxBytes': 1024 * 1024 * 100,  # 100MB
+            'backupCount': 10,
+        },
+        'elasticsearch': {
+            'class': 'CMRESHandler',
+            'hosts': [{'host': 'elasticsearch', 'port': 9200}],
+            'index_name': 'wasgo-logs',
+        },
+    },
+}
 ```
 
-### Kubernetes Configuration
+### 8. Deployment Architecture
+
+#### Container Orchestration (Kubernetes)
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: task-service
+  name: wasgo-backend
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: task-service
+      app: wasgo-backend
   template:
     metadata:
       labels:
-        app: task-service
+        app: wasgo-backend
     spec:
       containers:
-      - name: task-service
-        image: task-service:latest
+      - name: django
+        image: wasgo/backend:latest
         ports:
-        - containerPort: 3000
+        - containerPort: 8000
         env:
-        - name: NODE_ENV
-          value: "production"
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: wasgo-secrets
+              key: database-url
 ```
 
-## Monitoring & Observability
-
-### Metrics Collection
+#### CI/CD Pipeline (GitHub Actions)
 ```yaml
-Application Metrics:
-  - Request rate
-  - Response time
-  - Error rate
-  - Active users
-  - Database connections
-  
-Business Metrics:
-  - Tasks created/completed
-  - Sprint velocity
-  - User engagement
-  - Feature adoption
-  
-Infrastructure Metrics:
-  - CPU usage
-  - Memory usage
-  - Disk I/O
-  - Network traffic
+name: Deploy to Production
+on:
+  push:
+    branches: [main]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run tests
+        run: python manage.py test
+      - name: Build Docker image
+        run: docker build -t wasgo/backend:${{ github.sha }} .
+      - name: Deploy to Kubernetes
+        run: kubectl apply -f k8s/
 ```
 
-### Logging Strategy
+### 9. Disaster Recovery
+
+#### Backup Strategy
+- **Database**: Daily automated backups to S3
+- **Files**: Real-time replication to S3
+- **Configuration**: Version controlled in Git
+- **Recovery Time Objective (RTO)**: 4 hours
+- **Recovery Point Objective (RPO)**: 1 hour
+
+#### High Availability
+- Multi-AZ deployment in AWS
+- Database replication (Primary + 2 Read Replicas)
+- Redis Sentinel for cache failover
+- Load balancer health checks
+
+### 10. Ghana-Specific Considerations
+
+#### Network Optimization
+```python
+# Compression middleware for slow networks
+MIDDLEWARE = [
+    'django.middleware.gzip.GZipMiddleware',
+    'compression_middleware.CompressionMiddleware',
+]
+
+# Image optimization
+THUMBNAIL_ALIASES = {
+    '': {
+        'mobile': {'size': (400, 300), 'quality': 60},
+        'desktop': {'size': (800, 600), 'quality': 80},
+    },
+}
+```
+
+#### Offline Support
 ```javascript
-// Structured logging
-const logger = winston.createLogger({
-  format: winston.format.json(),
-  transports: [
-    new winston.transports.File({ 
-      filename: 'error.log', 
-      level: 'error' 
-    }),
-    new winston.transports.File({ 
-      filename: 'combined.log' 
-    })
-  ]
+// Service Worker for offline functionality
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => response || fetch(event.request))
+      .catch(() => caches.match('/offline.html'))
+  );
 });
-
-// Log levels
-const logLevels = {
-  error: 0,    // System errors
-  warn: 1,     // Warning conditions
-  info: 2,     // Informational
-  http: 3,     // HTTP requests
-  verbose: 4,  // Detailed info
-  debug: 5,    // Debug info
-  silly: 6     // Everything
-};
 ```
 
-## Disaster Recovery
-
-### Backup Strategy
-```yaml
-Database Backups:
-  frequency: Daily
-  retention: 30 days
-  type: Full + Incremental
-  storage: AWS S3 (different region)
-  
-File Backups:
-  frequency: Real-time
-  retention: 90 days
-  type: Versioning
-  storage: S3 with cross-region replication
+#### Mobile Money Integration
+```python
+# Multiple provider support
+PAYMENT_PROVIDERS = {
+    'mtn': {
+        'api_url': 'https://api.mtn.com/mobilemoney',
+        'timeout': 30,
+    },
+    'vodafone': {
+        'api_url': 'https://api.vodafone.gh/cash',
+        'timeout': 30,
+    },
+    'airteltigo': {
+        'api_url': 'https://api.airteltigo.gh/money',
+        'timeout': 30,
+    },
+}
 ```
-
-### Recovery Objectives
-- **RTO (Recovery Time Objective):** 4 hours
-- **RPO (Recovery Point Objective):** 1 hour
-- **Availability Target:** 99.9% (8.76 hours downtime/year)
 
 ## Performance Requirements
 
-### Response Time Targets
-| Operation | Target | Max |
-|-----------|--------|-----|
-| Page Load | < 2s | 3s |
-| API Response | < 200ms | 500ms |
-| Search | < 500ms | 1s |
-| File Upload | < 5s/MB | 10s/MB |
-| Report Generation | < 10s | 30s |
-| WebSocket Latency | < 100ms | 200ms |
+### Response Times
+- API endpoints: < 200ms (p95)
+- Dashboard load: < 2 seconds
+- Mobile app launch: < 3 seconds
+- Real-time updates: < 100ms latency
 
-### Capacity Planning
-| Metric | Current | Target | Max |
-|--------|---------|--------|-----|
-| Concurrent Users | 1,000 | 10,000 | 50,000 |
-| Requests/Second | 500 | 5,000 | 10,000 |
-| Database Connections | 100 | 500 | 1,000 |
-| Storage | 1 TB | 10 TB | 100 TB |
+### Throughput
+- 10,000 concurrent users
+- 1,000 requests/second
+- 100,000 sensor readings/hour
+- 50 GB data/day
+
+### Availability
+- 99.9% uptime (8.76 hours downtime/year)
+- Planned maintenance windows: Sunday 2-4 AM GMT
+
+## Technology Stack Summary
+
+### Backend
+- **Language**: Python 3.10+
+- **Framework**: Django 4.2+
+- **API**: Django REST Framework
+- **Real-time**: Django Channels
+- **Task Queue**: Celery + Redis
+
+### Frontend
+- **Web**: React 18 + TypeScript
+- **Mobile**: React Native + Expo
+- **State**: Redux Toolkit
+- **UI**: Material-UI
+
+### Infrastructure
+- **Cloud**: AWS/Azure
+- **Containers**: Docker
+- **Orchestration**: Kubernetes
+- **CI/CD**: GitHub Actions
+- **Monitoring**: Prometheus + Grafana
+
+### Data
+- **Primary DB**: PostgreSQL + PostGIS
+- **Cache**: Redis
+- **Time Series**: InfluxDB
+- **Search**: ElasticSearch
+- **File Storage**: AWS S3
+
+### IoT
+- **Protocol**: MQTT
+- **Broker**: Mosquitto
+- **Stream Processing**: Apache Kafka
+- **Edge Computing**: AWS IoT Core

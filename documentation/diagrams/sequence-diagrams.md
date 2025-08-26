@@ -1,515 +1,437 @@
-# Sequence Diagrams
+# Wasgo Sequence Diagrams
 
 ## Overview
-This document contains sequence diagrams for the key processes in the Task Management System. Each diagram illustrates the interaction between different system components and actors.
+This document contains sequence diagrams for the key processes in the Wasgo Smart Waste Management System. Each diagram illustrates the interaction between different system components and actors in waste collection operations.
 
-## 1. User Registration Process
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant UI as Frontend UI
-    participant API as Backend API
-    participant Auth as Auth Service
-    participant DB as Database
-    participant Email as Email Service
-    participant Redis as Redis Cache
-
-    U->>UI: Click "Sign Up"
-    UI->>U: Show registration form
-    U->>UI: Fill form (email, password, name)
-    UI->>UI: Validate input format
-    UI->>API: POST /api/auth/register
-    API->>API: Validate request data
-    API->>DB: Check if email exists
-    DB-->>API: Email availability
-    
-    alt Email already exists
-        API-->>UI: Error: Email already registered
-        UI-->>U: Show error message
-    else Email available
-        API->>Auth: Hash password
-        Auth-->>API: Password hash
-        API->>API: Generate verification token
-        API->>DB: Create user record
-        DB-->>API: User created
-        API->>Redis: Store verification token
-        Redis-->>API: Token stored
-        API->>Email: Send verification email
-        Email-->>U: Verification email sent
-        API-->>UI: Success response
-        UI-->>U: Show success message
-    end
-```
-
-## 2. User Login Process
+## 1. Smart Bin Sensor Data Upload Process
 
 ```mermaid
 sequenceDiagram
-    participant U as User
-    participant UI as Frontend UI
-    participant API as Backend API
-    participant Auth as Auth Service
-    participant DB as Database
-    participant Redis as Redis Cache
-    participant WS as WebSocket Server
-
-    U->>UI: Enter credentials
-    UI->>API: POST /api/auth/login
-    API->>DB: Find user by email
-    DB-->>API: User data
-    
-    alt User not found
-        API-->>UI: Error: Invalid credentials
-        UI-->>U: Show error
-    else User found
-        API->>Auth: Verify password
-        Auth-->>API: Password valid/invalid
-        
-        alt Password invalid
-            API->>DB: Increment failed attempts
-            DB-->>API: Updated
-            API-->>UI: Error: Invalid credentials
-            UI-->>U: Show error
-        else Password valid
-            API->>Auth: Generate JWT token
-            Auth-->>API: Access & Refresh tokens
-            API->>Redis: Store session
-            Redis-->>API: Session stored
-            API->>DB: Update last login
-            DB-->>API: Updated
-            API->>WS: Initialize WebSocket connection
-            WS-->>API: Connection established
-            API-->>UI: Success + Tokens
-            UI->>UI: Store tokens
-            UI-->>U: Redirect to dashboard
-        end
-    end
-```
-
-## 3. Create Task Process
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant UI as Frontend UI
-    participant API as Backend API
-    participant DB as Database
-    participant WS as WebSocket Server
-    participant Notif as Notification Service
-    participant Cache as Redis Cache
-
-    U->>UI: Click "Create Task"
-    UI->>U: Show task form
-    U->>UI: Fill task details
-    UI->>API: POST /api/tasks
-    API->>API: Validate request
-    API->>DB: Verify project access
-    DB-->>API: Access confirmed
-    
-    API->>DB: Generate task key
-    DB-->>API: Task key (PROJ-123)
-    API->>DB: Create task record
-    DB-->>API: Task created
-    
-    par Parallel operations
-        API->>DB: Create activity log
-        DB-->>API: Logged
-    and
-        API->>Cache: Invalidate project cache
-        Cache-->>API: Cache cleared
-    and
-        API->>WS: Broadcast task creation
-        WS-->>UI: Real-time update
-    end
-    
-    alt Has assignees
-        API->>DB: Create assignments
-        DB-->>API: Assignments created
-        API->>Notif: Send notifications
-        Notif-->>API: Notifications queued
-    end
-    
-    API-->>UI: Task created response
-    UI->>UI: Update task list
-    UI-->>U: Show success message
-```
-
-## 4. Sprint Planning Process
-
-```mermaid
-sequenceDiagram
-    participant SM as Scrum Master
-    participant UI as Frontend UI
-    participant API as Backend API
-    participant DB as Database
-    participant WS as WebSocket Server
-    participant Team as Team Members
-
-    SM->>UI: Open Sprint Planning
-    UI->>API: GET /api/sprints/current
-    API->>DB: Fetch current sprint
-    DB-->>API: Sprint data
-    API-->>UI: Sprint details
-    
-    UI->>API: GET /api/backlog
-    API->>DB: Fetch backlog items
-    DB-->>API: Backlog tasks
-    API-->>UI: Backlog list
-    
-    SM->>UI: Drag task to sprint
-    UI->>API: POST /api/sprints/{id}/tasks
-    API->>DB: Verify sprint capacity
-    DB-->>API: Capacity check
-    
-    alt Capacity exceeded
-        API-->>UI: Warning: Over capacity
-        UI-->>SM: Show warning
-    else Within capacity
-        API->>DB: Assign task to sprint
-        DB-->>API: Task assigned
-        API->>DB: Update sprint metrics
-        DB-->>API: Metrics updated
-        API->>WS: Broadcast update
-        WS-->>Team: Real-time update
-        API-->>UI: Success
-        UI->>UI: Update sprint board
-    end
-    
-    SM->>UI: Start sprint
-    UI->>API: PUT /api/sprints/{id}/start
-    API->>DB: Update sprint status
-    DB-->>API: Sprint started
-    API->>WS: Broadcast sprint start
-    WS-->>Team: Sprint started notification
-```
-
-## 5. Task Status Update Process
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant UI as Frontend UI
-    participant API as Backend API
-    participant DB as Database
-    participant WS as WebSocket Server
-    participant AL as Activity Logger
+    participant Sensor as IoT Sensor
+    participant MQTT as MQTT Broker
+    participant API as Django API
+    participant DB as PostgreSQL
+    participant Alert as Alert Service
     participant Notif as Notification Service
 
-    U->>UI: Drag task to new column
-    UI->>API: PATCH /api/tasks/{id}/status
-    API->>DB: Verify task access
-    DB-->>API: Access verified
+    Sensor->>MQTT: Publish sensor data
+    Note over MQTT: Topic: bins/{bin_id}/readings
+    MQTT->>API: Forward reading
+    API->>API: Validate sensor data
+    API->>DB: Store SensorReading
+    DB-->>API: Reading saved
     
-    API->>DB: Get current task state
-    DB-->>API: Current state
-    API->>DB: Update task status
+    API->>DB: Update SmartBin status
     DB-->>API: Status updated
     
-    par Parallel processing
-        API->>AL: Log status change
-        AL->>DB: Create activity log
-        DB-->>AL: Logged
-    and
-        API->>WS: Broadcast status change
-        WS-->>UI: Real-time update
-    and
-        alt Status is "Done"
-            API->>DB: Update completion timestamp
-            DB-->>API: Timestamp updated
-            API->>DB: Calculate actual hours
-            DB-->>API: Hours calculated
-        end
+    alt Fill level >= 80%
+        API->>Alert: Create BinAlert
+        Alert->>DB: Store alert
+        Alert->>Notif: Send notification
+        Notif->>Notif: Queue SMS/Email
+        Notif-->>API: Notification sent
     end
     
-    API->>Notif: Check notification rules
-    Notif->>DB: Get watchers
-    DB-->>Notif: Watcher list
-    Notif->>Notif: Queue notifications
-    
-    API-->>UI: Success response
-    UI->>UI: Update board
-    UI-->>U: Show updated status
+    API-->>MQTT: Acknowledge receipt
+    MQTT-->>Sensor: Confirmation
 ```
 
-## 6. Real-time Collaboration Flow
+## 2. Service Request Creation Process
 
 ```mermaid
 sequenceDiagram
-    participant U1 as User 1
-    participant U2 as User 2
-    participant UI1 as UI Client 1
-    participant UI2 as UI Client 2
+    participant Customer as Customer
+    participant Web as Web/Mobile App
+    participant API as Django API
+    participant DB as PostgreSQL
+    participant Provider as Provider Service
+    participant Driver as Driver App
+    participant SMS as SMS Service
+
+    Customer->>Web: Request waste collection
+    Web->>Web: Capture location
+    Customer->>Web: Select waste type & quantity
+    Web->>API: POST /api/service-requests/
+    
+    API->>API: Validate request
+    API->>API: Generate request_id
+    API->>DB: Create ServiceRequest
+    DB-->>API: Request created
+    
+    API->>Provider: Find available providers
+    Provider->>DB: Query by service area
+    DB-->>Provider: Provider list
+    
+    Provider->>Provider: Select best match
+    Provider->>API: Assign provider
+    
+    API->>DB: Update request status
+    API->>Driver: Notify assigned driver
+    Driver-->>API: Acknowledged
+    
+    API->>SMS: Send confirmation SMS
+    SMS-->>Customer: SMS delivered
+    
+    API-->>Web: Request confirmed
+    Web-->>Customer: Show tracking info
+```
+
+## 3. Driver Check-in and Assignment Process
+
+```mermaid
+sequenceDiagram
+    participant Driver as Driver
+    participant App as Driver Mobile App
+    participant API as Django API
+    participant DB as PostgreSQL
+    participant GPS as GPS Service
+    participant Dispatch as Dispatch Service
+
+    Driver->>App: Start shift
+    App->>GPS: Get current location
+    GPS-->>App: Location coordinates
+    
+    App->>API: POST /api/drivers/check-in/
+    API->>DB: Update driver status
+    DB-->>API: Status: on_duty
+    
+    API->>DB: Log shift start
+    DB-->>API: Logged
+    
+    API->>Dispatch: Driver available
+    Dispatch->>DB: Query pending requests
+    DB-->>Dispatch: Pending list
+    
+    Dispatch->>Dispatch: Match by location/capacity
+    Dispatch->>DB: Assign requests to driver
+    DB-->>Dispatch: Assignments created
+    
+    Dispatch->>API: Send assignments
+    API->>App: Push assignments
+    App->>App: Display route
+    App-->>Driver: Show collection list
+```
+
+## 4. Bin Collection Process
+
+```mermaid
+sequenceDiagram
+    participant Driver as Driver
+    participant App as Driver App
+    participant QR as QR Scanner
+    participant API as Django API
+    participant DB as PostgreSQL
+    participant IoT as IoT Service
+    participant Customer as Customer
+
+    Driver->>App: Arrive at bin location
+    App->>API: Update driver location
+    API->>DB: Store location
+    
+    Driver->>QR: Scan bin QR code
+    QR-->>App: Bin ID extracted
+    
+    App->>API: GET /api/bins/{bin_id}/
+    API->>DB: Fetch bin details
+    DB-->>API: Bin data
+    API-->>App: Display bin info
+    
+    Driver->>App: Confirm collection
+    App->>App: Take photo proof
+    App->>API: POST /api/bins/{bin_id}/collect/
+    
+    API->>DB: Update bin status
+    DB-->>API: Status: emptied
+    
+    API->>IoT: Reset bin fill level
+    IoT-->>API: Confirmed
+    
+    API->>DB: Log collection record
+    DB-->>API: Record saved
+    
+    API->>Customer: Send notification
+    Customer-->>API: Delivered
+    
+    API-->>App: Collection confirmed
+    App-->>Driver: Next bin location
+```
+
+## 5. Real-time Vehicle Tracking Process
+
+```mermaid
+sequenceDiagram
+    participant Driver as Driver App
+    participant GPS as GPS Module
+    participant API as Django API
     participant WS as WebSocket Server
-    participant API as Backend API
-    participant Redis as Redis PubSub
-
-    U1->>UI1: Open project board
-    UI1->>WS: Connect WebSocket
-    WS->>WS: Authenticate token
-    WS->>Redis: Subscribe to project channel
-    Redis-->>WS: Subscribed
-    WS-->>UI1: Connection established
-    
-    U2->>UI2: Open same project
-    UI2->>WS: Connect WebSocket
-    WS->>Redis: Subscribe to project channel
-    Redis-->>WS: Subscribed
-    WS-->>UI2: Connection established
-    
-    U1->>UI1: Start editing task
-    UI1->>WS: Send "user typing" event
-    WS->>Redis: Publish to channel
-    Redis->>WS: Broadcast to subscribers
-    WS-->>UI2: User 1 is typing
-    UI2-->>U2: Show typing indicator
-    
-    U1->>UI1: Save changes
-    UI1->>API: Update task
-    API->>API: Process update
-    API->>Redis: Publish update event
-    Redis->>WS: Broadcast update
-    WS-->>UI1: Update confirmed
-    WS-->>UI2: Task updated
-    UI2->>UI2: Refresh task data
-    UI2-->>U2: Show updated task
-```
-
-## 7. File Upload Process
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant UI as Frontend UI
-    participant API as Backend API
-    participant Auth as Auth Service
-    participant S3 as AWS S3
-    participant DB as Database
-    participant AV as Antivirus Service
-
-    U->>UI: Select file to upload
-    UI->>UI: Validate file size/type
-    
-    alt File invalid
-        UI-->>U: Show error
-    else File valid
-        UI->>API: POST /api/upload/presigned-url
-        API->>Auth: Verify user permissions
-        Auth-->>API: Authorized
-        API->>API: Generate presigned URL
-        API-->>UI: Presigned URL + upload ID
-        
-        UI->>S3: Upload file directly
-        S3-->>UI: Upload progress
-        S3-->>UI: Upload complete
-        
-        UI->>API: POST /api/attachments
-        API->>S3: Verify file exists
-        S3-->>API: File confirmed
-        
-        API->>AV: Scan file
-        AV-->>API: Scan result
-        
-        alt Virus detected
-            API->>S3: Delete file
-            S3-->>API: Deleted
-            API-->>UI: Error: Malicious file
-            UI-->>U: Show error
-        else File clean
-            API->>DB: Create attachment record
-            DB-->>API: Record created
-            API->>API: Generate thumbnail (if image)
-            API-->>UI: Attachment details
-            UI->>UI: Update UI
-            UI-->>U: Show uploaded file
-        end
-    end
-```
-
-## 8. Report Generation Process
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant UI as Frontend UI
-    participant API as Backend API
-    participant DB as Database
-    participant Report as Report Service
-    participant Cache as Redis Cache
-    participant S3 as AWS S3
-
-    U->>UI: Request report
-    UI->>UI: Select parameters
-    U->>UI: Click "Generate"
-    UI->>API: POST /api/reports/generate
-    API->>Cache: Check cached report
-    Cache-->>API: Cache miss
-    
-    API->>DB: Query report data
-    DB-->>API: Raw data
-    API->>Report: Process data
-    Report->>Report: Generate charts
-    Report->>Report: Create PDF/Excel
-    Report-->>API: Report file
-    
-    par Store report
-        API->>S3: Upload report
-        S3-->>API: File URL
-    and
-        API->>Cache: Cache report metadata
-        Cache-->>API: Cached
-    and
-        API->>DB: Log report generation
-        DB-->>API: Logged
-    end
-    
-    API-->>UI: Report URL
-    UI->>UI: Download report
-    UI-->>U: Open report
-```
-
-## 9. Password Reset Process
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant UI as Frontend UI
-    participant API as Backend API
-    participant DB as Database
-    participant Email as Email Service
+    participant DB as PostgreSQL
+    participant Admin as Admin Dashboard
     participant Redis as Redis Cache
 
-    U->>UI: Click "Forgot Password"
-    UI->>U: Show email form
-    U->>UI: Enter email
-    UI->>API: POST /api/auth/forgot-password
-    API->>DB: Find user by email
-    DB-->>API: User found/not found
-    
-    Note over API: Always return success to prevent email enumeration
-    
-    alt User exists
-        API->>API: Generate reset token
-        API->>Redis: Store token (1hr TTL)
-        Redis-->>API: Token stored
-        API->>Email: Send reset email
-        Email-->>U: Reset link sent
+    loop Every 30 seconds
+        Driver->>GPS: Get location
+        GPS-->>Driver: Coordinates
+        
+        Driver->>API: PUT /api/drivers/location/
+        API->>DB: Store DriverLocation
+        DB-->>API: Saved
+        
+        API->>Redis: Update cache
+        Redis-->>API: Cached
+        
+        API->>WS: Broadcast location
+        WS-->>Admin: Real-time update
+        Admin->>Admin: Update map
     end
     
-    API-->>UI: Success message
-    UI-->>U: Check your email
-    
-    U->>UI: Click reset link
-    UI->>API: GET /api/auth/verify-reset-token
-    API->>Redis: Validate token
-    Redis-->>API: Token valid/invalid
-    
-    alt Token invalid
-        API-->>UI: Error: Invalid/expired
-        UI-->>U: Show error
-    else Token valid
-        UI->>U: Show password form
-        U->>UI: Enter new password
-        UI->>API: POST /api/auth/reset-password
-        API->>Redis: Verify token again
-        Redis-->>API: Valid
-        API->>DB: Update password
-        DB-->>API: Updated
-        API->>Redis: Delete token
-        Redis-->>API: Deleted
-        API->>DB: Invalidate all sessions
-        DB-->>API: Sessions cleared
-        API-->>UI: Success
-        UI-->>U: Password reset successful
-    end
+    Admin->>API: Request route history
+    API->>DB: Query locations
+    DB-->>API: Location history
+    API-->>Admin: Display route
 ```
 
-## 10. Sprint Retrospective Process
+## 6. Payment Processing (Mobile Money)
 
 ```mermaid
 sequenceDiagram
-    participant Team as Team Members
-    participant UI as Frontend UI
-    participant API as Backend API
-    participant DB as Database
-    participant WS as WebSocket Server
-    participant Report as Report Service
+    participant Customer as Customer
+    participant App as Mobile App
+    participant API as Django API
+    participant DB as PostgreSQL
+    participant MM as Mobile Money API
+    participant SMS as SMS Service
 
-    Team->>UI: Open Retrospective
-    UI->>API: GET /api/sprints/{id}/retrospective
-    API->>DB: Fetch sprint data
-    DB-->>API: Sprint details
-    API->>DB: Fetch sprint metrics
-    DB-->>API: Metrics data
-    API-->>UI: Retrospective data
+    Customer->>App: Select payment
+    App->>App: Choose Mobile Money
+    Customer->>App: Enter phone number
     
-    loop Team Discussion
-        Team->>UI: Add feedback item
-        UI->>API: POST /api/retrospective/items
-        API->>DB: Save feedback
-        DB-->>API: Saved
-        API->>WS: Broadcast new item
-        WS-->>UI: Update all clients
-        UI-->>Team: Show new item
+    App->>API: POST /api/payments/initiate/
+    API->>API: Generate transaction_id
+    API->>DB: Create Payment record
+    DB-->>API: Payment pending
+    
+    API->>MM: Initiate payment
+    MM-->>Customer: USSD prompt
+    Customer->>MM: Enter PIN
+    MM->>MM: Process payment
+    
+    alt Payment successful
+        MM->>API: Callback: Success
+        API->>DB: Update payment status
+        DB-->>API: Status: completed
+        
+        API->>DB: Update service request
+        DB-->>API: Request paid
+        
+        API->>SMS: Send receipt
+        SMS-->>Customer: Receipt SMS
+        
+        API-->>App: Payment successful
+    else Payment failed
+        MM->>API: Callback: Failed
+        API->>DB: Update status
+        API-->>App: Payment failed
+        App-->>Customer: Show error
+    end
+```
+
+## 7. Sensor Alert and Maintenance Process
+
+```mermaid
+sequenceDiagram
+    participant Sensor as Smart Bin Sensor
+    participant API as Django API
+    participant DB as PostgreSQL
+    participant Alert as Alert System
+    participant Tech as Technician
+    participant Admin as Admin Dashboard
+
+    Sensor->>API: Low battery alert
+    API->>DB: Check sensor history
+    DB-->>API: Battery trend
+    
+    API->>Alert: Create maintenance alert
+    Alert->>DB: Store BinAlert
+    DB-->>Alert: Alert saved
+    
+    Alert->>Alert: Determine severity
+    
+    alt Critical (battery < 10%)
+        Alert->>Tech: Urgent notification
+        Tech-->>Alert: Acknowledged
+        Alert->>DB: Assign technician
+    else Warning (battery < 20%)
+        Alert->>Admin: Dashboard notification
+        Admin->>Admin: Schedule maintenance
     end
     
-    Team->>UI: Vote on items
-    UI->>API: POST /api/retrospective/votes
-    API->>DB: Record votes
-    DB-->>API: Votes recorded
-    API->>WS: Broadcast vote update
-    WS-->>UI: Update vote counts
+    Tech->>API: Arrive at bin
+    API->>DB: Update alert status
     
-    Team->>UI: Create action items
-    UI->>API: POST /api/action-items
-    API->>DB: Create action items
-    DB-->>API: Items created
-    API->>DB: Link to next sprint
-    DB-->>API: Linked
+    Tech->>API: Complete maintenance
+    API->>DB: Log maintenance
+    DB-->>API: Logged
     
-    Team->>UI: Complete retrospective
-    UI->>API: POST /api/retrospective/complete
-    API->>Report: Generate summary
-    Report-->>API: Summary report
-    API->>DB: Archive retrospective
-    DB-->>API: Archived
-    API-->>UI: Retrospective completed
+    API->>DB: Reset sensor status
+    API->>Alert: Close alert
+    Alert->>DB: Alert resolved
+    
+    API-->>Admin: Update dashboard
+```
+
+## 8. Bulk Waste Collection Request
+
+```mermaid
+sequenceDiagram
+    participant Customer as Customer
+    participant Web as Website
+    participant API as Django API
+    participant DB as PostgreSQL
+    participant Provider as Provider Service
+    participant Payment as Payment Service
+    participant Driver as Driver
+
+    Customer->>Web: Request bulk collection
+    Web->>Web: Upload photos
+    Customer->>Web: Describe items
+    
+    Web->>API: POST /api/service-requests/bulk/
+    API->>API: Estimate weight/volume
+    API->>Provider: Get pricing
+    Provider->>DB: Query rates
+    DB-->>Provider: Pricing info
+    Provider-->>API: Cost estimate
+    
+    API->>DB: Create ServiceRequest
+    DB-->>API: Request saved
+    
+    API-->>Web: Show quote
+    Web-->>Customer: Display price
+    
+    Customer->>Web: Accept quote
+    Web->>API: Confirm request
+    
+    API->>Payment: Process payment
+    Payment-->>API: Payment confirmed
+    
+    API->>Provider: Schedule pickup
+    Provider->>Driver: Assign job
+    Driver-->>Provider: Accepted
+    
+    API->>Customer: Send confirmation
+    Customer-->>API: SMS/Email received
+```
+
+## 9. Environmental Report Generation
+
+```mermaid
+sequenceDiagram
+    participant Admin as Administrator
+    participant UI as Admin Dashboard
+    participant API as Django API
+    participant DB as PostgreSQL
+    participant Analytics as Analytics Engine
+    participant Report as Report Generator
+    participant S3 as File Storage
+
+    Admin->>UI: Request monthly report
+    UI->>API: GET /api/reports/environmental/
+    
+    API->>DB: Query waste collected
+    DB-->>API: Collection data
+    
+    API->>DB: Query recycling rates
+    DB-->>API: Recycling data
+    
+    API->>DB: Query bin alerts
+    DB-->>API: Overflow incidents
+    
+    API->>Analytics: Process data
+    Analytics->>Analytics: Calculate metrics
+    Analytics->>Analytics: Generate charts
+    Analytics-->>API: Processed data
+    
+    API->>Report: Generate PDF
+    Report->>Report: Create document
+    Report->>S3: Upload report
+    S3-->>Report: File URL
+    
+    Report-->>API: Report ready
+    API-->>UI: Download link
+    UI-->>Admin: View/Download report
+```
+
+## 10. Zone Coverage Analysis
+
+```mermaid
+sequenceDiagram
+    participant Planner as City Planner
+    participant UI as Web Interface
+    participant API as Django API
+    participant GIS as PostGIS Database
+    participant Analytics as Analytics Service
+    participant Map as Mapping Service
+
+    Planner->>UI: Select analysis area
+    UI->>Map: Draw polygon
+    Map-->>UI: Area boundaries
+    
+    UI->>API: POST /api/analytics/coverage/
+    API->>GIS: Query bins in area
+    GIS-->>API: Bin locations
+    
+    API->>GIS: Calculate coverage
+    Note over GIS: ST_Contains, ST_Distance
+    GIS-->>API: Coverage data
+    
+    API->>Analytics: Analyze gaps
+    Analytics->>Analytics: Identify underserved
+    Analytics->>Analytics: Population density
+    Analytics-->>API: Gap analysis
+    
+    API->>GIS: Generate heatmap
+    GIS-->>API: Heatmap data
+    
+    API-->>UI: Analysis results
+    UI->>Map: Display heatmap
+    Map-->>Planner: Visual coverage
+    
+    UI->>UI: Show recommendations
+    UI-->>Planner: Suggested bin locations
 ```
 
 ## Component Interaction Summary
 
 ### Key Components:
-1. **Frontend UI**: React-based SPA handling user interactions
-2. **Backend API**: Node.js/Express REST API
-3. **Database**: PostgreSQL for persistent storage
-4. **Redis**: Caching and session management
-5. **WebSocket Server**: Real-time communication
-6. **Email Service**: SendGrid for transactional emails
-7. **AWS S3**: File storage
-8. **Notification Service**: Push and email notifications
-9. **Report Service**: Report generation engine
-10. **Auth Service**: Authentication and authorization
+1. **Django Backend**: Core API and business logic
+2. **PostgreSQL/PostGIS**: Spatial database
+3. **MQTT Broker**: IoT communication
+4. **Redis**: Caching and real-time data
+5. **WebSocket Server**: Live updates
+6. **Mobile Apps**: Driver and customer apps
+7. **SMS Gateway**: Notifications (Twilio/Africa's Talking)
+8. **Mobile Money API**: Payment processing
+9. **File Storage**: AWS S3 or similar
+10. **Analytics Engine**: Data processing
 
 ### Communication Patterns:
-- **Synchronous**: REST API calls for CRUD operations
-- **Asynchronous**: WebSocket for real-time updates
-- **Event-driven**: Redis PubSub for distributed events
-- **Batch Processing**: Background jobs for reports and notifications
+- **REST API**: Standard CRUD operations
+- **MQTT**: IoT sensor data streaming
+- **WebSocket**: Real-time dashboard updates
+- **Webhooks**: Payment callbacks
+- **Background Jobs**: Report generation (Celery)
 
 ### Security Measures:
-- JWT token validation on every request
-- Rate limiting on sensitive endpoints
+- JWT authentication for API access
+- API key validation for IoT devices
+- SSL/TLS for all communications
 - Input validation and sanitization
-- SQL injection prevention
-- XSS protection
-- CORS configuration
-- File upload scanning
+- Rate limiting on public endpoints
+- Audit logging for all operations
 
-### Performance Optimizations:
-- Redis caching for frequently accessed data
-- Database connection pooling
-- Lazy loading of resources
-- Pagination for large datasets
-- CDN for static assets
-- Gzip compression
-- WebSocket connection pooling
+### Ghana-Specific Integrations:
+- Mobile Money providers (MTN, Vodafone, AirtelTigo)
+- SMS gateways for local carriers
+- Ghana Post GPS addressing system
+- Local language support (Twi, Ga)
+- DVLA vehicle registration validation
