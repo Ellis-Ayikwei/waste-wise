@@ -1,4 +1,328 @@
-# Wasgo User Stories Documentation
+# Wasgo User Stories
+
+## User Story Map Diagram
+
+```mermaid
+graph TB
+    subgraph "User Journey Map"
+        subgraph "Citizens/Customers"
+            C1[View Bin Locations]
+            C2[Request Service]
+            C3[Track Collection]
+            C4[Make Payment]
+            C5[Report Issues]
+            C6[View Schedule]
+        end
+        
+        subgraph "Drivers"
+            D1[Check In/Out]
+            D2[View Assignments]
+            D3[Navigate Route]
+            D4[Collect Waste]
+            D5[Update Status]
+            D6[Report Problems]
+        end
+        
+        subgraph "Administrators"
+            A1[Monitor Bins]
+            A2[Manage Alerts]
+            A3[Assign Drivers]
+            A4[Generate Reports]
+            A5[Track Vehicles]
+            A6[Analyze Data]
+        end
+        
+        subgraph "IoT System"
+            I1[Send Sensor Data]
+            I2[Generate Alerts]
+            I3[Monitor Health]
+            I4[Track Location]
+        end
+    end
+    
+    subgraph "Epic Flow"
+        E1[IoT Integration] --> E2[Collection Management]
+        E2 --> E3[Service Requests]
+        E3 --> E4[Driver Operations]
+        E4 --> E5[Payment Processing]
+        E5 --> E6[Analytics]
+        E6 --> E7[Vehicle Management]
+        E7 --> E8[Communication]
+    end
+```
+
+## User Story Hierarchy Diagram
+
+```mermaid
+mindmap
+  root((Wasgo System))
+    IoT & Smart Bins
+      WS-001 View Bin Status
+      WS-002 Receive Sensor Data
+      WS-003 Generate Bin Alerts
+      WS-004 Monitor Sensor Health
+    Collection Management
+      WS-005 View Bin Location Map
+      WS-006 Schedule Collection
+      WS-008 Manual Route Assignment
+      WS-012 View Collection Schedule
+    Service Requests
+      WS-009 Create Service Request
+      WS-010 Track Request Status
+      WS-011 Report Illegal Dumping
+      WS-027 Emergency Reporting
+    Driver Operations
+      WS-013 Driver Check-in/out
+      WS-014 Update Collection Status
+      WS-015 Capture Collection Photo
+      WS-016 View Collection List
+    Analytics & Reports
+      WS-017 View Collection Analytics
+      WS-018 Generate Environmental Report
+      WS-019 Analyze Waste Patterns
+    Payment & Billing
+      WS-020 Process Mobile Money
+      WS-021 Generate Invoice
+    Vehicle Management
+      WS-022 Track Vehicle Location
+      WS-023 Schedule Maintenance
+      WS-024 Manage Vehicle Assignment
+    Communication
+      WS-025 Create Customer Chat
+      WS-026 Send Community Updates
+```
+
+## User Story Flow Diagram
+
+```mermaid
+stateDiagram-v2
+    [*] --> BinMonitoring: System Start
+    
+    state BinMonitoring {
+        SensorData --> FillLevel
+        FillLevel --> CheckThreshold
+        CheckThreshold --> GenerateAlert: >80% Full
+        CheckThreshold --> Normal: <80%
+    }
+    
+    state ServiceRequest {
+        CreateRequest --> ValidateLocation
+        ValidateLocation --> AssignProvider
+        AssignProvider --> SchedulePickup
+        SchedulePickup --> NotifyCustomer
+    }
+    
+    state Collection {
+        DriverCheckIn --> ViewAssignments
+        ViewAssignments --> NavigateToLocation
+        NavigateToLocation --> CollectWaste
+        CollectWaste --> UpdateStatus
+        UpdateStatus --> NextLocation
+        NextLocation --> DriverCheckOut: All Complete
+    }
+    
+    state Payment {
+        InitiatePayment --> SelectProvider
+        SelectProvider --> EnterDetails
+        EnterDetails --> ProcessPayment
+        ProcessPayment --> SendReceipt
+    }
+    
+    BinMonitoring --> ServiceRequest: Alert Triggered
+    ServiceRequest --> Collection: Assigned
+    Collection --> Payment: Service Complete
+    Payment --> [*]: Transaction Complete
+```
+
+## Epic and User Story Breakdown Diagram
+
+```mermaid
+graph LR
+    subgraph "Epic 1: Smart Bin Management & IoT Integration"
+        WS001[WS-001: View Bin Status<br/>8 SP - Critical]
+        WS002[WS-002: Receive Sensor Data<br/>13 SP - Critical]
+        WS003[WS-003: Generate Bin Alerts<br/>5 SP - Critical]
+        WS004[WS-004: Monitor Sensor Health<br/>5 SP - High]
+    end
+    
+    subgraph "Epic 2: Collection Management"
+        WS005[WS-005: View Bin Location Map<br/>5 SP - High]
+        WS006[WS-006: Schedule Collection<br/>8 SP - Critical]
+        WS008[WS-008: Manual Route Assignment<br/>5 SP - High]
+        WS012[WS-012: View Collection Schedule<br/>3 SP - High]
+    end
+    
+    subgraph "Epic 3: Citizen Engagement & Service Requests"
+        WS009[WS-009: Create Service Request<br/>8 SP - Critical]
+        WS010[WS-010: Track Request Status<br/>5 SP - Critical]
+        WS011[WS-011: Report Illegal Dumping<br/>5 SP - High]
+        WS027[WS-027: Emergency Reporting<br/>5 SP - Critical]
+    end
+    
+    subgraph "Epic 4: Driver Mobile Application"
+        WS013[WS-013: Driver Check-in/Check-out<br/>5 SP - Critical]
+        WS014[WS-014: Update Collection Status<br/>5 SP - High]
+        WS015[WS-015: Capture Collection Photo<br/>3 SP - Medium]
+        WS016[WS-016: View Collection List<br/>5 SP - High]
+    end
+    
+    WS001 --> WS002
+    WS002 --> WS003
+    WS003 --> WS006
+    WS006 --> WS008
+    WS008 --> WS013
+    WS013 --> WS014
+    WS009 --> WS010
+    WS010 --> WS014
+```
+
+## User Persona Journey Map
+
+```mermaid
+journey
+    title Citizen Waste Disposal Journey
+    section Morning
+      Check bin status: 5: Citizen
+      Walk to bin: 3: Citizen
+      Dispose waste: 5: Citizen
+    section Bin Full
+      Receive alert: 4: System
+      Request collection: 5: Citizen
+      Get confirmation: 5: System
+    section Collection Day
+      Receive reminder: 5: System
+      Track driver: 5: Citizen
+      Collection complete: 5: Driver
+      Receive notification: 5: Citizen
+    section Payment
+      Receive invoice: 4: System
+      Make payment: 3: Citizen
+      Get receipt: 5: System
+```
+
+## Sprint Planning Story Map
+
+```mermaid
+gantt
+    title User Story Sprint Distribution
+    dateFormat YYYY-MM-DD
+    section Sprint 1
+    WS-001 View Bin Status           :done, s1-1, 2024-01-01, 3d
+    WS-002 Receive Sensor Data       :done, s1-2, 2024-01-01, 5d
+    WS-003 Generate Bin Alerts       :done, s1-3, 2024-01-04, 2d
+    WS-027 Emergency Reporting       :done, s1-4, 2024-01-06, 2d
+    WS-009 Create Service Request    :done, s1-5, 2024-01-08, 3d
+    
+    section Sprint 2
+    WS-013 Driver Check-in/out       :active, s2-1, 2024-01-15, 2d
+    WS-005 View Bin Location Map     :active, s2-2, 2024-01-15, 2d
+    WS-006 Schedule Collection       :active, s2-3, 2024-01-17, 3d
+    WS-008 Manual Route Assignment   :active, s2-4, 2024-01-20, 2d
+    WS-012 View Collection Schedule  :active, s2-5, 2024-01-22, 1d
+    WS-016 View Collection List      :active, s2-6, 2024-01-23, 2d
+    WS-014 Update Collection Status  :active, s2-7, 2024-01-25, 2d
+    WS-004 Monitor Sensor Health     :active, s2-8, 2024-01-27, 2d
+    
+    section Sprint 3
+    WS-010 Track Request Status      :s3-1, 2024-01-29, 2d
+    WS-011 Report Illegal Dumping    :s3-2, 2024-01-31, 2d
+    WS-015 Capture Collection Photo  :s3-3, 2024-02-02, 1d
+    WS-022 Track Vehicle Location    :s3-4, 2024-02-03, 3d
+    WS-024 Manage Vehicle Assignment :s3-5, 2024-02-06, 2d
+    WS-020 Process Mobile Money      :s3-6, 2024-02-08, 3d
+    WS-021 Generate Invoice          :s3-7, 2024-02-11, 2d
+    
+    section Sprint 4
+    WS-017 View Collection Analytics :s4-1, 2024-02-12, 3d
+    WS-018 Environmental Report      :s4-2, 2024-02-15, 3d
+    WS-019 Analyze Waste Patterns    :s4-3, 2024-02-18, 3d
+    WS-023 Schedule Vehicle Maint.   :s4-4, 2024-02-21, 2d
+    WS-025 Create Customer Chat      :s4-5, 2024-02-23, 3d
+    WS-026 Send Community Updates    :s4-6, 2024-02-26, 2d
+```
+
+## User Story Dependencies Network
+
+```mermaid
+graph TD
+    subgraph "Foundation Stories"
+        WS001[WS-001: View Bin Status]
+        WS002[WS-002: Receive Sensor Data]
+        WS009[WS-009: Create Service Request]
+        WS013[WS-013: Driver Check-in/out]
+    end
+    
+    subgraph "Dependent Stories"
+        WS003[WS-003: Generate Bin Alerts]
+        WS004[WS-004: Monitor Sensor Health]
+        WS005[WS-005: View Bin Location Map]
+        WS006[WS-006: Schedule Collection]
+        WS008[WS-008: Manual Route Assignment]
+        WS010[WS-010: Track Request Status]
+        WS014[WS-014: Update Collection Status]
+        WS016[WS-016: View Collection List]
+    end
+    
+    subgraph "Enhancement Stories"
+        WS015[WS-015: Capture Photo]
+        WS017[WS-017: Analytics]
+        WS018[WS-018: Environmental Report]
+        WS020[WS-020: Mobile Money]
+        WS022[WS-022: Track Vehicle]
+    end
+    
+    WS002 --> WS001
+    WS002 --> WS003
+    WS002 --> WS004
+    WS001 --> WS005
+    WS003 --> WS006
+    WS006 --> WS008
+    WS008 --> WS016
+    WS013 --> WS014
+    WS013 --> WS016
+    WS009 --> WS010
+    WS010 --> WS020
+    WS014 --> WS015
+    WS014 --> WS017
+    WS017 --> WS018
+    WS016 --> WS022
+    
+    style WS001 fill:#90EE90
+    style WS002 fill:#90EE90
+    style WS003 fill:#90EE90
+    style WS009 fill:#90EE90
+    style WS013 fill:#90EE90
+```
+
+## User Story Acceptance Criteria Summary
+
+```mermaid
+graph TB
+    subgraph "Acceptance Criteria Categories"
+        Functional[Functional Requirements]
+        Performance[Performance Requirements]
+        Security[Security Requirements]
+        Usability[Usability Requirements]
+    end
+    
+    Functional --> F1[Data Accuracy]
+    Functional --> F2[Business Rules]
+    Functional --> F3[Integration Points]
+    
+    Performance --> P1[Response Time < 2s]
+    Performance --> P2[99.5% Uptime]
+    Performance --> P3[Handle 1000 concurrent users]
+    
+    Security --> S1[Authentication Required]
+    Security --> S2[Data Encryption]
+    Security --> S3[Role-based Access]
+    
+    Usability --> U1[Mobile Responsive]
+    Usability --> U2[Offline Support]
+    Usability --> U3[Multi-language]
+```
+
+## User Stories
 
 ## Epic 1: Smart Bin Management & IoT Integration
 
