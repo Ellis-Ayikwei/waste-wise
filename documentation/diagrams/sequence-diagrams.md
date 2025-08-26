@@ -181,24 +181,117 @@ sequenceDiagram
     Web-->>Customer: Show tracking info
 ```
 
-## 3. Driver Check-in and Assignment Process
+## 3. Route Optimization and Generation Process
+
+```mermaid
+sequenceDiagram
+    participant Admin as Administrator
+    participant System as Wasgo System
+    participant OptEngine as Optimization Engine
+    participant DB as Database
+    participant Maps as Maps API
+    participant Traffic as Traffic API
+    participant Driver as Driver App
+
+    Note over Admin,Driver: Route Optimization Flow
+
+    %% Trigger Route Optimization
+    Admin->>System: Request route optimization
+    System->>DB: Get bins with fill level > threshold
+    DB-->>System: List of bins to collect
+    
+    System->>DB: Get available drivers & vehicles
+    DB-->>System: Driver and vehicle data
+    
+    %% Collect Geographic Data
+    System->>Maps: Get bin locations & distances
+    Maps-->>System: Distance matrix
+    
+    System->>Traffic: Get current traffic data
+    Traffic-->>System: Traffic patterns & delays
+    
+    %% Run Optimization Algorithm
+    System->>OptEngine: Send optimization request
+    Note over OptEngine: Input: Bins, Vehicles, Constraints
+    
+    OptEngine->>OptEngine: Run TSP/VRP algorithm
+    OptEngine->>OptEngine: Apply constraints
+    Note over OptEngine: - Vehicle capacity<br/>- Time windows<br/>- Priority bins<br/>- Driver hours
+    
+    OptEngine->>OptEngine: Calculate efficiency score
+    OptEngine-->>System: Optimized routes
+    
+    %% Save and Distribute Routes
+    System->>DB: Save optimized routes
+    System->>DB: Create route assignments
+    
+    System->>Driver: Push route to driver app
+    Driver-->>System: Route received confirmation
+    
+    %% Performance Tracking
+    System->>System: Start route monitoring
+    System->>Admin: Display route dashboard
+    Admin-->>System: Approve routes
+```
+
+## 4. Driver Check-in and Route Navigation
 
 ```mermaid
 sequenceDiagram
     participant Driver as Driver
     participant App as Driver Mobile App
+    participant GPS as GPS Service
+    participant System as Wasgo System
+    participant Route as Route Service
     participant API as Django API
     participant DB as PostgreSQL
-    participant GPS as GPS Service
-    participant Dispatch as Dispatch Service
 
+    Note over Driver,DB: Driver Route Navigation Process
+
+    %% Driver Check-in
     Driver->>App: Start shift
     App->>GPS: Get current location
     GPS-->>App: Location coordinates
     
-    App->>API: POST /api/drivers/check-in/
+    App->>API: Check-in request
     API->>DB: Update driver status
-    DB-->>API: Status: on_duty
+    DB-->>API: Status updated
+    API->>Route: Get assigned route
+    Route-->>API: Optimized route data
+    API-->>App: Route details & navigation
+    
+    %% Start Navigation
+    App->>App: Display route on map
+    App->>Driver: Show first stop
+    Note over App: Turn-by-turn navigation
+    
+    Driver->>App: Start navigation
+    App->>GPS: Track movement
+    GPS-->>App: Real-time location
+    
+    %% Route Progress
+    loop For each bin on route
+        App->>Route: Get next waypoint
+        Route-->>App: Next bin details
+        App->>Driver: Navigate to bin
+        
+        App->>GPS: Monitor arrival
+        GPS-->>App: At destination
+        
+        Driver->>App: Mark bin collected
+        App->>API: Update collection status
+        API->>DB: Save collection record
+        
+        App->>Route: Check route efficiency
+        Route-->>App: On-time/delayed status
+    end
+    
+    %% Route Completion
+    Driver->>App: Complete route
+    App->>API: Submit route summary
+    API->>System: Calculate performance metrics
+    System-->>API: Route efficiency score
+    API-->>App: Display performance
     
     API->>DB: Log shift start
     DB-->>API: Logged

@@ -145,11 +145,14 @@ graph LR
         WS004[WS-004: Monitor Sensor Health<br/>5 SP - High]
     end
     
-    subgraph "Epic 2: Collection Management"
-        WS005[WS-005: View Bin Location Map<br/>5 SP - High]
-        WS006[WS-006: Schedule Collection<br/>8 SP - Critical]
-        WS008[WS-008: Manual Route Assignment<br/>5 SP - High]
-        WS012[WS-012: View Collection Schedule<br/>3 SP - High]
+    subgraph "Epic 2: Collection & Route Optimization"
+        WS005[WS-005: Generate Optimized Routes<br/>13 SP - Critical]
+        WS006[WS-006: Schedule with Optimization<br/>8 SP - Critical]
+        WS007[WS-007: Track Route Progress<br/>8 SP - High]
+        WS028[WS-028: Navigate Route<br/>8 SP - Critical]
+        WS029[WS-029: Analyze Performance<br/>5 SP - Medium]
+        WS008[WS-008: Manual Assignment<br/>5 SP - High]
+        WS012[WS-012: View Schedule<br/>3 SP - High]
     end
     
     subgraph "Epic 3: Citizen Engagement & Service Requests"
@@ -168,10 +171,13 @@ graph LR
     
     WS001 --> WS002
     WS002 --> WS003
-    WS003 --> WS006
-    WS006 --> WS008
-    WS008 --> WS013
+    WS003 --> WS005
+    WS005 --> WS006
+    WS006 --> WS028
+    WS028 --> WS013
     WS013 --> WS014
+    WS014 --> WS007
+    WS007 --> WS029
     WS009 --> WS010
     WS010 --> WS014
 ```
@@ -421,20 +427,41 @@ graph TB
 
 ---
 
-## Epic 2: Collection Management
+## Epic 2: Collection Management & Route Optimization
 
-### WS-006: Schedule Collection
+### WS-005: Generate Optimized Collection Routes
 **As a** dispatch manager  
-**I want to** schedule waste collections  
-**So that** bins are emptied regularly
+**I want to** automatically generate optimized collection routes  
+**So that** drivers can collect waste with minimal travel time and fuel consumption
+
+**Acceptance Criteria:**
+- System calculates optimal route using TSP/VRP algorithms
+- Consider bin fill levels and priority bins
+- Factor in traffic patterns and road conditions
+- Account for vehicle capacity constraints
+- Display estimated distance and duration
+- Show potential fuel and time savings
+- Allow manual route adjustments if needed
+
+**Story Points:** 13  
+**Priority:** Critical  
+**Sprint:** 2
+
+---
+
+### WS-006: Schedule Collection with Route Optimization
+**As a** dispatch manager  
+**I want to** schedule waste collections with optimized routing  
+**So that** bins are emptied efficiently
 
 **Acceptance Criteria:**
 - Create collection schedules by zone
-- Assign drivers to collection areas
+- Auto-generate optimized routes for each zone
+- Assign drivers to optimized routes
 - Set recurring collection patterns
-- Handle special collection requests
-- Calendar view of schedules
-- Notification to drivers
+- Balance workload across drivers
+- Calendar view with route details
+- Notification to drivers with route maps
 
 **Story Points:** 8  
 **Priority:** Critical  
@@ -442,22 +469,65 @@ graph TB
 
 ---
 
-### WS-007: Track Collection Progress
+### WS-007: Track Collection Progress & Route Adherence
 **As a** operations manager  
-**I want to** track real-time collection progress  
-**So that** I can monitor service delivery
+**I want to** track real-time collection progress against planned routes  
+**So that** I can monitor service efficiency
 
 **Acceptance Criteria:**
-- Live map shows driver location
+- Live map shows driver location on planned route
+- Display route deviation alerts
 - Bins collected marked as complete
+- Show actual vs planned metrics
 - Progress percentage displayed
 - Delays flagged automatically
+- Route efficiency score calculated
 - Collection confirmation photos required
 - Performance metrics updated real-time
 
 **Story Points:** 8  
 **Priority:** High  
 **Sprint:** 3
+
+---
+
+### WS-028: Navigate Optimized Route
+**As a** driver  
+**I want to** navigate my optimized collection route  
+**So that** I can efficiently complete my collections
+
+**Acceptance Criteria:**
+- Turn-by-turn navigation on mobile app
+- Voice-guided directions
+- Real-time traffic updates
+- Automatic route recalculation
+- Display next bin information
+- Show estimated arrival time
+- Offline map support
+
+**Story Points:** 8  
+**Priority:** Critical  
+**Sprint:** 2
+
+---
+
+### WS-029: Analyze Route Performance
+**As a** operations analyst  
+**I want to** analyze route optimization performance  
+**So that** I can continuously improve efficiency
+
+**Acceptance Criteria:**
+- Compare actual vs optimized routes
+- Calculate fuel savings achieved
+- Track time savings metrics
+- Identify optimization patterns
+- Generate efficiency reports
+- Machine learning improvements
+- Historical trend analysis
+
+**Story Points:** 5  
+**Priority:** Medium  
+**Sprint:** 4
 
 ---
 

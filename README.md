@@ -29,6 +29,13 @@ Wasgo is an innovative IoT-powered waste management platform that revolutionizes
 - **Automated Alerts** - Instant notifications for full bins and maintenance needs
 - **Temperature & Humidity Sensors** - Environmental monitoring for waste safety
 
+### Route Optimization & Collection
+- **AI-Powered Route Planning** - TSP/VRP algorithms for optimal collection paths
+- **Real-Time Route Updates** - Dynamic route adjustment based on traffic and priorities
+- **Multi-Vehicle Coordination** - Efficient distribution of collection tasks
+- **Turn-by-Turn Navigation** - Mobile app guidance for drivers
+- **Performance Analytics** - Route efficiency scoring and improvement tracking
+
 ### Service Management
 - **Service Requests** - On-demand waste collection and special pickups
 - **Driver Management** - Assignment, tracking, and performance monitoring

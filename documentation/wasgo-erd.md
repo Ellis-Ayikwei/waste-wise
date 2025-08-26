@@ -117,6 +117,18 @@ graph TB
     s_battery -.-> Sensor
     s_status -.-> Sensor
     
+    %% ROUTE ENTITY WITH ATTRIBUTES
+    Route[Route]
+    rt_id((id))
+    rt_distance((distance))
+    rt_duration((duration))
+    rt_efficiency((efficiency))
+    
+    rt_id -.->|PK| Route
+    rt_distance -.-> Route
+    rt_duration -.-> Route
+    rt_efficiency -.-> Route
+    
     %% MAIN RELATIONSHIPS
     owns{owns}
     creates{creates}
@@ -125,12 +137,16 @@ graph TB
     drives{drives}
     pays_for{pays_for}
     located_in{located_in}
+    follows{follows}
+    optimizes{optimizes}
     
     User -->|1:N| owns --> SmartBin
     User -->|1:N| creates --> ServiceRequest
     SmartBin -->|1:1| monitors --> Sensor
     Driver -->|N:M| handles --> ServiceRequest
     Driver -->|N:1| drives --> Vehicle
+    Driver -->|N:M| follows --> Route
+    Route -->|N:M| optimizes --> SmartBin
     Payment -->|1:1| pays_for --> ServiceRequest
     SmartBin -->|N:1| located_in --> Zone
 ```
@@ -262,7 +278,7 @@ graph TB
     SmartBin -->|1:N| generates --> BinAlert
 ```
 
-## Collection Management Subsystem
+## Collection Management & Route Optimization Subsystem
 
 ```mermaid
 graph TB
@@ -274,12 +290,25 @@ graph TB
     zone_name -.-> Zone
     zone_area -.-> Zone
     
-    CollectionSchedule[Schedule]
-    schedule_day((day))
-    schedule_time((time))
+    CollectionRoute[Route]
+    route_id((id))
+    route_distance((distance))
+    route_duration((duration))
+    route_status((status))
     
-    schedule_day -.-> CollectionSchedule
-    schedule_time -.-> CollectionSchedule
+    route_id -.->|PK| CollectionRoute
+    route_distance -.-> CollectionRoute
+    route_duration -.-> CollectionRoute
+    route_status -.-> CollectionRoute
+    
+    RouteStop[RouteStop]
+    stop_sequence((sequence))
+    stop_arrival((arrival_time))
+    stop_type((type))
+    
+    stop_sequence -.-> RouteStop
+    stop_arrival -.-> RouteStop
+    stop_type -.-> RouteStop
     
     CollectionAssignment[Assignment]
     assign_date((date))
@@ -291,25 +320,90 @@ graph TB
     Driver[Driver]
     driver_id((id))
     driver_name((name))
+    driver_location((location))
     
     driver_id -.->|PK| Driver
     driver_name -.-> Driver
+    driver_location -.-> Driver
     
     SmartBin[SmartBin]
     bin_number((number))
+    bin_priority((priority))
     
     bin_number -.-> SmartBin
+    bin_priority -.-> SmartBin
     
-    %% COLLECTION RELATIONSHIPS
-    has_schedule{has_schedule}
+    %% COLLECTION & ROUTE RELATIONSHIPS
+    optimizes{optimizes}
+    follows{follows}
+    includes{{includes}}
+    visits{visits}
     performs{performs}
-    covers{covers}
-    contains{contains}
     
-    Zone -->|1:N| has_schedule --> CollectionSchedule
+    CollectionAssignment -->|1:1| optimizes --> CollectionRoute
+    Driver -->|N:M| follows --> CollectionRoute
+    CollectionRoute -->|1:N| includes --> RouteStop
+    RouteStop -->|N:1| visits --> SmartBin
     Driver -->|1:N| performs --> CollectionAssignment
-    CollectionAssignment -->|N:M| covers --> SmartBin
-    Zone -->|1:N| contains --> SmartBin
+```
+
+## Route Optimization System
+
+```mermaid
+graph TB
+    %% ROUTE OPTIMIZATION ENTITIES
+    CollectionRoute[Route]
+    r_id((id))
+    r_name((name))
+    r_distance((total_km))
+    r_duration((est_hours))
+    r_efficiency((efficiency_score))
+    r_fuel_cost((fuel_estimate))
+    
+    r_id -.->|PK| CollectionRoute
+    r_name -.-> CollectionRoute
+    r_distance -.-> CollectionRoute
+    r_duration -.-> CollectionRoute
+    r_efficiency -.-> CollectionRoute
+    r_fuel_cost -.-> CollectionRoute
+    
+    RouteOptimization[Optimization]
+    opt_algorithm((algorithm))
+    opt_criteria((criteria))
+    opt_savings((time_saved))
+    
+    opt_algorithm -.-> RouteOptimization
+    opt_criteria -.-> RouteOptimization
+    opt_savings -.-> RouteOptimization
+    
+    RouteStop[[RouteStop]]
+    rs_sequence((sequence))
+    rs_arrival((arrival))
+    rs_departure((departure))
+    rs_distance((distance_km))
+    
+    rs_sequence -.-> RouteStop
+    rs_arrival -.-> RouteStop
+    rs_departure -.-> RouteStop
+    rs_distance -.-> RouteStop
+    
+    TrafficData[Traffic]
+    traffic_level((congestion))
+    traffic_time((peak_hours))
+    
+    traffic_level -.-> TrafficData
+    traffic_time -.-> TrafficData
+    
+    %% ROUTE RELATIONSHIPS
+    generates{generates}
+    contains{{contains}}
+    considers{considers}
+    navigates{navigates}
+    
+    RouteOptimization -->|1:N| generates --> CollectionRoute
+    CollectionRoute -->|1:N| contains --> RouteStop
+    RouteOptimization -->|N:M| considers --> TrafficData
+    Driver -->|1:N| navigates --> CollectionRoute
 ```
 
 ## Service Request and Payment Flow
@@ -463,14 +557,85 @@ graph TB
 | Entity | Purpose | Key Attributes |
 |--------|---------|----------------|
 | **User** | System users (customers, admins) | id, email, phone, type |
-| **SmartBin** | IoT-enabled waste bins | id, location, fill_level, status |
+| **SmartBin** | IoT-enabled waste bins | id, location, fill_level, status, priority |
 | **Sensor** | IoT monitoring devices | type, battery, status |
 | **ServiceRequest** | Waste collection requests | type, date, status, cost |
-| **Driver** | Collection personnel | name, license, status, rating |
+| **Driver** | Collection personnel | name, license, status, rating, location |
 | **Vehicle** | Collection trucks | registration, type, capacity |
 | **Payment** | Transaction records | amount, method, status |
 | **Zone** | Geographic areas | name, area, boundary |
+| **Route** | Optimized collection paths | id, distance, duration, efficiency |
+| **RouteStop** | Individual stops on route | sequence, arrival_time, bin_id |
+| **RouteOptimization** | Route planning engine | algorithm, criteria, time_saved |
+
+## Route Optimization Architecture
+
+```mermaid
+graph LR
+    subgraph "Input Data"
+        BinData[Bin Fill Levels]
+        LocationData[GPS Locations]
+        TrafficData[Traffic Patterns]
+        HistoricalData[Historical Routes]
+    end
+    
+    subgraph "Optimization Engine"
+        Algorithm[TSP Algorithm]
+        Constraints[Constraints]
+        Scoring[Efficiency Scoring]
+    end
+    
+    subgraph "Output"
+        OptimizedRoute[Optimized Route]
+        EstimatedTime[Time Estimate]
+        FuelEstimate[Fuel Estimate]
+    end
+    
+    BinData --> Algorithm
+    LocationData --> Algorithm
+    TrafficData --> Constraints
+    HistoricalData --> Scoring
+    Algorithm --> OptimizedRoute
+    Constraints --> OptimizedRoute
+    Scoring --> EstimatedTime
+    OptimizedRoute --> FuelEstimate
+```
+
+### Route Optimization Features
+
+1. **Dynamic Route Planning**
+   - Real-time route calculation based on bin fill levels
+   - Priority-based collection (critical bins first)
+   - Multi-vehicle route coordination
+   - Time window constraints
+
+2. **Optimization Algorithms**
+   - Traveling Salesman Problem (TSP) solver
+   - Vehicle Routing Problem (VRP) with capacity constraints
+   - Genetic algorithms for large-scale optimization
+   - Machine learning for pattern prediction
+
+3. **Constraints & Factors**
+   - Vehicle capacity limits
+   - Driver working hours
+   - Traffic congestion patterns
+   - Road restrictions (weight limits, one-way streets)
+   - Fuel efficiency optimization
+   - Emergency collection priorities
+
+4. **Route Tracking & Monitoring**
+   - Real-time GPS tracking
+   - Route deviation alerts
+   - Performance metrics (actual vs planned)
+   - Historical route analysis
 
 ## Database Implementation Notes
 
-The high-level ERD translates to approximately 15-20 main tables in PostgreSQL with PostGIS extensions for spatial data. The actual implementation includes additional junction tables for many-to-many relationships and audit tables for tracking changes.
+The high-level ERD translates to approximately 20-25 main tables in PostgreSQL with PostGIS extensions for spatial data. The route optimization system adds:
+- `routes` table for planned collection routes
+- `route_stops` for individual waypoints
+- `route_optimizations` for optimization history
+- `traffic_patterns` for traffic data
+- Spatial indexes for efficient geographic queries
+- Junction tables for many-to-many relationships
+- Audit tables for tracking changes

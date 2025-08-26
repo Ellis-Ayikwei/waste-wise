@@ -305,7 +305,210 @@ PATCH /api/v1/service-requests/{request_id}/status/
 }
 ```
 
-### 3. Driver Operations
+## 3. Route Optimization
+
+### Generate Optimized Routes
+```http
+POST /api/routes/optimize/
+```
+
+**Request Body:**
+```json
+{
+  "zone_id": "uuid",
+  "date": "2024-01-15",
+  "constraints": {
+    "max_distance_km": 100,
+    "max_duration_hours": 8,
+    "vehicle_capacity_kg": 5000,
+    "priority_bins": ["bin_uuid1", "bin_uuid2"],
+    "avoid_traffic": true,
+    "time_windows": {
+      "start": "08:00",
+      "end": "17:00"
+    }
+  },
+  "vehicles": ["vehicle_uuid1", "vehicle_uuid2"],
+  "algorithm": "vrp_with_time_windows"
+}
+```
+
+**Response:**
+```json
+{
+  "route_id": "uuid",
+  "total_distance_km": 45.6,
+  "estimated_duration_hours": 4.5,
+  "fuel_estimate_liters": 12.3,
+  "efficiency_score": 0.89,
+  "routes": [
+    {
+      "vehicle_id": "uuid",
+      "driver_id": "uuid",
+      "distance_km": 22.3,
+      "duration_hours": 2.2,
+      "stops": [
+        {
+          "sequence": 1,
+          "bin_id": "uuid",
+          "arrival_time": "08:30",
+          "departure_time": "08:35",
+          "distance_from_previous_km": 2.1
+        }
+      ]
+    }
+  ],
+  "optimization_metrics": {
+    "time_saved_minutes": 45,
+    "distance_saved_km": 8.2,
+    "fuel_saved_liters": 2.1
+  }
+}
+```
+
+### Get Route Details
+```http
+GET /api/routes/{route_id}/
+```
+
+**Response:**
+```json
+{
+  "route_id": "uuid",
+  "status": "in_progress",
+  "driver": {
+    "id": "uuid",
+    "name": "John Doe",
+    "current_location": {
+      "lat": 5.6037,
+      "lng": -0.1870
+    }
+  },
+  "progress": {
+    "completed_stops": 5,
+    "total_stops": 12,
+    "percentage": 41.67,
+    "estimated_completion": "12:30"
+  },
+  "stops": [
+    {
+      "sequence": 1,
+      "bin": {
+        "id": "uuid",
+        "number": "BIN-001",
+        "location": {
+          "lat": 5.6037,
+          "lng": -0.1870
+        },
+        "fill_level": 85
+      },
+      "status": "completed",
+      "actual_arrival": "08:32",
+      "actual_departure": "08:37"
+    }
+  ]
+}
+```
+
+### Update Route Progress
+```http
+PUT /api/routes/{route_id}/progress/
+```
+
+**Request Body:**
+```json
+{
+  "current_stop": 5,
+  "location": {
+    "lat": 5.6037,
+    "lng": -0.1870
+  },
+  "status": "on_route",
+  "delay_minutes": 10,
+  "delay_reason": "heavy_traffic"
+}
+```
+
+### Get Route Navigation
+```http
+GET /api/routes/{route_id}/navigation/
+```
+
+**Response:**
+```json
+{
+  "current_stop": {
+    "bin_id": "uuid",
+    "address": "123 Main St, Accra",
+    "distance_km": 1.2,
+    "eta": "10:15"
+  },
+  "next_stop": {
+    "bin_id": "uuid",
+    "address": "456 Park Ave, Accra",
+    "distance_km": 2.3
+  },
+  "turn_by_turn": [
+    {
+      "instruction": "Turn right onto Main Street",
+      "distance_m": 500,
+      "duration_seconds": 60
+    }
+  ],
+  "traffic_alerts": [
+    {
+      "type": "congestion",
+      "severity": "moderate",
+      "location": "Independence Ave",
+      "delay_minutes": 5
+    }
+  ]
+}
+```
+
+### Analyze Route Performance
+```http
+GET /api/routes/analytics/
+```
+
+**Query Parameters:**
+- `start_date`: Start date for analysis
+- `end_date`: End date for analysis
+- `zone_id`: Filter by zone
+- `driver_id`: Filter by driver
+
+**Response:**
+```json
+{
+  "period": {
+    "start": "2024-01-01",
+    "end": "2024-01-31"
+  },
+  "metrics": {
+    "total_routes": 150,
+    "average_efficiency": 0.87,
+    "total_distance_km": 4500,
+    "total_fuel_liters": 890,
+    "time_saved_hours": 120,
+    "cost_savings_ghs": 2500
+  },
+  "optimization_improvements": {
+    "distance_reduction_percent": 15,
+    "time_reduction_percent": 18,
+    "fuel_reduction_percent": 12
+  },
+  "top_performing_routes": [
+    {
+      "route_id": "uuid",
+      "date": "2024-01-15",
+      "efficiency_score": 0.95,
+      "driver": "John Doe"
+    }
+  ]
+}
+```
+
+## 4. Driver Operations
 
 #### Driver Check-in
 ```http
