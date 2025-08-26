@@ -120,7 +120,7 @@ class Vehicle:
     fuel_type = CharField(choices=['diesel', 'petrol', 'electric', 'hybrid'])
     gps_device_id = CharField(unique=True)
     current_location = PointField()
-    status = CharField(choices=['available', 'on_route', 'maintenance', 'offline'])
+    status = CharField(choices=['available', 'on_duty', 'maintenance', 'offline'])
     last_maintenance = DateField()
     next_maintenance_due = DateField()
     
@@ -130,7 +130,7 @@ class Driver:
     license_number = CharField(unique=True)
     license_expiry = DateField()
     vehicle = ForeignKey(Vehicle, null=True)
-    current_route = ForeignKey('Route', null=True)
+    assigned_zone = ForeignKey('Zone', null=True)
     status = CharField(choices=['available', 'on_duty', 'break', 'off_duty'])
     shift_start = TimeField()
     shift_end = TimeField()
@@ -146,36 +146,41 @@ class DriverLocation:
     is_moving = BooleanField()
 ```
 
-### 5. Route Management
+### 5. Collection Management
 
 ```python
-class Route:
-    route_id = UUIDField(primary_key=True)
-    route_code = CharField(unique=True)
+class CollectionSchedule:
+    schedule_id = UUIDField(primary_key=True)
     zone = ForeignKey('Zone')
+    day_of_week = CharField(choices=['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])
+    time_slot = CharField(choices=['morning', 'afternoon', 'evening'])
+    frequency = CharField(choices=['daily', 'weekly', 'biweekly', 'monthly'])
+    is_active = BooleanField(default=True)
+    created_at = DateTimeField(auto_now_add=True)
+
+class CollectionAssignment:
+    assignment_id = UUIDField(primary_key=True)
     driver = ForeignKey(Driver)
-    vehicle = ForeignKey(Vehicle)
-    planned_date = DateField()
-    start_time = DateTimeField()
+    zone = ForeignKey('Zone')
+    assigned_date = DateField()
+    bins = ManyToManyField(WasteBin)
+    service_requests = ManyToManyField(ServiceRequest)
+    start_time = DateTimeField(null=True)
     end_time = DateTimeField(null=True)
-    total_distance_km = DecimalField(max_digits=10, decimal_places=2)
-    estimated_duration_minutes = IntegerField()
-    actual_duration_minutes = IntegerField(null=True)
-    fuel_consumed_liters = DecimalField(max_digits=10, decimal_places=2, null=True)
-    status = CharField(choices=['planned', 'active', 'completed', 'cancelled'])
+    status = CharField(choices=['pending', 'in_progress', 'completed', 'cancelled'])
+    total_bins_collected = IntegerField(default=0)
+    notes = TextField(null=True)
     
-class RouteStop:
-    stop_id = UUIDField(primary_key=True)
-    route = ForeignKey(Route)
+class CollectionRecord:
+    record_id = UUIDField(primary_key=True)
+    assignment = ForeignKey(CollectionAssignment)
     bin = ForeignKey(WasteBin, null=True)
     service_request = ForeignKey(ServiceRequest, null=True)
-    stop_order = IntegerField()
-    arrival_time = DateTimeField(null=True)
-    departure_time = DateTimeField(null=True)
-    collection_weight_kg = DecimalField(max_digits=10, decimal_places=2, null=True)
-    status = CharField(choices=['pending', 'completed', 'skipped'])
-    skip_reason = TextField(null=True)
+    collected_at = DateTimeField()
+    weight_kg = DecimalField(max_digits=10, decimal_places=2, null=True)
+    fill_level_before = IntegerField(null=True)
     photo_proof = ImageField(null=True)
+    notes = TextField(null=True)
 ```
 
 ### 6. Zone Management
@@ -192,6 +197,7 @@ class Zone:
     assigned_provider = ForeignKey('Provider', null=True)
     population_estimate = IntegerField()
     area_sq_km = DecimalField(max_digits=10, decimal_places=2)
+    total_bins = IntegerField(default=0)
 ```
 
 ### 7. Provider Management
@@ -271,11 +277,9 @@ class CollectionMetric:
     zone = ForeignKey(Zone)
     total_weight_collected_kg = DecimalField(max_digits=10, decimal_places=2)
     bins_collected = IntegerField()
-    routes_completed = IntegerField()
+    collections_completed = IntegerField()
     average_fill_level = DecimalField(max_digits=5, decimal_places=2)
-    fuel_consumed_liters = DecimalField(max_digits=10, decimal_places=2)
-    distance_traveled_km = DecimalField(max_digits=10, decimal_places=2)
-    co2_emissions_kg = DecimalField(max_digits=10, decimal_places=2)
+    service_requests_fulfilled = IntegerField()
     
 class WasteComposition:
     composition_id = UUIDField(primary_key=True)
@@ -287,6 +291,16 @@ class WasteComposition:
     metal_percentage = DecimalField(max_digits=5, decimal_places=2)
     glass_percentage = DecimalField(max_digits=5, decimal_places=2)
     other_percentage = DecimalField(max_digits=5, decimal_places=2)
+
+class EnvironmentalImpact:
+    impact_id = UUIDField(primary_key=True)
+    month = DateField()
+    zone = ForeignKey(Zone, null=True)
+    waste_diverted_kg = DecimalField(max_digits=10, decimal_places=2)
+    recycling_rate = DecimalField(max_digits=5, decimal_places=2)
+    overflow_incidents = IntegerField()
+    illegal_dumping_reports = IntegerField()
+    created_at = DateTimeField(auto_now_add=True)
 ```
 
 ## Entity Relationships
@@ -306,17 +320,20 @@ erDiagram
     WasteBin }o--|| Zone : belongs_to
     
     Driver ||--o| Vehicle : drives
-    Driver ||--o{ Route : assigned_to
+    Driver ||--o{ CollectionAssignment : performs
     Driver ||--o{ DriverLocation : tracks
+    Driver }o--o| Zone : assigned_to
     
-    Route ||--o{ RouteStop : contains
-    RouteStop }o--|| WasteBin : collects_from
-    RouteStop }o--o| ServiceRequest : fulfills
+    CollectionAssignment ||--o{ CollectionRecord : contains
+    CollectionRecord }o--|| WasteBin : collects_from
+    CollectionRecord }o--o| ServiceRequest : fulfills
+    
+    Zone ||--o{ CollectionSchedule : has
+    Zone }o--|| Provider : serviced_by
     
     ServiceRequest ||--o{ RequestItem : contains
     ServiceRequest }o--o| Payment : requires
     
-    Zone }o--|| Provider : serviced_by
     Provider ||--o{ Vehicle : owns
     
     Subscription }o--|| SubscriptionPlan : uses
@@ -334,13 +351,13 @@ CREATE INDEX idx_driverlocation_location ON driverlocation USING GIST(location);
 -- Performance indexes
 CREATE INDEX idx_sensorreading_timestamp ON sensorreading(timestamp DESC);
 CREATE INDEX idx_sensorreading_bin_timestamp ON sensorreading(sensor_id, timestamp DESC);
-CREATE INDEX idx_route_date_status ON route(planned_date, status);
+CREATE INDEX idx_collectionassignment_date ON collectionassignment(assigned_date, status);
 CREATE INDEX idx_servicerequest_status ON servicerequest(status) WHERE status != 'completed';
 CREATE INDEX idx_binalert_resolved ON binalert(resolved_at) WHERE resolved_at IS NULL;
 
 -- Foreign key indexes
 CREATE INDEX idx_sensorreading_sensor ON sensorreading(sensor_id);
-CREATE INDEX idx_routestop_route ON routestop(route_id);
+CREATE INDEX idx_collectionrecord_assignment ON collectionrecord(assignment_id);
 CREATE INDEX idx_notification_user ON notification(user_id);
 ```
 
@@ -359,12 +376,17 @@ SELECT zone_id, zone_name
 FROM zone
 WHERE ST_Contains(boundary, ST_MakePoint(?, ?));
 
--- Calculate route distance
-SELECT ST_Length(
-    ST_MakeLine(array_agg(location ORDER BY stop_order))::geography
-) as route_distance
-FROM routestop
-WHERE route_id = ?;
+-- Get all bins in a zone
+SELECT w.* FROM wastebin w
+JOIN zone z ON ST_Contains(z.boundary, w.location)
+WHERE z.zone_id = ?;
+
+-- Find bins near driver's current location
+SELECT b.*, ST_Distance(b.location, d.location) as distance
+FROM wastebin b, driverlocation d
+WHERE d.driver_id = ?
+AND d.timestamp = (SELECT MAX(timestamp) FROM driverlocation WHERE driver_id = ?)
+AND ST_DWithin(b.location, d.location, 500);
 ```
 
 ## Data Integrity Constraints

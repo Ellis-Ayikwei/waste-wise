@@ -1,7 +1,7 @@
 # Wasgo Smart Waste Management System - Agile Project Documentation
 
 ## Executive Summary
-Wasgo is an innovative IoT-powered smart waste management platform designed to revolutionize urban waste collection in Ghana. The system integrates smart sensors, real-time tracking, AI-driven route optimization, and comprehensive waste management services.
+Wasgo is an innovative IoT-powered smart waste management platform designed to revolutionize urban waste collection in Ghana. The system integrates smart sensors, real-time tracking, and comprehensive waste management services to improve collection efficiency and environmental sustainability.
 
 ## System Components
 
@@ -30,11 +30,12 @@ Wasgo is an innovative IoT-powered smart waste management platform designed to r
    - Battery level monitoring
    - Vandalism detection
 
-2. **Route Optimization**
-   - AI-powered collection route planning
-   - Dynamic routing based on bin fill levels
+2. **Collection Management**
+   - Manual collection scheduling
+   - Zone-based collection areas
    - Driver assignment and tracking
-   - Fuel consumption optimization
+   - Collection progress monitoring
+   - Performance metrics
 
 3. **Service Request System**
    - On-demand waste collection
@@ -109,14 +110,14 @@ Wasgo is an innovative IoT-powered smart waste management platform designed to r
    - Track collection schedules
 
 2. **Waste Collection Drivers**
-   - Optimized route navigation
-   - Bin status updates
+   - View assigned collection areas
+   - Update bin status
    - Collection confirmation
    - Performance tracking
 
 3. **System Administrators**
    - Bin management
-   - Route planning
+   - Collection scheduling
    - Performance monitoring
    - System configuration
 
@@ -137,14 +138,14 @@ Wasgo is an innovative IoT-powered smart waste management platform designed to r
 ### Environmental Impact
 - Reduce illegal dumping by 70%
 - Increase recycling rates by 50%
-- Lower carbon emissions through optimized routes
-- Prevent overflow and contamination
+- Monitor and reduce overflow incidents
+- Prevent contamination through timely collection
 
 ### Economic Benefits
-- 40% reduction in collection costs
-- Fuel savings through route optimization
+- 30% reduction in operational costs
 - Predictive maintenance reduces equipment costs
 - Revenue generation through data insights
+- Efficient resource allocation
 
 ### Social Impact
 - Cleaner neighborhoods
@@ -158,13 +159,14 @@ Wasgo is an innovative IoT-powered smart waste management platform designed to r
 - IoT smart bin deployment and management
 - Web and mobile applications
 - Real-time monitoring and alerts
-- Route optimization algorithms
+- Manual collection scheduling
 - Customer service portal
 - Payment processing
 - Reporting and analytics
 - Multi-language support (English, Twi, Ga)
 
 ### Out of Scope (Future Phases)
+- Automated route optimization algorithms
 - Waste sorting robotics
 - Blockchain-based recycling rewards
 - International expansion
@@ -176,17 +178,17 @@ Wasgo is an innovative IoT-powered smart waste management platform designed to r
 - System uptime: >99.9%
 - API response time: <200ms
 - Sensor data accuracy: >95%
-- Route optimization efficiency: 30% improvement
+- Collection completion rate: >90%
 
 ### Business KPIs
 - Customer satisfaction: >85%
-- Collection efficiency: 40% improvement
-- Cost reduction: 30% decrease
-- Revenue growth: 25% annually
+- Collection efficiency: 30% improvement
+- Cost reduction: 25% decrease
+- Revenue growth: 20% annually
 
 ### Environmental KPIs
 - Waste diverted from landfills: 10,000 tons/year
-- CO2 emissions reduced: 500 tons/year
+- Overflow incidents reduced: 60%
 - Recycling rate increase: 50%
 - Illegal dumping reduction: 70%
 

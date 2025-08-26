@@ -24,7 +24,7 @@
 ### WS-002: Monitor Bin Fill Level
 **As a** waste management operator  
 **I want to** see real-time fill levels of all bins  
-**So that** I can prioritize collection routes
+**So that** I can schedule collections effectively
 
 **Acceptance Criteria:**
 - Dashboard shows fill percentage (0-100%)
@@ -78,42 +78,42 @@
 
 ---
 
-## Epic 2: Route Optimization & Collection Management
-
-### WS-005: Generate Optimized Routes
-**As a** route planner  
-**I want to** generate optimal collection routes  
-**So that** we minimize fuel consumption and time
+### WS-005: View Bin Location Map
+**As a** operations manager  
+**I want to** see all bins on a map  
+**So that** I can manage collection areas
 
 **Acceptance Criteria:**
-- Routes consider bin fill levels, traffic, and distance
-- Algorithm prioritizes bins >70% full
-- Estimated time and distance calculated
-- Routes can be manually adjusted
-- Fuel consumption estimate provided
-- Routes saved and versioned
+- Interactive map with all bin locations
+- Bins colored by fill level status
+- Click for detailed bin information
+- Filter by zone, type, or status
+- Cluster view for dense areas
+- Search by bin ID or address
 
-**Story Points:** 13  
-**Priority:** Critical  
+**Story Points:** 5  
+**Priority:** High  
 **Sprint:** 2
 
 ---
 
-### WS-006: Assign Routes to Drivers
+## Epic 2: Collection Management
+
+### WS-006: Schedule Collection
 **As a** dispatch manager  
-**I want to** assign optimized routes to drivers  
-**So that** collections are completed efficiently
+**I want to** schedule waste collections  
+**So that** bins are emptied regularly
 
 **Acceptance Criteria:**
-- Drivers see assigned routes in mobile app
-- Turn-by-turn navigation provided
-- Driver can accept/reject assignment
-- Real-time location tracking enabled
-- Estimated completion time shown
-- Route changes pushed instantly
+- Create collection schedules by zone
+- Assign drivers to collection areas
+- Set recurring collection patterns
+- Handle special collection requests
+- Calendar view of schedules
+- Notification to drivers
 
 **Story Points:** 8  
-**Priority:** High  
+**Priority:** Critical  
 **Sprint:** 2
 
 ---
@@ -137,9 +137,28 @@
 
 ---
 
+### WS-008: Manual Route Assignment
+**As a** dispatch manager  
+**I want to** manually assign collection areas to drivers  
+**So that** all zones are covered
+
+**Acceptance Criteria:**
+- Assign zones or specific bins to drivers
+- View driver availability and capacity
+- Balance workload across drivers
+- Handle driver absences/replacements
+- Send route details to driver app
+- Track assignment history
+
+**Story Points:** 5  
+**Priority:** High  
+**Sprint:** 2
+
+---
+
 ## Epic 3: Citizen Engagement & Service Requests
 
-### WS-008: Report Waste Issue
+### WS-009: Report Waste Issue
 **As a** citizen  
 **I want to** report illegal dumping or overflowing bins  
 **So that** the area can be cleaned promptly
@@ -158,7 +177,7 @@
 
 ---
 
-### WS-009: Request Bulk Waste Collection
+### WS-010: Request Bulk Waste Collection
 **As a** resident  
 **I want to** schedule bulk waste pickup  
 **So that** large items are disposed properly
@@ -177,7 +196,7 @@
 
 ---
 
-### WS-010: Find Nearest Recycling Point
+### WS-011: Find Nearest Recycling Point
 **As a** environmentally conscious citizen  
 **I want to** find the nearest recycling facility  
 **So that** I can dispose of recyclables properly
@@ -196,9 +215,28 @@
 
 ---
 
+### WS-012: View Collection Schedule
+**As a** resident  
+**I want to** view waste collection schedule for my area  
+**So that** I can prepare bins on time
+
+**Acceptance Criteria:**
+- Enter address or use GPS location
+- Show next collection date/time
+- Display collection frequency
+- Holiday schedule adjustments
+- Subscribe to reminders
+- Download calendar
+
+**Story Points:** 3  
+**Priority:** High  
+**Sprint:** 2
+
+---
+
 ## Epic 4: Driver Mobile Application
 
-### WS-011: Driver Check-in/Check-out
+### WS-013: Driver Check-in/Check-out
 **As a** waste collection driver  
 **I want to** check in when starting my shift  
 **So that** my work hours are tracked
@@ -206,7 +244,7 @@
 **Acceptance Criteria:**
 - One-tap check-in with GPS verification
 - Vehicle inspection checklist
-- Route auto-assigned upon check-in
+- View assigned collection area
 - Break time tracking
 - End-of-shift summary
 - Overtime calculation
@@ -217,7 +255,7 @@
 
 ---
 
-### WS-012: Scan Bin QR Code
+### WS-014: Scan Bin QR Code
 **As a** driver  
 **I want to** scan bin QR codes  
 **So that** collection is verified
@@ -236,7 +274,7 @@
 
 ---
 
-### WS-013: Report Bin Issues
+### WS-015: Report Bin Issues
 **As a** driver  
 **I want to** report damaged or inaccessible bins  
 **So that** maintenance can be scheduled
@@ -255,9 +293,28 @@
 
 ---
 
+### WS-016: View Collection List
+**As a** driver  
+**I want to** see my assigned bins for collection  
+**So that** I know my daily tasks
+
+**Acceptance Criteria:**
+- List of assigned bins/areas
+- Map view of collection points
+- Bin fill levels shown
+- Priority indicators
+- Mark as collected
+- Notes for special instructions
+
+**Story Points:** 5  
+**Priority:** High  
+**Sprint:** 2
+
+---
+
 ## Epic 5: Analytics & Reporting
 
-### WS-014: View Collection Dashboard
+### WS-017: View Collection Dashboard
 **As a** city administrator  
 **I want to** see waste collection metrics  
 **So that** I can assess service performance
@@ -276,13 +333,13 @@
 
 ---
 
-### WS-015: Generate Environmental Impact Report
+### WS-018: Generate Environmental Impact Report
 **As a** sustainability officer  
 **I want to** track environmental metrics  
 **So that** I can report on green initiatives
 
 **Acceptance Criteria:**
-- CO2 emissions saved through route optimization
+- Waste diverted from landfills
 - Recycling rates by material type
 - Landfill diversion statistics
 - Comparison with baseline year
@@ -295,7 +352,7 @@
 
 ---
 
-### WS-016: Analyze Waste Generation Patterns
+### WS-019: Analyze Waste Generation Patterns
 **As a** urban planner  
 **I want to** understand waste generation patterns  
 **So that** I can plan infrastructure better
@@ -305,7 +362,7 @@
 - Peak generation times identified
 - Seasonal variations analyzed
 - Demographic correlations
-- Predictive modeling
+- Historical trend analysis
 - Recommendations generated
 
 **Story Points:** 13  
@@ -316,7 +373,7 @@
 
 ## Epic 6: Payment & Billing
 
-### WS-017: Process Service Payment
+### WS-020: Process Service Payment
 **As a** customer  
 **I want to** pay for waste services online  
 **So that** I can avoid cash transactions
@@ -335,7 +392,7 @@
 
 ---
 
-### WS-018: Manage Subscriptions
+### WS-021: Manage Subscriptions
 **As a** commercial customer  
 **I want to** manage my waste collection subscription  
 **So that** I can adjust service levels
@@ -356,7 +413,7 @@
 
 ## Epic 7: Vehicle & Fleet Management
 
-### WS-019: Track Vehicle Location
+### WS-022: Track Vehicle Location
 **As a** fleet manager  
 **I want to** track all collection vehicles  
 **So that** I can monitor operations
@@ -364,9 +421,9 @@
 **Acceptance Criteria:**
 - Real-time GPS tracking
 - Speed monitoring
-- Route adherence checking
+- Current location on map
 - Idle time detection
-- Fuel consumption tracking
+- Daily distance traveled
 - Maintenance alerts
 
 **Story Points:** 8  
@@ -375,7 +432,7 @@
 
 ---
 
-### WS-020: Schedule Vehicle Maintenance
+### WS-023: Schedule Vehicle Maintenance
 **As a** fleet manager  
 **I want to** schedule preventive maintenance  
 **So that** vehicles remain operational
@@ -394,9 +451,28 @@
 
 ---
 
+### WS-024: Manage Vehicle Assignment
+**As a** fleet manager  
+**I want to** assign vehicles to drivers  
+**So that** resources are utilized efficiently
+
+**Acceptance Criteria:**
+- Assign vehicle to driver
+- Track vehicle availability
+- Handle vehicle breakdowns
+- Temporary reassignments
+- Vehicle capacity management
+- Usage reports
+
+**Story Points:** 5  
+**Priority:** High  
+**Sprint:** 3
+
+---
+
 ## Epic 8: Communication & Support
 
-### WS-021: Chat with Support
+### WS-025: Chat with Support
 **As a** user  
 **I want to** chat with customer support  
 **So that** my issues are resolved quickly
@@ -415,7 +491,7 @@
 
 ---
 
-### WS-022: Receive Collection Reminders
+### WS-026: Receive Collection Reminders
 **As a** resident  
 **I want to** receive collection day reminders  
 **So that** I can prepare my waste bins
@@ -434,13 +510,32 @@
 
 ---
 
+### WS-027: Emergency Reporting
+**As a** citizen  
+**I want to** report urgent waste emergencies  
+**So that** immediate action can be taken
+
+**Acceptance Criteria:**
+- Emergency hotline number displayed
+- One-click emergency report
+- Hazardous waste option
+- Location sharing mandatory
+- Priority routing to dispatch
+- Response time tracking
+
+**Story Points:** 5  
+**Priority:** High  
+**Sprint:** 1
+
+---
+
 ## Story Points Summary by Sprint
 
 | Sprint | Focus Area | Total Points | Key Deliverables |
 |--------|------------|--------------|------------------|
-| Sprint 1 | IoT Foundation | 26 | Smart bin deployment, monitoring, citizen reporting |
-| Sprint 2 | Route Optimization | 34 | Route generation, driver assignment, mobile app |
-| Sprint 3 | Operations | 35 | Collection tracking, payments, vehicle tracking |
+| Sprint 1 | IoT Foundation | 28 | Smart bin deployment, monitoring, citizen reporting, emergency system |
+| Sprint 2 | Basic Operations | 39 | Bin mapping, scheduling, driver app basics |
+| Sprint 3 | Collection Management | 37 | Payment system, vehicle tracking, collection progress |
 | Sprint 4 | Analytics & Support | 39 | Dashboards, customer support, subscriptions |
 | Sprint 5 | Advanced Features | 29 | Environmental reporting, pattern analysis |
 
