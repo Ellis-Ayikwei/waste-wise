@@ -1,5 +1,17 @@
 # Wasgo - Smart Waste Management System 🌱
 
+## 🎯 Project Aim
+
+**To digitize and optimize waste collection in Ghana through IoT-enabled smart bins and real-time monitoring, making cities cleaner and waste management more efficient.**
+
+## 📋 Key Objectives
+
+1. **Reduce Waste Overflow by 80%** - Real-time monitoring prevents bin overflow
+2. **Improve Collection Efficiency by 60%** - Data-driven scheduling and routing
+3. **Achieve 95% On-Time Collection** - Better coordination and tracking
+4. **Increase Recycling by 40%** - Proper waste segregation and tracking
+5. **Serve 100,000+ Households** - Scalable solution for urban areas
+
 ## Smarter Waste Management for a Cleaner Ghana
 
 Wasgo is an innovative IoT-powered waste management platform that revolutionizes urban waste collection in Ghana. By integrating smart sensors, real-time tracking, and comprehensive service management, we help cities reduce collection costs while improving environmental sustainability.
