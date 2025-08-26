@@ -1,671 +1,476 @@
-# Wasgo Entity Relationship Diagram (ERD) - Chen's Notation
+# Wasgo Entity Relationship Diagram (ERD) - High-Level Chen's Notation
 
 ## Database Schema Overview
 Wasgo uses PostgreSQL with PostGIS extension for geospatial capabilities. The Django backend implements a comprehensive data model for smart waste management operations in Ghana.
 
-## Complete Entity Relationship Diagram - Chen's Notation
+## High-Level Conceptual ERD - Chen's Notation
+
+This high-level ERD shows the main entities and their key attributes arranged around them for clarity. Only the most important attributes are displayed to maintain readability.
 
 ```mermaid
 graph TB
-    %% Entities (Rectangles)
+    %% USER ENTITY WITH ATTRIBUTES
     User[User]
+    u_id((id))
+    u_email((email))
+    u_phone((phone))
+    u_type((type))
+    u_name((name))
+    
+    u_id -.->|PK| User
+    u_email -.-> User
+    u_phone -.-> User
+    u_type -.-> User
+    u_name -.-> User
+    
+    %% SMART BIN ENTITY WITH ATTRIBUTES
     SmartBin[SmartBin]
-    BinType[BinType]
-    Sensor[Sensor]
-    SensorReading[SensorReading]
-    BinAlert[BinAlert]
+    b_id((id))
+    b_number((number))
+    b_location((location))
+    b_fill((fill_level))
+    b_status((status))
+    
+    b_id -.->|PK| SmartBin
+    b_number -.-> SmartBin
+    b_location -.-> SmartBin
+    b_fill -.-> SmartBin
+    b_status -.-> SmartBin
+    
+    %% SERVICE REQUEST ENTITY WITH ATTRIBUTES
     ServiceRequest[ServiceRequest]
+    sr_id((id))
+    sr_type((type))
+    sr_status((status))
+    sr_date((date))
+    sr_cost((cost))
+    
+    sr_id -.->|PK| ServiceRequest
+    sr_type -.-> ServiceRequest
+    sr_status -.-> ServiceRequest
+    sr_date -.-> ServiceRequest
+    sr_cost -.-> ServiceRequest
+    
+    %% DRIVER ENTITY WITH ATTRIBUTES
     Driver[Driver]
+    d_id((id))
+    d_name((name))
+    d_license((license))
+    d_status((status))
+    d_rating((rating))
+    
+    d_id -.->|PK| Driver
+    d_name -.-> Driver
+    d_license -.-> Driver
+    d_status -.-> Driver
+    d_rating -.-> Driver
+    
+    %% VEHICLE ENTITY WITH ATTRIBUTES
     Vehicle[Vehicle]
-    ServiceProvider[ServiceProvider]
+    v_id((id))
+    v_reg((registration))
+    v_type((type))
+    v_capacity((capacity))
+    v_status((status))
+    
+    v_id -.->|PK| Vehicle
+    v_reg -.-> Vehicle
+    v_type -.-> Vehicle
+    v_capacity -.-> Vehicle
+    v_status -.-> Vehicle
+    
+    %% PAYMENT ENTITY WITH ATTRIBUTES
     Payment[Payment]
+    p_id((id))
+    p_amount((amount))
+    p_method((method))
+    p_status((status))
+    p_date((date))
+    
+    p_id -.->|PK| Payment
+    p_amount -.-> Payment
+    p_method -.-> Payment
+    p_status -.-> Payment
+    p_date -.-> Payment
+    
+    %% ZONE ENTITY WITH ATTRIBUTES
     Zone[Zone]
-    Notification[Notification]
-    CollectionSchedule[CollectionSchedule]
-    CollectionAssignment[CollectionAssignment]
-    CollectionRecord[CollectionRecord]
-    DriverLocation[DriverLocation]
-
-    %% Relationships (Diamonds)
+    z_id((id))
+    z_name((name))
+    z_area((area))
+    z_boundary((boundary))
+    
+    z_id -.->|PK| Zone
+    z_name -.-> Zone
+    z_area -.-> Zone
+    z_boundary -.-> Zone
+    
+    %% SENSOR ENTITY WITH ATTRIBUTES
+    Sensor[Sensor]
+    s_id((id))
+    s_type((type))
+    s_battery((battery))
+    s_status((status))
+    
+    s_id -.->|PK| Sensor
+    s_type -.-> Sensor
+    s_battery -.-> Sensor
+    s_status -.-> Sensor
+    
+    %% MAIN RELATIONSHIPS
     owns{owns}
     creates{creates}
-    makes{makes}
-    receives{receives}
-    has_type{has_type}
-    equipped_with{equipped_with}
-    generates{generates}
-    produces{produces}
-    assigned_to{assigned_to}
-    handled_by{handled_by}
-    uses{uses}
-    requires{requires}
-    works_for{works_for}
-    tracks_location{tracks_location}
-    performs{performs}
+    monitors{monitors}
+    handles{handles}
     drives{drives}
-    employs{employs}
-    owns_vehicle{owns}
-    services{services}
-    located_in{located_in}
-    contains{contains}
-    has_schedule{has_schedule}
-    assigns{assigns}
-    includes{includes}
     pays_for{pays_for}
-    about_bin{about}
-    about_request{about}
-    collected_in{collected_in}
-
-    %% Entity Relationships
+    located_in{located_in}
+    
     User -->|1:N| owns --> SmartBin
     User -->|1:N| creates --> ServiceRequest
-    User -->|1:N| makes --> Payment
-    User -->|1:N| receives --> Notification
-    
-    SmartBin -->|N:1| has_type --> BinType
-    SmartBin -->|1:1| equipped_with --> Sensor
-    SmartBin -->|1:N| generates --> BinAlert
-    SmartBin -->|1:N| collected_in --> CollectionRecord
+    SmartBin -->|1:1| monitors --> Sensor
+    Driver -->|N:M| handles --> ServiceRequest
+    Driver -->|N:1| drives --> Vehicle
+    Payment -->|1:1| pays_for --> ServiceRequest
     SmartBin -->|N:1| located_in --> Zone
-    
-    Sensor -->|1:N| produces --> SensorReading
-    
-    ServiceRequest -->|N:1| assigned_to --> ServiceProvider
-    ServiceRequest -->|N:1| handled_by --> Driver
-    ServiceRequest -->|N:1| uses --> Vehicle
-    ServiceRequest -->|1:1| requires --> Payment
-    
-    Driver -->|N:1| works_for --> ServiceProvider
-    Driver -->|1:N| tracks_location --> DriverLocation
-    Driver -->|1:N| performs --> CollectionAssignment
-    Driver -->|N:1| drives --> Vehicle
-    
-    Vehicle -->|N:1| owns_vehicle --> ServiceProvider
-    
-    ServiceProvider -->|1:N| employs --> Driver
-    ServiceProvider -->|1:N| owns_vehicle --> Vehicle
-    ServiceProvider -->|1:N| services --> Zone
-    
-    Zone -->|1:N| contains --> SmartBin
-    Zone -->|1:N| has_schedule --> CollectionSchedule
-    Zone -->|1:N| assigns --> CollectionAssignment
-    
-    CollectionAssignment -->|1:N| includes --> CollectionRecord
-    
-    Payment -->|N:1| pays_for --> ServiceRequest
-    
-    Notification -->|N:1| about_bin --> SmartBin
-    Notification -->|N:1| about_request --> ServiceRequest
 ```
 
-## Detailed Chen's Notation ERD with Attributes
-
-### User Management System
+## Core System Components - Simplified View
 
 ```mermaid
 graph TB
-    %% Entity
+    %% CORE ENTITIES ONLY
     User[User]
-    
-    %% Attributes (Ovals)
-    user_id((user_id))
-    email((email))
-    phone((phone))
-    user_type((user_type))
-    first_name((first_name))
-    last_name((last_name))
-    password_hash((password_hash))
-    is_verified((is_verified))
-    is_active((is_active))
-    profile_image((profile_image))
-    address((address))
-    city((city))
-    postal_code((postal_code))
-    created_at((created_at))
-    updated_at((updated_at))
-    
-    %% Primary Key (Underlined)
-    user_id -.->|PK| User
-    email -.->|UK| User
-    phone -.-> User
-    user_type -.-> User
-    first_name -.-> User
-    last_name -.-> User
-    password_hash -.-> User
-    is_verified -.-> User
-    is_active -.-> User
-    profile_image -.-> User
-    address -.-> User
-    city -.-> User
-    postal_code -.-> User
-    created_at -.-> User
-    updated_at -.-> User
-    
-    %% Relationships
-    owns{owns}
-    creates{creates}
-    makes{makes}
-    receives{receives}
-    
-    User -->|1:N| owns
-    User -->|1:N| creates
-    User -->|1:N| makes
-    User -->|1:N| receives
-```
-
-### Smart Bin & IoT System
-
-```mermaid
-graph TB
-    %% Entities
     SmartBin[SmartBin]
-    BinType[BinType]
-    Sensor[Sensor]
-    SensorReading[SensorReading]
-    BinAlert[BinAlert]
-    
-    %% SmartBin Attributes
-    bin_id((bin_id))
-    bin_number((bin_number))
-    bin_name((name))
-    location((location))
-    bin_address((address))
-    area((area))
-    bin_city((city))
-    status((status))
-    fill_status((fill_status))
-    current_fill_level((current_fill_level))
-    capacity_kg((capacity_kg))
-    current_weight_kg((current_weight_kg))
-    last_collected((last_collected))
-    next_collection((next_collection))
-    qr_code((qr_code))
-    
-    bin_id -.->|PK| SmartBin
-    bin_number -.->|UK| SmartBin
-    bin_name -.-> SmartBin
-    location -.-> SmartBin
-    bin_address -.-> SmartBin
-    area -.-> SmartBin
-    bin_city -.-> SmartBin
-    status -.-> SmartBin
-    fill_status -.-> SmartBin
-    current_fill_level -.-> SmartBin
-    capacity_kg -.-> SmartBin
-    current_weight_kg -.-> SmartBin
-    last_collected -.-> SmartBin
-    next_collection -.-> SmartBin
-    qr_code -.->|UK| SmartBin
-    
-    %% BinType Attributes
-    type_id((type_id))
-    type_name((name))
-    description((description))
-    color_code((color_code))
-    capacity_liters((capacity_liters))
-    icon((icon))
-    
-    type_id -.->|PK| BinType
-    type_name -.->|UK| BinType
-    description -.-> BinType
-    color_code -.-> BinType
-    capacity_liters -.-> BinType
-    icon -.-> BinType
-    
-    %% Sensor Attributes
-    sensor_id((sensor_id))
-    sensor_code((sensor_code))
-    sensor_type((sensor_type))
-    manufacturer((manufacturer))
-    model((model))
-    firmware_version((firmware_version))
-    is_active((is_active))
-    is_online((is_online))
-    battery_level((battery_level))
-    signal_strength((signal_strength))
-    mqtt_topic((mqtt_topic))
-    
-    sensor_id -.->|PK| Sensor
-    sensor_code -.->|UK| Sensor
-    sensor_type -.-> Sensor
-    manufacturer -.-> Sensor
-    model -.-> Sensor
-    firmware_version -.-> Sensor
-    is_active -.-> Sensor
-    is_online -.-> Sensor
-    battery_level -.-> Sensor
-    signal_strength -.-> Sensor
-    mqtt_topic -.-> Sensor
-    
-    %% Relationships
-    has_type{has_type}
-    equipped_with{equipped_with}
-    generates{generates}
-    produces{produces}
-    
-    SmartBin -->|N:1| has_type --> BinType
-    SmartBin -->|1:1| equipped_with --> Sensor
-    SmartBin -->|1:N| generates --> BinAlert
-    Sensor -->|1:N| produces --> SensorReading
-```
-
-### Service Request System
-
-```mermaid
-graph TB
-    %% Entity
     ServiceRequest[ServiceRequest]
-    
-    %% Attributes
-    request_id((request_id))
-    request_number((request_number))
-    service_type((service_type))
-    waste_type((waste_type))
-    pickup_location((pickup_location))
-    pickup_address((pickup_address))
-    requested_date((requested_date))
-    requested_time_slot((requested_time_slot))
-    sr_status((status))
-    estimated_weight_kg((estimated_weight_kg))
-    actual_weight_kg((actual_weight_kg))
-    sr_description((description))
-    photos((photos))
-    estimated_cost((estimated_cost))
-    final_cost((final_cost))
-    payment_status((payment_status))
-    completed_at((completed_at))
-    
-    request_id -.->|PK| ServiceRequest
-    request_number -.->|UK| ServiceRequest
-    service_type -.-> ServiceRequest
-    waste_type -.-> ServiceRequest
-    pickup_location -.-> ServiceRequest
-    pickup_address -.-> ServiceRequest
-    requested_date -.-> ServiceRequest
-    requested_time_slot -.-> ServiceRequest
-    sr_status -.-> ServiceRequest
-    estimated_weight_kg -.-> ServiceRequest
-    actual_weight_kg -.-> ServiceRequest
-    sr_description -.-> ServiceRequest
-    photos -.-> ServiceRequest
-    estimated_cost -.-> ServiceRequest
-    final_cost -.-> ServiceRequest
-    payment_status -.-> ServiceRequest
-    completed_at -.-> ServiceRequest
-    
-    %% Relationships
-    assigned_to{assigned_to}
-    handled_by{handled_by}
-    uses{uses}
-    requires{requires}
-    
-    ServiceRequest -->|N:1| assigned_to
-    ServiceRequest -->|N:1| handled_by
-    ServiceRequest -->|N:1| uses
-    ServiceRequest -->|1:1| requires
-```
-
-### Driver & Vehicle System
-
-```mermaid
-graph TB
-    %% Entities
     Driver[Driver]
-    Vehicle[Vehicle]
-    DriverLocation[DriverLocation]
-    
-    %% Driver Attributes
-    driver_id((driver_id))
-    driver_name((name))
-    driver_email((email))
-    driver_phone((phone))
-    license_number((license_number))
-    license_expiry((license_expiry))
-    employment_type((employment_type))
-    is_available((is_available))
-    is_on_duty((is_on_duty))
-    driver_location((location))
-    rating((rating))
-    total_trips((total_trips))
-    
-    driver_id -.->|PK| Driver
-    driver_name -.-> Driver
-    driver_email -.->|UK| Driver
-    driver_phone -.-> Driver
-    license_number -.->|UK| Driver
-    license_expiry -.-> Driver
-    employment_type -.-> Driver
-    is_available -.-> Driver
-    is_on_duty -.-> Driver
-    driver_location -.-> Driver
-    rating -.-> Driver
-    total_trips -.-> Driver
-    
-    %% Vehicle Attributes
-    vehicle_id((vehicle_id))
-    registration((registration))
-    make((make))
-    v_model((model))
-    year((year))
-    vehicle_category((vehicle_category))
-    fuel_type((fuel_type))
-    payload_capacity_kg((payload_capacity_kg))
-    load_volume_m3((load_volume_m3))
-    has_gps_tracking((has_gps_tracking))
-    v_is_active((is_active))
-    current_location((current_location))
-    odometer_km((odometer_km))
-    
-    vehicle_id -.->|PK| Vehicle
-    registration -.->|UK| Vehicle
-    make -.-> Vehicle
-    v_model -.-> Vehicle
-    year -.-> Vehicle
-    vehicle_category -.-> Vehicle
-    fuel_type -.-> Vehicle
-    payload_capacity_kg -.-> Vehicle
-    load_volume_m3 -.-> Vehicle
-    has_gps_tracking -.-> Vehicle
-    v_is_active -.-> Vehicle
-    current_location -.-> Vehicle
-    odometer_km -.-> Vehicle
-    
-    %% Relationships
-    works_for{works_for}
-    tracks_location{tracks_location}
-    drives{drives}
-    
-    Driver -->|N:1| works_for
-    Driver -->|1:N| tracks_location --> DriverLocation
-    Driver -->|N:1| drives --> Vehicle
-```
-
-### Payment System
-
-```mermaid
-graph TB
-    %% Entity
     Payment[Payment]
     
-    %% Attributes
-    payment_id((payment_id))
-    transaction_id((transaction_id))
-    amount((amount))
-    currency((currency))
-    payment_method((payment_method))
-    p_status((status))
-    mobile_money_provider((mobile_money_provider))
-    mobile_money_number((mobile_money_number))
-    initiated_at((initiated_at))
-    completed_at((completed_at))
-    reference((reference))
-    receipt_url((receipt_url))
+    %% CORE RELATIONSHIPS
+    requests{requests}
+    collects{collects}
+    pays{pays}
+    manages{manages}
     
-    payment_id -.->|PK| Payment
-    transaction_id -.->|UK| Payment
-    amount -.-> Payment
-    currency -.-> Payment
-    payment_method -.-> Payment
-    p_status -.-> Payment
-    mobile_money_provider -.-> Payment
-    mobile_money_number -.-> Payment
-    initiated_at -.-> Payment
-    completed_at -.-> Payment
-    reference -.-> Payment
-    receipt_url -.-> Payment
-    
-    %% Relationships
-    pays_for{pays_for}
-    made_by{made_by}
-    
-    Payment -->|N:1| pays_for
-    Payment -->|N:1| made_by
+    User -->|1:N| requests --> ServiceRequest
+    Driver -->|N:M| collects --> SmartBin
+    User -->|1:N| pays --> Payment
+    Driver -->|N:M| manages --> ServiceRequest
 ```
 
-## Cardinality and Participation Constraints
-
-### Notation Legend
-- **1:1** - One-to-One relationship
-- **1:N** - One-to-Many relationship
-- **M:N** - Many-to-Many relationship
-- **Total Participation** (double line): Entity must participate in relationship
-- **Partial Participation** (single line): Entity may or may not participate
-
-### Key Relationships with Cardinality
-
-```mermaid
-graph LR
-    %% One-to-One
-    SmartBin ---|1:1| equipped_with{equipped_with} ---|1:1| Sensor
-    ServiceRequest ---|1:1| requires{requires} ---|1:1| Payment
-    
-    %% One-to-Many
-    User ---|1| owns{owns} ---|N| SmartBin
-    Sensor ---|1| produces{produces} ---|N| SensorReading
-    SmartBin ---|1| generates{generates} ---|N| BinAlert
-    Driver ---|1| tracks{tracks_location} ---|N| DriverLocation
-    ServiceProvider ---|1| employs{employs} ---|N| Driver
-    Zone ---|1| contains{contains} ---|N| SmartBin
-    
-    %% Many-to-One
-    SmartBin ---|N| has_type{has_type} ---|1| BinType
-    ServiceRequest ---|N| assigned_to{assigned_to} ---|1| ServiceProvider
-    Driver ---|N| works_for{works_for} ---|1| ServiceProvider
-    Vehicle ---|N| owned_by{owned_by} ---|1| ServiceProvider
-    
-    %% Many-to-Many (resolved with junction tables)
-    CollectionAssignment ---|M| includes{includes} ---|N| CollectionRecord
-```
-
-## Weak Entities
+## Main Business Entities with Primary Attributes
 
 ```mermaid
 graph TB
-    %% Strong Entity
+    %% USER DOMAIN
+    subgraph "User Domain"
+        User[User]
+        user_email((email))
+        user_phone((phone))
+        user_type((type))
+        
+        user_email -.-> User
+        user_phone -.-> User
+        user_type -.-> User
+    end
+    
+    %% WASTE MANAGEMENT DOMAIN
+    subgraph "Waste Management"
+        SmartBin[SmartBin]
+        bin_location((location))
+        bin_fill((fill_level))
+        bin_status((status))
+        
+        bin_location -.-> SmartBin
+        bin_fill -.-> SmartBin
+        bin_status -.-> SmartBin
+    end
+    
+    %% SERVICE DOMAIN
+    subgraph "Service Domain"
+        ServiceRequest[ServiceRequest]
+        req_type((type))
+        req_status((status))
+        req_cost((cost))
+        
+        req_type -.-> ServiceRequest
+        req_status -.-> ServiceRequest
+        req_cost -.-> ServiceRequest
+    end
+    
+    %% OPERATIONS DOMAIN
+    subgraph "Operations"
+        Driver[Driver]
+        driver_name((name))
+        driver_status((status))
+        
+        Vehicle[Vehicle]
+        vehicle_reg((registration))
+        vehicle_capacity((capacity))
+        
+        driver_name -.-> Driver
+        driver_status -.-> Driver
+        vehicle_reg -.-> Vehicle
+        vehicle_capacity -.-> Vehicle
+    end
+```
+
+## IoT and Monitoring Subsystem
+
+```mermaid
+graph TB
+    %% IOT ENTITIES
     SmartBin[SmartBin]
+    bin_id((bin_id))
+    bin_location((location))
+    bin_fill_level((fill_level))
     
-    %% Weak Entities (double rectangle in Chen's notation)
+    bin_id -.->|PK| SmartBin
+    bin_location -.-> SmartBin
+    bin_fill_level -.-> SmartBin
+    
+    Sensor[Sensor]
+    sensor_type((type))
+    sensor_battery((battery))
+    sensor_status((status))
+    
+    sensor_type -.-> Sensor
+    sensor_battery -.-> Sensor
+    sensor_status -.-> Sensor
+    
     SensorReading[[SensorReading]]
-    BinAlert[[BinAlert]]
+    reading_value((value))
+    reading_time((timestamp))
     
-    %% Identifying Relationships (double diamond)
+    reading_value -.-> SensorReading
+    reading_time -.-> SensorReading
+    
+    BinAlert[[BinAlert]]
+    alert_type((type))
+    alert_severity((severity))
+    
+    alert_type -.-> BinAlert
+    alert_severity -.-> BinAlert
+    
+    %% IOT RELATIONSHIPS
+    equipped_with{equipped_with}
     produces{{produces}}
     generates{{generates}}
     
-    %% Relationships
-    SmartBin -->|1| generates --> |N| BinAlert
-    Sensor -->|1| produces --> |N| SensorReading
-    
-    %% Weak entity attributes
-    reading_timestamp((timestamp))
-    reading_value((value))
-    alert_timestamp((timestamp))
-    alert_message((message))
-    
-    reading_timestamp -.-> SensorReading
-    reading_value -.-> SensorReading
-    alert_timestamp -.-> BinAlert
-    alert_message -.-> BinAlert
+    SmartBin -->|1:1| equipped_with --> Sensor
+    Sensor -->|1:N| produces --> SensorReading
+    SmartBin -->|1:N| generates --> BinAlert
 ```
 
-## Specialization/Generalization Hierarchy
+## Collection Management Subsystem
 
 ```mermaid
 graph TB
-    %% Supertype
-    User[User]
+    %% COLLECTION ENTITIES
+    Zone[Zone]
+    zone_name((name))
+    zone_area((area))
     
-    %% ISA relationship (triangle)
-    ISA{ISA}
+    zone_name -.-> Zone
+    zone_area -.-> Zone
     
-    %% Subtypes
-    Customer[Customer]
+    CollectionSchedule[Schedule]
+    schedule_day((day))
+    schedule_time((time))
+    
+    schedule_day -.-> CollectionSchedule
+    schedule_time -.-> CollectionSchedule
+    
+    CollectionAssignment[Assignment]
+    assign_date((date))
+    assign_status((status))
+    
+    assign_date -.-> CollectionAssignment
+    assign_status -.-> CollectionAssignment
+    
     Driver[Driver]
-    Administrator[Administrator]
+    driver_id((id))
+    driver_name((name))
     
-    %% Hierarchy
-    User --> ISA
-    ISA --> Customer
-    ISA --> Driver
-    ISA --> Administrator
+    driver_id -.->|PK| Driver
+    driver_name -.-> Driver
     
-    %% Specialized attributes
-    subscription_plan((subscription_plan))
-    license_number((license_number))
-    admin_level((admin_level))
-    
-    subscription_plan -.-> Customer
-    license_number -.-> Driver
-    admin_level -.-> Administrator
-```
-
-## Multi-valued Attributes
-
-```mermaid
-graph TB
-    %% Entity
-    ServiceProvider[ServiceProvider]
-    
-    %% Single-valued attributes
-    provider_id((provider_id))
-    company_name((company_name))
-    
-    %% Multi-valued attributes (double oval)
-    service_areas(((service_areas)))
-    services_offered(((services_offered)))
-    waste_types_handled(((waste_types_handled)))
-    
-    provider_id -.->|PK| ServiceProvider
-    company_name -.-> ServiceProvider
-    service_areas -.-> ServiceProvider
-    services_offered -.-> ServiceProvider
-    waste_types_handled -.-> ServiceProvider
-```
-
-## Composite Attributes
-
-```mermaid
-graph TB
-    %% Entity
     SmartBin[SmartBin]
+    bin_number((number))
     
-    %% Composite attribute
-    location((location))
+    bin_number -.-> SmartBin
     
-    %% Component attributes
-    latitude((latitude))
-    longitude((longitude))
-    altitude((altitude))
+    %% COLLECTION RELATIONSHIPS
+    has_schedule{has_schedule}
+    performs{performs}
+    covers{covers}
+    contains{contains}
     
-    location -.-> SmartBin
-    latitude -.-> location
-    longitude -.-> location
-    altitude -.-> location
-    
-    %% Another composite attribute
-    address_comp((address))
-    street((street))
-    area_comp((area))
-    city_comp((city))
-    postal((postal_code))
-    
-    address_comp -.-> SmartBin
-    street -.-> address_comp
-    area_comp -.-> address_comp
-    city_comp -.-> address_comp
-    postal -.-> address_comp
+    Zone -->|1:N| has_schedule --> CollectionSchedule
+    Driver -->|1:N| performs --> CollectionAssignment
+    CollectionAssignment -->|N:M| covers --> SmartBin
+    Zone -->|1:N| contains --> SmartBin
 ```
 
-## Derived Attributes
+## Service Request and Payment Flow
 
 ```mermaid
 graph TB
-    %% Entity
-    SmartBin[SmartBin]
+    %% SERVICE ENTITIES
+    User[User]
+    user_id((id))
+    user_name((name))
     
-    %% Regular attributes
-    capacity_kg((capacity_kg))
-    current_weight_kg((current_weight_kg))
+    user_id -.->|PK| User
+    user_name -.-> User
     
-    %% Derived attribute (dashed oval)
-    fill_percentage((fill_percentage))
+    ServiceRequest[ServiceRequest]
+    request_type((type))
+    request_date((date))
+    request_status((status))
     
-    capacity_kg -.-> SmartBin
-    current_weight_kg -.-> SmartBin
-    fill_percentage -.->|derived| SmartBin
+    request_type -.-> ServiceRequest
+    request_date -.-> ServiceRequest
+    request_status -.-> ServiceRequest
     
-    %% Formula notation
-    Note[fill_percentage = current_weight_kg / capacity_kg * 100]
+    ServiceProvider[Provider]
+    provider_name((name))
+    provider_rating((rating))
+    
+    provider_name -.-> ServiceProvider
+    provider_rating -.-> ServiceProvider
+    
+    Payment[Payment]
+    payment_amount((amount))
+    payment_method((method))
+    payment_status((status))
+    
+    payment_amount -.-> Payment
+    payment_method -.-> Payment
+    payment_status -.-> Payment
+    
+    Driver[Driver]
+    driver_name((name))
+    
+    driver_name -.-> Driver
+    
+    %% SERVICE RELATIONSHIPS
+    creates{creates}
+    assigned_to{assigned_to}
+    handles{handles}
+    requires{requires}
+    employs{employs}
+    
+    User -->|1:N| creates --> ServiceRequest
+    ServiceRequest -->|N:1| assigned_to --> ServiceProvider
+    Driver -->|N:M| handles --> ServiceRequest
+    ServiceRequest -->|1:1| requires --> Payment
+    ServiceProvider -->|1:N| employs --> Driver
 ```
 
-## Complete Chen's ERD Legend
+## System Overview - Highest Level Abstraction
 
-| Symbol | Meaning |
-|--------|---------|
-| Rectangle `[ ]` | Entity |
-| Double Rectangle `[[ ]]` | Weak Entity |
-| Diamond `{ }` | Relationship |
-| Double Diamond `{{ }}` | Identifying Relationship |
-| Oval `( )` | Attribute |
-| Double Oval `(( ))` | Multi-valued Attribute |
-| Dashed Oval | Derived Attribute |
-| Underlined Attribute | Primary Key |
-| Triangle | ISA (Generalization) |
-| Lines | Participation |
-| Double Lines | Total Participation |
-| 1, N, M | Cardinality |
+```mermaid
+graph LR
+    %% SUPER HIGH LEVEL - JUST 5 MAIN ENTITIES
+    subgraph "Core System"
+        User[User]
+        Bin[SmartBin]
+        Service[Service]
+        Operation[Operations]
+        Analytics[Analytics]
+    end
+    
+    %% SIMPLE RELATIONSHIPS
+    interacts{interacts}
+    monitors{monitors}
+    manages{manages}
+    analyzes{analyzes}
+    
+    User --> interacts --> Service
+    Service --> manages --> Bin
+    Operation --> monitors --> Bin
+    Analytics --> analyzes --> Bin
+```
 
-## Key Constraints in Chen's Notation
+## Entity Groupings by Business Domain
 
-1. **Participation Constraints**
-   - Total: Every SmartBin MUST have a BinType
-   - Partial: A User MAY own SmartBins
+```mermaid
+graph TB
+    subgraph "Customer Interface"
+        User[User]
+        u_attr((email, phone, type))
+        u_attr -.-> User
+        
+        ServiceRequest[ServiceRequest]
+        sr_attr((type, date, status))
+        sr_attr -.-> ServiceRequest
+        
+        Payment[Payment]
+        p_attr((amount, method))
+        p_attr -.-> Payment
+    end
+    
+    subgraph "IoT Infrastructure"
+        SmartBin[SmartBin]
+        b_attr((location, fill_level))
+        b_attr -.-> SmartBin
+        
+        Sensor[Sensor]
+        s_attr((type, battery))
+        s_attr -.-> Sensor
+    end
+    
+    subgraph "Operations Management"
+        Driver[Driver]
+        d_attr((name, license))
+        d_attr -.-> Driver
+        
+        Vehicle[Vehicle]
+        v_attr((registration, capacity))
+        v_attr -.-> Vehicle
+        
+        Zone[Zone]
+        z_attr((name, boundary))
+        z_attr -.-> Zone
+    end
+```
 
-2. **Cardinality Constraints**
-   - (1,1): A SmartBin has exactly one Sensor
-   - (0,N): A User can create zero or many ServiceRequests
-   - (1,N): A Sensor produces at least one SensorReading
+## Chen's Notation Legend for High-Level ERD
 
-3. **Key Constraints**
-   - Primary Key: Uniquely identifies entity instances
-   - Foreign Key: References another entity
-   - Unique Key: Alternative key constraint
+| Symbol | Meaning | Example |
+|--------|---------|---------|
+| `[Entity]` | Entity (Rectangle) | `[User]`, `[SmartBin]` |
+| `((attribute))` | Attribute (Oval) | `((email))`, `((fill_level))` |
+| `{relationship}` | Relationship (Diamond) | `{owns}`, `{monitors}` |
+| `[[Weak Entity]]` | Weak Entity (Double Rectangle) | `[[SensorReading]]` |
+| `{{relationship}}` | Identifying Relationship (Double Diamond) | `{{produces}}` |
+| `-.->` | Attribute Connection | Links attributes to entities |
+| `-->` | Relationship Connection | Links entities via relationships |
+| `1:N`, `N:M` | Cardinality | One-to-Many, Many-to-Many |
+| `PK` | Primary Key | Unique identifier |
+
+## Key Design Principles
+
+1. **High-Level Abstraction**: Only showing main entities and their key attributes
+2. **Attribute Grouping**: Attributes shown as ovals around entities for clarity
+3. **Simplified Relationships**: Only critical relationships displayed
+4. **Domain Separation**: Entities grouped by business function
+5. **Chen's Standard**: Following proper Chen's notation conventions
+
+## Main System Components Summary
+
+| Entity | Purpose | Key Attributes |
+|--------|---------|----------------|
+| **User** | System users (customers, admins) | id, email, phone, type |
+| **SmartBin** | IoT-enabled waste bins | id, location, fill_level, status |
+| **Sensor** | IoT monitoring devices | type, battery, status |
+| **ServiceRequest** | Waste collection requests | type, date, status, cost |
+| **Driver** | Collection personnel | name, license, status, rating |
+| **Vehicle** | Collection trucks | registration, type, capacity |
+| **Payment** | Transaction records | amount, method, status |
+| **Zone** | Geographic areas | name, area, boundary |
 
 ## Database Implementation Notes
 
-### PostgreSQL with PostGIS Implementation
-```sql
--- Entity tables based on Chen's notation
-CREATE TABLE users (
-    user_id UUID PRIMARY KEY,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    phone VARCHAR(20),
-    user_type VARCHAR(20) CHECK (user_type IN ('customer', 'driver', 'admin', 'provider')),
-    -- other attributes
-);
-
-CREATE TABLE smart_bins (
-    bin_id UUID PRIMARY KEY,
-    bin_number VARCHAR(50) UNIQUE NOT NULL,
-    bin_type_id INTEGER REFERENCES bin_types(type_id),
-    user_id UUID REFERENCES users(user_id),
-    location GEOMETRY(Point, 4326),
-    -- other attributes
-);
-
--- Relationship tables for M:N relationships
-CREATE TABLE collection_assignments_bins (
-    assignment_id UUID REFERENCES collection_assignments(assignment_id),
-    bin_id UUID REFERENCES smart_bins(bin_id),
-    PRIMARY KEY (assignment_id, bin_id)
-);
-
--- Weak entity with composite key
-CREATE TABLE sensor_readings (
-    sensor_id UUID REFERENCES sensors(sensor_id),
-    timestamp TIMESTAMP,
-    fill_level INTEGER,
-    -- other attributes
-    PRIMARY KEY (sensor_id, timestamp)
-);
-```
+The high-level ERD translates to approximately 15-20 main tables in PostgreSQL with PostGIS extensions for spatial data. The actual implementation includes additional junction tables for many-to-many relationships and audit tables for tracking changes.
