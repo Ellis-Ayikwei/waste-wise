@@ -1,19 +1,19 @@
 # Wasgo Entity Relationship Diagram (ERD)
 
 ## Database Schema Overview
-Wasgo uses PostgreSQL with PostGIS extension for geospatial capabilities. The Django backend implements a comprehensive data model for waste management operations.
+Wasgo uses PostgreSQL with PostGIS extension for geospatial capabilities. The Django backend implements a comprehensive data model for smart waste management operations in Ghana.
 
 ## Core Django Apps and Their Models
 
-### 1. Authentication & User Management
+### 1. User & Authentication Models
 
 ```python
-# User App Models
+# From apps.User.models
 class User(AbstractUser):
     user_id = UUIDField(primary_key=True)
     email = EmailField(unique=True)
     phone = CharField(max_length=20)
-    user_type = CharField(choices=['citizen', 'driver', 'admin', 'provider'])
+    user_type = CharField(choices=['customer', 'driver', 'admin', 'provider'])
     is_verified = BooleanField(default=False)
     profile_image = ImageField()
     address = TextField()
@@ -21,389 +21,513 @@ class User(AbstractUser):
     postal_code = CharField(max_length=10)
     created_at = DateTimeField(auto_now_add=True)
     updated_at = DateTimeField(auto_now=True)
-
-class UserProfile:
-    user = OneToOneField(User)
-    notification_preferences = JSONField()
-    language = CharField(choices=['en', 'tw', 'ga'])
-    location = PointField()  # PostGIS
 ```
 
-### 2. WasteBin Management
+### 2. WasteBin Models (apps.WasteBin)
 
 ```python
-class WasteBin:
-    bin_id = UUIDField(primary_key=True)
-    bin_code = CharField(unique=True)  # e.g., "ACC-001"
-    bin_type = CharField(choices=['general', 'recycling', 'organic', 'hazardous'])
-    capacity_liters = IntegerField()
-    location = PointField()  # PostGIS point
-    address = TextField()
-    zone = ForeignKey('Zone')
-    qr_code = CharField(unique=True)
-    installation_date = DateField()
-    last_maintenance = DateTimeField()
-    status = CharField(choices=['active', 'maintenance', 'damaged', 'removed'])
-    created_at = DateTimeField(auto_now_add=True)
+class BinType(Model):
+    """Types of waste bins available"""
+    WASTE_TYPES = [
+        ('general', 'General Waste'),
+        ('recyclable', 'Recyclable'),
+        ('organic', 'Organic/Compost'),
+        ('hazardous', 'Hazardous'),
+        ('electronic', 'E-Waste'),
+        ('plastic', 'Plastic Only'),
+        ('paper', 'Paper Only'),
+        ('glass', 'Glass Only'),
+        ('metal', 'Metal Only'),
+    ]
+    name = CharField(choices=WASTE_TYPES, unique=True)
+    description = TextField()
+    color_code = CharField(max_length=7)  # Hex color
+    icon = CharField(max_length=50)
+    capacity_liters = IntegerField(default=240)
 
-class SmartBinSensor:
-    sensor_id = UUIDField(primary_key=True)
-    bin = OneToOneField(WasteBin)
-    sensor_type = CharField(choices=['ultrasonic', 'weight', 'temperature', 'gps'])
-    manufacturer = CharField(max_length=100)
-    model_number = CharField(max_length=50)
-    installation_date = DateTimeField()
-    last_calibration = DateTimeField()
-    battery_type = CharField(max_length=50)
-    is_active = BooleanField(default=True)
-
-class SensorReading:
-    reading_id = UUIDField(primary_key=True)
-    sensor = ForeignKey(SmartBinSensor)
-    fill_level = IntegerField()  # 0-100%
-    weight_kg = DecimalField(max_digits=10, decimal_places=2)
-    temperature = DecimalField(max_digits=5, decimal_places=2)
-    humidity = DecimalField(max_digits=5, decimal_places=2)
-    battery_level = IntegerField()  # 0-100%
-    signal_strength = IntegerField()  # 0-100%
-    timestamp = DateTimeField()
-    location = PointField()  # Current GPS position
+class SmartBin(Basemodel):
+    """IoT-enabled smart waste bins"""
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('inactive', 'Inactive'),
+        ('maintenance', 'Under Maintenance'),
+        ('damaged', 'Damaged'),
+        ('full', 'Full - Needs Collection'),
+        ('offline', 'Offline - No Signal'),
+    ]
     
-class BinAlert:
-    alert_id = UUIDField(primary_key=True)
-    bin = ForeignKey(WasteBin)
-    alert_type = CharField(choices=['overflow', 'damage', 'vandalism', 'offline'])
-    severity = CharField(choices=['low', 'medium', 'high', 'critical'])
+    FILL_STATUS = [
+        ('empty', 'Empty (0-20%)'),
+        ('low', 'Low (20-40%)'),
+        ('medium', 'Medium (40-60%)'),
+        ('high', 'High (60-80%)'),
+        ('full', 'Full (80-100%)'),
+        ('overflow', 'Overflow (>100%)'),
+    ]
+    
+    bin_number = CharField(max_length=50, unique=True)
+    name = CharField(max_length=100)
+    bin_type = ForeignKey(BinType)
+    user = ForeignKey(User, null=True)  # Owner for private bins
+    sensor = OneToOneField('Sensor', null=True)
+    
+    # Location
+    location = PointField(srid=4326)  # PostGIS
+    address = CharField(max_length=255)
+    area = CharField(max_length=100)
+    city = CharField(max_length=100, default='Accra')
+    region = CharField(max_length=100, default='Greater Accra')
+    
+    # Status
+    status = CharField(choices=STATUS_CHOICES)
+    fill_status = CharField(choices=FILL_STATUS)
+    current_fill_level = IntegerField(default=0)  # 0-100%
+    last_collected = DateTimeField(null=True)
+    next_collection = DateTimeField(null=True)
+    
+    # Capacity
+    capacity_kg = DecimalField(max_digits=10, decimal_places=2)
+    current_weight_kg = DecimalField(max_digits=10, decimal_places=2)
+
+class Sensor(Basemodel):
+    """IoT sensors attached to bins"""
+    SENSOR_TYPES = [
+        ('ultrasonic', 'Ultrasonic'),
+        ('weight', 'Weight Sensor'),
+        ('temperature', 'Temperature'),
+        ('humidity', 'Humidity'),
+        ('gps', 'GPS Tracker'),
+        ('camera', 'Camera'),
+    ]
+    
+    sensor_id = CharField(max_length=50, unique=True)
+    sensor_type = CharField(choices=SENSOR_TYPES)
+    manufacturer = CharField(max_length=100)
+    model = CharField(max_length=100)
+    firmware_version = CharField(max_length=50)
+    
+    # Status
+    is_active = BooleanField(default=True)
+    is_online = BooleanField(default=False)
+    battery_level = IntegerField(default=100)  # 0-100%
+    signal_strength = IntegerField(default=0)  # 0-100%
+    
+    # Calibration
+    last_calibration = DateTimeField(null=True)
+    next_calibration = DateTimeField(null=True)
+    
+    # Communication
+    mqtt_topic = CharField(max_length=255)
+    last_reading = DateTimeField(null=True)
+    reading_interval_minutes = IntegerField(default=15)
+
+class SensorReading(Basemodel):
+    """Sensor data readings"""
+    sensor = ForeignKey(Sensor)
+    reading_type = CharField(max_length=50)
+    
+    # Measurements
+    fill_level = IntegerField(null=True)  # 0-100%
+    weight_kg = DecimalField(max_digits=10, decimal_places=2, null=True)
+    temperature = DecimalField(max_digits=5, decimal_places=2, null=True)
+    humidity = DecimalField(max_digits=5, decimal_places=2, null=True)
+    battery_level = IntegerField(null=True)
+    signal_strength = IntegerField(null=True)
+    
+    # Location (for GPS readings)
+    location = PointField(null=True)
+    
+    # Metadata
+    raw_data = JSONField()
+    timestamp = DateTimeField()
+    is_anomaly = BooleanField(default=False)
+
+class BinAlert(Basemodel):
+    """Alerts generated from bins"""
+    ALERT_TYPES = [
+        ('overflow', 'Bin Overflow'),
+        ('high_fill', 'High Fill Level'),
+        ('sensor_offline', 'Sensor Offline'),
+        ('low_battery', 'Low Battery'),
+        ('maintenance', 'Maintenance Required'),
+        ('vandalism', 'Possible Vandalism'),
+    ]
+    
+    bin = ForeignKey(SmartBin)
+    alert_type = CharField(choices=ALERT_TYPES)
+    severity = CharField(choices=[('low', 'Low'), ('medium', 'Medium'), ('high', 'High'), ('critical', 'Critical')])
     message = TextField()
-    created_at = DateTimeField(auto_now_add=True)
+    is_resolved = BooleanField(default=False)
     resolved_at = DateTimeField(null=True)
     resolved_by = ForeignKey(User, null=True)
 ```
 
-### 3. Service Request Management
+### 3. ServiceRequest Models (apps.ServiceRequest)
 
 ```python
-class ServiceRequest:
-    request_id = UUIDField(primary_key=True)
-    request_number = CharField(unique=True)  # e.g., "SR-2024-0001"
+class ServiceRequest(Basemodel):
+    """Service requests for waste collection"""
+    SERVICE_TYPE_CHOICES = [
+        ('general', 'General Service'),
+        ('waste_collection', 'Waste Collection'),
+        ('recycling', 'Recycling Service'),
+        ('hazardous_waste', 'Hazardous Waste Disposal'),
+        ('bin_maintenance', 'Bin Maintenance'),
+        ('bulk_waste', 'Bulk Waste Collection'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('accepted', 'Accepted by Provider'),
+        ('assigned', 'Assigned to Driver'),
+        ('en_route', 'Driver En Route'),
+        ('arrived', 'Driver Arrived'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+    ]
+    
+    WASTE_TYPES = [
+        ('general', 'General Waste'),
+        ('recyclable', 'Recyclable'),
+        ('organic', 'Organic/Compost'),
+        ('hazardous', 'Hazardous Waste'),
+        ('electronic', 'E-Waste'),
+        ('construction', 'Construction Debris'),
+    ]
+    
+    # Core fields
+    request_id = CharField(max_length=50, unique=True)
     customer = ForeignKey(User)
-    service_type = CharField(choices=['regular', 'bulk', 'recycling', 'hazardous'])
-    location = PointField()
-    address = TextField()
+    service_type = CharField(choices=SERVICE_TYPE_CHOICES)
+    status = FSMField(default='pending', choices=STATUS_CHOICES)
+    
+    # Location
+    pickup_location = PointField()
+    pickup_address = TextField()
+    
+    # Scheduling
+    requested_date = DateField()
+    requested_time_slot = CharField(choices=[('morning', 'Morning'), ('afternoon', 'Afternoon'), ('evening', 'Evening')])
+    scheduled_date = DateTimeField(null=True)
+    
+    # Waste details
+    waste_type = CharField(choices=WASTE_TYPES)
+    estimated_weight_kg = DecimalField(max_digits=10, decimal_places=2)
     description = TextField()
-    preferred_date = DateField()
-    preferred_time_slot = CharField(choices=['morning', 'afternoon', 'evening'])
-    status = CharField(choices=['pending', 'assigned', 'in_progress', 'completed', 'cancelled'])
-    priority = CharField(choices=['low', 'medium', 'high', 'urgent'])
-    assigned_driver = ForeignKey('Driver', null=True)
-    created_at = DateTimeField(auto_now_add=True)
+    photos = JSONField(default=list)
+    
+    # Assignment
+    provider = ForeignKey('Provider.ServiceProvider', null=True)
+    driver = ForeignKey('Driver.Driver', null=True)
+    vehicle = ForeignKey('Vehicle.Vehicle', null=True)
+    
+    # Completion
     completed_at = DateTimeField(null=True)
-
-class RequestItem:
-    item_id = UUIDField(primary_key=True)
-    request = ForeignKey(ServiceRequest)
-    item_type = CharField(max_length=100)
-    quantity = IntegerField()
-    weight_estimate = DecimalField(max_digits=10, decimal_places=2)
-    photo = ImageField()
-    notes = TextField()
+    actual_weight_kg = DecimalField(max_digits=10, decimal_places=2, null=True)
+    completion_photos = JSONField(default=list)
+    
+    # Pricing
+    estimated_cost = DecimalField(max_digits=10, decimal_places=2)
+    final_cost = DecimalField(max_digits=10, decimal_places=2, null=True)
+    payment_status = CharField(choices=[('pending', 'Pending'), ('paid', 'Paid'), ('failed', 'Failed')])
 ```
 
-### 4. Vehicle & Driver Management
+### 4. Driver Models (apps.Driver)
 
 ```python
-class Vehicle:
-    vehicle_id = UUIDField(primary_key=True)
-    registration_number = CharField(unique=True)
-    vehicle_type = CharField(choices=['truck', 'van', 'compactor', 'tipper'])
-    capacity_tons = DecimalField(max_digits=5, decimal_places=2)
-    fuel_type = CharField(choices=['diesel', 'petrol', 'electric', 'hybrid'])
-    gps_device_id = CharField(unique=True)
-    current_location = PointField()
-    status = CharField(choices=['available', 'on_duty', 'maintenance', 'offline'])
-    last_maintenance = DateField()
-    next_maintenance_due = DateField()
+class Driver(Basemodel):
+    """Driver profiles"""
+    # Basic info
+    name = CharField(max_length=255)
+    email = EmailField(unique=True)
+    phone_number = CharField(max_length=20)
+    date_of_birth = DateField(null=True)
+    national_id = CharField(max_length=20, unique=True)
+    address = TextField()
     
-class Driver:
-    driver_id = UUIDField(primary_key=True)
-    user = OneToOneField(User)
-    license_number = CharField(unique=True)
+    # Current location
+    location = PointField(null=True)
+    last_location_update = DateTimeField(null=True)
+    
+    # Employment
+    provider = ForeignKey('Provider.ServiceProvider', null=True)
+    employment_type = CharField(choices=[
+        ('employee', 'Employee'),
+        ('contractor', 'Contractor'),
+    ])
+    date_started = DateField()
+    
+    # License
+    license_number = CharField(max_length=20)
     license_expiry = DateField()
-    vehicle = ForeignKey(Vehicle, null=True)
-    assigned_zone = ForeignKey('Zone', null=True)
-    status = CharField(choices=['available', 'on_duty', 'break', 'off_duty'])
-    shift_start = TimeField()
-    shift_end = TimeField()
-    total_collections_today = IntegerField(default=0)
+    license_categories = JSONField(default=list)
     
-class DriverLocation:
-    location_id = UUIDField(primary_key=True)
+    # Status
+    is_available = BooleanField(default=True)
+    is_on_duty = BooleanField(default=False)
+    current_assignment = ForeignKey(ServiceRequest, null=True)
+    
+    # Performance
+    total_trips = IntegerField(default=0)
+    rating = DecimalField(max_digits=3, decimal_places=2, default=5.0)
+
+class DriverLocation(Basemodel):
+    """Real-time driver location tracking"""
     driver = ForeignKey(Driver)
     location = PointField()
     speed_kmh = DecimalField(max_digits=5, decimal_places=2)
     heading = IntegerField()  # 0-360 degrees
     timestamp = DateTimeField()
     is_moving = BooleanField()
+    battery_level = IntegerField()  # Mobile device battery
 ```
 
-### 5. Collection Management
+### 5. Vehicle Models (apps.Vehicle)
 
 ```python
-class CollectionSchedule:
-    schedule_id = UUIDField(primary_key=True)
-    zone = ForeignKey('Zone')
-    day_of_week = CharField(choices=['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])
-    time_slot = CharField(choices=['morning', 'afternoon', 'evening'])
-    frequency = CharField(choices=['daily', 'weekly', 'biweekly', 'monthly'])
-    is_active = BooleanField(default=True)
-    created_at = DateTimeField(auto_now_add=True)
-
-class CollectionAssignment:
-    assignment_id = UUIDField(primary_key=True)
-    driver = ForeignKey(Driver)
-    zone = ForeignKey('Zone')
-    assigned_date = DateField()
-    bins = ManyToManyField(WasteBin)
-    service_requests = ManyToManyField(ServiceRequest)
-    start_time = DateTimeField(null=True)
-    end_time = DateTimeField(null=True)
-    status = CharField(choices=['pending', 'in_progress', 'completed', 'cancelled'])
-    total_bins_collected = IntegerField(default=0)
-    notes = TextField(null=True)
+class Vehicle(Basemodel):
+    """Fleet vehicles"""
+    VEHICLE_CATEGORIES = [
+        ('van', 'Van'),
+        ('truck', 'Truck'),
+        ('waste_collection', 'Waste Collection Vehicle'),
+        ('recycling_truck', 'Recycling Truck'),
+        ('compactor', 'Waste Compactor'),
+    ]
     
-class CollectionRecord:
-    record_id = UUIDField(primary_key=True)
-    assignment = ForeignKey(CollectionAssignment)
-    bin = ForeignKey(WasteBin, null=True)
-    service_request = ForeignKey(ServiceRequest, null=True)
-    collected_at = DateTimeField()
-    weight_kg = DecimalField(max_digits=10, decimal_places=2, null=True)
-    fill_level_before = IntegerField(null=True)
-    photo_proof = ImageField(null=True)
-    notes = TextField(null=True)
+    FUEL_TYPES = [
+        ('diesel', 'Diesel'),
+        ('petrol', 'Petrol'),
+        ('electric', 'Electric'),
+        ('hybrid', 'Hybrid'),
+    ]
+    
+    # Identity
+    registration = CharField(max_length=10, unique=True)
+    make = CharField(max_length=50)
+    model = CharField(max_length=50)
+    year = PositiveIntegerField()
+    
+    # Specifications
+    vehicle_category = CharField(choices=VEHICLE_CATEGORIES)
+    fuel_type = CharField(choices=FUEL_TYPES)
+    payload_capacity_kg = PositiveIntegerField()
+    load_volume_m3 = DecimalField(max_digits=5, decimal_places=2)
+    
+    # Waste collection specific
+    waste_types_handled = JSONField(default=list)
+    has_compaction_system = BooleanField(default=False)
+    has_gps_tracking = BooleanField(default=True)
+    
+    # Assignment
+    provider = ForeignKey('Provider.ServiceProvider')
+    assigned_driver = ForeignKey(Driver, null=True)
+    
+    # Status
+    is_active = BooleanField(default=True)
+    is_available = BooleanField(default=True)
+    current_location = PointField(null=True)
+    
+    # Maintenance
+    last_maintenance = DateField(null=True)
+    next_maintenance_due = DateField(null=True)
+    odometer_km = IntegerField(default=0)
 ```
 
-### 6. Zone Management
+### 6. Provider Models (apps.Provider)
 
 ```python
-class Zone:
-    zone_id = UUIDField(primary_key=True)
-    zone_name = CharField(max_length=100)
-    zone_code = CharField(unique=True)
-    city = CharField(max_length=100)
-    boundary = PolygonField()  # PostGIS polygon
-    zone_type = CharField(choices=['residential', 'commercial', 'industrial', 'mixed'])
-    collection_frequency = CharField(choices=['daily', 'weekly', 'biweekly', 'monthly'])
-    assigned_provider = ForeignKey('Provider', null=True)
-    population_estimate = IntegerField()
-    area_sq_km = DecimalField(max_digits=10, decimal_places=2)
-    total_bins = IntegerField(default=0)
-```
-
-### 7. Provider Management
-
-```python
-class Provider:
-    provider_id = UUIDField(primary_key=True)
-    company_name = CharField(max_length=200)
-    registration_number = CharField(unique=True)
+class ServiceProvider(Basemodel):
+    """Waste management service providers"""
+    # Company info
+    company_name = CharField(max_length=255)
+    registration_number = CharField(max_length=50, unique=True)
+    tax_id = CharField(max_length=50)
+    
+    # Contact
     contact_person = CharField(max_length=100)
     email = EmailField()
     phone = CharField(max_length=20)
-    address = TextField()
-    service_areas = ManyToManyField(Zone)
-    fleet_size = IntegerField()
-    employee_count = IntegerField()
-    rating = DecimalField(max_digits=3, decimal_places=2)
+    website = URLField(null=True)
+    
+    # Location
+    headquarters_location = PointField()
+    headquarters_address = TextField()
+    service_areas = JSONField(default=list)  # List of polygons
+    
+    # Services
+    services_offered = JSONField(default=list)
+    waste_types_handled = JSONField(default=list)
+    
+    # Capacity
+    fleet_size = IntegerField(default=0)
+    driver_count = IntegerField(default=0)
+    daily_capacity_tons = DecimalField(max_digits=10, decimal_places=2)
+    
+    # Status
     is_active = BooleanField(default=True)
+    is_verified = BooleanField(default=False)
+    rating = DecimalField(max_digits=3, decimal_places=2, default=5.0)
 ```
 
-### 8. Payment & Billing
+### 7. Payment Models (apps.Payment)
 
 ```python
-class Payment:
-    payment_id = UUIDField(primary_key=True)
+class Payment(Basemodel):
+    """Payment transactions"""
+    PAYMENT_METHODS = [
+        ('cash', 'Cash'),
+        ('mobile_money', 'Mobile Money'),
+        ('card', 'Credit/Debit Card'),
+        ('bank_transfer', 'Bank Transfer'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('processing', 'Processing'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+        ('refunded', 'Refunded'),
+    ]
+    
+    # Transaction details
+    transaction_id = CharField(max_length=100, unique=True)
     user = ForeignKey(User)
     service_request = ForeignKey(ServiceRequest, null=True)
-    subscription = ForeignKey('Subscription', null=True)
+    
+    # Amount
     amount = DecimalField(max_digits=10, decimal_places=2)
-    currency = CharField(default='GHS')
-    payment_method = CharField(choices=['mobile_money', 'card', 'bank_transfer', 'cash'])
-    transaction_reference = CharField(unique=True)
-    status = CharField(choices=['pending', 'completed', 'failed', 'refunded'])
-    payment_date = DateTimeField()
+    currency = CharField(max_length=3, default='GHS')
     
-class Subscription:
-    subscription_id = UUIDField(primary_key=True)
-    customer = ForeignKey(User)
-    plan = ForeignKey('SubscriptionPlan')
-    start_date = DateField()
-    end_date = DateField()
-    is_active = BooleanField(default=True)
-    auto_renew = BooleanField(default=True)
+    # Payment info
+    payment_method = CharField(choices=PAYMENT_METHODS)
+    status = CharField(choices=STATUS_CHOICES)
     
-class SubscriptionPlan:
-    plan_id = UUIDField(primary_key=True)
-    plan_name = CharField(max_length=100)
-    plan_type = CharField(choices=['residential', 'commercial', 'industrial'])
-    collections_per_month = IntegerField()
-    price_per_month = DecimalField(max_digits=10, decimal_places=2)
-    features = JSONField()
+    # Mobile money specific
+    mobile_money_provider = CharField(max_length=50, null=True)
+    mobile_money_number = CharField(max_length=20, null=True)
+    
+    # Timestamps
+    initiated_at = DateTimeField(auto_now_add=True)
+    completed_at = DateTimeField(null=True)
+    
+    # Reference
+    reference = CharField(max_length=255)
+    receipt_url = URLField(null=True)
 ```
 
-### 9. Notification System
+### 8. Notification Models (apps.Notification)
 
 ```python
-class Notification:
-    notification_id = UUIDField(primary_key=True)
+class Notification(Basemodel):
+    """Multi-channel notifications"""
+    NOTIFICATION_TYPES = [
+        ('bin_full', 'Bin Full Alert'),
+        ('collection_reminder', 'Collection Reminder'),
+        ('service_update', 'Service Update'),
+        ('payment_reminder', 'Payment Reminder'),
+        ('driver_arrival', 'Driver Arrival'),
+    ]
+    
+    CHANNELS = [
+        ('sms', 'SMS'),
+        ('email', 'Email'),
+        ('push', 'Push Notification'),
+        ('in_app', 'In-App'),
+    ]
+    
+    # Recipient
     user = ForeignKey(User)
-    notification_type = CharField(choices=['alert', 'reminder', 'update', 'promotion'])
-    title = CharField(max_length=200)
-    message = TextField()
-    channel = CharField(choices=['push', 'sms', 'email', 'in_app'])
-    is_read = BooleanField(default=False)
-    sent_at = DateTimeField()
-    read_at = DateTimeField(null=True)
-    related_object_type = CharField(max_length=50, null=True)
-    related_object_id = UUIDField(null=True)
-```
-
-### 10. Analytics & Reporting
-
-```python
-class CollectionMetric:
-    metric_id = UUIDField(primary_key=True)
-    date = DateField()
-    zone = ForeignKey(Zone)
-    total_weight_collected_kg = DecimalField(max_digits=10, decimal_places=2)
-    bins_collected = IntegerField()
-    collections_completed = IntegerField()
-    average_fill_level = DecimalField(max_digits=5, decimal_places=2)
-    service_requests_fulfilled = IntegerField()
     
-class WasteComposition:
-    composition_id = UUIDField(primary_key=True)
-    zone = ForeignKey(Zone)
-    sample_date = DateField()
-    organic_percentage = DecimalField(max_digits=5, decimal_places=2)
-    plastic_percentage = DecimalField(max_digits=5, decimal_places=2)
-    paper_percentage = DecimalField(max_digits=5, decimal_places=2)
-    metal_percentage = DecimalField(max_digits=5, decimal_places=2)
-    glass_percentage = DecimalField(max_digits=5, decimal_places=2)
-    other_percentage = DecimalField(max_digits=5, decimal_places=2)
-
-class EnvironmentalImpact:
-    impact_id = UUIDField(primary_key=True)
-    month = DateField()
-    zone = ForeignKey(Zone, null=True)
-    waste_diverted_kg = DecimalField(max_digits=10, decimal_places=2)
-    recycling_rate = DecimalField(max_digits=5, decimal_places=2)
-    overflow_incidents = IntegerField()
-    illegal_dumping_reports = IntegerField()
-    created_at = DateTimeField(auto_now_add=True)
+    # Content
+    notification_type = CharField(choices=NOTIFICATION_TYPES)
+    title = CharField(max_length=255)
+    message = TextField()
+    data = JSONField(default=dict)
+    
+    # Delivery
+    channels = JSONField(default=list)  # List of channels
+    is_sent = BooleanField(default=False)
+    sent_at = DateTimeField(null=True)
+    is_read = BooleanField(default=False)
+    read_at = DateTimeField(null=True)
+    
+    # Related objects
+    related_bin = ForeignKey(SmartBin, null=True)
+    related_request = ForeignKey(ServiceRequest, null=True)
 ```
 
-## Entity Relationships
-
-### Primary Relationships
+## Entity Relationships Diagram
 
 ```mermaid
 erDiagram
     User ||--o{ ServiceRequest : creates
-    User ||--o| Driver : is
     User ||--o{ Payment : makes
     User ||--o{ Notification : receives
+    User ||--o{ SmartBin : owns
     
-    WasteBin ||--|| SmartBinSensor : has
-    SmartBinSensor ||--o{ SensorReading : generates
-    WasteBin ||--o{ BinAlert : triggers
-    WasteBin }o--|| Zone : belongs_to
+    SmartBin ||--o| Sensor : has
+    SmartBin ||--|| BinType : is_type
+    SmartBin ||--o{ BinAlert : generates
+    SmartBin ||--o{ SensorReading : records
     
-    Driver ||--o| Vehicle : drives
-    Driver ||--o{ CollectionAssignment : performs
+    Sensor ||--o{ SensorReading : produces
+    
+    ServiceRequest }o--|| ServiceProvider : assigned_to
+    ServiceRequest }o--o| Driver : handled_by
+    ServiceRequest }o--o| Vehicle : uses
+    ServiceRequest ||--o| Payment : requires
+    
+    Driver }o--|| ServiceProvider : works_for
     Driver ||--o{ DriverLocation : tracks
-    Driver }o--o| Zone : assigned_to
+    Driver }o--o| Vehicle : drives
     
-    CollectionAssignment ||--o{ CollectionRecord : contains
-    CollectionRecord }o--|| WasteBin : collects_from
-    CollectionRecord }o--o| ServiceRequest : fulfills
+    Vehicle }o--|| ServiceProvider : owned_by
     
-    Zone ||--o{ CollectionSchedule : has
-    Zone }o--|| Provider : serviced_by
+    ServiceProvider ||--o{ Driver : employs
+    ServiceProvider ||--o{ Vehicle : owns
     
-    ServiceRequest ||--o{ RequestItem : contains
-    ServiceRequest }o--o| Payment : requires
-    
-    Provider ||--o{ Vehicle : owns
-    
-    Subscription }o--|| SubscriptionPlan : uses
-    Subscription }o--|| User : belongs_to
+    Notification }o--o| SmartBin : about
+    Notification }o--o| ServiceRequest : about
 ```
 
-## Database Indexes
+## Key Database Indexes
 
 ```sql
 -- Geospatial indexes for PostGIS
-CREATE INDEX idx_wastebin_location ON wastebin USING GIST(location);
-CREATE INDEX idx_zone_boundary ON zone USING GIST(boundary);
-CREATE INDEX idx_driverlocation_location ON driverlocation USING GIST(location);
+CREATE INDEX idx_smartbin_location ON smartbin USING GIST(location);
+CREATE INDEX idx_servicerequest_location ON servicerequest USING GIST(pickup_location);
+CREATE INDEX idx_driver_location ON driver USING GIST(location);
+CREATE INDEX idx_vehicle_location ON vehicle USING GIST(current_location);
 
 -- Performance indexes
 CREATE INDEX idx_sensorreading_timestamp ON sensorreading(timestamp DESC);
-CREATE INDEX idx_sensorreading_bin_timestamp ON sensorreading(sensor_id, timestamp DESC);
-CREATE INDEX idx_collectionassignment_date ON collectionassignment(assigned_date, status);
+CREATE INDEX idx_binalert_unresolved ON binalert(is_resolved) WHERE is_resolved = false;
 CREATE INDEX idx_servicerequest_status ON servicerequest(status) WHERE status != 'completed';
-CREATE INDEX idx_binalert_resolved ON binalert(resolved_at) WHERE resolved_at IS NULL;
-
--- Foreign key indexes
-CREATE INDEX idx_sensorreading_sensor ON sensorreading(sensor_id);
-CREATE INDEX idx_collectionrecord_assignment ON collectionrecord(assignment_id);
-CREATE INDEX idx_notification_user ON notification(user_id);
+CREATE INDEX idx_driver_available ON driver(is_available, is_on_duty);
+CREATE INDEX idx_notification_unread ON notification(user_id, is_read) WHERE is_read = false;
 ```
 
-## PostGIS Spatial Queries
+## PostGIS Spatial Queries Examples
 
 ```sql
 -- Find nearest bins to a location
-SELECT bin_id, bin_code, 
-       ST_Distance(location, ST_MakePoint(?, ?)::geography) as distance
-FROM wastebin
-WHERE ST_DWithin(location, ST_MakePoint(?, ?)::geography, 1000)
+SELECT bin_number, name, 
+       ST_Distance(location, ST_MakePoint(%s, %s)::geography) as distance
+FROM wastebin_smartbin
+WHERE ST_DWithin(location, ST_MakePoint(%s, %s)::geography, 1000)
 ORDER BY distance;
 
--- Check if point is within zone
-SELECT zone_id, zone_name
-FROM zone
-WHERE ST_Contains(boundary, ST_MakePoint(?, ?));
+-- Find all service requests in a provider's service area
+SELECT sr.* 
+FROM servicerequest_servicerequest sr, provider_serviceprovider sp
+WHERE sp.id = %s
+AND ST_Contains(sp.service_area, sr.pickup_location);
 
--- Get all bins in a zone
-SELECT w.* FROM wastebin w
-JOIN zone z ON ST_Contains(z.boundary, w.location)
-WHERE z.zone_id = ?;
-
--- Find bins near driver's current location
-SELECT b.*, ST_Distance(b.location, d.location) as distance
-FROM wastebin b, driverlocation d
-WHERE d.driver_id = ?
-AND d.timestamp = (SELECT MAX(timestamp) FROM driverlocation WHERE driver_id = ?)
-AND ST_DWithin(b.location, d.location, 500);
+-- Track driver movement
+SELECT ST_MakeLine(location ORDER BY timestamp) as route
+FROM driver_driverlocation
+WHERE driver_id = %s
+AND timestamp >= %s;
 ```
-
-## Data Integrity Constraints
-
-1. **Check Constraints**
-   - Fill level between 0-100%
-   - Battery level between 0-100%
-   - Ratings between 0-5
-   - Percentages sum to 100% in waste composition
-
-2. **Unique Constraints**
-   - One sensor per bin
-   - One driver per user
-   - Unique QR codes for bins
-   - Unique transaction references
-
-3. **Foreign Key Constraints**
-   - CASCADE on delete for dependent records
-   - RESTRICT on critical relationships
-   - SET NULL for optional relationships
