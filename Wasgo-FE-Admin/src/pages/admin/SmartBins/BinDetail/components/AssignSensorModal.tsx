@@ -50,8 +50,10 @@ const AssignSensorModal: React.FC<AssignSensorModalProps> = ({
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Fetch all sensors
-    const { data: sensorsData, isLoading } = useSwr<Sensor[]>('waste/sensors/', fetcher);
+    const { data: sensorsData, isLoading } = useSwr<Sensor[]>('waste/sensors/?unassigned=true', fetcher);
     const sensors = sensorsData || [];
+
+    console.log("the sensor data", sensorsData)
 
     // Filter sensors based on search term
     const filteredSensors = sensors.filter(sensor => 
@@ -76,14 +78,15 @@ const AssignSensorModal: React.FC<AssignSensorModalProps> = ({
         try {
             // Update the bin to assign the sensor
             const binUpdateData = {
-                properties: {
-                    ...binData.properties,
-                    sensor_id: selectedSensor.id,
-                    updated_at: new Date().toISOString()
-                }
+                sensor_id: selectedSensor.id,
+                // properties: {
+                //     ...binData.properties,
+                //     sensor_id: selectedSensor.id,
+                //     updated_at: new Date().toISOString()
+                // }
             };
 
-            await axiosInstance.put(`waste/bins/${binData.id}/`, binUpdateData);
+            await axiosInstance.put(`waste/bins/${binData.id}/assign_to_sensor/`, binUpdateData);
 
             // Update the sensor to assign it to this bin
             const sensorUpdateData = {
@@ -124,14 +127,14 @@ const AssignSensorModal: React.FC<AssignSensorModalProps> = ({
                 }
             };
 
-            await axiosInstance.put(`waste/bins/${binData.id}/`, binUpdateData);
+            await axiosInstance.put(`waste/bins/${binData.id}/unassign_from_sensor/`);
 
             // Remove bin assignment from sensor
             const sensorUpdateData = {
                 assigned_bin: null
             };
 
-            await axiosInstance.put(`waste/sensors/${binData.properties.sensor_id}/`, sensorUpdateData);
+            // await axiosInstance.put(`waste/sensors/${binData.properties.sensor_id}/assign_to_bin/`, sensorUpdateData);
 
             toast.success('Sensor removed from bin successfully');
             onSuccess();

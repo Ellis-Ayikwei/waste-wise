@@ -1,4 +1,4 @@
-# 🚀 MoreVans Stripe Checkout Integration Guide
+# 🚀 wasgo Stripe Checkout Integration Guide
 
 ## 📋 **What We've Implemented**
 

@@ -16,7 +16,7 @@ This project now includes a comprehensive OTP (One-Time Password) verification s
 - Secure API endpoints for OTP operations
 
 ### 🎨 User Experience
-- Beautiful, modern UI matching the MoreVans design system
+- Beautiful, modern UI matching the wasgo design system
 - Responsive design for all device sizes
 - Auto-focus and smart navigation between OTP input fields
 - Copy-paste support for OTP codes
@@ -251,7 +251,7 @@ Update the logo and branding elements:
 </div>
 
 // Company name and tagline
-<h1 className="text-3xl font-bold text-white">MoreVans</h1>
+<h1 className="text-3xl font-bold text-white">wasgo</h1>
 <p className="text-blue-200 text-sm">Professional Logistics Solutions</p>
 ```
 
@@ -342,6 +342,6 @@ useEffect(() => {
 
 ## Conclusion
 
-This OTP verification system provides a secure, user-friendly, and highly customizable solution for email verification and two-factor authentication. The modular design allows for easy integration into existing authentication flows while maintaining the high design standards of the MoreVans platform.
+This OTP verification system provides a secure, user-friendly, and highly customizable solution for email verification and two-factor authentication. The modular design allows for easy integration into existing authentication flows while maintaining the high design standards of the wasgo platform.
 
 For questions or support, refer to the component documentation or contact the development team.

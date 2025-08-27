@@ -130,7 +130,7 @@ const ContactDetailsSection: React.FC<ContactDetailsSectionProps> = ({
                         className="mr-2 mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     />
                     <span className="text-sm text-gray-700">
-                        Please tick here to confirm you have read and understood MoreVans's{' '}
+                        Please tick here to confirm you have read and understood wasgo's{' '}
                         <a href="/partner-privacy-policy" className="text-blue-600 hover:underline" target="_blank">
                             Partner Privacy Policy
                         </a>

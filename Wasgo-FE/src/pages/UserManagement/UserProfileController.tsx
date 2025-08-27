@@ -296,7 +296,7 @@ const UserProfileController: React.FC<UserProfileControllerProps> = ({ userId, i
             mockUser = {
               id,
               name: 'Admin User',
-              email: 'admin@morevans.example.com',
+              email: 'admin@wasgo.example.com',
               phone: '+44 20 7111 2222',
               joinDate: '2023-01-01T00:00:00Z',
               type: 'admin',

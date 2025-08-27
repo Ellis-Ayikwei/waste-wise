@@ -486,7 +486,7 @@ const Hero: React.FC = () => {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.8, duration: 0.6 }}
                         >
-                            <h3 className="text-white font-bold text-xl mb-6">Why Choose MoreVans?</h3>
+                            <h3 className="text-white font-bold text-xl mb-6">Why Choose wasgo?</h3>
                             <div className="grid grid-cols-3 gap-6">
                                 <motion.div whileHover={{ scale: 1.05 }} className="text-center">
                                     <div className="text-3xl font-bold text-white mb-2">15K+</div>

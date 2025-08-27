@@ -1,4 +1,4 @@
-# MoreVans Chat System Architecture
+# wasgo Chat System Architecture
 
 ## Table of Contents
 
@@ -14,7 +14,7 @@
 
 ## 1. User Types & Communication Channels
 
-The MoreVans platform connects four primary user types through distinct communication channels:
+The wasgo platform connects four primary user types through distinct communication channels:
 
 |User Type|Role|Primary Communication Channels|
 |---------|----|-------------------------------|

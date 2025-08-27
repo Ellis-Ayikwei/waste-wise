@@ -96,7 +96,7 @@ const EmailVerificationSuccessModal: React.FC<EmailVerificationSuccessModalProps
                                         </Dialog.Title>
                                         
                                         <p className="text-lg text-gray-700 dark:text-gray-300">
-                                            Welcome to MoreVans, <span className="font-semibold text-green-600 dark:text-green-400">{providerName}</span>!
+                                            Welcome to wasgo, <span className="font-semibold text-green-600 dark:text-green-400">{providerName}</span>!
                                         </p>
 
                                         {email && (

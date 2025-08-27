@@ -185,7 +185,7 @@ export async function validatePostcode(postcode: string): Promise<{
     context?: any;
 }> {
     try {
-        const response = await axiosInstance.get(`/morevans/api/v1/locations/validate-postcode/${encodeURIComponent(postcode)}/`);
+        const response = await axiosInstance.get(`/wasgo/api/v1/locations/validate-postcode/${encodeURIComponent(postcode)}/`);
         return response.data;
     } catch (error) {
         console.error('Error validating postcode:', error);

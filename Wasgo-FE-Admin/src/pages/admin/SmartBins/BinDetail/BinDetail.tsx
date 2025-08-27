@@ -118,7 +118,7 @@ const BinDetail: React.FC = () => {
 
     useEffect(() => {
         if (binData) {
-            dispatch(setPageTitle(`Bin Detail - ${binData.properties.name}`));
+            dispatch(setPageTitle(`Bin Detail - ${binData?.properties?.name}`));
         }
     }, [dispatch, binData]);
 
@@ -163,8 +163,8 @@ const BinDetail: React.FC = () => {
             <div className="space-y-6">
                 {/* Header */}
                 <BinHeader
-                    binName={binData.properties.name}
-                    binId={binData.properties.bin_id}
+                    binName={binData?.properties?.name}
+                    binId={binData?.properties?.bin_id}
                     onRefresh={handleRefresh}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
@@ -172,8 +172,8 @@ const BinDetail: React.FC = () => {
 
                 {/* Status Overview */}
                 <BinStats
-                    fillLevel={binData.properties.fill_level}
-                    isOnline={binData.properties.is_online}
+                    fillLevel={binData?.properties?.fill_level}
+                    isOnline={binData?.properties?.is_online}
                     activeAlertsCount={activeAlerts.length}
                     totalReadingsCount={readings.length}
                 />
@@ -185,8 +185,8 @@ const BinDetail: React.FC = () => {
                 <div className="mt-6">
                     {activeTab === 'overview' && (
                         <OverviewTab
-                            binProperties={binData.properties}
-                            coordinates={Array.isArray(binData.geometry.coordinates) ? binData.geometry.coordinates : [0, 0]}
+                            binProperties={binData?.properties}
+                            coordinates={Array.isArray(binData?.geometry?.coordinates) ? binData?.geometry?.coordinates : [0, 0]}
                             recentReadings={recentReadings}
                         />
                     )}
@@ -221,7 +221,7 @@ const BinDetail: React.FC = () => {
                 <EditBinModal
                     isOpen={showEditModal}
                     onClose={() => setShowEditModal(false)}
-                    binData={binData}
+                    binData={binData?.properties}
                     onSuccess={() => {
                         mutate();
                         setShowEditModal(false);

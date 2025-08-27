@@ -1,4 +1,4 @@
-// filepath: c:\Users\Ellis Rockefeller\Desktop\Morevans.com\MoreVans-FE-v2\src\helper\apiDataConverter.tsx
+// filepath: c:\Users\Ellis Rockefeller\Desktop\wasgo.com\wasgo-FE-v2\src\helper\apiDataConverter.tsx
 import { convertToCamelCase } from '../utilities/snakeToCamel';
 import { ServiceRequest, JourneyStop, JourneyItem } from '../types';
 

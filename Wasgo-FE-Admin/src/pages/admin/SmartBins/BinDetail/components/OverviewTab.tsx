@@ -50,39 +50,39 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                 <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="text-sm font-medium text-gray-500">Bin ID</label>
-                            <p className="text-sm font-mono">{binProperties.bin_id}</p>
+                            <label className="text-sm font-medium text-gray-500">Bin Number</label>
+                            <p className="text-sm font-mono">{binProperties?.bin_number || 'N/A'}</p>
                         </div>
                         <div>
                             <label className="text-sm font-medium text-gray-500">Type</label>
-                            <Badge variant="outline">{binProperties.bin_type_display}</Badge>
+                            <Badge variant="outline">{binProperties?.bin_type_display}</Badge>
                         </div>
                         <div>
                             <label className="text-sm font-medium text-gray-500">Status</label>
-                            <Badge variant={binProperties.is_online ? 'default' : 'destructive'}>
-                                {binProperties.is_online ? 'Online' : 'Offline'}
+                            <Badge variant={binProperties?.is_online ? 'default' : 'destructive'}>
+                                {binProperties?.is_online ? 'Online' : 'Offline'}
                             </Badge>
                         </div>
                         <div>
                             <label className="text-sm font-medium text-gray-500">Fill Status</label>
-                            <Badge variant="outline">{binProperties.fill_status}</Badge>
+                            <Badge variant="outline">{binProperties?.fill_status}</Badge>
                         </div>
                     </div>
                     
                     <div>
                         <label className="text-sm font-medium text-gray-500">Address</label>
-                        <p className="text-sm">{binProperties.address}</p>
+                        <p className="text-sm">{binProperties?.address}</p>
                     </div>
                     
                     <div>
                         <label className="text-sm font-medium text-gray-500">Area</label>
-                        <p className="text-sm">{binProperties.area}</p>
+                        <p className="text-sm">{binProperties?.area}</p>
                     </div>
 
-                    {binProperties.user && (
+                    {binProperties?.user && (
                         <div>
                             <label className="text-sm font-medium text-gray-500">Assigned User</label>
-                            <p className="text-sm">{binProperties.user.name || 'Unknown'}</p>
+                            <p className="text-sm">{binProperties?.user?.name || 'Unknown'}</p>
                         </div>
                     )}
                 </CardContent>
@@ -97,7 +97,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                     <div>
                         <label className="text-sm font-medium text-gray-500">Sensor Status</label>
                         <div className="flex items-center gap-2 mt-1">
-                            {binProperties.sensor_id ? (
+                            {binProperties?.sensor_id ? (
                                 <Badge variant="default" className="bg-green-100 text-green-800">
                                     Sensor Assigned
                                 </Badge>
@@ -111,20 +111,20 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
 
                     <div>
                         <label className="text-sm font-medium text-gray-500">Sensor ID</label>
-                        <p className="text-sm font-mono">{binProperties.sensor_id || 'Not assigned'}</p>
+                        <p className="text-sm font-mono">{binProperties?.sensor_id || 'Not assigned'}</p>
                     </div>
 
-                    {binProperties.sensor_id && (
+                    {binProperties?.sensor_id && (
                         <>
                             <div>
                                 <label className="text-sm font-medium text-gray-500">Battery Level</label>
                                 <div className="flex items-center gap-2 mt-1">
                                     <Progress 
-                                        value={binProperties.battery_level || 0} 
+                                        value={binProperties?.battery_level || 0} 
                                         className="flex-1"
-                                        color={binProperties.battery_level && binProperties.battery_level > 50 ? 'green' : 'red'}
+                                        color={binProperties?.battery_level && binProperties?.battery_level > 50 ? 'green' : 'red'}
                                     />
-                                    <span className="text-sm">{binProperties.battery_level || 0}%</span>
+                                    <span className="text-sm">{binProperties?.battery_level || 0}%</span>
                                 </div>
                             </div>
 
@@ -132,23 +132,23 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                                 <label className="text-sm font-medium text-gray-500">Signal Strength</label>
                                 <div className="flex items-center gap-2 mt-1">
                                     <Progress 
-                                        value={binProperties.signal_strength || 0} 
+                                        value={binProperties?.signal_strength || 0} 
                                         className="flex-1"
-                                        color={binProperties.signal_strength && binProperties.signal_strength > 50 ? 'green' : 'red'}
+                                        color={binProperties?.signal_strength && binProperties?.signal_strength > 50 ? 'green' : 'red'}
                                     />
-                                    <span className="text-sm">{binProperties.signal_strength || 0}%</span>
+                                    <span className="text-sm">{binProperties?.signal_strength || 0}%</span>
                                 </div>
                             </div>
 
                             <div>
                                 <label className="text-sm font-medium text-gray-500">Last Reading</label>
-                                <p className="text-sm">{binProperties.last_reading_at || 'No recent readings'}</p>
+                                <p className="text-sm">{binProperties?.last_reading_at || 'No recent readings'}</p>
                             </div>
 
                             <Button 
                                 variant="outline" 
                                 className="w-full" 
-                                onClick={() => navigate(`/admin/sensors/${binProperties.sensor_id}`)}
+                                onClick={() => navigate(`/admin/sensors/${binProperties?.sensor_id}`)}
                             >
                                 <IconArrowRight className="w-4 h-4 mr-2" />
                                 View Sensor Details

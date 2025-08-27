@@ -1,6 +1,6 @@
 # Common Items Admin Console
 
-A comprehensive admin interface for managing common items, categories, brands, and models in the MoreVans system.
+A comprehensive admin interface for managing common items, categories, brands, and models in the wasgo system.
 
 ## Features
 

@@ -382,7 +382,7 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({ isOpen, onClose, onAdd,
 
 
                     const response = await axiosInstance.post(`/drivers/${driverId}/documents/`, docData)
-                    // const response = await fetch(`/morevans/api/v1/drivers/${driverId}/documents/`, {
+                    // const response = await fetch(`/wasgo/api/v1/drivers/${driverId}/documents/`, {
                     //     method: 'POST',
                     //     body: docData,
                     //     headers: {

@@ -1,8 +1,8 @@
-# MoreVans Pricing System Documentation
+# wasgo Pricing System Documentation
 
 ## Overview
 
-The MoreVans pricing system is a dynamic, factor-based pricing engine that calculates delivery costs based on multiple variables. The system consists of two main components:
+The wasgo pricing system is a dynamic, factor-based pricing engine that calculates delivery costs based on multiple variables. The system consists of two main components:
 
 1. Pricing Factors - Individual components that affect the final price
 2. Pricing Configurations - Sets of active factors and their base settings

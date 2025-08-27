@@ -40,6 +40,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import useSWR from 'swr';
 import fetcher from '../../services/fetcher';
+import Ghc from '../../helper/CurrencyFormatter';
 
 const CustomerDashboard = () => {
     const auth = useAuthUser();
@@ -238,7 +239,7 @@ const CustomerDashboard = () => {
                     <StatCard
                         icon={faWallet}
                         title="Total Spent"
-                        value={`$${stats.rewardsEarned.toFixed(2)}`}
+                        value={`${Ghc(stats.rewardsEarned)}`}
                         color="yellow"
                         delay={0.4}
                     />

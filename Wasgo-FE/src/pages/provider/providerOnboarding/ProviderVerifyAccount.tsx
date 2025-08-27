@@ -158,7 +158,7 @@ const ProviderVerifyAccount: React.FC = () => {
                                 Thank you for signing up!
                             </h1>
                             <p className="text-xl text-gray-600">
-                                Almost there, activate your MoreVans account and start maximising your earnings
+                                Almost there, activate your wasgo account and start maximising your earnings
                             </p>
                         </div>
 

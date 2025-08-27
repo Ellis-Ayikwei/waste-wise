@@ -179,12 +179,7 @@ class SmartBinSerializer(GeoFeatureModelSerializer):
 
     # Include sensor information
     sensor = SensorSerializer(read_only=True)
-    user = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
-        required=False,
-        allow_null=True,
-        help_text="Primary key UUID of the user who owns this bin",
-    )
+    user = serializers.SerializerMethodField()
     sensor_id = serializers.PrimaryKeyRelatedField(
         source="sensor",
         queryset=Sensor.objects.all(),
@@ -217,6 +212,14 @@ class SmartBinSerializer(GeoFeatureModelSerializer):
         # Update the online status and return it
         obj.check_and_set_online()
         return obj.is_online
+
+    def get_user(self, obj):
+        """Get full user data if user exists"""
+        if obj.user:
+            from apps.User.serializer import UserSerializer
+
+            return UserSerializer(obj.user).data
+        return None
 
 
 class SmartBinListSerializer(GeoFeatureModelSerializer):
@@ -281,10 +284,7 @@ class SmartBinListJSONSerializer(serializers.ModelSerializer):
     bin_type_display = serializers.CharField(
         source="bin_type.get_name_display", read_only=True
     )
-    user_id = serializers.UUIDField(source="user.id", read_only=True, allow_null=True)
-    user_name = serializers.CharField(
-        source="user.username", read_only=True, allow_null=True
-    )
+    user = serializers.SerializerMethodField()
     sensor_id = serializers.UUIDField(
         source="sensor.id", read_only=True, allow_null=True
     )
@@ -309,8 +309,7 @@ class SmartBinListJSONSerializer(serializers.ModelSerializer):
             "status",
             "bin_type",
             "bin_type_display",
-            "user_id",
-            "user_name",
+            "user",
             "sensor_id",
             "battery_level",
             "signal_strength",
@@ -343,6 +342,14 @@ class SmartBinListJSONSerializer(serializers.ModelSerializer):
         # Update the online status and return it
         obj.check_and_set_online()
         return obj.is_online
+
+    def get_user(self, obj):
+        """Get full user data if user exists"""
+        if obj.user:
+            from apps.User.serializer import UserSerializer
+
+            return UserSerializer(obj.user).data
+        return None
 
 
 class SensorDataInputSerializer(serializers.Serializer):

@@ -203,7 +203,7 @@ const EditDriver: React.FC = () => {
 
     const handleDownload = async (document: any, side?: string) => {
         try {
-            const url1 = `/morevans/api/v1/uploads/docs/drivers/${id}/${document.id}/${side === 'back' ? document.back_file_name : document.front_file_name}`.replace(/\/+/g, '/');
+            const url1 = `/wasgo/api/v1/uploads/docs/drivers/${id}/${document.id}/${side === 'back' ? document.back_file_name : document.front_file_name}`.replace(/\/+/g, '/');
             
             const response = await axiosInstance.get(url1, { responseType: 'blob' });
             const blob = new Blob([response.data]);

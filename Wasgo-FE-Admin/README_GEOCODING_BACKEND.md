@@ -24,7 +24,7 @@ Frontend ← Formatted Response ← API Response
 
 ### 1. Django Views Added
 
-Located in: `MoreVans-BE/apps/Location/views.py`
+Located in: `wasgo-BE/apps/Location/views.py`
 
 -   `google_address_autocomplete` - Address suggestions
 -   `google_place_details` - Detailed place information
@@ -33,7 +33,7 @@ Located in: `MoreVans-BE/apps/Location/views.py`
 
 ### 2. URL Endpoints
 
-Located in: `MoreVans-BE/apps/Location/urls.py`
+Located in: `wasgo-BE/apps/Location/urls.py`
 
 ```python
 # Google Maps API proxy endpoints
@@ -45,7 +45,7 @@ path("locations/postcode-suggestions/", views.postcode_suggestions),
 
 ### 3. API Key Configuration
 
-Located in: `MoreVans-BE/backend/settings.py`
+Located in: `wasgo-BE/backend/settings.py`
 
 ```python
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY', 'your-fallback-key')
@@ -94,7 +94,7 @@ function MyForm() {
 ### Address Autocomplete
 
 ```http
-GET /morevans/api/v1/locations/google-autocomplete/?input=london%20bridge&sessiontoken=abc123
+GET /wasgo/api/v1/locations/google-autocomplete/?input=london%20bridge&sessiontoken=abc123
 ```
 
 **Response:**
@@ -118,7 +118,7 @@ GET /morevans/api/v1/locations/google-autocomplete/?input=london%20bridge&sessio
 ### Place Details
 
 ```http
-GET /morevans/api/v1/locations/google-place-details/?place_id=ChIJ...&sessiontoken=abc123
+GET /wasgo/api/v1/locations/google-place-details/?place_id=ChIJ...&sessiontoken=abc123
 ```
 
 **Response:**
@@ -147,7 +147,7 @@ GET /morevans/api/v1/locations/google-place-details/?place_id=ChIJ...&sessiontok
 ### Geocoding
 
 ```http
-GET /morevans/api/v1/locations/geocode/?address=10%20Downing%20Street%20London
+GET /wasgo/api/v1/locations/geocode/?address=10%20Downing%20Street%20London
 ```
 
 **Response:**
@@ -172,7 +172,7 @@ GET /morevans/api/v1/locations/geocode/?address=10%20Downing%20Street%20London
 ### Postcode Suggestions
 
 ```http
-GET /morevans/api/v1/locations/postcode-suggestions/?q=SW1
+GET /wasgo/api/v1/locations/postcode-suggestions/?q=SW1
 ```
 
 **Response:**

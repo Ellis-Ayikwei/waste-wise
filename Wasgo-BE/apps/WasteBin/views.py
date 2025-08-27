@@ -44,6 +44,7 @@ class SensorViewSet(viewsets.ModelViewSet):
     """ViewSet for managing IoT sensors"""
 
     queryset = Sensor.objects.all()
+
     serializer_class = SensorSerializer
     permission_classes = [AllowAny]  # Temporarily allow anonymous access for testing
 
@@ -74,6 +75,10 @@ class SensorViewSet(viewsets.ModelViewSet):
         manufacturer = self.request.query_params.get("manufacturer")
         if manufacturer:
             queryset = queryset.filter(manufacturer__icontains=manufacturer)
+
+        unassigned = self.request.query_params.get("unassigned")
+        if unassigned == "true":
+            queryset = queryset.filter(assigned_bin__isnull=True)
 
         # Filter sensors needing maintenance
         needs_maintenance = self.request.query_params.get("needs_maintenance")
@@ -278,6 +283,7 @@ class SmartBinViewSet(viewsets.ModelViewSet):
     queryset = SmartBin.objects.all()
     serializer_class = SmartBinSerializer
     permission_classes = [AllowAny]
+    authentication_classes = []  # Disable all authentication
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -330,8 +336,8 @@ class SmartBinViewSet(viewsets.ModelViewSet):
         if user_id:
             queryset = queryset.filter(user__id=user_id)
 
-        # Filter by current user's bins (if not admin)
-        if not self.request.user.is_staff:
+        # Filter by current user's bins (if not admin and user is authenticated)
+        if self.request.user.is_authenticated and not self.request.user.is_staff:
             queryset = queryset.filter(user=self.request.user)
 
         # Update online status for all bins in queryset
@@ -477,7 +483,7 @@ class SmartBinViewSet(viewsets.ModelViewSet):
 
         return Response(impact_data)
 
-    @action(detail=True, methods=["post"])
+    @action(detail=True, methods=["put"])
     def assign_to_user(self, request, pk=None):
         """Assign a bin to a user"""
         bin = self.get_object()
@@ -506,7 +512,7 @@ class SmartBinViewSet(viewsets.ModelViewSet):
                 {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
-    @action(detail=True, methods=["post"])
+    @action(detail=True, methods=["put"])
     def unassign_from_user(self, request, pk=None):
         """Remove user assignment from a bin"""
         bin = self.get_object()
@@ -523,6 +529,72 @@ class SmartBinViewSet(viewsets.ModelViewSet):
 
         return Response(
             {"message": f"Bin {bin.bin_number} unassigned from user {previous_user}"},
+            status=status.HTTP_200_OK,
+        )
+
+    @action(detail=True, methods=["put"])
+    def assign_to_sensor(self, request, pk=None):
+        """Assign a bin to a sensor"""
+        bin = self.get_object()
+        sensor_id = request.data.get("sensor_id")
+        sensor = Sensor.objects.get(id=sensor_id)
+
+        if not sensor:
+            return Response(
+                {"error": "Sensor not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        if not sensor_id:
+            return Response(
+                {"error": "sensor_id is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            if sensor.assigned_bin:
+                return Response(
+                    {"error": "Sensor is already assigned to a bin"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        except SmartBin.DoesNotExist:
+            # Sensor has no assigned bin, which is what we want
+            pass
+
+        try:
+            sensor = Sensor.objects.get(id=sensor_id)
+
+            bin.sensor = sensor
+            bin.save()
+
+            return Response(
+                {
+                    "message": f"Bin {bin.bin_number} assigned to sensor {sensor.sensor_number}"
+                },
+                status=status.HTTP_200_OK,
+            )
+        except Sensor.DoesNotExist:
+            return Response(
+                {"error": "Sensor not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+    @action(detail=True, methods=["put"])
+    def unassign_from_sensor(self, request, pk=None):
+        """Remove sensor assignment from a bin"""
+        bin = self.get_object()
+
+        if not bin.sensor:
+            return Response(
+                {"error": "Bin is not assigned to any sensor"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        previous_sensor = bin.sensor.sensor_number
+        bin.sensor = None
+        bin.save()
+
+        return Response(
+            {
+                "message": f"Bin {bin.bin_number} unassigned from sensor {previous_sensor}"
+            },
             status=status.HTTP_200_OK,
         )
 
@@ -652,6 +724,56 @@ class SensorDataViewSet(viewsets.ViewSet):
                 {"error": f"Failed to update online status: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+    @action(detail=True, methods=["put"])
+    def assign_to_bin(self, request, pk=None):
+        """Assign a sensor to a bin"""
+        sensor = self.get_object()
+        bin_id = request.data.get("bin_id")
+
+        if not bin_id:
+            return Response(
+                {"error": "bin_id is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            bin = SmartBin.objects.get(id=bin_id)
+
+            sensor.bin = bin
+            bin.save()
+
+            return Response(
+                {
+                    "message": f"Sensor {sensor.sensor_number} assigned to bin {bin.bin_number}"
+                },
+                status=status.HTTP_200_OK,
+            )
+        except SmartBin.DoesNotExist:
+            return Response(
+                {"error": "Bin not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+    @action(detail=True, methods=["put"])
+    def unassign_from_bin(self, request, pk=None):
+        """Remove bin assignment from a sensor"""
+        sensor = self.get_object()
+
+        if not sensor.bin:
+            return Response(
+                {"error": "Sensor is not assigned to any bin"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        previous_bin = sensor.bin.bin_number
+        sensor.bin = None
+        sensor.save()
+
+        return Response(
+            {
+                "message": f"Sensor {sensor.sensor_number} unassigned from bin {previous_bin}"
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class BinAlertViewSet(viewsets.ModelViewSet):

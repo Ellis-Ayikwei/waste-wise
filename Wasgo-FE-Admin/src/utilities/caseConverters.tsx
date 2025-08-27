@@ -1,4 +1,4 @@
-// filepath: c:\Users\Ellis Rockefeller\Desktop\Morevans.com\MoreVans-FE-v2\src\utilities\caseConverters.tsx
+// filepath: c:\Users\Ellis Rockefeller\Desktop\wasgo.com\wasgo-FE-v2\src\utilities\caseConverters.tsx
 /**
  * Utility functions to convert between camelCase and snake_case
  */

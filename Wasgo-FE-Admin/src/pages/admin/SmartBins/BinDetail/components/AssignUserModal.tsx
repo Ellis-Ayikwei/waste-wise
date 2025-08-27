@@ -9,6 +9,7 @@ import axiosInstance from '../../../../../services/axiosInstance';
 import toast from 'react-hot-toast';
 import useSwr from 'swr';
 import fetcher from '../../../../../services/fetcher';
+import { showNotification } from '../../../../../utilities/showNotifcation';
 
 interface AssignUserModalProps {
     isOpen: boolean;
@@ -53,32 +54,45 @@ const AssignUserModal: React.FC<AssignUserModalProps> = ({
     );
 
     // Filter to show only customers
-    const customerUsers = filteredUsers.filter(user => user.user_type === 'customer');
+    const customerUsers = filteredUsers;
 
     const handleAssignUser = async () => {
         if (!selectedUser) {
-            toast.error('Please select a user to assign');
+            showNotification({
+                showHide: true,
+                message: 'Please select a user to assign',
+                type: 'error'
+            })
             return;
         }
 
         setIsSubmitting(true);
         try {
             const updateData = {
-                properties: {
-                    ...binData.properties,
-                    user_id: selectedUser.id,
-                    user_name: `${selectedUser.first_name} ${selectedUser.last_name}`,
-                    updated_at: new Date().toISOString()
-                }
+                user_id: selectedUser.id,
+                // properties: {
+                //     ...binData.properties,
+                //     user_id: selectedUser.id,
+                //     user_name: `${selectedUser.first_name} ${selectedUser.last_name}`,
+                //     updated_at: new Date().toISOString()
+                // }
             };
 
-            await axiosInstance.put(`waste/bins/${binData.id}/`, updateData);
-            toast.success(`User ${selectedUser.first_name} ${selectedUser.last_name} assigned successfully`);
+            await axiosInstance.put(`waste/bins/${binData?.id}/assign_to_user/`, updateData);
+            showNotification({
+                showHide: true,
+                message: `User ${selectedUser.first_name} ${selectedUser.last_name} assigned successfully`,
+                type: 'success'
+            })
             onSuccess();
             onClose();
         } catch (error) {
             console.error('Error assigning user:', error);
-            toast.error('Failed to assign user');
+            showNotification({
+                showHide: true,
+                message: 'Failed to assign user',
+                type: 'error'
+            })
         } finally {
             setIsSubmitting(false);
         }
@@ -306,6 +320,7 @@ const AssignUserModal: React.FC<AssignUserModalProps> = ({
 };
 
 export default AssignUserModal;
+
 
 
 

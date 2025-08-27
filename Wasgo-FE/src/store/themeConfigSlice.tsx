@@ -173,7 +173,7 @@ const themeConfigSlice = createSlice({
         },
         setPageTitle(state, action: PayloadAction<string>) {
             state.pageTitle = action.payload;
-            document.title = `${action.payload} | MoreVans`;
+            document.title = `${action.payload} | wasgo`;
         },
         setAccentColor(state, action: PayloadAction<string>) {
             const payload = action.payload;

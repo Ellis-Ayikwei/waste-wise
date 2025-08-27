@@ -1,10 +1,10 @@
-let GBPFormatter = new Intl.NumberFormat('en-GB', {
+let GhsFormatter = new Intl.NumberFormat('en-GB', {
     style: 'currency',
-    currency: 'GBP',
+    currency: 'GHS',
 });
 
-const Gbp = (amount: any) => {
-    return GBPFormatter.format(Number(amount ?? 0));
+const Ghc = (amount: any) => {
+    return GhsFormatter.format(amount);
 };
 
-export default Gbp;
+export default Ghc;

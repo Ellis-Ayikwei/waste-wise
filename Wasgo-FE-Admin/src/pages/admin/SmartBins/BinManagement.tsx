@@ -31,6 +31,7 @@ import DraggableDataTable from '../../../components/ui/DraggableDataTable';
 import { setPageTitle } from '../../../store/themeConfigSlice';
 import useSwr from 'swr';
 import fetcher from '../../../services/fetcher';
+import AssignUserModal from './BinDetail/components/AssignUserModal';
 
 // Interface for bin data
 interface SmartBinData {
@@ -75,6 +76,7 @@ const BinManagement: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [showAddModal, setShowAddModal] = useState(false);
+    const [showAssignUserModal, setShowAssignUserModal] = useState(false);
     const [newBinForm, setNewBinForm] = useState<NewBinForm>({
         name: '',
         address: '',
@@ -155,6 +157,16 @@ const BinManagement: React.FC = () => {
             render: (bin: SmartBinData) => (
                 <div className="max-w-xs truncate" title={bin.address}>
                     {bin.address}
+                </div>
+            )
+        },
+        {
+            accessor: 'user',
+            title: 'Assigned User',
+            sortable: true,
+            render: (bin: SmartBinData) => (
+                <div className="max-w-xs truncate" title={bin?.user?.first_name + ' ' + bin?.user?.last_name || 'N/A'}>
+                    {bin?.user ? bin?.user?.first_name + ' ' + bin?.user?.last_name : (<button className="text-blue-500 hover:text-blue-600" onClick={() => setShowAssignUserModal(true)}>Assign User</button>)}
                 </div>
             )
         },
@@ -441,6 +453,14 @@ const BinManagement: React.FC = () => {
                     />
                 </CardContent>
             </Card>
+
+            {/* Assign User Modal */}
+<AssignUserModal
+    isOpen={showAssignUserModal}
+    onClose={() => setShowAssignUserModal(false)}
+    binData={binData}
+    onSuccess={() => mutate()}
+/>
 
             {/* Add Bin Modal */}
             <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)}>

@@ -500,3 +500,6 @@ const RecyclingCenterDetail = () => {
 
 export default RecyclingCenterDetail;
 
+
+
+

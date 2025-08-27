@@ -205,7 +205,7 @@ const ContactSupportPage = () => {
         <div className="max-w-6xl mx-auto px-4 py-12">
             {/* Header Section */}
             <div className="text-center mb-10">
-                <h1 className="text-4xl font-bold mb-4">MoreVans Help Center</h1>
+                <h1 className="text-4xl font-bold mb-4">wasgo Help Center</h1>
                 <p className="text-gray-600 text-lg">Find answers or contact our support team for assistance</p>
             </div>
 

@@ -128,7 +128,7 @@ const UserManagement: React.FC = () => {
             {
               id: 'ADM12351',
               name: 'Admin User',
-              email: 'admin@morevans.example.com',
+              email: 'admin@wasgo.example.com',
               type: 'admin',
               status: 'active',
               verificationStatus: 'verified',
