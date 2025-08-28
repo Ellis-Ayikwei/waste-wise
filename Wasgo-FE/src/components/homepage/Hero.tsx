@@ -21,7 +21,6 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({ name, value, 
 
 interface QuickFormData {
     pickup_location: string;
-    dropoff_location: string;
     serviceType: string;
     move_date: string;
     name: string;
@@ -36,7 +35,6 @@ const Hero: React.FC = () => {
     const [selectedServiceType, setSelectedServiceType] = useState('home');
     const [quickFormData, setQuickFormData] = useState<QuickFormData>({
         pickup_location: '',
-        dropoff_location: '',
         serviceType: 'home',
         move_date: '',
         name: '',

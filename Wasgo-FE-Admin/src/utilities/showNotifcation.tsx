@@ -9,8 +9,8 @@ import { createRoot } from 'react-dom/client';
 interface NotificationProps {
     message: string;
     type: 'success' | 'error' | 'warning' | 'loading' | 'info';
-    showHide: boolean;
-    onClose: () => void;
+    showHide?: boolean;
+    onClose?: () => void;
 }
 
 const ShowNotificationComponent: React.FC<NotificationProps> = ({message, type, showHide=true, onClose}) => {

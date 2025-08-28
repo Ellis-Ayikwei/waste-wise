@@ -102,8 +102,6 @@ class ServiceRequestSerializer(serializers.ModelSerializer):
             # Location fields
             "pickup_location",
             "pickup_address",
-            "dropoff_location",
-            "dropoff_address",
             "landmark",
             "current_location",
             # Service details
@@ -263,18 +261,6 @@ class ServiceRequestSerializer(serializers.ModelSerializer):
                 }
             )
 
-        if obj.dropoff_location:
-            locations.append(
-                {
-                    "type": "dropoff",
-                    "location": {
-                        "type": "Point",
-                        "coordinates": [obj.dropoff_location.x, obj.dropoff_location.y],
-                    },
-                    "address": obj.dropoff_address,
-                }
-            )
-
         if obj.current_location:
             locations.append(
                 {
@@ -399,7 +385,6 @@ class ServiceRequestListSerializer(ServiceRequestSerializer):
             "estimated_price",
             "service_date",
             "pickup_address",
-            "dropoff_address",
             "assigned_provider",
             "user",
             "created_at",
@@ -490,8 +475,6 @@ class ServiceRequestCreateSerializer(serializers.ModelSerializer):
             "description",
             "pickup_location",
             "pickup_address",
-            "dropoff_location",
-            "dropoff_address",
             "landmark",
             "estimated_weight_kg",
             "estimated_volume_m3",

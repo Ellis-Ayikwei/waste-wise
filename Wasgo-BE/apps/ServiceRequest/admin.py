@@ -93,8 +93,6 @@ class ServiceRequestAdmin(admin.ModelAdmin):
                 "fields": (
                     "pickup_location",
                     "pickup_address",
-                    "dropoff_location",
-                    "dropoff_address",
                     "landmark",
                     "current_location",
                     "locations_display",
@@ -303,8 +301,6 @@ class ServiceRequestAdmin(admin.ModelAdmin):
         locations = []
         if obj.pickup_location:
             locations.append(f"Pickup: {obj.pickup_address}")
-        if obj.dropoff_location:
-            locations.append(f"Dropoff: {obj.dropoff_address}")
         if obj.current_location:
             locations.append("Current: Active location")
         return mark_safe("<br>".join(locations)) if locations else "No locations"

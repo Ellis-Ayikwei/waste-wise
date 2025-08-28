@@ -113,10 +113,6 @@ class ServiceRequest(Basemodel):
         srid=4326, null=True, blank=True, help_text="GPS coordinates for pickup"
     )
     pickup_address = models.TextField()
-    dropoff_location = gis_models.PointField(
-        srid=4326, null=True, blank=True, help_text="GPS coordinates for dropoff"
-    )
-    dropoff_address = models.TextField(blank=True)
     landmark = models.CharField(max_length=255, blank=True)
     current_location = gis_models.PointField(
         srid=4326, null=True, blank=True, help_text="Current location during execution"
