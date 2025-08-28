@@ -429,5 +429,85 @@ LOGGING["loggers"]["apps.Payment"] = {
     "propagate": False,
 }
 
+# --- Paystack Configuration ---
+# Paystack API Keys (get these from Paystack Dashboard)
+PAYSTACK_PUBLIC_KEY = os.getenv(
+    "PAYSTACK_PUBLIC_KEY", 
+    "pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+)  # Replace with your public key
+PAYSTACK_SECRET_KEY = os.getenv(
+    "PAYSTACK_SECRET_KEY", 
+    "sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+)  # Replace with your secret key
+
+# Paystack Webhook URL (configure this in your Paystack dashboard)
+PAYSTACK_WEBHOOK_URL = os.getenv(
+    "PAYSTACK_WEBHOOK_URL",
+    "https://api.wasgo.app/api/v1/payments/webhook/"
+)
+
+# Paystack Settings
+PAYSTACK_SETTINGS = {
+    'CURRENCY': 'NGN',  # Default currency
+    'ALLOWED_CURRENCIES': ['NGN', 'GHS', 'ZAR', 'USD'],
+    'CHANNELS': ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer'],
+    'CALLBACK_URL': os.getenv(
+        'PAYSTACK_CALLBACK_URL',
+        'https://wasgo.app/payment/callback'
+    ),
+    'WEBHOOK_IP_WHITELIST': [
+        '52.31.139.75',
+        '52.49.173.169',
+        '52.214.14.220',
+    ],  # Paystack IP addresses for webhook validation
+}
+
+# Payment Settings
+PAYMENT_SETTINGS = {
+    'AUTO_VERIFY': True,  # Automatically verify payments after initialization
+    'SEND_RECEIPT': True,  # Send email receipts
+    'ALLOW_PARTIAL_PAYMENT': False,  # Allow partial payments
+    'MINIMUM_AMOUNT': 100,  # Minimum payment amount in Naira
+    'MAXIMUM_AMOUNT': 10000000,  # Maximum payment amount in Naira
+}
+
+# Paystack Success/Cancel URLs
+PAYSTACK_SUCCESS_URL = os.getenv(
+    "PAYSTACK_SUCCESS_URL", 
+    "http://localhost:3000/payment/success"
+)
+PAYSTACK_CANCEL_URL = os.getenv(
+    "PAYSTACK_CANCEL_URL", 
+    "http://localhost:3000/payment/cancel"
+)
+
+# Paystack Features Configuration
+PAYSTACK_FEATURES = {
+    "payment_initialization": True,
+    "payment_verification": True,
+    "payment_methods": True,
+    "customers": True,
+    "refunds": True,
+    "webhooks": True,
+    "transfers": True,
+    "bulk_charges": False,  # Enable when bulk payment features are needed
+    "subscriptions": False,  # Enable when subscription features are needed
+}
+
+# Logging configuration for Paystack
+LOGGING["loggers"]["paystack"] = {
+    "handlers": ["console"],
+    "level": "INFO",
+    "propagate": False,
+}
+
+# Print Paystack configuration for debugging
+print("=== Paystack Payment Configuration ===")
+print(f"PAYSTACK_PUBLIC_KEY: {'*' * len(PAYSTACK_PUBLIC_KEY) if PAYSTACK_PUBLIC_KEY else 'None'}")
+print(f"PAYSTACK_SECRET_KEY: {'*' * len(PAYSTACK_SECRET_KEY) if PAYSTACK_SECRET_KEY else 'None'}")
+print(f"PAYSTACK_CURRENCY: {PAYSTACK_SETTINGS['CURRENCY']}")
+print(f"PAYSTACK_WEBHOOK_URL: {PAYSTACK_WEBHOOK_URL}")
+print("=====================================")
+
 MEDIA_URL = "/uploads/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "uploads")
