@@ -16,7 +16,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from .models_paystack import (
-    PaystackPayment, PaystackPaymentMethod, PaystackCustomer, 
+    PaystackPayment, PaystackPaymentMethod as PaymentMethod, PaystackCustomer, 
     PaymentWebhook, TransferRecipient, Transfer
 )
 from .serializer import PaymentSerializer

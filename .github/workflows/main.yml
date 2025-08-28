@@ -1,0 +1,27 @@
+name: Deploy to DigitalOcean
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up SSH agent
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.DO_SSH_KEYS }}
+
+    - name: Deploy to DigitalOcean Droplet
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.DO_USER }}@${{ secrets.DO_DROPLET_IP }} << EOF
+          cd /home/${{ secrets.DO_USER }}/waste-wise/Wasgo-BE
+          git pull origin main
+          . venv/bin/activate
+          pip install --no-cache-dir -r requirements.txt
+        EOF
