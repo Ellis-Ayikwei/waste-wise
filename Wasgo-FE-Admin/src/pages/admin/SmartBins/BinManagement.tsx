@@ -28,6 +28,7 @@ import Label from '../../../components/ui/Label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/Select';
 import StatCard from '../../../components/ui/statCard';
 import DraggableDataTable from '../../../components/ui/DraggableDataTable';
+import AddressAutocomplete from '../../../components/AddressAutocomplete';
 import { setPageTitle } from '../../../store/themeConfigSlice';
 import useSwr from 'swr';
 import fetcher from '../../../services/fetcher';
@@ -481,12 +482,21 @@ const BinManagement: React.FC = () => {
                             </div>
                             
                             <div>
-                                <Label htmlFor="address">Address</Label>
-                                <Input
-                                    id="address"
-                                    value={newBinForm.address}
-                                    onChange={(e) => setNewBinForm({...newBinForm, address: e.target.value})}
+                                <AddressAutocomplete
                                     placeholder="Enter full address"
+                                    value={newBinForm.address}
+                                    onAddressChange={(value) => setNewBinForm({...newBinForm, address: value})}
+                                    onAddressSelect={(addressData) => {
+                                        setNewBinForm({
+                                            ...newBinForm, 
+                                            address: addressData.formatted_address,
+                                            latitude: addressData.coordinates.lat,
+                                            longitude: addressData.coordinates.lng
+                                        });
+                                    }}
+                                    label="Address"
+                                    showDetails={false}
+                                    showPostcodeAddresses={false}
                                 />
                             </div>
                             

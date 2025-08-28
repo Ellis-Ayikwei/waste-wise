@@ -5,7 +5,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
     faTruck, 
     faCalendarAlt, 
-    faMapMarkerAlt, 
     faTrash,
     faRecycle,
     faLeaf,
@@ -13,6 +12,7 @@ import {
     faClock,
     faCheckCircle
 } from '@fortawesome/free-solid-svg-icons';
+import AddressAutocomplete from '../../components/AddressAutocomplete';
 
 const RequestPickup = () => {
     const [formData, setFormData] = useState({
@@ -174,23 +174,18 @@ const RequestPickup = () => {
 
                                 {/* Location */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Pickup Location
-                                    </label>
-                                    <div className="relative">
-                                        <FontAwesomeIcon 
-                                            icon={faMapMarkerAlt} 
-                                            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" 
-                                        />
-                                        <input
-                                            type="text"
-                                            value={formData.location}
-                                            onChange={(e) => handleInputChange('location', e.target.value)}
-                                            placeholder="Enter your address"
-                                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                            required
-                                        />
-                                    </div>
+                                    <AddressAutocomplete
+                                        placeholder="Enter your address"
+                                        value={formData.location}
+                                        onAddressChange={(value) => handleInputChange('location', value)}
+                                        onAddressSelect={(addressData) => {
+                                            handleInputChange('location', addressData.formatted_address);
+                                        }}
+                                        label="Pickup Location *"
+                                        required={true}
+                                        showDetails={false}
+                                        showPostcodeAddresses={false}
+                                    />
                                 </div>
 
                                 {/* Date and Time */}

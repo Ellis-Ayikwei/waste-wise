@@ -2,22 +2,21 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 import { 
-    IconX,
-    IconCalendar,
-    IconMapPin,
-    IconClock,
-    IconAlertTriangle,
-    IconRecycle,
-    IconTools,
-    IconClipboardList,
-    IconCheck,
-    IconLoader,
-    IconDatabase,
-    IconBattery,
-    IconWifi,
-    IconCrosshair,
-    IconSearch
+    IconX, 
+    IconCalendar, 
+    IconMapPin, 
+    IconClock, 
+    IconAlertTriangle, 
+    IconRecycle, 
+    IconTools, 
+    IconClipboardList, 
+    IconCheck, 
+    IconLoader, 
+    IconDatabase, 
+    IconBattery, 
+    IconWifi
 } from '@tabler/icons-react';
+import AddressAutocomplete from '../../../components/AddressAutocomplete';
 import axiosInstance from '../../../services/axiosInstance';
 import useSWR from 'swr';
 import fetcher from '../../../services/fetcher';
@@ -72,14 +71,7 @@ interface ServiceRequest {
     recurrence_pattern?: string;
 }
 
-interface AddressSuggestion {
-    place_id: string;
-    description: string;
-    structured_formatting: {
-        main_text: string;
-        secondary_text: string;
-    };
-}
+
 
 const SERVICE_TYPES = [
     { value: 'waste_collection', label: 'Waste Collection', icon: IconRecycle },
@@ -134,12 +126,7 @@ const CreateServiceRequestModal: React.FC<ServiceRequestModalProps> = ({
     const [activeStep, setActiveStep] = useState(1);
     const [selectedBin, setSelectedBin] = useState<SmartBin | null>(null);
     
-    // Address search states
-    const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
-    const [showSuggestions, setShowSuggestions] = useState(false);
-    const [isSearching, setIsSearching] = useState(false);
-    const [isGettingLocation, setIsGettingLocation] = useState(false);
-    const searchTimeoutRef = useRef<NodeJS.Timeout>();
+
 
     // Fetch user's bins
     const { data: userBinsData } = useSWR('/customer/bins/', fetcher);
@@ -168,88 +155,13 @@ const CreateServiceRequestModal: React.FC<ServiceRequestModalProps> = ({
         }
     }, [preSelectedBin]);
 
-    // Address search functionality
-    const searchAddresses = async (query: string) => {
-        if (!query.trim()) {
-            setAddressSuggestions([]);
-            setShowSuggestions(false);
-            return;
-        }
-
-        setIsSearching(true);
-        try {
-            const response = await fetch(
-                `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&types=address&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`
-            );
-            const data = await response.json();
-            
-            if (data.predictions) {
-                setAddressSuggestions(data.predictions);
-                setShowSuggestions(true);
-            }
-        } catch (error) {
-            console.error('Error searching addresses:', error);
-            // Fallback to a simple search if Google Places API fails
-            setAddressSuggestions([]);
-        } finally {
-            setIsSearching(false);
-        }
-    };
-
-    const handleAddressInputChange = (value: string) => {
-        handleInputChange('pickup_address', value);
-        
-        // Clear previous timeout
-        if (searchTimeoutRef.current) {
-            clearTimeout(searchTimeoutRef.current);
-        }
-
-        // Set new timeout for search
-        searchTimeoutRef.current = setTimeout(() => {
-            searchAddresses(value);
-        }, 300);
-    };
-
-    const handleAddressSelect = (suggestion: AddressSuggestion) => {
-        handleInputChange('pickup_address', suggestion.description);
-        setShowSuggestions(false);
-        setAddressSuggestions([]);
-    };
-
-    const getCurrentLocation = () => {
-        if (!navigator.geolocation) {
-            showNotification('Geolocation is not supported by this browser.', 'error');
-            return;
-        }
-
-        setIsGettingLocation(true);
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                try {
-                    const { latitude, longitude } = position.coords;
-                    const response = await fetch(
-                        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`
-                    );
-                    const data = await response.json();
-                    
-                    if (data.results && data.results[0]) {
-                        const address = data.results[0].formatted_address;
-                        handleInputChange('pickup_address', address);
-                        showNotification('Current location detected successfully!', 'success');
-                    }
-                } catch (error) {
-                    console.error('Error getting address from coordinates:', error);
-                    showNotification('Failed to get address from current location.', 'error');
-                } finally {
-                    setIsGettingLocation(false);
-                }
-            },
-            (error) => {
-                console.error('Error getting current location:', error);
-                showNotification('Failed to get current location. Please check your location permissions.', 'error');
-                setIsGettingLocation(false);
-            }
-        );
+    // Address handling function
+    const handleAddressSelect = (addressData: any) => {
+        setFormData(prev => ({ 
+            ...prev, 
+            pickup_address: addressData.formatted_address,
+            pickup_location: `${addressData.coordinates.lat},${addressData.coordinates.lng}`
+        }));
     };
 
     const handleInputChange = (field: keyof ServiceRequest, value: any) => {
@@ -317,14 +229,7 @@ const CreateServiceRequestModal: React.FC<ServiceRequestModalProps> = ({
         }
     };
 
-    // Cleanup timeout on unmount
-    useEffect(() => {
-        return () => {
-            if (searchTimeoutRef.current) {
-                clearTimeout(searchTimeoutRef.current);
-            }
-        };
-    }, []);
+
 
     return (
         <Transition appear show={isOpen} as={Fragment}>
@@ -488,67 +393,16 @@ const CreateServiceRequestModal: React.FC<ServiceRequestModalProps> = ({
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     {/* Pickup Address with Search */}
                                                     <div className="md:col-span-2">
-                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                            Pickup Address *
-                                                        </label>
-                                                        <div className="relative">
-                                                            <input
-                                                                type="text"
-                                                                value={formData.pickup_address}
-                                                                onChange={(e) => handleAddressInputChange(e.target.value)}
-                                                                onFocus={() => setShowSuggestions(true)}
-                                                                className="w-full px-3 py-2 pl-10 pr-20 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                                                placeholder="Search for an address or use current location"
-                                                            />
-                                                            <IconMapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                                            
-                                                            {/* Current Location Button */}
-                                                            <button
-                                                                type="button"
-                                                                onClick={getCurrentLocation}
-                                                                disabled={isGettingLocation}
-                                                                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-blue-600 disabled:text-gray-300 transition-colors"
-                                                                title="Use current location"
-                                                            >
-                                                                {isGettingLocation ? (
-                                                                    <IconLoader className="w-4 h-4 animate-spin" />
-                                                                ) : (
-                                                                    <IconCrosshair className="w-4 h-4" />
-                                                                )}
-                                                            </button>
-                                                        </div>
-
-                                                        {/* Address Suggestions Dropdown */}
-                                                        {showSuggestions && (addressSuggestions.length > 0 || isSearching) && (
-                                                            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                                                                {isSearching && (
-                                                                    <div className="p-3 text-center text-gray-500">
-                                                                        <IconLoader className="w-4 h-4 animate-spin mx-auto mb-1" />
-                                                                        Searching...
-                                                                    </div>
-                                                                )}
-                                                                {addressSuggestions.map((suggestion) => (
-                                                                    <button
-                                                                        key={suggestion.place_id}
-                                                                        type="button"
-                                                                        onClick={() => handleAddressSelect(suggestion)}
-                                                                        className="w-full p-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-                                                                    >
-                                                                        <div className="flex items-center space-x-2">
-                                                                            <IconSearch className="w-4 h-4 text-gray-400" />
-                                                                            <div>
-                                                                                <div className="font-medium text-gray-900">
-                                                                                    {suggestion.structured_formatting.main_text}
-                                                                                </div>
-                                                                                <div className="text-sm text-gray-500">
-                                                                                    {suggestion.structured_formatting.secondary_text}
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                        )}
+                                                        <AddressAutocomplete
+                                                            placeholder="Search for an address or use current location"
+                                                            value={formData.pickup_address}
+                                                            onAddressChange={(value) => handleInputChange('pickup_address', value)}
+                                                            onAddressSelect={handleAddressSelect}
+                                                            label="Pickup Address *"
+                                                            required={true}
+                                                            showDetails={false}
+                                                            showPostcodeAddresses={false}
+                                                        />
                                                     </div>
 
                                                     {/* Service Date and Time */}
