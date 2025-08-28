@@ -13,9 +13,17 @@ import {
 
 interface SystemOverviewProps {
     onAddDevice: () => void;
+    totalBins?: number;
+    onlineBins?: number;
+    averageBatteryLevel?: number;
 }
 
-const SystemOverview: React.FC<SystemOverviewProps> = ({ onAddDevice }) => {
+const SystemOverview: React.FC<SystemOverviewProps> = ({ 
+    onAddDevice, 
+    totalBins = 0, 
+    onlineBins = 0, 
+    averageBatteryLevel = 0 
+}) => {
     return (
         <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -47,7 +55,7 @@ const SystemOverview: React.FC<SystemOverviewProps> = ({ onAddDevice }) => {
                             </div>
                             <h3 className="font-bold text-slate-900">Connected Devices</h3>
                         </div>
-                        <p className="text-3xl font-bold text-blue-600 mb-1">3</p>
+                        <p className="text-3xl font-bold text-blue-600 mb-1">{totalBins}</p>
                         <p className="text-sm text-slate-600 flex items-center">
                             <IconTrendingUp className="w-4 h-4 text-emerald-500 mr-1" />
                             Active smart bins monitoring
@@ -67,7 +75,7 @@ const SystemOverview: React.FC<SystemOverviewProps> = ({ onAddDevice }) => {
                             </div>
                             <h3 className="font-bold text-slate-900">Network Status</h3>
                         </div>
-                        <p className="text-3xl font-bold text-emerald-600 mb-1">2/3</p>
+                        <p className="text-3xl font-bold text-emerald-600 mb-1">{onlineBins}/{totalBins}</p>
                         <p className="text-sm text-slate-600 flex items-center">
                             <IconTrendingUp className="w-4 h-4 text-emerald-500 mr-1" />
                             Devices online and connected
@@ -87,7 +95,7 @@ const SystemOverview: React.FC<SystemOverviewProps> = ({ onAddDevice }) => {
                             </div>
                             <h3 className="font-bold text-slate-900">Battery Health</h3>
                         </div>
-                        <p className="text-3xl font-bold text-amber-600 mb-1">62%</p>
+                        <p className="text-3xl font-bold text-amber-600 mb-1">{averageBatteryLevel}%</p>
                         <p className="text-sm text-slate-600 flex items-center">
                             <IconTrendingDown className="w-4 h-4 text-amber-500 mr-1" />
                             Average battery level

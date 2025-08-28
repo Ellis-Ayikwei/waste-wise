@@ -532,6 +532,68 @@ class UserManagementViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=True, methods=["get"])
+    def bins(self, request, pk=None):
+        """Get bins associated with a specific user"""
+        try:
+            user = self.get_object()
+
+            # Import SmartBin model
+            from apps.WasteBin.models import SmartBin
+            from apps.WasteBin.serializers import SmartBinListJSONSerializer
+
+            # Get bins owned by this user
+            bins = SmartBin.objects.filter(user=user)
+
+            # Apply filters if provided
+            status_filter = request.query_params.get("status")
+            if status_filter:
+                bins = bins.filter(status=status_filter)
+
+            fill_level_min = request.query_params.get("min_fill_level")
+            if fill_level_min:
+                bins = bins.filter(fill_level__gte=int(fill_level_min))
+
+            area_filter = request.query_params.get("area")
+            if area_filter:
+                bins = bins.filter(area__icontains=area_filter)
+
+            bin_type_filter = request.query_params.get("bin_type")
+            if bin_type_filter:
+                bins = bins.filter(bin_type__name=bin_type_filter)
+
+            needs_collection = request.query_params.get("needs_collection")
+            if needs_collection == "true":
+                bins = bins.filter(fill_level__gte=80)
+
+            needs_maintenance = request.query_params.get("needs_maintenance")
+            if needs_maintenance == "true":
+                from django.db.models import Q
+
+                bins = bins.filter(
+                    Q(sensor__battery_level__lt=20)
+                    | Q(sensor__signal_strength__lt=30)
+                    | Q(status__in=["maintenance", "damaged"])
+                )
+
+            # Update online status for all bins
+            bins = bins.select_related("bin_type", "sensor", "user")
+            for bin in bins:
+                bin.check_and_set_online()
+                bin.save()
+
+            # Serialize the bins
+            serializer = SmartBinListJSONSerializer(bins, many=True)
+
+            return Response({"count": bins.count(), "results": serializer.data})
+
+        except Exception as e:
+            logger.error(f"Error getting bins for user {pk}: {str(e)}")
+            return Response(
+                {"error": f"Failed to get bins: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=True, methods=["get"])
     def activity(self, request, pk=None):
         """
         Returns a user's activity history.

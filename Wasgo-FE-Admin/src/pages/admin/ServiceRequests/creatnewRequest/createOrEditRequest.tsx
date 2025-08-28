@@ -17,7 +17,6 @@ import {
     IconShield,
     IconRoute,
     IconClipboardList,
-    IconDollarSign,
     IconUser,
     IconPhone,
     IconMail,
@@ -26,18 +25,139 @@ import {
     IconFileText,
     IconSettings,
     IconCheck,
-    IconLoader
+    IconLoader,
+    IconDatabase,
+    IconBattery,
+    IconWifi,
+    IconThermometer,
+    IconCrosshair,
+    IconSearch
 } from '@tabler/icons-react';
 import axiosInstance from '../../../../services/axiosInstance';
-import toast from 'react-hot-toast';
 import useSWR from 'swr';
 import fetcher from '../../../../services/fetcher';
+import showNotification from '../../../../utilities/showNotifcation';
 
 interface ServiceRequestModalProps {
     isOpen: boolean;
     onClose: () => void;
     requestId?: string; // If provided, we're editing
     onSuccess?: () => void;
+}
+
+interface SmartBin {
+    id: string;
+    type: string;
+    geometry: {
+        type: string;
+        coordinates: [number, number];
+    };
+    properties: {
+        bin_type_display: string;
+        needs_collection: boolean;
+        needs_maintenance: boolean;
+        bin_number: string;
+        sensor: {
+            id: string;
+            sensor_type_display: string;
+            status_display: string;
+            category_display: string;
+            needs_maintenance: boolean;
+            needs_calibration: boolean;
+            readings_count: number;
+            created_at: string;
+            updated_at: string;
+            sensor_number: string;
+            sensor_type: string;
+            category: string;
+            model: string;
+            manufacturer: string;
+            serial_number: string;
+            version: string;
+            status: string;
+            battery_level: number;
+            signal_strength: number;
+            accuracy: number | null;
+            precision: number | null;
+            range_min: number | null;
+            range_max: number | null;
+            unit: string;
+            installation_date: string;
+            last_maintenance_date: string | null;
+            next_maintenance_date: string | null;
+            warranty_expiry: string | null;
+            expected_lifespan_years: number | null;
+            firmware_version: string;
+            software_version: string;
+            calibration_date: string | null;
+            calibration_due_date: string | null;
+            calibration_interval_days: number | null;
+            communication_protocol: string;
+            data_transmission_interval: number;
+            last_data_transmission: string | null;
+            operating_temperature_min: number | null;
+            operating_temperature_max: number | null;
+            operating_humidity_min: number | null;
+            operating_humidity_max: number | null;
+            power_consumption_watts: number | null;
+            battery_capacity_mah: number | null;
+            solar_powered: boolean;
+            notes: string;
+            is_active: boolean;
+            is_public: boolean;
+            tags: string[];
+        } | null;
+        user: {
+            id: string;
+            email: string;
+            first_name: string;
+            last_name: string;
+            phone_number: string;
+            profile_picture: string | null;
+            rating: string;
+            user_type: string;
+            account_status: string;
+            last_active: string | null;
+            date_joined: string;
+            groups: any[];
+            user_permissions: any[];
+            roles: any[];
+            user_activities: any[];
+            bins: any[];
+        } | null;
+        sensor_id: string | null;
+        battery_level: number | null;
+        signal_strength: number | null;
+        is_online: boolean;
+        created_at: string;
+        updated_at: string;
+        name: string;
+        address: string;
+        area: string;
+        city: string;
+        region: string;
+        landmark: string;
+        fill_level: number;
+        fill_status: string;
+        temperature: number | null;
+        humidity: number | null;
+        status: string;
+        capacity_kg: number;
+        current_weight_kg: number;
+        last_reading_at: string | null;
+        last_collection_at: string | null;
+        installation_date: string;
+        last_maintenance_date: string | null;
+        next_maintenance_date: string | null;
+        maintenance_notes: string;
+        has_compactor: boolean;
+        has_solar_panel: boolean;
+        has_foot_pedal: boolean;
+        qr_code: string;
+        notes: string;
+        is_public: boolean;
+        bin_type: number;
+    };
 }
 
 interface ServiceRequest {
@@ -51,11 +171,8 @@ interface ServiceRequest {
         coordinates: number[];
     };
     pickup_address: string;
-    dropoff_location?: {
-        type: string;
-        coordinates: number[];
-    };
     dropoff_address?: string;
+
     landmark?: string;
     estimated_weight_kg?: number;
     estimated_volume_m3?: number;
@@ -84,6 +201,15 @@ interface User {
     last_name: string;
     email: string;
     phone_number: string;
+}
+
+interface AddressSuggestion {
+    place_id: string;
+    description: string;
+    structured_formatting: {
+        main_text: string;
+        secondary_text: string;
+    };
 }
 
 const SERVICE_TYPES = [
@@ -175,10 +301,35 @@ const CreateOrEditRequestModal: React.FC<ServiceRequestModalProps> = ({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [activeStep, setActiveStep] = useState(1);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [selectedBin, setSelectedBin] = useState<SmartBin | null>(null);
+    
+    // Address search states
+    const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [isSearching, setIsSearching] = useState(false);
+    const [isGettingLocation, setIsGettingLocation] = useState(false);
+    const searchTimeoutRef = useRef<NodeJS.Timeout>();
 
     // Fetch users for selection
     const { data: usersData } = useSWR('/users/', fetcher);
     const users = usersData || [];
+
+    // Fetch user's bins when user is selected
+    const { data: userBinsData } = useSWR(
+        formData.user_id ? `/users/${formData.user_id}/bins/` : null,
+        fetcher
+    );
+
+    console.log("user bins", userBinsData)
+    const userBins = userBinsData || [];
+
+    // Filter bins that need service
+    const binsNeedingService = userBins?.filter((bin: SmartBin) => 
+        bin.properties.needs_collection || 
+        bin.properties.needs_maintenance ||
+        bin.properties.sensor?.needs_maintenance ||
+        bin.properties.sensor?.needs_calibration
+    );
 
     // Fetch existing request data if editing
     const { data: existingRequest } = useSWR(
@@ -195,8 +346,8 @@ const CreateOrEditRequestModal: React.FC<ServiceRequestModalProps> = ({
                 description: existingRequest.description || '',
                 pickup_location: existingRequest.pickup_location,
                 pickup_address: existingRequest.pickup_address || '',
-                dropoff_location: existingRequest.dropoff_location,
                 dropoff_address: existingRequest.dropoff_address || '',
+
                 landmark: existingRequest.landmark || '',
                 estimated_weight_kg: existingRequest.estimated_weight_kg || undefined,
                 estimated_volume_m3: existingRequest.estimated_volume_m3 || undefined,
@@ -221,6 +372,34 @@ const CreateOrEditRequestModal: React.FC<ServiceRequestModalProps> = ({
         }
     }, [existingRequest, requestId]);
 
+    // Update selected user when user_id changes
+    useEffect(() => {
+        if (formData.user_id) {
+            const user = users.find((u: User) => u.id === formData.user_id);
+            setSelectedUser(user || null);
+        } else {
+            setSelectedUser(null);
+        }
+    }, [formData.user_id, users]);
+
+    // Auto-select bin if only one needs service
+    useEffect(() => {
+        if (binsNeedingService.length === 1 && !selectedBin) {
+            setSelectedBin(binsNeedingService[0]);
+            handleInputChange('smart_bin', binsNeedingService[0].id);
+            handleInputChange('pickup_address', binsNeedingService[0].properties.address);
+        }
+    }, [binsNeedingService, selectedBin]);
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
+    }, []);
+
     const handleInputChange = (field: keyof ServiceRequest, value: any) => {
         setFormData(prev => ({
             ...prev,
@@ -228,9 +407,117 @@ const CreateOrEditRequestModal: React.FC<ServiceRequestModalProps> = ({
         }));
     };
 
+    const handleBinSelection = (bin: SmartBin) => {
+        setSelectedBin(bin);
+        handleInputChange('smart_bin', bin.id);
+        handleInputChange('pickup_address', bin.properties.address);
+    };
+
+    // Address search functionality
+    const searchAddresses = async (query: string) => {
+        if (!query.trim()) {
+            setAddressSuggestions([]);
+            setShowSuggestions(false);
+            return;
+        }
+
+        setIsSearching(true);
+        try {
+            const response = await fetch(
+                `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&types=address&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`
+            );
+            const data = await response.json();
+            
+            if (data.predictions) {
+                setAddressSuggestions(data.predictions);
+                setShowSuggestions(true);
+            }
+        } catch (error) {
+            console.error('Error searching addresses:', error);
+            setAddressSuggestions([]);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    const handleAddressInputChange = (value: string) => {
+        handleInputChange('pickup_address', value);
+        
+        // Clear previous timeout
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+
+        // Set new timeout for search
+        searchTimeoutRef.current = setTimeout(() => {
+            searchAddresses(value);
+        }, 300);
+    };
+
+    const handleAddressSelect = (suggestion: AddressSuggestion) => {
+        handleInputChange('pickup_address', suggestion.description);
+        setShowSuggestions(false);
+        setAddressSuggestions([]);
+    };
+
+    const getCurrentLocation = () => {
+        if (!navigator.geolocation) {
+            showNotification('Geolocation is not supported by this browser.', 'error');
+            return;
+        }
+
+        setIsGettingLocation(true);
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                try {
+                    const { latitude, longitude } = position.coords;
+                    const response = await fetch(
+                        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`
+                    );
+                    const data = await response.json();
+                    
+                    if (data.results && data.results[0]) {
+                        const address = data.results[0].formatted_address;
+                        handleInputChange('pickup_address', address);
+                        showNotification('Current location detected successfully!', 'success');
+                    }
+                } catch (error) {
+                    console.error('Error getting address from coordinates:', error);
+                    showNotification('Failed to get address from current location.', 'error');
+                } finally {
+                    setIsGettingLocation(false);
+                }
+            },
+            (error) => {
+                console.error('Error getting current location:', error);
+                showNotification('Failed to get current location. Please check your location permissions.', 'error');
+                setIsGettingLocation(false);
+            }
+        );
+    };
+
+    const getBinStatusColor = (bin: SmartBin) => {
+        if (bin.properties.needs_collection) return 'text-red-600 bg-red-50 border-red-200';
+        if (bin.properties.needs_maintenance) return 'text-orange-600 bg-orange-50 border-orange-200';
+        if (bin.properties.sensor?.needs_maintenance || bin.properties.sensor?.needs_calibration) return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+        return 'text-green-600 bg-green-50 border-green-200';
+    };
+
+    const getBinStatusText = (bin: SmartBin) => {
+        if (bin.properties.needs_collection) return 'Needs Collection';
+        if (bin.properties.needs_maintenance) return 'Needs Maintenance';
+        if (bin.properties.sensor?.needs_maintenance) return 'Sensor Maintenance';
+        if (bin.properties.sensor?.needs_calibration) return 'Sensor Calibration';
+        return 'Healthy';
+    };
+
     const handleSubmit = async () => {
         if (!formData.user_id || !formData.title || !formData.pickup_address) {
-            toast.error('Please fill in all required fields');
+            showNotification({
+                message: 'Please fill in all required fields',
+                type: 'error',
+                showHide: true,
+            })
             return;
         }
 
@@ -239,18 +526,31 @@ const CreateOrEditRequestModal: React.FC<ServiceRequestModalProps> = ({
             if (requestId) {
                 // Update existing request
                 await axiosInstance.put(`/service-requests/${requestId}/`, formData);
-                toast.success('Service request updated successfully');
+                onClose();
+                showNotification({
+                    message: 'Service request updated successfully',
+                    type: 'success',
+                    showHide: true,
+                })
             } else {
                 // Create new request
                 await axiosInstance.post('/service-requests/', formData);
-                toast.success('Service request created successfully');
+                showNotification({
+                    message: 'Service request created successfully',
+                    type: 'success',
+                    showHide: true,
+                })
             }
             
             onSuccess?.();
             onClose();
         } catch (error) {
             console.error('Error saving service request:', error);
-            toast.error('Failed to save service request');
+            showNotification({
+                message: 'Failed to save service request',
+                type: 'error',
+                showHide: true,
+            })
         } finally {
             setIsSubmitting(false);
         }
@@ -453,6 +753,114 @@ const CreateOrEditRequestModal: React.FC<ServiceRequestModalProps> = ({
                                                 <span>Service Details</span>
                                             </h4>
 
+                                            {/* Bin Selection for bin-related services */}
+                                            {(formData.service_type.includes('bin') || formData.service_type.includes('waste')) && formData.user_id && (
+                                                <div className="space-y-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <h5 className="text-sm font-medium text-gray-900 flex items-center space-x-2">
+                                                            <IconDatabase className="w-4 h-4" />
+                                                            <span>Smart Bins Needing Service</span>
+                                                        </h5>
+                                                        {binsNeedingService.length > 0 && (
+                                                            <span className="text-xs text-gray-500">
+                                                                {binsNeedingService.length} bin{binsNeedingService.length !== 1 ? 's' : ''} need attention
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {binsNeedingService.length > 0 ? (
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            {binsNeedingService.map((bin: SmartBin) => (
+                                                                <div
+                                                                    key={bin.id}
+                                                                    onClick={() => handleBinSelection(bin)}
+                                                                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                                                                        selectedBin?.id === bin.id
+                                                                            ? 'border-blue-500 bg-blue-50'
+                                                                            : 'border-gray-200 hover:border-gray-300'
+                                                                    }`}
+                                                                >
+                                                                    <div className="flex items-start justify-between mb-3">
+                                                                        <div>
+                                                                            <h6 className="font-semibold text-gray-900">
+                                                                                {bin.properties.name}
+                                                                            </h6>
+                                                                            <p className="text-sm text-gray-600">
+                                                                                {bin.properties.bin_type_display} • {bin.properties.bin_number}
+                                                                            </p>
+                                                                        </div>
+                                                                        <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getBinStatusColor(bin)}`}>
+                                                                            {getBinStatusText(bin)}
+                                                                        </span>
+                                                                    </div>
+
+                                                                    <div className="space-y-2">
+                                                                        <div className="flex items-center justify-between text-sm">
+                                                                            <span className="text-gray-600">Fill Level</span>
+                                                                            <span className="font-medium">{bin.properties.fill_level}%</span>
+                                                                        </div>
+                                                                        <div className="w-full bg-gray-200 rounded-full h-2">
+                                                                            <div 
+                                                                                className={`h-2 rounded-full ${
+                                                                                    bin.properties.fill_level >= 90 ? 'bg-red-500' :
+                                                                                    bin.properties.fill_level >= 75 ? 'bg-orange-500' :
+                                                                                    bin.properties.fill_level >= 50 ? 'bg-yellow-500' :
+                                                                                    bin.properties.fill_level >= 25 ? 'bg-blue-500' :
+                                                                                    'bg-green-500'
+                                                                                }`}
+                                                                                style={{ width: `${bin.properties.fill_level}%` }}
+                                                                            ></div>
+                                                                        </div>
+
+                                                                        <div className="grid grid-cols-2 gap-2 text-xs">
+                                                                            <div className="flex items-center space-x-1">
+                                                                                <IconBattery className="w-3 h-3 text-green-600" />
+                                                                                <span>{bin.properties.battery_level || bin.properties.sensor?.battery_level || 0}%</span>
+                                                                            </div>
+                                                                            <div className="flex items-center space-x-1">
+                                                                                <IconWifi className="w-3 h-3 text-blue-600" />
+                                                                                <span>{bin.properties.signal_strength || bin.properties.sensor?.signal_strength || 0}/5</span>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div className="text-xs text-gray-500">
+                                                                            {bin.properties.address}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-center py-8 bg-gray-50 rounded-lg">
+                                                            <IconDatabase className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                                                            <p className="text-gray-600">No bins need service for this customer</p>
+                                                            <p className="text-sm text-gray-500 mt-1">All bins are in good condition</p>
+                                                        </div>
+                                                    )}
+
+                                                    {selectedBin && (
+                                                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <h6 className="font-medium text-blue-900">Selected Bin</h6>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setSelectedBin(null);
+                                                                        handleInputChange('smart_bin', '');
+                                                                        handleInputChange('pickup_address', '');
+                                                                    }}
+                                                                    className="text-blue-600 hover:text-blue-800 text-sm"
+                                                                >
+                                                                    Clear Selection
+                                                                </button>
+                                                            </div>
+                                                            <p className="text-sm text-blue-800">
+                                                                {selectedBin.properties.name} - {selectedBin.properties.address}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
                                             {/* Waste Type (for waste collection services) */}
                                             {formData.service_type.includes('waste') && (
                                                 <div>
@@ -568,7 +976,7 @@ const CreateOrEditRequestModal: React.FC<ServiceRequestModalProps> = ({
                                                 <span>Location & Schedule</span>
                                             </h4>
 
-                                            {/* Pickup Address */}
+                                            {/* Pickup Address with Search */}
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                                     Pickup Address *
@@ -577,12 +985,60 @@ const CreateOrEditRequestModal: React.FC<ServiceRequestModalProps> = ({
                                                     <input
                                                         type="text"
                                                         value={formData.pickup_address}
-                                                        onChange={(e) => handleInputChange('pickup_address', e.target.value)}
-                                                        className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                                        placeholder="Enter pickup address"
+                                                        onChange={(e) => handleAddressInputChange(e.target.value)}
+                                                        onFocus={() => setShowSuggestions(true)}
+                                                        className="w-full px-3 py-2 pl-10 pr-20 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                        placeholder="Search for an address or use current location"
                                                     />
                                                     <IconMapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                                    
+                                                    {/* Current Location Button */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={getCurrentLocation}
+                                                        disabled={isGettingLocation}
+                                                        className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-blue-600 disabled:text-gray-300 transition-colors"
+                                                        title="Use current location"
+                                                    >
+                                                        {isGettingLocation ? (
+                                                            <IconLoader className="w-4 h-4 animate-spin" />
+                                                        ) : (
+                                                            <IconCrosshair className="w-4 h-4" />
+                                                        )}
+                                                    </button>
                                                 </div>
+
+                                                {/* Address Suggestions Dropdown */}
+                                                {showSuggestions && (addressSuggestions.length > 0 || isSearching) && (
+                                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                                        {isSearching && (
+                                                            <div className="p-3 text-center text-gray-500">
+                                                                <IconLoader className="w-4 h-4 animate-spin mx-auto mb-1" />
+                                                                Searching...
+                                                            </div>
+                                                        )}
+                                                        {addressSuggestions.map((suggestion) => (
+                                                            <button
+                                                                key={suggestion.place_id}
+                                                                type="button"
+                                                                onClick={() => handleAddressSelect(suggestion)}
+                                                                className="w-full p-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                                                            >
+                                                                <div className="flex items-center space-x-2">
+                                                                    <IconSearch className="w-4 h-4 text-gray-400" />
+                                                                    <div>
+                                                                        <div className="font-medium text-gray-900">
+                                                                            {suggestion.structured_formatting.main_text}
+                                                                        </div>
+                                                                        <div className="text-sm text-gray-500">
+                                                                            {suggestion.structured_formatting.secondary_text}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
 
                                             {/* Dropoff Address */}
@@ -601,6 +1057,8 @@ const CreateOrEditRequestModal: React.FC<ServiceRequestModalProps> = ({
                                                     <IconMapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                                                 </div>
                                             </div>
+
+
 
                                             {/* Service Date and Time */}
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -56,6 +56,9 @@ class ServiceRequestSerializer(serializers.ModelSerializer):
         allow_null=True,
     )
     smart_bin = SmartBinSerializer(read_only=True)
+    smart_bin_id = serializers.UUIDField(
+        write_only=True, required=False, allow_null=True
+    )
 
     # Computed fields
     time_remaining = serializers.SerializerMethodField()
@@ -185,6 +188,7 @@ class ServiceRequestSerializer(serializers.ModelSerializer):
             "notes",
             "tracking_url",
             "smart_bin",
+            "smart_bin_id",
             # Computed fields
             "time_remaining",
             "timeline_events",
@@ -285,6 +289,26 @@ class ServiceRequestSerializer(serializers.ModelSerializer):
 
         return locations
 
+    def create(self, validated_data):
+        """Handle smart_bin_id during creation"""
+        smart_bin_id = validated_data.pop("smart_bin_id", None)
+
+        # Create the service request
+        service_request = super().create(validated_data)
+
+        # Set the smart_bin if provided
+        if smart_bin_id:
+            from apps.WasteBin.models import SmartBin
+
+            try:
+                smart_bin = SmartBin.objects.get(id=smart_bin_id)
+                service_request.smart_bin = smart_bin
+                service_request.save()
+            except SmartBin.DoesNotExist:
+                pass  # Silently ignore if bin doesn't exist
+
+        return service_request
+
     def get_citizen_reports(self, obj):
         """Get citizen reports related to this service request"""
         # This would need to be implemented based on your business logic
@@ -358,6 +382,11 @@ class ServiceRequestDetailSerializer(ServiceRequestSerializer):
 class ServiceRequestListSerializer(ServiceRequestSerializer):
     """List serializer with minimal fields for performance"""
 
+    smart_bin = SmartBinSerializer(read_only=True)
+    smart_bin_id = serializers.UUIDField(
+        write_only=True, required=False, allow_null=True
+    )
+
     class Meta:
         model = ServiceRequest
         fields = [
@@ -377,6 +406,8 @@ class ServiceRequestListSerializer(ServiceRequestSerializer):
             "is_instant",
             "is_completed",
             "offered_price",
+            "smart_bin",
+            "smart_bin_id",
         ]
         read_only_fields = fields
 
@@ -443,6 +474,9 @@ class ServiceRequestCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating new service requests"""
 
     user_id = serializers.UUIDField(write_only=True, required=True)
+    smart_bin_id = serializers.UUIDField(
+        write_only=True, required=False, allow_null=True
+    )
     items = RequestItemSerializer(many=True, required=False)
     journey_stops = JourneyStopSerializer(many=True, required=False)
 
@@ -450,6 +484,7 @@ class ServiceRequestCreateSerializer(serializers.ModelSerializer):
         model = ServiceRequest
         fields = [
             "user_id",
+            "smart_bin_id",
             "service_type",
             "title",
             "description",
@@ -484,6 +519,7 @@ class ServiceRequestCreateSerializer(serializers.ModelSerializer):
         items_data = validated_data.pop("items", [])
         journey_stops_data = validated_data.pop("journey_stops", [])
         user_id = validated_data.pop("user_id")
+        smart_bin_id = validated_data.pop("smart_bin_id", None)
 
         # Get user
         from apps.User.models import User
@@ -500,6 +536,17 @@ class ServiceRequestCreateSerializer(serializers.ModelSerializer):
 
         # Create service request
         service_request = ServiceRequest.objects.create(**validated_data)
+
+        # Set the smart_bin if provided
+        if smart_bin_id:
+            from apps.WasteBin.models import SmartBin
+
+            try:
+                smart_bin = SmartBin.objects.get(id=smart_bin_id)
+                service_request.smart_bin = smart_bin
+                service_request.save()
+            except SmartBin.DoesNotExist:
+                pass  # Silently ignore if bin doesn't exist
 
         # Create items
         for item_data in items_data:

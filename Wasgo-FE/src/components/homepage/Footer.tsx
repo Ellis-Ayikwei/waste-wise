@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFacebook, faTwitter, faInstagram, faLinkedin, faYoutube, faGooglePlay, faApple } from '@fortawesome/free-brands-svg-icons';
 import { faPhone, faEnvelope, faMapMarkerAlt, faChevronRight, faRecycle, faLeaf, faTrash, faMobileAlt } from '@fortawesome/free-solid-svg-icons';
-
+import logo from '/assets/images/wasgologo/wasgowhite.png';
 const Footer: React.FC = () => {
     const currentYear = new Date().getFullYear();
 
@@ -55,7 +55,11 @@ const Footer: React.FC = () => {
                         <div className="text-center md:text-left mb-6 md:mb-0">
                             <h3 className="text-2xl font-bold text-white mb-2">
                                 <FontAwesomeIcon icon={faMobileAlt} className="mr-3" />
-                                Get the wasgo App
+                                Get the wasgo App 
+                            </h3>
+                            <h3 className="text-2xl font-bold text-white mb-2">
+                                <FontAwesomeIcon icon={faMobileAlt} className="mr-3" />
+                                Or Add To Your HomeScreen
                             </h3>
                             <p className="text-green-100">
                                 Track bins, request pickups, and manage waste on the go!
@@ -74,7 +78,7 @@ const Footer: React.FC = () => {
                                     className="text-3xl text-white group-hover:text-green-400 transition-colors" 
                                 />
                                 <div className="text-left">
-                                    <div className="text-xs text-gray-300">GET IT ON</div>
+                                    <div className="text-xs text-gray-300">GET IT SOON ON</div>
                                     <div className="text-lg font-semibold text-white">Google Play</div>
                                 </div>
                             </a>
@@ -91,7 +95,7 @@ const Footer: React.FC = () => {
                                     className="text-3xl text-white group-hover:text-green-400 transition-colors" 
                                 />
                                 <div className="text-left">
-                                    <div className="text-xs text-gray-300">Download on the</div>
+                                    <div className="text-xs text-gray-300">Download soon on the</div>
                                     <div className="text-lg font-semibold text-white">App Store</div>
                                 </div>
                             </a>
@@ -107,7 +111,7 @@ const Footer: React.FC = () => {
                     <div className="lg:col-span-2">
                         <Link to="/" className="inline-flex items-center mb-6">
                             <div className="bg-green-600 p-2 rounded-lg mr-3">
-                                <FontAwesomeIcon icon={faRecycle} className="text-2xl text-white" />
+                                <img src={logo} alt="wasgo" className="w-10 h-10" />
                             </div>
                             <span className="text-2xl font-bold text-white">wasgo</span>
                         </Link>
@@ -117,7 +121,7 @@ const Footer: React.FC = () => {
                         <div className="space-y-3">
                             <div className="flex items-center">
                                 <FontAwesomeIcon icon={faPhone} className="w-5 h-5 text-green-500 mr-3" />
-                                <span>+233 30 123 4567</span>
+                                <span>+233 24 813 8722</span>
                             </div>
                             <div className="flex items-center">
                                 <FontAwesomeIcon icon={faEnvelope} className="w-5 h-5 text-green-500 mr-3" />

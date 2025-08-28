@@ -1,0 +1,29 @@
+Service Cancelled - Wasgo
+
+Hello {{ user.first_name|default:user.username }},
+
+We're sorry to inform you that your service request has been cancelled.
+
+CANCELLATION DETAILS:
+{% if reason %}Reason: {{ reason }}{% endif %}
+Cancelled on: {{ cancelled_at|date:"F j, Y at g:i A" }}
+
+{% if service_request %}
+SERVICE REQUEST DETAILS:
+Request ID: {{ service_request.request_id }}
+Service Type: {{ service_request.get_service_type_display }}
+Title: {{ service_request.title }}
+{% if service_request.pickup_address %}Pickup Address: {{ service_request.pickup_address }}{% endif %}
+{% if service_request.dropoff_address %}Dropoff Address: {{ service_request.dropoff_address }}{% endif %}
+{% if service_request.estimated_price %}Estimated Price: ${{ service_request.estimated_price }}{% endif %}
+{% endif %}
+
+If you have any questions about this cancellation or would like to book a new service, please don't hesitate to contact our support team.
+
+Book a new service: {{ dashboard_url|default:'https://wasgo.com/dashboard' }}
+
+Thank you for choosing Wasgo for your waste management needs.
+
+If you have any questions, please contact us at support@wasgo.com
+
+© 2024 Wasgo. All rights reserved.

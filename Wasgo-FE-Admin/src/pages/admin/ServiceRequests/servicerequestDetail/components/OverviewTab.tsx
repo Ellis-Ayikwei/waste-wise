@@ -9,6 +9,7 @@ import {
     IconCurrencyDollar
 } from '@tabler/icons-react';
 import ServiceTypeIcon from './ServiceTypeIcon';
+import Ghc from '../../../../../helper/CurrencyFormatter';
 
 interface ServiceRequest {
     id: string;
@@ -146,7 +147,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ serviceRequest }) => {
                             <p className="text-sm text-gray-500">Estimated Price</p>
                             <div className="flex items-center space-x-2">
                                 <IconCurrencyDollar className="w-4 h-4 text-gray-400" />
-                                <p className="font-medium">${serviceRequest.estimated_price}</p>
+                                <p className="font-medium">{Ghc(serviceRequest.estimated_price)}</p>
                             </div>
                         </div>
                         {serviceRequest.final_price && (
@@ -154,7 +155,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ serviceRequest }) => {
                                 <p className="text-sm text-gray-500">Final Price</p>
                                 <div className="flex items-center space-x-2">
                                     <IconCurrencyDollar className="w-4 h-4 text-gray-400" />
-                                    <p className="font-medium">${serviceRequest.final_price}</p>
+                                    <p className="font-medium">{Ghc(serviceRequest.final_price)}</p>
                                 </div>
                             </div>
                         )}

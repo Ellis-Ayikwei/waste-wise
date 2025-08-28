@@ -328,8 +328,10 @@ class ServiceRequestViewSet(viewsets.ModelViewSet):
         try:
             service_request = self.get_object()
             reason = request.data.get("reason", "")
+            print("cancelling service")
 
             ServiceRequestService.cancel_service(service_request, reason)
+            print("cancelling service done")
 
             return Response(
                 {"message": "Service cancelled successfully"},

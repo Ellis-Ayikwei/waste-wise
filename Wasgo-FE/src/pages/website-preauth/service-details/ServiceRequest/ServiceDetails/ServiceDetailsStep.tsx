@@ -6,6 +6,7 @@ import { faBox } from '@fortawesome/free-solid-svg-icons';
 import StepNavigation from '../stepNavigation';
 import ItemsInventory from './ItemsInventory';
 import DocumentationSection from './DocumentationSection';
+
 import { AppDispatch } from '../../../../../store';
 import { submitStepToAPI, updateFormValues } from '../../../../../store/slices/createRequestSlice';
 import showMessage from '../../../../../helper/showMessage';
@@ -139,6 +140,7 @@ const ServiceDetailsStep: React.FC<ServiceDetailsStepProps> = ({
                     </div>
                     <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">Service Details</h2>
                 </div>
+
 
                 {values.request_type && values.request_type === 'instant' && (
                     <ItemsInventory values={values} setFieldValue={setFieldValue} selectedServiceType={selectedServiceType} />

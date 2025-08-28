@@ -236,10 +236,11 @@ class ServiceRequestService:
 
     @staticmethod
     def cancel_service(service_request, reason=""):
+        print("cancelling service service")
         """Cancel a service request"""
         with transaction.atomic():
             service_request.cancel_service(reason)
-
+            print("cancelling service service done")
             # Create timeline event
             ServiceRequestTimelineService.create_timeline_event(
                 service_request=service_request,

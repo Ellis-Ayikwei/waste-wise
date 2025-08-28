@@ -236,7 +236,9 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.TokenAuthentication",
     ),
-    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),  # Temporarily allow all for testing
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.AllowAny",
+    ),  # Temporarily allow all for testing
     "DEFAULT_THROTTLE_CLASSES": [
         # "rest_framework.throttling.AnonRateThrottle",
         # "rest_framework.throttling.UserRateThrottle",

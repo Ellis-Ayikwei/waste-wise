@@ -236,16 +236,17 @@ class Notification(Basemodel):
             self.read_at = timezone.now()
             self.save(update_fields=["read", "read_at"])
 
-    def mark_as_delivered(self, channel):
+    def mark_as_delivered(self, channel=None):
         """Mark notification as delivered via specific channel"""
         from django.utils import timezone
 
-        if channel == "email":
-            self.email_sent = True
-        elif channel == "sms":
-            self.sms_sent = True
-        elif channel == "push":
-            self.push_sent = True
+        if channel:
+            if channel == "email":
+                self.email_sent = True
+            elif channel == "sms":
+                self.sms_sent = True
+            elif channel == "push":
+                self.push_sent = True
 
         if not self.delivered_at:
             self.delivered_at = timezone.now()

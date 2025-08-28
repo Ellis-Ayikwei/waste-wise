@@ -38,7 +38,14 @@ import {
     IconShare,
     IconMessage,
     IconBell,
-    IconCurrencyDollar
+    IconCurrencyDollar,
+    IconDatabase,
+    IconBattery,
+    IconWifi,
+    IconThermometer,
+    IconDroplet,
+    IconScale,
+    IconAlertTriangle
 } from '@tabler/icons-react';
 import useSWR from 'swr';
 import toast from 'react-hot-toast';
@@ -54,6 +61,124 @@ import axiosInstance from '../../../../services/axiosInstance';
 import ErrorBoundary from '../../../../components/ErrorBoundary';
 import fetcher from '../../../../services/fetcher';
 import ServiceTypeIcon from './components/ServiceTypeIcon';
+import Ghc from '../../../../helper/CurrencyFormatter';
+import confirmDialog from '../../../../helper/confirmDialog';
+import showNotification from '../../../../utilities/showNotifcation';
+
+interface SmartBin {
+    id: string;
+    type: string;
+    geometry: {
+        type: string;
+        coordinates: [number, number];
+    };
+    properties: {
+        bin_type_display: string;
+        needs_collection: boolean;
+        needs_maintenance: boolean;
+        bin_number: string;
+        sensor: {
+            id: string;
+            sensor_type_display: string;
+            status_display: string;
+            category_display: string;
+            needs_maintenance: boolean;
+            needs_calibration: boolean;
+            readings_count: number;
+            created_at: string;
+            updated_at: string;
+            sensor_number: string;
+            sensor_type: string;
+            category: string;
+            model: string;
+            manufacturer: string;
+            serial_number: string;
+            version: string;
+            status: string;
+            battery_level: number;
+            signal_strength: number;
+            accuracy: number | null;
+            precision: number | null;
+            range_min: number | null;
+            range_max: number | null;
+            unit: string;
+            installation_date: string;
+            last_maintenance_date: string | null;
+            next_maintenance_date: string | null;
+            warranty_expiry: string | null;
+            expected_lifespan_years: number | null;
+            firmware_version: string;
+            software_version: string;
+            calibration_date: string | null;
+            calibration_due_date: string | null;
+            calibration_interval_days: number | null;
+            communication_protocol: string;
+            data_transmission_interval: number;
+            last_data_transmission: string | null;
+            operating_temperature_min: number | null;
+            operating_temperature_max: number | null;
+            operating_humidity_min: number | null;
+            operating_humidity_max: number | null;
+            power_consumption_watts: number | null;
+            battery_capacity_mah: number | null;
+            solar_powered: boolean;
+            notes: string;
+            is_active: boolean;
+            is_public: boolean;
+            tags: string[];
+        } | null;
+        user: {
+            id: string;
+            email: string;
+            first_name: string;
+            last_name: string;
+            phone_number: string;
+            profile_picture: string | null;
+            rating: string;
+            user_type: string;
+            account_status: string;
+            last_active: string | null;
+            date_joined: string;
+            groups: any[];
+            user_permissions: any[];
+            roles: any[];
+            user_activities: any[];
+            bins: any[];
+        } | null;
+        sensor_id: string | null;
+        battery_level: number | null;
+        signal_strength: number | null;
+        is_online: boolean;
+        created_at: string;
+        updated_at: string;
+        name: string;
+        address: string;
+        area: string;
+        city: string;
+        region: string;
+        landmark: string;
+        fill_level: number;
+        fill_status: string;
+        temperature: number | null;
+        humidity: number | null;
+        status: string;
+        capacity_kg: number;
+        current_weight_kg: number;
+        last_reading_at: string | null;
+        last_collection_at: string | null;
+        installation_date: string;
+        last_maintenance_date: string | null;
+        next_maintenance_date: string | null;
+        maintenance_notes: string;
+        has_compactor: boolean;
+        has_solar_panel: boolean;
+        has_foot_pedal: boolean;
+        qr_code: string;
+        notes: string;
+        is_public: boolean;
+        bin_type: number;
+    };
+}
 
 interface ServiceRequest {
     id: string;
@@ -106,6 +231,7 @@ interface ServiceRequest {
     rating?: number;
     review?: string;
     notes?: string;
+    smart_bin?: SmartBin;
 }
 
 interface Provider {
@@ -261,28 +387,56 @@ const ServiceRequestDetail: React.FC = () => {
     };
 
     const handleCancelService = async () => {
-        if (window.confirm('Are you sure you want to cancel this service?')) {
+        if (await confirmDialog({
+            title: 'Cancel Service',
+            note: 'Are you sure you want to cancel this service?',
+            type: 'error',
+            finalQuestion: 'Are you sure you want to cancel this service?',
+            confirmText: 'Yes Cancel Service',
+        })) {
             try {
                 await axiosInstance.post(`/service-requests/${serviceRequest.id}/cancel_service/`, {
                     reason: 'Cancelled by admin'
                 });
-                toast.success('Service cancelled successfully');
+                showNotification({
+                    message: 'Service cancelled successfully',
+                    type: 'success',
+                    showHide: true,
+                })
                 mutateServiceRequest();
             } catch (error) {
-                toast.error('Failed to cancel service');
+                showNotification({
+                    message: 'Failed to cancel service',
+                    type: 'error',
+                    showHide: true,
+                })
                 console.error('Error cancelling service:', error);
             }
         }
     };
 
     const handleDelete = async () => {
-        if (window.confirm('Are you sure you want to delete this service request?')) {
+        if (await confirmDialog({
+            title: 'Delete Service',
+            note: 'Are you sure you want to delete this service request?',
+            type: 'error',
+            finalQuestion: 'Are you sure you want to delete this service request?',
+            confirmText: 'Yes Delete Service',
+        })) {
             try {
                 await axiosInstance.delete(`/service-requests/${serviceRequest.id}/`);
-                toast.success('Service request deleted successfully');
+                showNotification({
+                    message: 'Service request deleted successfully',
+                    type: 'success',
+                    showHide: true,
+                })
                 navigate('/admin/service-requests');
             } catch (error) {
-                toast.error('Failed to delete service request');
+                showNotification({
+                    message: 'Failed to delete service request',
+                    type: 'error',
+                    showHide: true,
+                })
                 console.error('Error deleting service request:', error);
             }
         }
@@ -336,8 +490,7 @@ const ServiceRequestDetail: React.FC = () => {
                                         <span>{new Date(serviceRequest.service_date).toLocaleDateString()}</span>
                                     </div>
                                     <div className="flex items-center space-x-1">
-                                        <IconCurrencyDollar className="w-4 h-4" />
-                                        <span>${serviceRequest.final_price || serviceRequest.estimated_price}</span>
+                                        <span>{Ghc(serviceRequest.final_price || serviceRequest.estimated_price)}</span>
                                     </div>
                                     <div className="flex items-center space-x-1">
                                         <IconUser className="w-4 h-4" />
@@ -373,6 +526,7 @@ const ServiceRequestDetail: React.FC = () => {
                                 { id: 'overview', label: 'Overview', icon: IconEye },
                                 { id: 'customer', label: 'Customer Info', icon: IconUser },
                                 { id: 'provider', label: 'Provider Info', icon: IconTruck },
+                                { id: 'bin', label: 'Bin Info', icon: IconDatabase },
                                 { id: 'timeline', label: 'Timeline', icon: IconHistory },
                                 { id: 'actions', label: 'Actions', icon: IconSettings }
                             ].map((tab) => {
@@ -416,6 +570,266 @@ const ServiceRequestDetail: React.FC = () => {
                                 onAcceptOffer={handleAcceptOffer}
                                 onRejectOffer={handleRejectOffer}
                             />
+                        )}
+
+                        {/* Bin Info Tab */}
+                        {activeTab === 'bin' && (
+                            <div className="space-y-6">
+                                {serviceRequest.smart_bin ? (
+                                    <>
+                                        {/* Bin Header */}
+                                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center space-x-4">
+                                                    <div className="p-3 bg-white rounded-xl shadow-sm border border-gray-200">
+                                                        <IconDatabase className="w-8 h-8 text-blue-600" />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="text-xl font-bold text-gray-900">
+                                                            {serviceRequest.smart_bin.properties.name}
+                                                        </h3>
+                                                        <p className="text-gray-600">
+                                                            {serviceRequest.smart_bin.properties.bin_type_display} • {serviceRequest.smart_bin.properties.bin_number}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                                                        serviceRequest.smart_bin.properties.is_online 
+                                                            ? 'bg-green-100 text-green-800' 
+                                                            : 'bg-red-100 text-red-800'
+                                                    }`}>
+                                                        {serviceRequest.smart_bin.properties.is_online ? 'Online' : 'Offline'}
+                                                    </span>
+                                                    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                                                        serviceRequest.smart_bin.properties.fill_status === 'empty' ? 'bg-green-100 text-green-800' :
+                                                        serviceRequest.smart_bin.properties.fill_status === 'low' ? 'bg-blue-100 text-blue-800' :
+                                                        serviceRequest.smart_bin.properties.fill_status === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                                        'bg-red-100 text-red-800'
+                                                    }`}>
+                                                        {serviceRequest.smart_bin.properties.fill_status.toUpperCase()}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Bin Details Grid */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {/* Fill Level */}
+                                            <div className="bg-white rounded-xl p-6 border border-gray-200">
+                                                <h4 className="text-lg font-semibold text-gray-900 mb-4">Fill Level</h4>
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <span className="text-3xl font-bold text-gray-900">
+                                                        {serviceRequest.smart_bin.properties.fill_level}%
+                                                    </span>
+                                                    <span className="text-sm text-gray-600">
+                                                        {serviceRequest.smart_bin.properties.current_weight_kg?.toFixed(1)}kg / {serviceRequest.smart_bin.properties.capacity_kg}kg
+                                                    </span>
+                                                </div>
+                                                <div className="w-full bg-gray-200 rounded-full h-3">
+                                                    <div 
+                                                        className={`h-3 rounded-full ${
+                                                            serviceRequest.smart_bin.properties.fill_level >= 90 ? 'bg-red-500' :
+                                                            serviceRequest.smart_bin.properties.fill_level >= 75 ? 'bg-orange-500' :
+                                                            serviceRequest.smart_bin.properties.fill_level >= 50 ? 'bg-yellow-500' :
+                                                            serviceRequest.smart_bin.properties.fill_level >= 25 ? 'bg-blue-500' :
+                                                            'bg-green-500'
+                                                        }`}
+                                                        style={{ width: `${serviceRequest.smart_bin.properties.fill_level}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+
+                                            {/* IoT Status */}
+                                            <div className="bg-white rounded-xl p-6 border border-gray-200">
+                                                <h4 className="text-lg font-semibold text-gray-900 mb-4">IoT Status</h4>
+                                                <div className="space-y-3">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center space-x-2">
+                                                            <IconBattery className="w-5 h-5 text-green-600" />
+                                                            <span className="text-gray-600">Battery</span>
+                                                        </div>
+                                                        <span className="font-semibold">
+                                                            {serviceRequest.smart_bin.properties.battery_level || serviceRequest.smart_bin.properties.sensor?.battery_level || 0}%
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center space-x-2">
+                                                            <IconWifi className="w-5 h-5 text-blue-600" />
+                                                            <span className="text-gray-600">Signal</span>
+                                                        </div>
+                                                        <span className="font-semibold">
+                                                            {serviceRequest.smart_bin.properties.signal_strength || serviceRequest.smart_bin.properties.sensor?.signal_strength || 0}/5
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center space-x-2">
+                                                            <IconThermometer className="w-5 h-5 text-orange-600" />
+                                                            <span className="text-gray-600">Temperature</span>
+                                                        </div>
+                                                        <span className="font-semibold">
+                                                            {serviceRequest.smart_bin.properties.temperature?.toFixed(1) || 'N/A'}°C
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center space-x-2">
+                                                            <IconDroplet className="w-5 h-5 text-blue-600" />
+                                                            <span className="text-gray-600">Humidity</span>
+                                                        </div>
+                                                        <span className="font-semibold">
+                                                            {serviceRequest.smart_bin.properties.humidity?.toFixed(1) || 'N/A'}%
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Location */}
+                                            <div className="bg-white rounded-xl p-6 border border-gray-200">
+                                                <h4 className="text-lg font-semibold text-gray-900 mb-4">Location</h4>
+                                                <div className="space-y-3">
+                                                    <div>
+                                                        <span className="text-gray-600 text-sm">Address</span>
+                                                        <p className="font-semibold text-gray-900">{serviceRequest.smart_bin.properties.address}</p>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-gray-600 text-sm">Area</span>
+                                                        <p className="font-semibold text-gray-900">{serviceRequest.smart_bin.properties.area}</p>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <div>
+                                                            <span className="text-gray-600 text-sm">Latitude</span>
+                                                            <p className="font-semibold text-gray-900">{serviceRequest.smart_bin.geometry.coordinates[1].toFixed(6)}</p>
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-gray-600 text-sm">Longitude</span>
+                                                            <p className="font-semibold text-gray-900">{serviceRequest.smart_bin.geometry.coordinates[0].toFixed(6)}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Sensor Information */}
+                                        {serviceRequest.smart_bin.properties.sensor && (
+                                            <div className="bg-white rounded-xl p-6 border border-gray-200">
+                                                <h4 className="text-lg font-semibold text-gray-900 mb-4">Sensor Information</h4>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    <div className="space-y-3">
+                                                        <div className="flex justify-between">
+                                                            <span className="text-gray-600">Sensor ID</span>
+                                                            <span className="font-semibold">{serviceRequest.smart_bin.properties.sensor.sensor_number}</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-gray-600">Type</span>
+                                                            <span className="font-semibold">{serviceRequest.smart_bin.properties.sensor.sensor_type_display}</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-gray-600">Category</span>
+                                                            <span className="font-semibold">{serviceRequest.smart_bin.properties.sensor.category_display}</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-gray-600">Status</span>
+                                                            <span className={`font-semibold ${
+                                                                serviceRequest.smart_bin.properties.sensor.status === 'active' ? 'text-green-600' : 'text-red-600'
+                                                            }`}>
+                                                                {serviceRequest.smart_bin.properties.sensor.status_display}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-gray-600">Model</span>
+                                                            <span className="font-semibold">{serviceRequest.smart_bin.properties.sensor.model}</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-gray-600">Manufacturer</span>
+                                                            <span className="font-semibold">{serviceRequest.smart_bin.properties.sensor.manufacturer}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="space-y-3">
+                                                        <div className="flex justify-between">
+                                                            <span className="text-gray-600">Installation Date</span>
+                                                            <span className="font-semibold">{serviceRequest.smart_bin.properties.sensor.installation_date}</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-gray-600">Protocol</span>
+                                                            <span className="font-semibold">{serviceRequest.smart_bin.properties.sensor.communication_protocol}</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-gray-600">Transmission Interval</span>
+                                                            <span className="font-semibold">{serviceRequest.smart_bin.properties.sensor.data_transmission_interval}s</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-gray-600">Readings Count</span>
+                                                            <span className="font-semibold">{serviceRequest.smart_bin.properties.sensor.readings_count}</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-gray-600">Solar Powered</span>
+                                                            <span className={`font-semibold ${
+                                                                serviceRequest.smart_bin.properties.sensor.solar_powered ? 'text-green-600' : 'text-gray-600'
+                                                            }`}>
+                                                                {serviceRequest.smart_bin.properties.sensor.solar_powered ? 'Yes' : 'No'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-gray-600">Last Reading</span>
+                                                            <span className="font-semibold">
+                                                                {serviceRequest.smart_bin.properties.last_reading_at 
+                                                                    ? new Date(serviceRequest.smart_bin.properties.last_reading_at).toLocaleString()
+                                                                    : 'N/A'
+                                                                }
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Alerts */}
+                                        {(serviceRequest.smart_bin.properties.needs_collection || 
+                                          serviceRequest.smart_bin.properties.needs_maintenance ||
+                                          serviceRequest.smart_bin.properties.sensor?.needs_maintenance ||
+                                          serviceRequest.smart_bin.properties.sensor?.needs_calibration) && (
+                                            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                                                <h4 className="text-lg font-semibold text-red-900 mb-3 flex items-center space-x-2">
+                                                    <IconAlertTriangle className="w-5 h-5" />
+                                                    <span>Active Alerts</span>
+                                                </h4>
+                                                <div className="space-y-2">
+                                                    {serviceRequest.smart_bin.properties.needs_collection && (
+                                                        <div className="flex items-center space-x-2 p-2 bg-red-100 rounded-lg">
+                                                            <IconAlertTriangle className="w-4 h-4 text-red-600" />
+                                                            <span className="text-sm text-red-800">Bin needs collection</span>
+                                                        </div>
+                                                    )}
+                                                    {serviceRequest.smart_bin.properties.needs_maintenance && (
+                                                        <div className="flex items-center space-x-2 p-2 bg-red-100 rounded-lg">
+                                                            <IconAlertTriangle className="w-4 h-4 text-red-600" />
+                                                            <span className="text-sm text-red-800">Bin needs maintenance</span>
+                                                        </div>
+                                                    )}
+                                                    {serviceRequest.smart_bin.properties.sensor?.needs_maintenance && (
+                                                        <div className="flex items-center space-x-2 p-2 bg-red-100 rounded-lg">
+                                                            <IconAlertTriangle className="w-4 h-4 text-red-600" />
+                                                            <span className="text-sm text-red-800">Sensor needs maintenance</span>
+                                                        </div>
+                                                    )}
+                                                    {serviceRequest.smart_bin.properties.sensor?.needs_calibration && (
+                                                        <div className="flex items-center space-x-2 p-2 bg-red-100 rounded-lg">
+                                                            <IconAlertTriangle className="w-4 h-4 text-red-600" />
+                                                            <span className="text-sm text-red-800">Sensor needs calibration</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <div className="text-center py-12">
+                                        <IconDatabase className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                        <h3 className="text-lg font-medium text-gray-900 mb-2">No Bin Information</h3>
+                                        <p className="text-gray-500">This service request is not associated with any smart bin.</p>
+                                    </div>
+                                )}
+                            </div>
                         )}
 
                         {/* Timeline Tab */}

@@ -58,6 +58,8 @@ const CustomerDashboard = () => {
         fetcher
     );
 
+    console.log("the bins data", binsData)
+
     // Fetch customer's service requests
     const { data: requestsData, isLoading: requestsLoading, error: requestsError } = useSWR(
         user?.id ? `/customers/${user.id}/service_requests/` : null,
@@ -103,7 +105,7 @@ const CustomerDashboard = () => {
     const smartBins = extractArrayData(binsData).map((bin: any) => ({
         id: bin.id,
         name: bin.bin_number || bin.name || 'Unnamed Bin',
-        location: bin.location_name || bin.location || 'Unknown Location',
+        location: bin.name || bin.location || 'Unknown Location',
         fillLevel: bin.fill_level || 0,
         status: bin.status || 'unknown',
         lastCollection: bin.last_collection_date || bin.last_collection || 'Never',

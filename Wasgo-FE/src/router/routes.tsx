@@ -42,13 +42,13 @@ import LeaveReviewPage from '../pages/user/LeaveAReview';
 import ProviderReviews from '../pages/provider/reviews';
 import ProviderManagement from '../pages/provider/ProviderManagement';
 import Home from '../pages/Home';
-import ServiceRequestForm from '../pages/ServiceRequest/ServiceRequestForm';
 import VehicleManagement from '../pages/vehicleManagement/vehicleManagment';
 import DriversManagement from '../pages/DriverManagement/driverManagement';
 
 import UserDetail from '../pages/user/UserDetail';
 import PaymentPage from '../pages/PaymentPage';
 import ServiceRequestDetailPage from '../pages/ServiceRequestDetailPage';
+import ServiceRequestPage from '../pages/customer/ServiceRequest/ServiceRequestPage';
 import ProviderJobDetailPage from '../pages/ProviderJobDetailPage';
 import PaymentDetail from '../components/Payment/PaymentDetail';
 import UserBookingDetail from '../pages/user/UserBookingDetail';
@@ -75,6 +75,7 @@ import DriverDetail from '../pages/provider/ProviderDetail/tabs/driversTab/Drive
 import EditDriver from '../pages/provider/ProviderDetail/tabs/driversTab/EditDriver';
 import ProviderDashboard from '../pages/provider/providerDashboard';
 import SmartBins from '../pages/customer/SmartBin/SmartBins';
+import BinDetail from '../pages/customer/SmartBin/BinDetail/BinDetail';
 import SmartBinAlerts from '../pages/provider/SmartBinAlerts';
 import Rewards from '../pages/customer/Rewards';
 import ImpactReports from '../pages/customer/ImpactReports';
@@ -252,6 +253,15 @@ const routes = [
         layout: 'default',
     },
     {
+        path: '/customer/bins/:id',
+        element: (
+            <ProtectedRoute customerOnly>
+                <BinDetail />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
         path: '/faq',
         element: (
             <ProtectedRoute>
@@ -270,12 +280,7 @@ const routes = [
         layout: 'default',
     },
 
-    // Customer routes
-    {
-        path: '/service-request',
-        element: <ServiceRequestForm />,
-        layout: 'flexible',
-    },
+    
     {
         path: '/customer/request-pickup',
         element: (
@@ -421,24 +426,8 @@ const routes = [
         layout: 'default',
     },
     // Legacy customer routes (keeping for backward compatibility)
-    {
-        path: '/request-pickup',
-        element: (
-            <ProtectedRoute customerOnly>
-                <ServiceRequestForm />
-            </ProtectedRoute>
-        ),
-        layout: 'default',
-    },
-    {
-        path: '/schedule-pickup',
-        element: (
-            <ProtectedRoute customerOnly>
-                <ServiceRequestForm />
-            </ProtectedRoute>
-        ),
-        layout: 'default',
-    },
+   
+  
     {
         path: '/active-pickups',
         element: (
@@ -511,10 +500,15 @@ const routes = [
         ),
         layout: 'default',
     },
+  
     {
-        path: '/service-request2',
-        element: <ServiceRequestForm />,
-        layout: 'flexible',
+        path: '/service-request/create',
+        element: (
+            <ProtectedRoute customerOnly>
+                <ServiceRequestPage />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
     },
     {
         path: '/service-requests/:id',
@@ -599,15 +593,7 @@ const routes = [
         ),
         layout: 'default',
     },
-    {
-        path: '/bookings/new',
-        element: (
-            <ProtectedRoute customerOnly>
-                <ServiceRequestForm />
-            </ProtectedRoute>
-        ),
-        layout: 'default',
-    },
+   
     {
         path: '/bookings/:id',
         element: (

@@ -3,11 +3,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import App from '../../App';
 import { IRootState } from '../../store';
 import { toggleSidebar } from '../../store/themeConfigSlice';
-import Footer from './Footer';
 import Header from './Header/Header';
 import Setting from './Setting';
 import Sidebar from './Sidebar';
 import Portals from '../../components/Portals';
+import Footer from '../homepage/Footer';
 
 const DefaultLayout = ({ children }: PropsWithChildren) => {
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);

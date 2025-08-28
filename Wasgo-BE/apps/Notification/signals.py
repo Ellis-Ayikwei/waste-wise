@@ -63,7 +63,7 @@ def handle_request_status_change(sender, instance, created, **kwargs):
                         related_object_id=instance.id,
                         action_url=f"/service-requests/{instance.id}",
                         priority="high",
-                        request=instance,
+                        service_request=instance,
                     )
 
             logger.info(f"Sent status change notification for request {instance.id}")
@@ -74,7 +74,12 @@ def handle_request_status_change(sender, instance, created, **kwargs):
 @receiver(post_save, sender="Payment.Payment")
 def handle_payment_status_change(sender, instance, created, **kwargs):
     """Send notification when payment status changes"""
-    if not created and instance.request and instance.request.user:
+    if (
+        not created
+        and instance.request
+        and hasattr(instance.request, "user")
+        and instance.request.user
+    ):
         try:
             if instance.status == "completed":
                 if not NotificationService.has_sent_email_for(
@@ -199,7 +204,7 @@ def handle_provider_verification(sender, instance, created, **kwargs):
 @receiver(post_save, sender="ServiceRequest.ServiceRequest")
 def handle_job_status_change(sender, instance, created, **kwargs):
     """Send notification when job status changes"""
-    if not created and instance.request and instance.request.user:
+    if not created and instance.user:
         try:
             # Get old status (you might need to implement this)
             old_status = getattr(instance, "_original_status", None)
@@ -216,13 +221,13 @@ def handle_job_status_change(sender, instance, created, **kwargs):
                 )
 
                 if not NotificationService.has_sent_email_for(
-                    user=instance.request.user,
+                    user=instance.user,
                     notification_type=notification_type,
                     related_object_type="job",
                     related_object_id=instance.id,
                 ):
                     NotificationService.notify_job_status_change(
-                        user=instance.request.user,
+                        user=instance.user,
                         job_obj=instance,
                         old_status=old_status,
                         new_status=instance.status,

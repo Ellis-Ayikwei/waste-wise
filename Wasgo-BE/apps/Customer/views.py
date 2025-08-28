@@ -128,9 +128,9 @@ class CustomerViewSet(viewsets.ModelViewSet):
             )
 
         # Serialize bins
-        from apps.WasteBin.serializers import SmartBinSerializer
+        from apps.WasteBin.serializers import SmartBinListJSONSerializer
 
-        serializer = SmartBinSerializer(bins, many=True)
+        serializer = SmartBinListJSONSerializer(bins, many=True)
 
         return Response({"count": bins.count(), "results": serializer.data})
 

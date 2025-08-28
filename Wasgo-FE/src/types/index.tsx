@@ -134,6 +134,7 @@ export interface ServiceRequest {
     dropoff_has_elevator?: boolean;
     moving_items?: JourneyItem[];
     journey_stops?: JourneyStop[];
+    smart_bin?: string;
     status?: string;
     created_at?: string;
     updated_at?: string;

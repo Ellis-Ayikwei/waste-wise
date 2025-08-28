@@ -35,6 +35,8 @@ import { faClipboardList, faClock, faMapPin, faCheckCircle, faMoneyBill } from '
 import IconLoader from '../../../components/Icon/IconLoader';
 import CreateOrEditRequestModal from './creatnewRequest/createOrEditRequest';
 import Ghc from '../../../helper/CurrencyFormatter';
+import showNotification from '../../../utilities/showNotifcation';
+import confirmDialog from '../../../helper/confirmDialog';
 
 interface ServiceRequest {
     id: string;
@@ -291,7 +293,14 @@ const ServiceRequestManagement: React.FC = () => {
     };
 
     const handleCancelService = async (request: ServiceRequest) => {
-        if (window.confirm('Are you sure you want to cancel this service?')) {
+        if (await confirmDialog({
+            title: 'Cancel Service',
+            note: 'Are you sure you want to cancel this service?',
+            type: 'error',
+            finalQuestion: 'Are you sure you want to cancel this service?',
+            confirmText: 'Yes Cancel Service',
+         
+        })) {
             try {
                 await axiosInstance.post(`/service-requests/${request.id}/cancel_service/`, {
                     reason: 'Cancelled by admin'
@@ -301,6 +310,38 @@ const ServiceRequestManagement: React.FC = () => {
             } catch (error) {
                 toast.error('Failed to cancel service');
                 console.error('Error cancelling service:', error);
+            }
+        }
+    };
+
+    const handleDeleteService = async (request: ServiceRequest) => {
+
+        const isConfirmDelete = await confirmDialog({
+            title: 'Delete Service',
+            note: 'This action cannot be undone',
+            type: 'error',
+            finalQuestion: 'Are you sure you want to delete this service?',
+            confirmText: 'Delete',
+            denyText: 'Cancel',
+            cancelText: 'Cancel',
+        })
+
+        if (isConfirmDelete) {
+        try {
+            await axiosInstance.delete(`/service-requests/${request.id}/`);
+            showNotification({
+                message: 'Service deleted successfully',
+                type: 'success',
+                showHide: true,
+            })
+            mutateServiceRequests();
+        } catch (error) {
+            showNotification({
+                message: 'Failed to delete service',
+                type: 'error',
+                showHide: true,
+            })
+                console.error('Error deleting service:', error);
             }
         }
     };
@@ -538,7 +579,15 @@ const ServiceRequestManagement: React.FC = () => {
                             <IconX className="w-4 h-4" />
                         </button>
                     )}
+                     <button
+                            onClick={() => handleDeleteService(request)}
+                            className="p-1 text-red-600 hover:text-red-800 transition-colors"
+                            title="Delete Service"
+                        >
+                            <IconTrash className="w-4 h-4" />
+                        </button>
                 </div>
+                
             )
         }
     ];

@@ -1,5 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { useSchedulePickup } from '../../../../utils/schedulePickup';
 import {
     IconDatabase,
     IconWifi,
@@ -58,6 +60,9 @@ interface SmartBinCardProps {
 }
 
 const SmartBinCard: React.FC<SmartBinCardProps> = ({ bin, index }) => {
+    const navigate = useNavigate();
+    const { schedulePickup } = useSchedulePickup();
+
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'empty': return 'text-emerald-600 bg-emerald-50 border-emerald-200';
@@ -120,6 +125,20 @@ const SmartBinCard: React.FC<SmartBinCardProps> = ({ bin, index }) => {
             case 'Organic Waste': return <IconLeaf className="w-5 h-5 text-emerald-600" />;
             default: return <IconTrash className="w-5 h-5 text-slate-600" />;
         }
+    };
+
+    const handleViewDetails = () => {
+        navigate(`/customer/bins/${bin.id}`);
+    };
+
+    const handleSchedulePickup = () => {
+        schedulePickup({
+            binId: bin.id,
+            binName: bin.name,
+            binAddress: bin.location,
+            binType: bin.type,
+            fillLevel: bin.fillLevel,
+        });
     };
 
     return (
@@ -274,6 +293,7 @@ const SmartBinCard: React.FC<SmartBinCardProps> = ({ bin, index }) => {
                         <motion.button 
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
+                            onClick={handleSchedulePickup}
                             className="px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl"
                         >
                             Schedule Pickup
@@ -281,6 +301,7 @@ const SmartBinCard: React.FC<SmartBinCardProps> = ({ bin, index }) => {
                         <motion.button 
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
+                            onClick={handleViewDetails}
                             className="px-4 py-3 bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all duration-300"
                         >
                             View Details
