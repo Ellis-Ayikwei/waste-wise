@@ -133,7 +133,7 @@ const Sidebar = () => {
             label: 'Service Requests',
             subItems: [
                 { path: '/admin/service-requests/all', icon: IconList, label: 'All Requests' },
-                { path: '/admin/service-requests/new', icon: IconTrash, label: 'New Requests' },
+                // { path: '/admin/service-requests/new', icon: IconTrash, label: 'New Requests' },
             ],
         },
         {

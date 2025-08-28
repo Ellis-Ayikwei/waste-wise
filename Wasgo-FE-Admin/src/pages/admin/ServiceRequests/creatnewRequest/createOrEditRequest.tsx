@@ -324,10 +324,10 @@ const CreateOrEditRequestModal: React.FC<ServiceRequestModalProps> = ({
 
     // Filter bins that need service
     const binsNeedingService = userBins?.filter((bin: SmartBin) => 
-        bin.properties.needs_collection || 
-        bin.properties.needs_maintenance ||
-        bin.properties.sensor?.needs_maintenance ||
-        bin.properties.sensor?.needs_calibration
+        bin?.properties?.needs_collection || 
+        bin?.properties?.needs_maintenance ||
+        bin?.properties?.sensor?.needs_maintenance ||
+        bin?.properties?.sensor?.needs_calibration
     );
 
     // Fetch existing request data if editing
