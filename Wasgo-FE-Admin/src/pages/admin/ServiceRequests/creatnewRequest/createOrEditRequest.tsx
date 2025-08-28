@@ -323,7 +323,7 @@ const CreateOrEditRequestModal: React.FC<ServiceRequestModalProps> = ({
     const userBins = userBinsData || [];
 
     // Filter bins that need service
-    const binsNeedingService = userBins?.filter((bin: SmartBin) => 
+    const binsNeedingService = Array.isArray(userBins) && userBins.filter((bin: SmartBin) => 
         bin?.properties?.needs_collection || 
         bin?.properties?.needs_maintenance ||
         bin?.properties?.sensor?.needs_maintenance ||
