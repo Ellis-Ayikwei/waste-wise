@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 import { 
@@ -29,10 +29,9 @@ import {
     IconDatabase,
     IconBattery,
     IconWifi,
-    IconThermometer,
-    IconCrosshair,
-    IconSearch
+    IconThermometer
 } from '@tabler/icons-react';
+import AddressAutocomplete from '../../../../components/AddressAutocomplete';
 import axiosInstance from '../../../../services/axiosInstance';
 import useSWR from 'swr';
 import fetcher from '../../../../services/fetcher';
@@ -513,11 +512,7 @@ const CreateOrEditRequestModal: React.FC<ServiceRequestModalProps> = ({
 
     const handleSubmit = async () => {
         if (!formData.user_id || !formData.title || !formData.pickup_address) {
-            showNotification({
-                message: 'Please fill in all required fields',
-                type: 'error',
-                showHide: true,
-            })
+            showNotification('Please fill in all required fields', 'error');
             return;
         }
 
@@ -527,30 +522,18 @@ const CreateOrEditRequestModal: React.FC<ServiceRequestModalProps> = ({
                 // Update existing request
                 await axiosInstance.put(`/service-requests/${requestId}/`, formData);
                 onClose();
-                showNotification({
-                    message: 'Service request updated successfully',
-                    type: 'success',
-                    showHide: true,
-                })
+                showNotification('Service request updated successfully', 'success');
             } else {
                 // Create new request
                 await axiosInstance.post('/service-requests/', formData);
-                showNotification({
-                    message: 'Service request created successfully',
-                    type: 'success',
-                    showHide: true,
-                })
+                showNotification('Service request created successfully', 'success');
             }
             
             onSuccess?.();
             onClose();
         } catch (error) {
             console.error('Error saving service request:', error);
-            showNotification({
-                message: 'Failed to save service request',
-                type: 'error',
-                showHide: true,
-            })
+            showNotification('Failed to save service request', 'error');
         } finally {
             setIsSubmitting(false);
         }
@@ -978,67 +961,19 @@ const CreateOrEditRequestModal: React.FC<ServiceRequestModalProps> = ({
 
                                             {/* Pickup Address with Search */}
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Pickup Address *
-                                                </label>
-                                                <div className="relative">
-                                                    <input
-                                                        type="text"
-                                                        value={formData.pickup_address}
-                                                        onChange={(e) => handleAddressInputChange(e.target.value)}
-                                                        onFocus={() => setShowSuggestions(true)}
-                                                        className="w-full px-3 py-2 pl-10 pr-20 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                                        placeholder="Search for an address or use current location"
-                                                    />
-                                                    <IconMapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                                    
-                                                    {/* Current Location Button */}
-                                                    <button
-                                                        type="button"
-                                                        onClick={getCurrentLocation}
-                                                        disabled={isGettingLocation}
-                                                        className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-blue-600 disabled:text-gray-300 transition-colors"
-                                                        title="Use current location"
-                                                    >
-                                                        {isGettingLocation ? (
-                                                            <IconLoader className="w-4 h-4 animate-spin" />
-                                                        ) : (
-                                                            <IconCrosshair className="w-4 h-4" />
-                                                        )}
-                                                    </button>
-                                                </div>
-
-                                                {/* Address Suggestions Dropdown */}
-                                                {showSuggestions && (addressSuggestions.length > 0 || isSearching) && (
-                                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                                                        {isSearching && (
-                                                            <div className="p-3 text-center text-gray-500">
-                                                                <IconLoader className="w-4 h-4 animate-spin mx-auto mb-1" />
-                                                                Searching...
-                                                            </div>
-                                                        )}
-                                                        {addressSuggestions.map((suggestion) => (
-                                                            <button
-                                                                key={suggestion.place_id}
-                                                                type="button"
-                                                                onClick={() => handleAddressSelect(suggestion)}
-                                                                className="w-full p-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-                                                            >
-                                                                <div className="flex items-center space-x-2">
-                                                                    <IconSearch className="w-4 h-4 text-gray-400" />
-                                                                    <div>
-                                                                        <div className="font-medium text-gray-900">
-                                                                            {suggestion.structured_formatting.main_text}
-                                                                        </div>
-                                                                        <div className="text-sm text-gray-500">
-                                                                            {suggestion.structured_formatting.secondary_text}
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                )}
+                                                <AddressAutocomplete
+                                                    placeholder="Search for an address or use current location"
+                                                    value={formData.pickup_address}
+                                                    onAddressChange={(value) => handleInputChange('pickup_address', value)}
+                                                    onAddressSelect={(addressData) => {
+                                                        handleInputChange('pickup_address', addressData.formatted_address);
+                                                        handleInputChange('pickup_location', `${addressData.coordinates.lat},${addressData.coordinates.lng}`);
+                                                    }}
+                                                    label="Pickup Address *"
+                                                    required={true}
+                                                    showDetails={false}
+                                                    showPostcodeAddresses={false}
+                                                />
                                             </div>
 
                                             {/* Dropoff Address */}
