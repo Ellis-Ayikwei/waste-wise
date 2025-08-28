@@ -20,7 +20,7 @@ jobs:
     - name: Deploy to DigitalOcean Droplet
       run: |
         ssh -o StrictHostKeyChecking=no ${{ secrets.DO_USER }}@${{ secrets.DO_DROPLET_IP }} << EOF
-          cd /home/ellis_1/waste-wise/
+          cd /home/${{ secrets.DO_USER }}/waste-wise/
           git pull origin main
           . scb/bin/activate
           pip install --no-cache-dir -r requirements.txt
