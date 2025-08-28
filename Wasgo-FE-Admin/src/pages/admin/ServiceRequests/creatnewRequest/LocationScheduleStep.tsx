@@ -40,22 +40,6 @@ const LocationScheduleStep: React.FC<LocationScheduleStepProps> = ({
                 />
             </div>
 
-            {/* Dropoff Address */}
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Dropoff Address
-                </label>
-                <div className="relative">
-                    <input
-                        type="text"
-                        value={formData.dropoff_address || ''}
-                        onChange={(e) => onInputChange('dropoff_address', e.target.value)}
-                        className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Enter dropoff address (optional)"
-                    />
-                    <IconMapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                </div>
-            </div>
 
             {/* Service Date and Time */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
