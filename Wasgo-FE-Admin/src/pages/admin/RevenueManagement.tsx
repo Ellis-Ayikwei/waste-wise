@@ -139,7 +139,7 @@ const RevenueManagement: React.FC = () => {
     const { data: paymentsData, error: paymentsError, mutate: refreshPayments } = useSWR('/payments/', fetcher);
 
     // Fetch payment methods from API
-    const { data: paymentMethodsData, error: paymentMethodsError } = useSWR('/payment-methods/', fetcher);
+    const { data: paymentMethodsData, error: paymentMethodsError } = useSWR('/payments/payment_methods/', fetcher);
 
     useEffect(() => {
         if (paymentsData) {
