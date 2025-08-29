@@ -81,8 +81,6 @@ const Header = () => {
                     </div>
                 </div>
 
-                {/* Enhanced Horizontal Menu - Waste Management Focused */}
-                <HorizontalMenu />
             </div>
         </header>
     );
