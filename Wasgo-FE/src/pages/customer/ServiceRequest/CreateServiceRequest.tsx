@@ -21,6 +21,7 @@ import axiosInstance from '../../../services/axiosInstance';
 import useSWR from 'swr';
 import fetcher from '../../../services/fetcher';
 import showNotification from '../../../utilities/showNotifcation';
+import useAuthUser from 'react-auth-kit/hooks/useAuthUser';
 
 interface ServiceRequestModalProps {
     isOpen: boolean;
@@ -58,6 +59,7 @@ interface ServiceRequest {
     title: string;
     description: string;
     pickup_address: string;
+    pickup_location?: string;
     service_date: string;
     service_time_slot: string;
     priority: string;
@@ -125,6 +127,8 @@ const CreateServiceRequestModal: React.FC<ServiceRequestModalProps> = ({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [activeStep, setActiveStep] = useState(1);
     const [selectedBin, setSelectedBin] = useState<SmartBin | null>(null);
+    const auth = useAuthUser();
+    const user = auth?.user as any;
     
 
 
@@ -207,23 +211,81 @@ const CreateServiceRequestModal: React.FC<ServiceRequestModalProps> = ({
     const handleSubmit = async () => {
         setIsSubmitting(true);
         try {
+            // Get current user ID from localStorage or context
+            
+            if (!user?.id) {
+                showNotification({
+                    message: 'User information not found. Please log in again.',
+                    type: 'error',
+                    showHide: true,
+                });
+                return;
+            }
+
+            // Prepare payload according to backend expectations
             const payload = {
-                ...formData,
+                user_id: user.id,
+                service_type: formData.service_type,
+                title: formData.title,
+                description: formData.description,
+                pickup_address: formData.pickup_address,
+                service_date: formData.service_date,
+                service_time_slot: formData.service_time_slot,
+                priority: formData.priority,
+                payment_method: formData.payment_method,
+                is_instant: formData.is_instant,
+                is_recurring: formData.is_recurring,
+                special_instructions: formData.special_instructions,
+                smart_bin_id: formData.smart_bin || null
             };
 
             if (requestId) {
                 await axiosInstance.put(`/service-requests/${requestId}/`, payload);
-                showNotification('Service request updated successfully!', 'success');
+                showNotification({
+                    message: 'Service request updated successfully!',
+                    type: 'success',
+                    showHide: true,
+                });
             } else {
                 await axiosInstance.post('/service-requests/', payload);
-                showNotification('Service request created successfully!', 'success');
+                showNotification({
+                    message: 'Service request created successfully!',
+                    type: 'success',
+                    showHide: true,
+                });
             }
 
             onSuccess?.();
             onClose();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error submitting service request:', error);
-            showNotification('Failed to create service request. Please try again.', 'error');
+            
+            // Show more specific error message
+            if (error.response?.data) {
+                const errorData = error.response.data;
+                if (typeof errorData === 'object') {
+                    const errorMessages = Object.entries(errorData)
+                        .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+                        .join('\n');
+                    showNotification({
+                        message: `Validation errors:\n${errorMessages}`,
+                        type: 'error',
+                        showHide: true,
+                    });
+                } else {
+                    showNotification({
+                        message: errorData.toString(),
+                        type: 'error',
+                        showHide: true,
+                    });
+                }
+            } else {
+                showNotification({
+                    message: 'Failed to create service request. Please try again.',
+                    type: 'error',
+                    showHide: true,
+                });
+            }
         } finally {
             setIsSubmitting(false);
         }
