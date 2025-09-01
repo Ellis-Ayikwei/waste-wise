@@ -22,32 +22,49 @@ const AuthRedirect: React.FC<AuthRedirectProps> = ({ children }) => {
     const isAuthenticated = useIsAuthenticated();
     const authUser = useAuthUser() as AuthUser | null;
     const location = useLocation();
+    const dispatch = useDispatch();
+
+    console.log('=== AUTH REDIRECT COMPONENT RENDERED ===');
+    console.log('AuthRedirect - isAuthenticated:', isAuthenticated);
+    console.log('AuthRedirect - authUser:', authUser);
+    console.log('AuthRedirect - location:', location.pathname);
+    console.log('AuthRedirect - timestamp:', new Date().toISOString());
 
     // If user is authenticated, redirect them away from auth pages
     if (isAuthenticated && authUser?.user) {
         const userType = authUser.user.user_type?.toLowerCase();
+        console.log('AuthRedirect - userType:', userType);
+        console.log('AuthRedirect - User is authenticated, redirecting...');
+        
         const searchParams = new URLSearchParams(location.search);
         const from = searchParams.get('from');
-        const dispatch = useDispatch();
-        
 
         // If there's a 'from' parameter, redirect there
         if (from) {
+            console.log('AuthRedirect - redirecting to from:', from);
             return <Navigate to={decodeURIComponent(from)} replace />;
         }
 
-        // Otherwise, redirect based on user type
+        // Redirect based on user type
         const adminRoles = ['super_admin', 'admin', 'underwriter', 'premium_admin', 'sales'];
-        const providerRoles = ['provider', 'business'];
+        const providerRoles = ['provider', 'business', 'waste_provider'];
 
-        if (adminRoles.includes(userType) || providerRoles.includes(userType)) {
+        if (adminRoles.includes(userType)) {
+            console.log('AuthRedirect - redirecting admin to /admin/dashboard');
+            dispatch(initializeViewMode("admin"));
+            return <Navigate to="/admin/dashboard" replace />;
+        } else if (providerRoles.includes(userType)) {
+            console.log('AuthRedirect - redirecting provider to /provider/dashboard');
             dispatch(initializeViewMode("admin"));
             return <Navigate to="/provider/dashboard" replace />;
         } else {
+            // Customer users (default case)
+            console.log('AuthRedirect - redirecting customer to /dashboard');
             return <Navigate to="/dashboard" replace />;
         }
     }
 
+    console.log('AuthRedirect - showing children (not authenticated)');
     return <>{children}</>;
 };
 

@@ -224,7 +224,7 @@ class _AppSidebarState extends State<AppSidebar> {
         name: 'account-settings',
         label: 'Account Settings',
         icon: Icons.person,
-        route: '/customer/account-settings',
+        route: '/account-settings',
       ),
     ];
   }

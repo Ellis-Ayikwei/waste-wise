@@ -251,3 +251,30 @@ class CustomerViewSet(viewsets.ModelViewSet):
                 "monthly_breakdown": monthly_data,
             }
         )
+
+    @action(detail=True, methods=["get"])
+    def payments_history(self, request, pk=None):
+        """Payments for a customer"""
+        from apps.Payment.models_paystack import PaystackPayment
+
+        customer = self.get_object()
+
+        # Ensure user can only access their own payments
+        if customer.id != request.user.id:
+            return Response(
+                {"error": "You can only access your own payments"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        payments = PaystackPayment.objects.filter(user=customer)
+        print(request.user)
+        print(payments)
+
+        # Serialize payments
+        from apps.Payment.serializer import (
+            PaystackPaymentSerializer as PaymentSerializer,
+        )
+
+        serializer = PaymentSerializer(payments, many=True)
+
+        return Response(serializer.data)

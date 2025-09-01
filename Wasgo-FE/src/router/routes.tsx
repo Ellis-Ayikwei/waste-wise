@@ -15,8 +15,7 @@ import AuthRedirect from '../components/Auth/AuthRedirect';
 import Login from '../pages/auth/login';
 import Register from '../pages/auth/register';
 import FAQPage from '../pages/help and support/faq';
-import JobBoard from '../pages/provider/JobBoard/JobBoard';
-import JobDetail from '../pages/provider/JobdDeatail/JobDetail';
+import JobDetail from '../pages/provider/Jobs/JobDetail';
 
 import ProviderOnboarding from '../pages/provider/providerOnboarding/ProviderOnboarding';
 import ProviderVerifyAccount from '../pages/provider/providerOnboarding/ProviderVerifyAccount';
@@ -73,7 +72,7 @@ import AddEditVehiclePage from '../pages/provider/ProviderDetail/tabs/vehiclesTa
 import ViewVehiclePage from '../pages/provider/ProviderDetail/tabs/vehiclesTab/ViewVehiclePage';
 import DriverDetail from '../pages/provider/ProviderDetail/tabs/driversTab/DriverDetail';
 import EditDriver from '../pages/provider/ProviderDetail/tabs/driversTab/EditDriver';
-import ProviderDashboard from '../pages/provider/providerDashboard';
+import ProviderDashboard from '../pages/provider/Dashboard/providerDashboard';
 import SmartBins from '../pages/customer/SmartBin/SmartBins';
 import BinDetail from '../pages/customer/SmartBin/BinDetail/BinDetail';
 import SmartBinAlerts from '../pages/provider/SmartBinAlerts';
@@ -94,14 +93,20 @@ import Messages from '../pages/customer/Messages';
 import HelpCenter from '../pages/customer/HelpCenter';
 import LiveChat from '../pages/customer/LiveChat';
 import DisputeResolution from '../pages/customer/DisputeResolution';
-import CustomerAccountSettings from '../pages/customer/AccountSettings';
-import ProviderAccountSettings from '../pages/provider/AccountSettings';
-import JobRequests from '../pages/provider/JobRequests';
+import PickupRequestsPage from '../pages/customer/PickupRequests/PickupRequestsPage';
+import ServiceRequestDetail from '../pages/customer/ServiceRequest/ServiceRequestDetail';
+import UserAccountSetting from '../pages/userAccountSetting';
+import JobRequests from '../pages/provider/Jobs/JobRequests';
+import PickupRoute from '../pages/provider/Jobs/PickupRoute';
 import ActiveJobs from '../pages/provider/ActiveJobs';
 import FleetManagement from '../pages/provider/FleetManagement';
 import Earnings from '../pages/provider/Earnings';
-import Dashboard from '../pages/customer/Dashboard';
-
+import Dashboard from '../pages/Dasboard/Dashboard';
+import CreateOrEditServiceRequest from '../pages/customer/ServiceRequest/CreateOrEditServiceRequest';
+import AddSmartBinPage from '../pages/customer/SmartBin/AddSmartBinPage';
+import CreateServiceRequestPage from '../pages/customer/ServiceRequest/CreateServiceRequestPage';
+import VerifyPayments from '../pages/payments/verifyPayments';
+import PaymentsPage from '../pages/customer/Payments/PaymentsPage';
 
 
 const routes = [
@@ -372,19 +377,47 @@ const routes = [
         layout: 'default',
     },
     {
-        path: '/customer/account-settings',
+        path: '/account-settings',
         element: (
             <ProtectedRoute customerOnly>
-                <CustomerAccountSettings />
+                <UserAccountSetting />
             </ProtectedRoute>
         ),
         layout: 'default',
     },
     {
-        path: '/provider/account-settings',
+        path: '/customer/pickup-requests',
         element: (
-            <ProtectedRoute providerOnly>
-                <ProviderAccountSettings />
+            <ProtectedRoute customerOnly>
+                <PickupRequestsPage />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/customer/service-requests/:id',
+        element: (
+            <ProtectedRoute customerOnly>
+                <ServiceRequestDetail />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/customer/payments',
+        element: (
+            <ProtectedRoute customerOnly>
+                <PaymentsPage />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+   
+    {
+        path: '/customer/smart-bins/add',
+        element: (
+            <ProtectedRoute customerOnly>
+                <AddSmartBinPage />
             </ProtectedRoute>
         ),
         layout: 'default',
@@ -505,7 +538,7 @@ const routes = [
         path: '/service-request/create',
         element: (
             <ProtectedRoute customerOnly>
-                <ServiceRequestPage />
+                <CreateServiceRequestPage />
             </ProtectedRoute>
         ),
         layout: 'default',
@@ -666,6 +699,20 @@ const routes = [
         ),
         layout: 'blank',
     },
+    {
+        path: '/payments/verify',
+        element: <VerifyPayments />,
+        layout: 'blank',
+    },
+    {
+        path: '/payment/verify',
+        element: (
+            <ProtectedRoute>
+                <VerifyPayments />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
 
     // Support routes
     {
@@ -699,15 +746,7 @@ const routes = [
         ),
         layout: 'default',
     },
-    {
-        path: '/provider/job-requests',
-        element: (
-            <ProtectedRoute providerOnly>
-                <JobBoard />
-            </ProtectedRoute>
-        ),
-        layout: 'default',
-    },
+   
     
     {
         path: '/provider/fleet',
@@ -723,6 +762,15 @@ const routes = [
         element: (
             <ProtectedRoute providerOnly>
                 <BookingTracking />
+            </ProtectedRoute>
+        ),
+        layout: 'default',
+    },
+    {
+        path: '/provider/pickup-routes',
+        element: (
+            <ProtectedRoute providerOnly>
+                <PickupRoute />
             </ProtectedRoute>
         ),
         layout: 'default',
@@ -818,15 +866,7 @@ const routes = [
         ),
         layout: 'default',
     },
-    {
-        path: '/provider/jobs',
-        element: (
-            <ProtectedRoute providerOnly>
-                <JobBoard />
-            </ProtectedRoute>
-        ),
-        layout: 'default',
-    },
+    
     
     
     {

@@ -11,11 +11,15 @@ from django.utils import timezone
 import json
 import logging
 
-from .models import PaymentMethod, Payment, StripeEvent
+from .models_paystack import (
+    PaystackPaymentMethod as PaymentMethod,
+    PaystackPayment as Payment,
+    PaymentWebhook as StripeEvent,
+)
 from django.core.exceptions import ObjectDoesNotExist
 from .serializer import (
-    PaymentMethodSerializer,
-    PaymentSerializer,
+    PaystackPaymentMethodSerializer as PaymentMethodSerializer,
+    PaystackPaymentSerializer as PaymentSerializer,
     CreateRefundSerializer,
 )
 from .stripe_service import StripeService
@@ -109,9 +113,9 @@ class PaymentMethodViewSet(viewsets.ModelViewSet):
             "default_payment_methods": PaymentMethod.objects.filter(
                 is_default=True
             ).count(),
-            "by_type": PaymentMethod.objects.values("stripe_payment_method_type")
+            "by_type": PaymentMethod.objects.values("payment_type")
             .annotate(count=Count("id"))
-            .order_by("stripe_payment_method_type"),
+            .order_by("payment_type"),
             "recent_additions": PaymentMethod.objects.select_related("user")
             .order_by("-created_at")[:10]
             .values(
@@ -792,7 +796,9 @@ class PaymentViewSet(viewsets.ModelViewSet):
 
             # Get request with specific user
             try:
-                request_obj = ServiceRequest.objects.get(id=request_id, user=actual_user)
+                request_obj = ServiceRequest.objects.get(
+                    id=request_id, user=actual_user
+                )
                 print(f"Found request for user: {request_obj.id}")
             except ServiceRequest.DoesNotExist:
                 return Response(
@@ -979,9 +985,11 @@ class PaymentViewSet(viewsets.ModelViewSet):
                             request_obj.final_price = payment.amount
                             request_obj.is_paid = True
                             request_obj.paid_at = timezone.now()
-                            request_obj.payment_reference = payment.stripe_payment_intent_id
+                            request_obj.payment_reference = (
+                                payment.stripe_payment_intent_id
+                            )
                             request_obj.save()
-                            
+
                             payment_result["service_request_updated"] = True
                             logger.info(
                                 f"Updated service request {request_obj.id} for payment {payment.id}"
@@ -991,8 +999,10 @@ class PaymentViewSet(viewsets.ModelViewSet):
                             )
 
                         # Add timeline event for payment processing
-                        from apps.ServiceRequest.services import ServiceRequestTimelineService
-                        
+                        from apps.ServiceRequest.services import (
+                            ServiceRequestTimelineService,
+                        )
+
                         ServiceRequestTimelineService.create_timeline_event(
                             service_request=request_obj,
                             event_type="system_notification",
@@ -1142,7 +1152,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 # Update ServiceRequest directly
                 old_status = request_obj.status
                 old_payment_status = request_obj.payment_status
-                
+
                 # Update payment-related fields
                 request_obj.final_price = payment.amount
                 request_obj.is_paid = True
@@ -1292,7 +1302,9 @@ class StripeWebhookView(APIView):
                         },
                     )
 
-                    logger.info(f"Auto-processed payment {payment.id} for service request {request_obj.id}")
+                    logger.info(
+                        f"Auto-processed payment {payment.id} for service request {request_obj.id}"
+                    )
                     return True
                 else:
                     logger.info(

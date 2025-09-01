@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import CreateServiceRequestModal from './CreateServiceRequest';
+import CreateServiceRequestModal from './CreateOrEditServiceRequest';
 
 const ServiceRequestPage: React.FC = () => {
     const [searchParams] = useSearchParams();

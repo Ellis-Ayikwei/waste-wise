@@ -36,7 +36,6 @@ export const LoginUser = createAsyncThunk('auth/LoginUser', async ({ email_or_ph
 
         const accessToken = response?.headers['authorization'];
         const refreshToken = response?.headers['x-refresh-token'];
-        console.log('the response...............SS', accessToken, refreshToken);
 
         const user = response.data;
 

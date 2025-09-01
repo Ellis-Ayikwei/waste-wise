@@ -37,18 +37,18 @@ const NotFound: React.FC = () => {
             link: '/',
             primary: true,
         },
-        {
-            icon: RotateCcw,
-            title: 'Request Pickup',
-            description: 'Schedule a waste collection service',
-            link: '/service-request',
-        },
-        {
-            icon: Search,
-            title: 'Track Service',
-            description: 'Check the status of your service request',
-            link: '/user/bookings',
-        },
+        // {
+        //     icon: RotateCcw,
+        //     title: 'Request Pickup',
+        //     description: 'Schedule a waste collection service',
+        //     link: '/service-request',
+        // },
+        // {
+        //     icon: Search,
+        //     title: 'Track Service',
+        //     description: 'Check the status of your service request',
+        //     link: '/user/bookings',
+        // },
         {
             icon: HelpCircle,
             title: 'Get Help',
@@ -78,54 +78,7 @@ const NotFound: React.FC = () => {
                         className="text-center mb-16"
                     >
                         {/* Animated Recycling Icon */}
-                        <div className="relative mb-8">
-                            <motion.div
-                                animate={{
-                                    rotate: [0, 360],
-                                }}
-                                transition={{
-                                    duration: 4,
-                                    repeat: Infinity,
-                                    ease: "linear",
-                                }}
-                                className="inline-block"
-                            >
-                                <div className="relative">
-                                    <RotateCcw className="w-32 h-32 text-green-600" />
-                                    <motion.div
-                                        animate={{
-                                            scale: [1, 1.2, 1],
-                                        }}
-                                        transition={{
-                                            duration: 2,
-                                            repeat: Infinity,
-                                            ease: "easeInOut",
-                                        }}
-                                        className="absolute -top-4 -right-4"
-                                    >
-                                        <Leaf className="w-12 h-12 text-emerald-500" />
-                                    </motion.div>
-                                </div>
-                            </motion.div>
-                            
-                            {/* Recycling Arrow Path */}
-                            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-64 h-1 bg-gray-300">
-                                <motion.div
-                                    className="h-full bg-green-600"
-                                    animate={{
-                                        x: [-256, 0],
-                                    }}
-                                    transition={{
-                                        duration: 3,
-                                        repeat: Infinity,
-                                        ease: "linear",
-                                    }}
-                                    style={{
-                                        backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 10px, white 10px, white 20px)',
-                                    }}
-                                />
-                            </div>
-                        </div>
+                       
 
                         {/* Error Message */}
                         <h1 className="text-6xl md:text-8xl font-bold text-gray-900 mb-4">404</h1>
@@ -152,13 +105,13 @@ const NotFound: React.FC = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, delay: 0.2 }}
-                        className="max-w-4xl mx-auto mb-16"
+                        className="max-w-4xl mx-auto mb-16 "
                     >
-                        <h3 className="text-xl font-semibold text-gray-900 text-center mb-8">
+                        <h3 className="text-xl font-semibold text-gray-900 text-center mb-8 mx-auto">
                             Here are some helpful links to get you back on track:
                         </h3>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-2 gap-6 mx-auto">
                             {quickLinks.map((link, index) => {
                                 const IconComponent = link.icon;
                                 return (
@@ -201,7 +154,7 @@ const NotFound: React.FC = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, delay: 0.6 }}
-                        className="max-w-4xl mx-auto text-center"
+                        className="max-w-4xl mx-auto text-center mx-auto"
                     >
                         <h3 className="text-xl font-semibold text-gray-900 mb-6">
                             Or explore our popular waste management services:
@@ -236,11 +189,11 @@ const NotFound: React.FC = () => {
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <a
-                                href="tel:+441234567890"
+                                href="tel:+233 24 813 8722"
                                 className="inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                             >
                                 <Phone className="w-4 h-4 mr-2" />
-                                Call +44 123 456 7890
+                                Call +233 24 813 8722
                             </a>
                             <Link
                                 to="/contact"
@@ -252,7 +205,7 @@ const NotFound: React.FC = () => {
                     </motion.div>
 
                     {/* Fun Fact */}
-                    <motion.div
+                    {/* <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.6, delay: 1 }}
@@ -260,9 +213,9 @@ const NotFound: React.FC = () => {
                     >
                         <p className="text-sm text-gray-500">
                             <Trash2 className="w-4 h-4 inline mr-2" />
-                            Fun fact: We've helped manage over 1 million tons of waste across the UK, but we couldn't find this page!
+                            Fun fact: We've helped manage over 1 million tons of waste across Ghana, but we couldn't find this page!
                         </p>
-                    </motion.div>
+                    </motion.div> */}
                 </div>
             </div>
 

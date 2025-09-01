@@ -405,3 +405,118 @@ class ProviderRegistrationSerializer(serializers.Serializer):
                 "message": "Provider registration successful. Please verify your email to activate your account.",
             }
         return super().to_representation(instance)
+
+
+class PickupRouteSerializer(serializers.ModelSerializer):
+    """Serializer for PickupRoute model"""
+    
+    provider = serializers.PrimaryKeyRelatedField(read_only=True)
+    provider_details = ServiceProviderSerializer(source='provider', read_only=True)
+    assigned_driver_details = serializers.SerializerMethodField()
+    total_stops = serializers.IntegerField(read_only=True)
+    completed_stops = serializers.IntegerField(read_only=True)
+    completion_percentage = serializers.FloatField(read_only=True)
+    is_overdue = serializers.BooleanField(read_only=True)
+    is_efficient = serializers.BooleanField(read_only=True)
+    profit_margin = serializers.FloatField(read_only=True)
+    
+    class Meta:
+        model = 'Provider.PickupRoute'
+        fields = [
+            'id', 'provider', 'provider_details', 'route_name', 'route_description',
+            'route_type', 'route_status', 'start_location', 'end_location', 'waypoints',
+            'route_distance_km', 'route_duration_minutes', 'estimated_fuel_cost',
+            'scheduled_date', 'scheduled_start_time', 'scheduled_end_time',
+            'actual_start_time', 'actual_end_time', 'vehicle_type', 'assigned_driver',
+            'assigned_driver_details', 'is_active', 'is_recurring', 'recurrence_pattern',
+            'route_instructions', 'safety_notes', 'customer_notes', 'total_stops',
+            'completed_stops', 'total_waste_collected', 'route_efficiency_score',
+            'total_revenue', 'total_cost', 'tags', 'priority', 'completion_percentage',
+            'is_overdue', 'is_efficient', 'profit_margin', 'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'total_stops', 'completed_stops', 'total_waste_collected',
+            'route_efficiency_score', 'total_revenue', 'total_cost'
+        ]
+    
+    def get_assigned_driver_details(self, obj):
+        """Get driver details if assigned"""
+        if obj.assigned_driver:
+            return {
+                'id': obj.assigned_driver.id,
+                'name': f"{obj.assigned_driver.first_name} {obj.assigned_driver.last_name}",
+                'phone': obj.assigned_driver.phone,
+                'license_number': obj.assigned_driver.license_number
+            }
+        return None
+    
+    def validate(self, data):
+        """Validate route data"""
+        if 'scheduled_date' in data and data['scheduled_date'] < timezone.now().date():
+            raise serializers.ValidationError("Scheduled date cannot be in the past")
+        
+        if ('scheduled_start_time' in data and 'scheduled_end_time' in data and
+            data['scheduled_start_time'] >= data['scheduled_end_time']):
+            raise serializers.ValidationError("Start time must be before end time")
+        
+        return data
+
+
+class RouteStopSerializer(serializers.ModelSerializer):
+    """Serializer for RouteStop model"""
+    
+    route = serializers.PrimaryKeyRelatedField(read_only=True)
+    service_request_details = serializers.SerializerMethodField()
+    is_delayed = serializers.BooleanField(read_only=True)
+    stop_efficiency = serializers.FloatField(read_only=True)
+    
+    class Meta:
+        model = 'Provider.RouteStop'
+        fields = [
+            'id', 'route', 'service_request', 'service_request_details', 'stop_order',
+            'estimated_arrival_time', 'actual_arrival_time', 'actual_departure_time',
+            'stop_duration_minutes', 'status', 'waste_collected_kg', 'revenue_generated',
+            'stop_instructions', 'customer_notes', 'driver_notes', 'is_on_time',
+            'customer_satisfaction', 'is_delayed', 'stop_efficiency', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['stop_duration_minutes', 'is_delayed', 'stop_efficiency']
+    
+    def get_service_request_details(self, obj):
+        """Get service request details"""
+        if obj.service_request:
+            return {
+                'id': obj.service_request.id,
+                'title': obj.service_request.title,
+                'service_type': obj.service_request.service_type,
+                'pickup_address': obj.service_request.pickup_address,
+                'estimated_weight_kg': obj.service_request.estimated_weight_kg,
+                'estimated_price': obj.service_request.estimated_price,
+                'status': obj.service_request.status
+            }
+        return None
+
+
+class RouteOptimizationSerializer(serializers.ModelSerializer):
+    """Serializer for RouteOptimization model"""
+    
+    route = serializers.PrimaryKeyRelatedField(read_only=True)
+    applied_by_details = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = 'Provider.RouteOptimization'
+        fields = [
+            'id', 'route', 'optimization_type', 'suggested_changes',
+            'estimated_improvement', 'is_applied', 'applied_at', 'applied_by',
+            'applied_by_details', 'actual_improvement', 'notes', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['is_applied', 'applied_at', 'actual_improvement']
+    
+    def get_applied_by_details(self, obj):
+        """Get user details who applied the optimization"""
+        if obj.applied_by:
+            return {
+                'id': obj.applied_by.id,
+                'name': f"{obj.applied_by.first_name} {obj.applied_by.last_name}",
+                'email': obj.applied_by.email
+            }
+        return None

@@ -65,7 +65,7 @@ export const LoginUser = createAsyncThunk('auth/LoginUser', async ({ email, pass
         return user;
     } catch (error: any) {
 
-        console.log(error)
+        console.log("the login error", error)
 
 
         const parser = new DOMParser();

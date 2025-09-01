@@ -37,7 +37,7 @@ import ServiceRequestForm from '../pages/ServiceRequest/ServiceRequestForm';
 import DriversManagement from '../pages/DriverManagement/driverManagement';
 import UserManagement from '../pages/admin/usermanagment';
 import ProviderManagement from '../pages/admin/ProviderManagement';
-import RevenueManagement from '../pages/admin/RevenueManagement';
+import RevenueManagement from '../pages/admin/RevenueManagement/RevenueManagement';
 import SystemMaintenance from '../pages/admin/SystemMaintenance';
 import DisputeManagement from '../pages/admin/DisputeManagement';
 
@@ -186,16 +186,6 @@ const routes = [
         layout: 'blank',
     },
 
-    // Protected routes for authenticated users
-    {
-        path: '/dashboard',
-        element: (
-            <ProtectedRoute customerOnly>
-                <UserDashboard />
-            </ProtectedRoute>
-        ),
-        layout: 'default',
-    },
     {
         path: '/faq',
         element: (
@@ -517,17 +507,38 @@ const routes = [
     // Admin routes
     {
         path: '/admin/dashboard',
-        element: <EnhancedAdminDashboard />,
+        element: 
+        <ProtectedRoute adminOnly>
+            <EnhancedAdminDashboard />
+        </ProtectedRoute>
+        ,
+        layout: 'default',
+    },
+    {
+        path: '/dashboard',
+        element: 
+        <ProtectedRoute adminOnly>
+            <EnhancedAdminDashboard />
+        </ProtectedRoute>
+        ,
         layout: 'default',
     },
     {
         path: '/admin/users',
-        element: <UserManagement />,
+        element: (
+            <ProtectedRoute adminOnly>
+                <UserManagement />
+            </ProtectedRoute>
+        ),
         layout: 'default',
     },
     {
         path: '/admin/users/new',
-        element: <CreateUser />,
+        element: (
+            <ProtectedRoute adminOnly>
+                <CreateUser />
+            </ProtectedRoute>
+        ),
         layout: 'default',
     },
     {

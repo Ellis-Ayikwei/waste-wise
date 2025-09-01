@@ -293,6 +293,15 @@ const UserManagement: React.FC = () => {
                 <span className={getStatusBadge(item.account_status, 'account')}>{item.account_status}</span>
             ),
         },
+        // {
+        //     accessor: 'is_active',
+        //     title: 'Active',
+        //     width: '10%',
+        //     sortable: true,
+        //     render: (item: UserAccount) => (
+        //         <span className={getStatusBadge(item.is_active, 'account')}>{item.is_active}</span>
+        //     ),
+        // },
         {
             accessor: 'number_of_completed_bookings',
             title: 'Jobs',
@@ -348,6 +357,7 @@ const UserManagement: React.FC = () => {
                             <IconCheck className="w-4 h-4" />
                         </button>
                     )}
+
                     {item.account_status !== 'suspended' ? (
                         <button
                             onClick={() => handleSuspend(item)}

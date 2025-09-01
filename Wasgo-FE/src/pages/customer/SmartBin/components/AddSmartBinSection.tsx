@@ -24,9 +24,9 @@ const AddSmartBinSection: React.FC<AddSmartBinSectionProps> = ({ onAddBin }) => 
                     <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:shadow-lg group-hover:scale-110 transition-all duration-300">
                         <IconPlus className="w-8 h-8 text-white" />
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-2">Add New Smart Bin</h3>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">Request New Smart Bin</h3>
                     <p className="text-slate-600 mb-6 max-w-md mx-auto">
-                        Connect a new IoT-enabled smart bin to expand your waste monitoring network
+                        Request a new IoT-enabled smart bin to expand your waste monitoring network
                     </p>
                     <motion.button 
                         whileHover={{ scale: 1.05 }}
@@ -34,7 +34,7 @@ const AddSmartBinSection: React.FC<AddSmartBinSectionProps> = ({ onAddBin }) => 
                         onClick={onAddBin}
                         className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl"
                     >
-                        Connect Device
+                        Request Smart Bin
                     </motion.button>
                 </div>
             </motion.div>

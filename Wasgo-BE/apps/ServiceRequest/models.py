@@ -16,6 +16,9 @@ from django_fsm import FSMField, transition
 from decimal import Decimal
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ServiceRequest(Basemodel):
@@ -167,13 +170,11 @@ class ServiceRequest(Basemodel):
         blank=True,
         related_name="assigned_service_requests",
     )
-    offered_provider = models.ForeignKey(
+    offered_providers = models.ManyToManyField(
         ServiceProvider,
-        on_delete=models.SET_NULL,
-        null=True,
         blank=True,
         related_name="offered_service_requests",
-        help_text="Provider who was offered this service",
+        help_text="Providers who were offered this service",
     )
     offer_response = models.CharField(
         max_length=20,
@@ -600,6 +601,78 @@ class ServiceRequest(Basemodel):
     def is_waste_collection(self):
         """Check if this is a waste collection service"""
         return self.service_type in ["waste_collection", "recycling", "hazardous_waste"]
+
+    def offer_to_providers(self, providers):
+        """Offer this service request to multiple providers"""
+        if not isinstance(providers, (list, tuple)):
+            providers = [providers]
+
+        for provider in providers:
+            if provider.is_available_for_job():
+                self.offered_providers.add(provider)
+
+        self.status = "offered"
+        self.save()
+
+        logger.info(f"Service request {self.id} offered to {len(providers)} providers")
+        return True
+
+    def remove_from_offered_providers(self, provider):
+        """Remove a provider from the offered providers list"""
+        self.offered_providers.remove(provider)
+        self.save()
+
+        # If no more offered providers and no assigned provider, reset status
+        if self.offered_providers.count() == 0 and not self.assigned_provider:
+            self.status = "pending"
+            self.save()
+
+    def get_available_providers(self):
+        """Get all providers who can handle this service request"""
+        from apps.Provider.models import ServiceProvider
+
+        # Filter providers based on service type, location, and availability
+        available_providers = ServiceProvider.objects.filter(
+            is_active=True, is_available=True, verification_status="verified"
+        )
+
+        # Filter by service type if specified
+        if self.service_type:
+            available_providers = available_providers.filter(
+                waste_types_handled__contains=[self.service_type]
+            )
+
+        # Filter by location if pickup location is available
+        if self.pickup_location:
+            # This is a simplified location filter - you might want to implement
+            # more sophisticated distance calculations
+            pass
+
+        return available_providers
+
+    def auto_assign_to_best_provider(self):
+        """Automatically assign to the best available provider"""
+        available_providers = self.get_available_providers()
+
+        if available_providers.exists():
+            # Simple selection logic - you might want to implement more sophisticated
+            # provider selection based on rating, distance, availability, etc.
+            best_provider = available_providers.order_by(
+                "-rating", "-completion_rate"
+            ).first()
+
+            if best_provider:
+                self.assigned_provider = best_provider
+                self.status = "assigned"
+                self.assigned_at = timezone.now()
+                self.save()
+
+                logger.info(
+                    f"Service request {self.id} auto-assigned to provider {best_provider.id}"
+                )
+                return best_provider
+
+        return None
 
     def __str__(self):
         return f"{self.request_id} - {self.get_service_type_display()} - {self.status}"

@@ -181,41 +181,41 @@ const Sidebar = () => {
                 { path: '/admin/messaging/customer-support', icon: IconHeadset, label: 'Customer Support' },
             ],
         },
-        {
-            path: '/admin/support',
-            icon: IconHeadset,
-            label: 'Support & Help',
-            subItems: [
-                { path: '/admin/support/tickets', icon: IconHelp, label: 'Support Tickets' },
-                { path: '/admin/support/disputes', icon: IconScale, label: 'Dispute Resolution' },
-                { path: '/admin/support/faq', icon: IconFileText, label: 'FAQ Management' },
-                { path: '/admin/support/live-chat', icon: IconMessage2, label: 'Live Chat' },
-            ],
-        },
+        // {
+        //     path: '/admin/support',
+        //     icon: IconHeadset,
+        //     label: 'Support & Help',
+        //     subItems: [
+        //         { path: '/admin/support/tickets', icon: IconHelp, label: 'Support Tickets' },
+        //         { path: '/admin/support/disputes', icon: IconScale, label: 'Dispute Resolution' },
+        //         { path: '/admin/support/faq', icon: IconFileText, label: 'FAQ Management' },
+        //         { path: '/admin/support/live-chat', icon: IconMessage2, label: 'Live Chat' },
+        //     ],
+        // },
        
-        {
-            path: '/admin/rewards',
-            icon: IconTrophy,
-            label: 'Rewards & Loyalty',
-            subItems: [
-                { path: '/admin/rewards/programs', icon: IconTrophy, label: 'Reward Programs' },
-                { path: '/admin/rewards/badges', icon: IconStar, label: 'Badge Management' },
-                { path: '/admin/rewards/points', icon: IconCalculator, label: 'Points System' },
-                { path: '/admin/rewards/redemptions', icon: IconExchange, label: 'Redemptions' },
-            ],
-        },
+        // {
+        //     path: '/admin/rewards',
+        //     icon: IconTrophy,
+        //     label: 'Rewards & Loyalty',
+        //     subItems: [
+        //         { path: '/admin/rewards/programs', icon: IconTrophy, label: 'Reward Programs' },
+        //         { path: '/admin/rewards/badges', icon: IconStar, label: 'Badge Management' },
+        //         { path: '/admin/rewards/points', icon: IconCalculator, label: 'Points System' },
+        //         { path: '/admin/rewards/redemptions', icon: IconExchange, label: 'Redemptions' },
+        //     ],
+        // },
         
-        {
-            path: '/admin/wallet',
-            icon: IconWallet,
-            label: 'Wallet & Credits',
-            subItems: [
-                { path: '/admin/wallet/overview', icon: IconWallet, label: 'Wallet Overview' },
-                { path: '/admin/wallet/transactions', icon: IconReceipt, label: 'Transactions' },
-                { path: '/admin/wallet/credits', icon: IconCreditCard, label: 'Credit Management' },
-                { path: '/admin/wallet/refunds', icon: IconExchange, label: 'Refunds' },
-            ],
-        },
+        // {
+        //     path: '/admin/wallet',
+        //     icon: IconWallet,
+        //     label: 'Wallet & Credits',
+        //     subItems: [
+        //         { path: '/admin/wallet/overview', icon: IconWallet, label: 'Wallet Overview' },
+        //         { path: '/admin/wallet/transactions', icon: IconReceipt, label: 'Transactions' },
+        //         { path: '/admin/wallet/credits', icon: IconCreditCard, label: 'Credit Management' },
+        //         { path: '/admin/wallet/refunds', icon: IconExchange, label: 'Refunds' },
+        //     ],
+        // },
         {
             path: '/admin/configurations',
             icon: IconSettings,
@@ -227,17 +227,17 @@ const Sidebar = () => {
                 { path: '/admin/configurations/backup', icon: IconDatabase, label: 'Backup & Restore' },
             ],
         },
-        {
-            path: '/admin/maintenance',
-            icon: IconTools,
-            label: 'System Maintenance',
-            subItems: [
-                { path: '/admin/maintenance/overview', icon: IconTools, label: 'Maintenance Overview' },
-                { path: '/admin/maintenance/logs', icon: IconFileText, label: 'System Logs' },
-                { path: '/admin/maintenance/updates', icon: IconDownload, label: 'System Updates' },
-                { path: '/admin/maintenance/health', icon: IconChecklist, label: 'System Health' },
-            ],
-        },
+        // {
+        //     path: '/admin/maintenance',
+        //     icon: IconTools,
+        //     label: 'System Maintenance',
+        //     subItems: [
+        //         { path: '/admin/maintenance/overview', icon: IconTools, label: 'Maintenance Overview' },
+        //         { path: '/admin/maintenance/logs', icon: IconFileText, label: 'System Logs' },
+        //         { path: '/admin/maintenance/updates', icon: IconDownload, label: 'System Updates' },
+        //         { path: '/admin/maintenance/health', icon: IconChecklist, label: 'System Health' },
+        //     ],
+        // },
     ];
 
     const isPathActive = (path: string) => {

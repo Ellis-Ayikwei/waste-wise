@@ -275,7 +275,7 @@ const EnhancedAdminDashboard: React.FC = () => {
 
     return (
         <ErrorBoundary>
-            <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6">
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div>
@@ -435,19 +435,19 @@ const EnhancedAdminDashboard: React.FC = () => {
                                     
                                     {bin.battery_level !== null && (
                                         <>
-                                            <div className="flex justify-between text-sm">
-                                                <span>Battery</span>
+                                    <div className="flex justify-between text-sm">
+                                        <span>Battery</span>
                                                 <span>{bin.battery_level}%</span>
-                                            </div>
+                                    </div>
                                             <Progress value={bin.battery_level} className="h-2" />
                                         </>
                                     )}
                                     
                                     {bin.signal_strength !== null && (
-                                        <div className="flex justify-between text-sm">
+                                    <div className="flex justify-between text-sm">
                                             <span>Signal Strength</span>
                                             <span>{bin.signal_strength}%</span>
-                                        </div>
+                                    </div>
                                     )}
                                 </div>
                                 

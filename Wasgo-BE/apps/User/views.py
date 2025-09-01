@@ -8,6 +8,7 @@ from django.utils import timezone
 import logging
 from django.contrib.contenttypes.models import ContentType
 from datetime import timedelta
+from django.core.exceptions import PermissionDenied
 
 from .models import User, Address, UserActivity, Document, Availability
 from .serializer import (
@@ -89,6 +90,7 @@ class UserManagementViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         """Use detailed serializer for retrieve actions"""
         if self.action in ["retrieve", "me"]:
+            print("single user retrieved")
             return UserDetailSerializer
         return UserSerializer
 
@@ -101,7 +103,10 @@ class UserManagementViewSet(viewsets.ModelViewSet):
         """
         if self.action == "create":
             permission_classes = [IsAdminUser | IsSuperAdminUser]
-        elif self.action in ["update", "partial_update", "destroy"]:
+        elif self.action in ["update", "partial_update"]:
+            # Users can update their own basic info, admins can update anything
+            permission_classes = [permissions.IsAuthenticated]
+        elif self.action in ["destroy"]:
             permission_classes = [IsSelfOrAdmin]
         elif self.action in ["create_customer", "create_provider", "create_admin"]:
             if self.action == "create_customer":
@@ -148,6 +153,698 @@ class UserManagementViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(id=self.request.user.id)
 
         return queryset
+
+    def get_object(self):
+        """
+        Custom object retrieval with update-specific permissions.
+        Users can only access their own data unless they are admin.
+        """
+        obj = super().get_object()
+
+        # Check if user is requesting their own data or is an admin
+        if obj.id != self.request.user.id and not (
+            self.request.user.user_type in ["admin"] or self.request.user.is_superuser
+        ):
+            raise PermissionDenied("You can only access your own user data.")
+
+        return obj
+
+    def update(self, request, *args, **kwargs):
+        """
+        Custom update method that allows users to update basic info but restricts sensitive fields.
+        """
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+
+        # Check if user type is being changed to provider
+        user_type_changed = False
+        if "user_type" in request.data and request.data["user_type"] == "provider":
+            # Only allow user_type changes for admins
+            if not (
+                request.user.is_staff
+                or request.user.is_superuser
+                or request.user.user_type == "admin"
+            ):
+                return Response(
+                    {
+                        "detail": "You cannot change your user type. Only administrators can modify user types."
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            user_type_changed = True
+
+        # Determine what fields the user can update based on their role
+        if (
+            request.user.is_staff
+            or request.user.is_superuser
+            or request.user.user_type == "admin"
+        ):
+            # Admins can update all fields
+            serializer = self.get_serializer(
+                instance, data=request.data, partial=partial
+            )
+        else:
+            # Regular users can only update basic fields
+            allowed_fields = [
+                "first_name",
+                "last_name",
+                "phone_number",
+                "profile_picture",
+                "date_of_birth",
+                "gender",
+                "address_line1",
+                "address_line2",
+                "city",
+                "state",
+                "postal_code",
+                "country",
+                "timezone",
+                "language_preference",
+                "notification_preferences",
+            ]
+
+            # Filter out restricted fields
+            filtered_data = {
+                k: v for k, v in request.data.items() if k in allowed_fields
+            }
+
+            if not filtered_data:
+                return Response(
+                    {
+                        "detail": "No valid fields to update. You can only update basic profile information."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            serializer = self.get_serializer(instance, data=filtered_data, partial=True)
+
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        # If user type was changed to provider, create ServiceProvider profile
+        if user_type_changed and user.user_type == "provider":
+            try:
+                from apps.Provider.models import ServiceProvider
+                from django.contrib.gis.geos import Point
+
+                # Check if ServiceProvider profile already exists
+                if not hasattr(user, "serviceprovider"):
+                    # Default location (Accra coordinates)
+                    default_location = Point(-0.1869644, 5.5600149, srid=4326)
+
+                    # Create ServiceProvider profile with default values
+                    provider_data = {
+                        "user": user,
+                        "business_name": f"{user.first_name}'s Service",
+                        "business_type": "sole_trader",
+                        "verification_status": "unverified",
+                        "base_location": default_location,
+                        "phone": user.phone_number or "N/A",
+                        "email": user.email,
+                        "address_line1": "Address to be updated",
+                        "city": "City to be updated",
+                        "county": "County to be updated",
+                        "postcode": "00233",  # Accra postcode
+                        "country": "Ghana",
+                    }
+
+                    # Create ServiceProvider
+                    service_provider = ServiceProvider.objects.create(**provider_data)
+                    logger.info(
+                        f"ServiceProvider profile created for user {user.id} after self-update"
+                    )
+
+            except ImportError as e:
+                logger.warning(
+                    f"Provider app not available, skipping ServiceProvider creation: {e}"
+                )
+            except Exception as e:
+                logger.error(
+                    f"Error creating ServiceProvider profile for user {user.id}: {e}"
+                )
+
+        # If user is already a provider, update their ServiceProvider profile
+        print(f"DEBUG: Checking if user {user.id} needs ServiceProvider profile update")
+        print(f"DEBUG: User type: {user.user_type}")
+
+        if user.user_type == "provider":
+            print(f"DEBUG: User is a provider, checking for ServiceProvider profile")
+
+            try:
+                from apps.Provider.models import ServiceProvider
+
+                # Check if ServiceProvider profile exists
+                try:
+                    service_provider = ServiceProvider.objects.get(user=user)
+                    print(
+                        f"DEBUG: Found ServiceProvider profile: {service_provider.id}"
+                    )
+                except ServiceProvider.DoesNotExist:
+                    print(f"DEBUG: No ServiceProvider profile found for user {user.id}")
+                    # Create one if it doesn't exist
+                    from django.contrib.gis.geos import Point
+
+                    default_location = Point(-0.1869644, 5.5600149, srid=4326)
+
+                    service_provider = ServiceProvider.objects.create(
+                        user=user,
+                        business_name=f"{user.first_name}'s Service",
+                        business_type="sole_trader",
+                        verification_status="unverified",
+                        base_location=default_location,
+                        phone=user.phone_number or "N/A",
+                        email=user.email,
+                        address_line1="Address to be updated",
+                        city="City to be updated",
+                        county="County to be updated",
+                        postcode="00233",
+                        country="Ghana",
+                    )
+                    print(
+                        f"DEBUG: Created new ServiceProvider profile: {service_provider.id}"
+                    )
+
+                print(f"DEBUG: Request data: {request.data}")
+
+                # Fields that should update the ServiceProvider profile
+                provider_update_fields = {}
+
+                # Update phone if changed
+                print(
+                    f"DEBUG: Checking phone - request: {request.data.get('phone_number')}, current: {service_provider.phone}"
+                )
+                if (
+                    "phone_number" in request.data
+                    and request.data["phone_number"] != service_provider.phone
+                ):
+                    provider_update_fields["phone"] = request.data["phone_number"]
+                    print(
+                        f"DEBUG: Phone will be updated to: {request.data['phone_number']}"
+                    )
+
+                # Update email if changed
+                print(
+                    f"DEBUG: Checking email - request: {request.data.get('email')}, current: {service_provider.email}"
+                )
+                if (
+                    "email" in request.data
+                    and request.data["email"] != service_provider.email
+                ):
+                    provider_update_fields["email"] = request.data["email"]
+                    print(f"DEBUG: Email will be updated to: {request.data['email']}")
+
+                # Update address fields if changed
+                address_fields = [
+                    "address_line1",
+                    "city",
+                    "state",
+                    "postal_code",
+                    "country",
+                ]
+                for field in address_fields:
+                    if field in request.data and request.data[field] != getattr(
+                        service_provider, field, None
+                    ):
+                        if field == "state":
+                            provider_update_fields["county"] = request.data[field]
+                        elif field == "postal_code":
+                            provider_update_fields["postcode"] = request.data[field]
+                        else:
+                            provider_update_fields[field] = request.data[field]
+
+                # Update business-specific fields if changed
+                business_fields = [
+                    "vat_number",
+                    "registration_number",
+                    "business_name",
+                    "business_type",
+                ]
+                for field in business_fields:
+                    print(
+                        f"DEBUG: Checking business field '{field}' - request: {request.data.get(field)}, current: {getattr(service_provider, field, None)}"
+                    )
+                    if field in request.data and request.data[field] != getattr(
+                        service_provider, field, None
+                    ):
+                        provider_update_fields[field] = request.data[field]
+                        print(
+                            f"DEBUG: {field} will be updated to: {request.data[field]}"
+                        )
+
+                # Update the ServiceProvider profile if there are changes
+                if provider_update_fields:
+                    print(
+                        f"DEBUG: Updating ServiceProvider profile with fields: {provider_update_fields}"
+                    )
+                    for field, value in provider_update_fields.items():
+                        setattr(service_provider, field, value)
+                    service_provider.save()
+                    logger.info(
+                        f"ServiceProvider profile updated for user {user.id}: {provider_update_fields}"
+                    )
+                else:
+                    print("DEBUG: No ServiceProvider profile fields to update")
+
+            except ImportError as e:
+                logger.warning(
+                    f"Provider app not available, skipping ServiceProvider update: {e}"
+                )
+            except Exception as e:
+                logger.error(
+                    f"Error updating ServiceProvider profile for user {user.id}: {e}"
+                )
+
+        logger.info(f"User {instance.id} updated by {request.user.id}")
+        return Response(serializer.data)
+
+    def partial_update(self, request, *args, **kwargs):
+        """
+        Custom partial update method with the same restrictions as update.
+        """
+        kwargs["partial"] = True
+        return self.update(request, *args, **kwargs)
+
+    @action(
+        detail=True,
+        methods=["patch"],
+        permission_classes=[permissions.IsAuthenticated],
+    )
+    def update_profile(self, request, pk=None):
+        """
+        Custom action for users to update their basic profile information.
+        This is a more user-friendly way to update basic profile data.
+        """
+        instance = self.get_object()
+
+        # Ensure user can only update their own profile
+        if instance.id != request.user.id:
+            return Response(
+                {"detail": "You can only update your own profile."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # Define allowed fields for profile updates
+        allowed_fields = [
+            "first_name",
+            "last_name",
+            "phone_number",
+            "profile_picture",
+            "date_of_birth",
+            "gender",
+            "address_line1",
+            "address_line2",
+            "city",
+            "state",
+            "postal_code",
+            "country",
+            "timezone",
+            "language_preference",
+            "notification_preferences",
+        ]
+
+        # Filter data to only include allowed fields
+        filtered_data = {k: v for k, v in request.data.items() if k in allowed_fields}
+
+        if not filtered_data:
+            return Response(
+                {"detail": "No valid profile fields to update."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = self.get_serializer(instance, data=filtered_data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        logger.info(f"User {instance.id} updated their profile")
+        return Response(
+            {"detail": "Profile updated successfully", "user": serializer.data}
+        )
+
+    @action(
+        detail=True,
+        methods=["patch"],
+        permission_classes=[IsAdminUser | IsSuperAdminUser],
+    )
+    def admin_update(self, request, pk=None):
+        """
+        Admin-only update method that can modify any field including sensitive ones.
+        This is separate from the regular update to maintain clear separation of concerns.
+        """
+        instance = self.get_object()
+        partial = request.data.get("partial", True)
+
+        # Check if user type is being changed to provider
+        user_type_changed = False
+        if "user_type" in request.data and request.data["user_type"] == "provider":
+            user_type_changed = True
+
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        # If user type was changed to provider, create ServiceProvider profile
+        if user_type_changed and user.user_type == "provider":
+            try:
+                from apps.Provider.models import ServiceProvider
+                from django.contrib.gis.geos import Point
+
+                # Check if ServiceProvider profile already exists
+                if not hasattr(user, "serviceprovider"):
+                    # Default location (Accra coordinates)
+                    default_location = Point(-0.1869644, 5.5600149, srid=4326)
+
+                    # Create ServiceProvider profile with default values
+                    provider_data = {
+                        "user": user,
+                        "business_name": f"{user.first_name}'s Service",
+                        "business_type": "sole_trader",
+                        "verification_status": "unverified",
+                        "base_location": default_location,
+                        "phone": user.phone_number or "N/A",
+                        "email": user.email,
+                        "address_line1": "Address to be updated",
+                        "city": "City to be updated",
+                        "county": "County to be updated",
+                        "postcode": "00233",  # Accra postcode
+                        "country": "Ghana",
+                    }
+
+                    # Create ServiceProvider
+                    service_provider = ServiceProvider.objects.create(**provider_data)
+                    logger.info(
+                        f"ServiceProvider profile created for user {user.id} after admin update"
+                    )
+
+            except ImportError as e:
+                logger.warning(
+                    f"Provider app not available, skipping ServiceProvider creation: {e}"
+                )
+            except Exception as e:
+                logger.error(
+                    f"Error creating ServiceProvider profile for user {user.id}: {e}"
+                )
+
+        # If user is already a provider, update their ServiceProvider profile
+        elif user.user_type == "provider" and hasattr(user, "serviceprovider"):
+            try:
+                from apps.Provider.models import ServiceProvider
+
+                # Get the existing ServiceProvider profile
+                service_provider = user.serviceprovider
+
+                # Fields that should update the ServiceProvider profile
+                provider_update_fields = {}
+
+                # Update phone if changed
+                if (
+                    "phone_number" in request.data
+                    and request.data["phone_number"] != service_provider.phone
+                ):
+                    provider_update_fields["phone"] = request.data["phone_number"]
+
+                # Update email if changed
+                if (
+                    "email" in request.data
+                    and request.data["email"] != service_provider.email
+                ):
+                    provider_update_fields["email"] = request.data["email"]
+
+                # Update address fields if changed
+                address_fields = [
+                    "address_line1",
+                    "city",
+                    "state",
+                    "postal_code",
+                    "country",
+                ]
+                for field in address_fields:
+                    if field in request.data and request.data[field] != getattr(
+                        service_provider, field, None
+                    ):
+                        if field == "state":
+                            provider_update_fields["county"] = request.data[field]
+                        else:
+                            provider_update_fields[field] = request.data[field]
+
+                # Update business-specific fields if changed
+                business_fields = [
+                    "vat_number",
+                    "registration_number",
+                    "business_name",
+                    "business_type",
+                ]
+                for field in business_fields:
+                    print(
+                        f"DEBUG: Checking business field '{field}' - request: {request.data.get(field)}, current: {getattr(service_provider, field, None)}"
+                    )
+                    if field in request.data and request.data[field] != getattr(
+                        service_provider, field, None
+                    ):
+                        provider_update_fields[field] = request.data[field]
+                        print(
+                            f"DEBUG: {field} will be updated to: {request.data[field]}"
+                        )
+
+                # Update the ServiceProvider profile if there are changes
+                if provider_update_fields:
+                    for field, value in provider_update_fields.items():
+                        setattr(service_provider, field, value)
+                    service_provider.save()
+                    logger.info(
+                        f"ServiceProvider profile updated for user {user.id} after admin update: {provider_update_fields}"
+                    )
+
+            except ImportError as e:
+                logger.warning(
+                    f"Provider app not available, skipping ServiceProvider update: {e}"
+                )
+            except Exception as e:
+                logger.error(
+                    f"Error updating ServiceProvider profile for user {user.id}: {e}"
+                )
+
+        logger.info(f"User {instance.id} updated by admin {request.user.id}")
+        return Response(
+            {"detail": "User updated successfully by admin", "user": serializer.data}
+        )
+
+    @action(
+        detail=True,
+        methods=["patch"],
+        permission_classes=[permissions.IsAuthenticated],
+    )
+    def update_preferences(self, request, pk=None):
+        """
+        Allow users to update their preferences and settings.
+        """
+        instance = self.get_object()
+
+        # Ensure user can only update their own preferences
+        if instance.id != request.user.id:
+            return Response(
+                {"detail": "You can only update your own preferences."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # Define allowed preference fields
+        allowed_fields = [
+            "language_preference",
+            "timezone",
+            "notification_preferences",
+            "privacy_settings",
+            "communication_preferences",
+        ]
+
+        # Filter data to only include preference fields
+        filtered_data = {k: v for k, v in request.data.items() if k in allowed_fields}
+
+        if not filtered_data:
+            return Response(
+                {"detail": "No valid preference fields to update."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = self.get_serializer(instance, data=filtered_data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        logger.info(f"User {instance.id} updated their preferences")
+        return Response(
+            {"detail": "Preferences updated successfully", "user": serializer.data}
+        )
+
+    @action(
+        detail=True,
+        methods=["patch"],
+        permission_classes=[IsAdminUser | IsSuperAdminUser],
+    )
+    def update_role_and_status(self, request, pk=None):
+        """
+        Admin-only method to update user roles, status, and other sensitive fields.
+        """
+        instance = self.get_object()
+
+        # Define sensitive fields that only admins can update
+        sensitive_fields = [
+            "user_type",
+            "account_status",
+            "is_active",
+            "is_staff",
+            "is_superuser",
+            "groups",
+            "user_permissions",
+            "date_joined",
+            "last_login",
+        ]
+
+        # Filter data to only include sensitive fields
+        filtered_data = {k: v for k, v in request.data.items() if k in sensitive_fields}
+
+        if not filtered_data:
+            return Response(
+                {"detail": "No valid role/status fields to update."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Check if user type is being changed to provider
+        user_type_changed = False
+        if "user_type" in filtered_data and filtered_data["user_type"] == "provider":
+            user_type_changed = True
+
+        serializer = self.get_serializer(instance, data=filtered_data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        # If user type was changed to provider, create ServiceProvider profile
+        if user_type_changed and user.user_type == "provider":
+            try:
+                from apps.Provider.models import ServiceProvider
+                from django.contrib.gis.geos import Point
+
+                # Check if ServiceProvider profile already exists
+                if not hasattr(user, "serviceprovider"):
+                    # Default location (Accra coordinates)
+                    default_location = Point(-0.1869644, 5.5600149, srid=4326)
+
+                    # Create ServiceProvider profile with default values
+                    provider_data = {
+                        "user": user,
+                        "business_name": f"{user.first_name}'s Service",
+                        "business_type": "sole_trader",
+                        "verification_status": "unverified",
+                        "base_location": default_location,
+                        "phone": user.phone_number or "N/A",
+                        "email": user.email,
+                        "address_line1": "Address to be updated",
+                        "city": "City to be updated",
+                        "county": "County to be updated",
+                        "postcode": "00233",  # Accra postcode
+                        "country": "Ghana",
+                    }
+
+                    # Create ServiceProvider
+                    service_provider = ServiceProvider.objects.create(**provider_data)
+                    logger.info(
+                        f"ServiceProvider profile created for user {user.id} after role update"
+                    )
+
+            except ImportError as e:
+                logger.warning(
+                    f"Provider app not available, skipping ServiceProvider creation: {e}"
+                )
+            except Exception as e:
+                logger.error(
+                    f"Error creating ServiceProvider profile for user {user.id}: {e}"
+                )
+
+        # If user is already a provider, update their ServiceProvider profile
+        elif user.user_type == "provider" and hasattr(user, "serviceprovider"):
+            try:
+                from apps.Provider.models import ServiceProvider
+
+                # Get the existing ServiceProvider profile
+                service_provider = user.serviceprovider
+
+                # Fields that should update the ServiceProvider profile
+                provider_update_fields = {}
+
+                # Update phone if changed
+                if (
+                    "phone_number" in filtered_data
+                    and filtered_data["phone_number"] != service_provider.phone
+                ):
+                    provider_update_fields["phone"] = filtered_data["phone_number"]
+
+                # Update email if changed
+                if (
+                    "email" in filtered_data
+                    and filtered_data["email"] != service_provider.email
+                ):
+                    provider_update_fields["email"] = filtered_data["email"]
+
+                # Update address fields if changed
+                address_fields = [
+                    "address_line1",
+                    "city",
+                    "state",
+                    "postal_code",
+                    "country",
+                ]
+                for field in address_fields:
+                    if field in filtered_data and filtered_data[field] != getattr(
+                        service_provider, field, None
+                    ):
+                        if field == "state":
+                            provider_update_fields["county"] = filtered_data[field]
+                        else:
+                            provider_update_fields[field] = filtered_data[field]
+
+                # Update business-specific fields if changed
+                business_fields = [
+                    "vat_number",
+                    "registration_number",
+                    "business_name",
+                    "business_type",
+                ]
+                for field in business_fields:
+                    print(
+                        f"DEBUG: Checking business field '{field}' - request: {filtered_data.get(field)}, current: {getattr(service_provider, field, None)}"
+                    )
+                    if field in filtered_data and filtered_data[field] != getattr(
+                        service_provider, field, None
+                    ):
+                        provider_update_fields[field] = filtered_data[field]
+                        print(
+                            f"DEBUG: {field} will be updated to: {filtered_data[field]}"
+                        )
+
+                # Update the ServiceProvider profile if there are changes
+                if provider_update_fields:
+                    for field, value in provider_update_fields.items():
+                        setattr(service_provider, field, value)
+                    service_provider.save()
+                    logger.info(
+                        f"ServiceProvider profile updated for user {user.id} after role update: {provider_update_fields}"
+                    )
+
+            except ImportError as e:
+                logger.warning(
+                    f"Provider app not available, skipping ServiceProvider update: {e}"
+                )
+            except Exception as e:
+                logger.error(
+                    f"Error updating ServiceProvider profile for user {user.id}: {e}"
+                )
+
+        logger.info(
+            f"User {instance.id} role/status updated by admin {request.user.id}"
+        )
+        return Response(
+            {
+                "detail": "User role and status updated successfully",
+                "user": serializer.data,
+            }
+        )
 
     @action(
         detail=False,
@@ -600,7 +1297,7 @@ class UserManagementViewSet(viewsets.ModelViewSet):
         Regular users can only see their own activity.
         """
         user = self.get_object()
-        activities = UserActivity.objects.filter(user=user).order_by("-timestamp")
+        activities = UserActivity.objects.filter(user=user).order_by("-created_at")
 
         page = self.paginate_queryset(activities)
         if page is not None:
@@ -1036,6 +1733,87 @@ class UserManagementViewSet(viewsets.ModelViewSet):
         }
 
         return Response(enhanced_stats)
+
+    @action(
+        detail=True,
+        methods=["post"],
+        permission_classes=[permissions.IsAuthenticated],
+    )
+    def change_password(self, request, pk=None):
+        """
+        Allow users to change their own password.
+        Requires current password, new password, and confirm password.
+        """
+        instance = self.get_object()
+
+        # Ensure user can only change their own password
+        if instance.id != request.user.id:
+            return Response(
+                {"detail": "You can only change your own password."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # Get password data from request
+        current_password = request.data.get("current_password")
+        new_password = request.data.get("new_password")
+        confirm_password = request.data.get("confirm_password")
+
+        # Validate required fields
+        if not all([current_password, new_password, confirm_password]):
+            return Response(
+                {
+                    "detail": "current_password, new_password, and confirm_password are required."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Check if current password is correct
+        if not instance.check_password(current_password):
+            return Response(
+                {"detail": "Current password is incorrect."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Check if new password matches confirmation
+        if new_password != confirm_password:
+            return Response(
+                {"detail": "New password and confirm password do not match."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Check if new password is different from current
+        if current_password == new_password:
+            return Response(
+                {"detail": "New password must be different from current password."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Validate new password strength (basic validation)
+        if len(new_password) < 8:
+            return Response(
+                {"detail": "New password must be at least 8 characters long."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Change the password
+        try:
+            instance.set_password(new_password)
+            instance.save()
+
+            logger.info(f"User {instance.id} changed their password")
+            return Response(
+                {"detail": "Password changed successfully."},
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            logger.error(f"Error changing password for user {instance.id}: {str(e)}")
+            return Response(
+                {
+                    "detail": "An error occurred while changing password. Please try again."
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class AddressViewSet(viewsets.ModelViewSet):

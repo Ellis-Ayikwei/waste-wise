@@ -16,6 +16,7 @@ const fetcher = async (url: string, config: object = {}): Promise<any> => {
         const response = await axiosInstance.get(url, config);
         return response.data;
     } catch (error) {
+        console.error('Error fetching data:', error);
         throw error;
     }
 };

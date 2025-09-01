@@ -11,11 +11,13 @@ import LanguageSelector from './LanguageSelector';
 import MessagesDropdown from './MessagesDropdown';
 import UserProfileDropdown from './UserProfileDropdown';
 import HorizontalMenu from './HorizontalMenu';
+import useAuthUser from 'react-auth-kit/hooks/useAuthUser';
 
 const Header = () => {
     const location = useLocation();
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);
-
+    const authUser = useAuthUser();
+    const user = authUser?.user;
     useEffect(() => {
         const path = location?.pathname || window.location.pathname;
         const allActiveLinks = document.querySelectorAll('ul.horizontal-menu .nav-link.active');
@@ -52,7 +54,7 @@ const Header = () => {
                         <div className="sm:ltr:mr-auto sm:rtl:ml-auto"></div>
 
                         {/* Provider Rating Display */}
-                        <ProviderRating />
+                        {user?.user_type === 'provider' && <ProviderRating />}
 
                         {/* Theme Toggle */}
                         <ThemeToggle />

@@ -306,24 +306,7 @@ const ConnectDeviceModal: React.FC<ConnectDeviceModalProps> = ({ isOpen, onClose
                     />
                 </div>
 
-                <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Device Type</label>
-                    <div className="grid grid-cols-2 gap-3">
-                        {deviceTypes.map((type) => (
-                            <motion.button
-                                key={type.id}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                className="p-3 bg-white border border-slate-200 rounded-lg hover:border-orange-300 hover:shadow-md transition-all duration-300"
-                            >
-                                <div className="flex items-center space-x-2">
-                                    <FontAwesomeIcon icon={type.icon} className="text-orange-500" />
-                                    <span className="text-sm font-medium">{type.name}</span>
-                                </div>
-                            </motion.button>
-                        ))}
-                    </div>
-                </div>
+               
 
                 <motion.button
                     whileHover={{ scale: 1.02 }}

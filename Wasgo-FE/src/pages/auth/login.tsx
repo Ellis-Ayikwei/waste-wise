@@ -28,6 +28,8 @@ import useSignIn from 'react-auth-kit/hooks/useSignIn';
 // import { loginUser } from '../../store/authSlice';
 import { AppDispatch, IRootState } from '../../store';
 import { LoginUser } from '../../store/authSlice';
+import showNotification from '../../utilities/showNotifcation';
+import renderErrorMessage from '../../helper/renderErrorMessage';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -45,13 +47,7 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState<any>({});
 
-    useEffect(() => {
-        // Check if user is already logged in
-        const token = localStorage.getItem('token');
-        if (token) {
-            navigate('/dashboard');
-        }
-    }, [navigate]);
+    // AuthRedirect will handle redirecting authenticated users
 
     const validateForm = () => {
         const newErrors: any = {};
@@ -80,20 +76,40 @@ const Login = () => {
         }
 
         try {
+            console.log('Login - Starting login process...');
             const result = await dispatch(LoginUser({
                 email_or_phone: formData.email_or_phone,
                 password: formData.password,
                 extra: { signIn },
             })).unwrap();
 
-            toast.success('Login successful! Redirecting...');
-            
-            // Redirect based on user type
+            console.log('Login - Login successful, result:', result);
+
+            showNotification({
+                message: 'Login successful! Redirecting...',
+                type: 'success',
+                showHide: true,
+            });
+
+            // Force a re-render to allow AuthRedirect to detect the auth state change
+            // This is needed because react-auth-kit state updates are asynchronous
             setTimeout(() => {
-                navigate(userType === 'provider' ? '/provider/dashboard' : '/dashboard');
-            }, 1000);
+                console.log('Login - Forcing re-render to trigger AuthRedirect');
+                // Force component re-render by updating state
+                setFormData(prev => ({ ...prev }));
+                // Navigate to the same route to trigger AuthRedirect re-evaluation
+                navigate('/login', { replace: true });
+            }, 500);
+            
+            // AuthRedirect will handle the redirect automatically
         } catch (err: any) {
-            toast.error(err.message || 'Login failed. Please try again.');
+            console.log('Login - Login failed:', err);
+            setErrors(renderErrorMessage(err))
+            showNotification({
+                message: err.message || 'Login failed. Please try again.',
+                type: 'error',
+                showHide: true,
+            });
         }
     };
 
@@ -149,6 +165,31 @@ const Login = () => {
                         <p className="text-gray-600">Sign in to access your eco-friendly waste management dashboard</p>
                     </div>
 
+                    {/* Main Error Display */}
+                    {error && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg"
+                        >
+                            <div className="flex items-center">
+                                <div className="flex-shrink-0">
+                                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div className="ml-3">
+                                    <h3 className="text-sm font-medium text-red-800">
+                                        Login Error
+                                    </h3>
+                                    <div className="mt-2 text-sm text-red-700">
+                                        {typeof error === 'string' ? error : 'An error occurred during login. Please try again.'}
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+
                     {/* User Type Selector */}
                     <div className="grid grid-cols-2 gap-4 mb-6">
                         <motion.button
@@ -161,6 +202,8 @@ const Login = () => {
                                     : 'border-gray-200 hover:border-gray-300'
                             }`}
                         >
+
+                            
                             <User 
                                 size={32}
                                 className={`mb-2 mx-auto ${userType === 'customer' ? 'text-green-600' : 'text-gray-400'}`} 

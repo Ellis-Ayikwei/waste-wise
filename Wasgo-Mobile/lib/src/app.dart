@@ -199,7 +199,7 @@ class _MyAppState extends State<MyApp> {
           page: () => const DisputesView(),
         ),
         GetPage(
-          name: '/customer/account-settings',
+          name: '/account-settings',
           page: () => const AccountSettingsView(),
         ),
         

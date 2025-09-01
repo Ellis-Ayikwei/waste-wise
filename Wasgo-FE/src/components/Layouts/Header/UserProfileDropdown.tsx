@@ -265,7 +265,7 @@ const UserProfileDropdown: React.FC = () => {
 
                         {/* Profile Links */}
                         <div className="space-y-1">
-                            <Link to="/profile" className="flex items-center gap-3 p-3 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-300 group touch-manipulation min-h-[56px]">
+                            <Link to="/account-settings" className="flex items-center gap-3 p-3 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-300 group touch-manipulation min-h-[56px]">
                                 <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center group-hover:bg-green-200 dark:group-hover:bg-green-900/50 transition-colors">
                                     <IconUser className="w-4 h-4 text-green-600 dark:text-green-400" />
                                 </div>

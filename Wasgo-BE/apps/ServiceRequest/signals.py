@@ -1,7 +1,9 @@
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
+from django.utils import timezone
 from .models import ServiceRequest, ServiceRequestTimelineEvent
 from .services import ServiceRequestNotificationService
+from apps.Payment.models_paystack import PaystackPayment
 import logging
 
 logger = logging.getLogger(__name__)
@@ -103,3 +105,42 @@ def handle_service_request_delete(sender, instance, **kwargs):
 
     # Clean up related data if needed
     # Note: Timeline events will be automatically deleted due to CASCADE
+
+
+@receiver(post_save, sender=PaystackPayment)
+def handle_paystack_payment_save(sender, instance, **kwargs):
+    """Handle Paystack payment save events"""
+    try:
+        logger.info(f"Paystack payment saved: {instance.reference}")
+
+        if instance.status == "success" and instance.request:
+            instance.request.is_paid = True
+            instance.request.paid_at = timezone.now()
+            instance.request.payment_reference = instance.reference
+            instance.request.status = "pending"
+            instance.request.save()
+
+            logger.info(f"Service request {instance.request.request_id} marked as paid")
+
+            # Create timeline event
+            try:
+                from .services import ServiceRequestTimelineService
+
+                ServiceRequestTimelineService.create_timeline_event(
+                    service_request=instance.request,
+                    event_type="payment_completed",
+                    user=instance.user,
+                    description=f"Payment of {instance.currency} {instance.amount} completed successfully",
+                    metadata={
+                        "payment_reference": instance.reference,
+                        "payment_amount": str(instance.amount),
+                        "payment_currency": instance.currency,
+                        "payment_channel": instance.channel,
+                        "transaction_id": instance.transaction_id,
+                    },
+                )
+            except ImportError:
+                logger.warning("ServiceRequestTimelineService not available")
+
+    except Exception as e:
+        logger.error(f"Error in paystack payment save signal: {str(e)}")

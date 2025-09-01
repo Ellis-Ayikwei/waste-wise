@@ -286,7 +286,7 @@ const UserView: React.FC = () => {
         })
       };
 
-      const response = await axiosInstance.put(`/users/${id}/`, updatedUser);
+      const response = await axiosInstance.patch(`/users/${id}/admin_update/`, updatedUser);
       
       if (response.status === 200) {
         const savedUser = {
@@ -543,7 +543,7 @@ const UserView: React.FC = () => {
       case 'security':
         return (
           <UserSecurity
-            user={user}
+            user={user as UserAccount}
             isEditing={isEditing}
             onSave={handleSecuritySave}
             onCancel={handleSecurityCancel}

@@ -206,6 +206,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
     user_activities = serializers.SerializerMethodField(read_only=True)
     bins = serializers.SerializerMethodField(read_only=True)
     customer_profile = serializers.SerializerMethodField(read_only=True)
+    provider_profile = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
@@ -227,6 +228,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
             "user_activities",
             "bins",
             "customer_profile",
+            "provider_profile",
         )
         read_only_fields = (
             "rating",
@@ -238,6 +240,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
             "user_activities",
             "bins",
             "customer_profile",
+            "provider_profile",
         )
 
     def get_roles(self, obj):
@@ -288,6 +291,21 @@ class UserDetailSerializer(serializers.ModelSerializer):
                 return None
             except ImportError:
                 # Fallback if Customer app is not available
+                return None
+        return None
+
+    def get_provider_profile(self, obj):
+        """Get provider profile if user is a provider"""
+        if obj.user_type == "provider":
+            try:
+                from apps.Provider.models import ServiceProvider
+                from apps.Provider.serializers import ServiceProviderSerializer
+
+                provider_profile = ServiceProvider.objects.filter(user=obj).first()
+                if provider_profile:
+                    return ServiceProviderSerializer(provider_profile).data
+            except ImportError:
+                # Fallback if Provider app is not available
                 return None
         return None
 

@@ -35,6 +35,7 @@ const LoadingScreen: React.FC = () => (
 );
 
 const UnauthorizedScreen: React.FC<{ userType?: string }> = ({ userType }) => (
+    
     <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 flex items-center justify-center">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-md mx-auto px-6">
             <motion.div
@@ -83,9 +84,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles,
     // }
 
     // Redirect to login if not authenticated
-    // if (!isAuthenticated) {
-    //     return <Navigate to={`/login?from=${encodeURIComponent(location.pathname + location.search)}`} replace />;
-    // }
+    if (!isAuthenticated) {
+        return <Navigate to={`/login?from=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+    }
 
     // If authenticated but no user data, show loadng
     // if (!authUser?.user) {
@@ -110,12 +111,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles,
     //     }
     // }
 
-    // if (providerOnly) {
-    //     const providerRoles = ['provider', 'business'];
-    //     if (!providerRoles.includes(userType)) {
-    //         return <UnauthorizedScreen userType={userType} />;
-    //     }
-    // }
+    if (providerOnly) {
+        const providerRoles = ['provider', 'business'];
+        if (!providerRoles.includes(userType || '')) {
+            return <UnauthorizedScreen userType={userType} />;
+        }
+    }
 
     // if (allowedRoles && !allowedRoles.includes(userType)) {
     //     return <UnauthorizedScreen userType={userType} />;

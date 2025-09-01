@@ -81,10 +81,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles,
     //     return <LoadingScreen />;
     // }
 
-    // Redirect to login if not authenticated
-    // if (!isAuthenticated) {
-    //     return <Navigate to={`/login?from=${encodeURIComponent(location.pathname + location.search)}`} replace />;
-    // }
+    //Redirect to login if not authenticated
+    if (!isAuthenticated) {
+        if (authUser?.user.user_type.toLowerCase() !== 'admin') {
+            return <Navigate to={`/login?from=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+        }
+        return <Navigate to={`/login?from=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+    }
 
     // If authenticated but no user data, show loading
     // if (!authUser?.user) {
@@ -94,12 +97,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles,
     const userType = authUser?.user?.user_type?.toLowerCase();
 
     // // Check role-based access
-    // if (adminOnly) {
-    //     const adminRoles = ['super_admin', 'admin', 'underwriter', 'premium_admin', 'sales'];
-    //     if (!adminRoles.includes(userType)) {
-    //         return <UnauthorizedScreen userType={userType} />;
-    //     }
-    // }
+    if (adminOnly) {
+        const adminRoles = ['super_admin', 'admin', 'underwriter', 'premium_admin', 'sales'];
+        if (!adminRoles.includes(userType)) {
+            return <UnauthorizedScreen userType={userType} />;
+        }
+    }
 
     // if (customerOnly) {
     //     const customerRoles = ['member', 'regular', 'customer'];
@@ -110,7 +113,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles,
 
     // if (providerOnly) {
     //     const providerRoles = ['provider', 'business'];
-    //     if (!providerRoles.includes(userType)) {
+    //     if (!providerRoles.includes(userType || '')) {
     //         return <UnauthorizedScreen userType={userType} />;
     //     }
     // }
