@@ -96,7 +96,7 @@ import DisputeResolution from '../pages/customer/DisputeResolution';
 import PickupRequestsPage from '../pages/customer/PickupRequests/PickupRequestsPage';
 import ServiceRequestDetail from '../pages/customer/ServiceRequest/ServiceRequestDetail';
 import UserAccountSetting from '../pages/userAccountSetting';
-import JobRequests from '../pages/provider/Jobs/JobRequests';
+import JobRequests from '../pages/provider/Jobs/JobRequests/JobRequests';
 import PickupRoute from '../pages/provider/Jobs/PickupRoute';
 import ActiveJobs from '../pages/provider/ActiveJobs';
 import FleetManagement from '../pages/provider/FleetManagement';

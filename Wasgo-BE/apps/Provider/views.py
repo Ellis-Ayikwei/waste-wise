@@ -371,6 +371,17 @@ class ServiceProviderViewSet(viewsets.ModelViewSet):
             requests_data = []
             for service_request in queryset:
                 try:
+                    i_accepted = service_request.accepted_providers.filter(
+                        id=provider.id
+                    ).exists()
+                    i_declined = service_request.declined_providers.filter(
+                        id=provider.id
+                    ).exists()
+                    i_requested_to_be_offered = (
+                        service_request.requested_to_be_offered.filter(
+                            id=provider.id
+                        ).exists()
+                    )
                     customer = service_request.user
                     request_data = {
                         "id": str(service_request.id),
@@ -387,6 +398,9 @@ class ServiceProviderViewSet(viewsets.ModelViewSet):
                         "customer_rating": 4.5,  # Placeholder - implement rating system
                         "customer_phone": customer.phone_number,
                         "status": service_request.status,
+                        "i_accepted": i_accepted,
+                        "i_declined": i_declined,
+                        "i_requested_to_be_offered": i_requested_to_be_offered,
                     }
                     requests_data.append(request_data)
                 except Exception as e:
@@ -1114,3 +1128,57 @@ class ServiceProviderViewSet(viewsets.ModelViewSet):
                 {"status": "error", "message": error_msg},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+    @action(detail=True, methods=["get"])
+    def offers(self, request, pk=None):
+        """Get all offers for a provider"""
+        provider = self.get_object()
+        user = provider.user
+
+        if user.user_type != "provider":
+            return Response(
+                {"detail": "User is not a service provider"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        status_filter = request.query_params.get("status")  # optional
+
+        queryset = ServiceRequest.objects.filter(offered_providers=provider)
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+
+        logger.info(
+            f"Found {queryset.count()} offered requests for provider {provider.id}"
+        )
+
+        results = []
+        for sr in queryset.select_related("user"):
+            customer = sr.user
+            i_accepted = sr.accepted_providers.filter(id=provider.id).exists()
+            i_declined = sr.declined_providers.filter(id=provider.id).exists()
+            i_requested_to_be_offered = sr.requested_to_be_offered.filter(
+                id=provider.id
+            ).exists()
+
+            results.append(
+                {
+                    "id": str(sr.id),
+                    "customer_name": f"{customer.first_name} {customer.last_name}",
+                    "waste_type": sr.waste_type or "general",
+                    "address": sr.pickup_address or "Address not specified",
+                    "estimated_volume": f"{sr.estimated_volume_m3 or 'N/A'} m³",
+                    "price": sr.estimated_price or 0,
+                    "offered_price": sr.offered_price or 0,
+                    "offer_expires_at": (
+                        sr.offer_expires_at.isoformat() if sr.offer_expires_at else None
+                    ),
+                    "status": sr.status,
+                    "created_at": sr.created_at.isoformat(),
+                    "customer_phone": getattr(customer, "phone_number", None),
+                    "i_accepted": i_accepted,
+                    "i_declined": i_declined,
+                    "i_requested_to_be_offered": i_requested_to_be_offered,
+                }
+            )
+
+        return Response(results)

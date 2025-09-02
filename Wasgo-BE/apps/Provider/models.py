@@ -301,14 +301,9 @@ class ServiceProvider(Basemodel):
     def accept_service_request(self, service_request):
         """Accept a service request that was offered to this provider"""
         if service_request in self.offered_service_requests.all():
-            service_request.assigned_provider = self
-            service_request.status = "assigned"
-            service_request.assigned_at = timezone.now()
+            service_request.accepted_providers.add(self)
             service_request.offer_response = "accepted"
             service_request.save()
-
-            # Remove from offered providers since it's now assigned
-            service_request.offered_providers.remove(self)
 
             logger.info(
                 f"Provider {self.id} accepted service request {service_request.id}"
@@ -319,7 +314,13 @@ class ServiceProvider(Basemodel):
     def decline_service_request(self, service_request, reason=""):
         """Decline a service request that was offered to this provider"""
         if service_request in self.offered_service_requests.all():
-            service_request.offer_response = "declined"
+            # Track declined provider
+            try:
+                service_request.declined_providers.add(self)
+            except Exception:
+                pass
+
+            service_request.offer_response = "rejected"
             service_request.decline_reason = reason
             service_request.save()
 

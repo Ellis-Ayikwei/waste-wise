@@ -176,6 +176,25 @@ class ServiceRequest(Basemodel):
         related_name="offered_service_requests",
         help_text="Providers who were offered this service",
     )
+    accepted_providers = models.ManyToManyField(
+        ServiceProvider,
+        blank=True,
+        related_name="accepted_service_requests",
+        help_text="Providers who accepted the offer for this service",
+    )
+    declined_providers = models.ManyToManyField(
+        ServiceProvider,
+        blank=True,
+        related_name="declined_service_requests",
+        help_text="Providers who declined the offer for this service",
+    )
+    requested_to_be_offered = models.ManyToManyField(
+        ServiceProvider,
+        blank=True,
+        related_name="requested_offer_service_requests",
+        help_text="Providers who requested to be offered this service",
+    )
+
     offer_response = models.CharField(
         max_length=20,
         choices=OFFER_RESPONSES,
@@ -461,10 +480,12 @@ class ServiceRequest(Basemodel):
         if expires_at is None:
             expires_at = timezone.now() + timedelta(hours=24)
 
-        self.offered_provider = provider
+        # Add provider to the offered_providers list
+        self.offered_providers.add(provider)
+
+        # Set the offered price and expiration
         self.offered_price = offered_price
         self.offer_expires_at = expires_at
-        self.offer_response = "pending"
         self.status = "offered"
 
         # Set offer-specific details

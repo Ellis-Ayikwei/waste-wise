@@ -359,9 +359,12 @@ class ServiceRequestSerializer(serializers.ModelSerializer):
 class ServiceRequestDetailSerializer(ServiceRequestSerializer):
     """Detailed serializer with additional information"""
 
+    offered_providers = ServiceProviderSerializer(many=True, read_only=True)
+
     class Meta(ServiceRequestSerializer.Meta):
         fields = ServiceRequestSerializer.Meta.fields + [
             "timeline_events",
+            "offered_providers",
         ]
 
 
@@ -393,6 +396,7 @@ class ServiceRequestListSerializer(ServiceRequestSerializer):
             "offered_price",
             "smart_bin",
             "smart_bin_id",
+            "offered_providers",
         ]
         read_only_fields = fields
 

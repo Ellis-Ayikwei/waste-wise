@@ -61,7 +61,8 @@ class ServiceRequestViewSet(viewsets.ModelViewSet):
         provider_id = self.request.query_params.get("provider", None)
         if provider_id:
             queryset = queryset.filter(
-                Q(assigned_provider_id=provider_id) | Q(offered_provider_id=provider_id)
+                Q(assigned_provider_id=provider_id)
+                | Q(offered_providers__id=provider_id)
             )
 
         # Filter by driver
@@ -183,12 +184,44 @@ class ServiceRequestViewSet(viewsets.ModelViewSet):
 
             provider = get_object_or_404(ServiceProvider, id=provider_id)
 
-            ServiceRequestService.offer_to_provider(
-                service_request, provider, Decimal(offered_price), expires_at
+            print(service_request.status)
+
+            # Check if service request is available for offering
+            if service_request.offered_providers.count() >= 5:
+                return Response(
+                    {"error": "Service request is not available for offering"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if service_request.assigned_provider:
+                return Response(
+                    {"error": "Service request is already assigned to a provider"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Add provider to offered_providers and update status
+            service_request.offered_providers.add(provider)
+            service_request.status = "offered"
+            service_request.offered_price = Decimal(offered_price)
+            if expires_at:
+                service_request.offer_expires_at = expires_at
+            else:
+                service_request.offer_expires_at = timezone.now() + timedelta(hours=24)
+
+            service_request.save()
+
+            logger.info(
+                f"Service request {service_request.id} offered to provider {provider.id}"
             )
 
             return Response(
-                {"message": f"Offer sent to {provider.business_name}"},
+                {
+                    "message": f"Offer sent to {provider.business_name}",
+                    "service_request_id": str(service_request.id),
+                    "provider_id": str(provider.id),
+                    "offered_price": str(offered_price),
+                    "expires_at": service_request.offer_expires_at,
+                },
                 status=status.HTTP_200_OK,
             )
 
@@ -197,6 +230,47 @@ class ServiceRequestViewSet(viewsets.ModelViewSet):
             return Response(
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @action(detail=True, methods=["get"])
+    def requested_providers(self, request, pk=None):
+        """List providers who requested to be offered this service request"""
+        sr = self.get_object()
+        providers = sr.requested_to_be_offered.all()
+        from apps.Provider.serializer import ServiceProviderSerializer
+
+        return Response(ServiceProviderSerializer(providers, many=True).data)
+
+    @action(detail=True, methods=["post"])
+    def request_offer(self, request, pk=None):
+        """Current provider requests to be offered this service request"""
+        sr = self.get_object()
+        provider_id = request.data.get("provider_id")
+        if not provider_id:
+            return Response(
+                {"error": "provider_id is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        from apps.Provider.models import ServiceProvider
+
+        provider = get_object_or_404(ServiceProvider, id=provider_id)
+        sr.requested_to_be_offered.add(provider)
+        return Response({"message": "Request to be offered recorded"})
+
+    @action(detail=True, methods=["delete"])
+    def withdraw_request_offer(self, request, pk=None):
+        """Provider withdraws their request to be offered this service request"""
+        sr = self.get_object()
+        provider_id = request.query_params.get("provider_id") or request.data.get(
+            "provider_id"
+        )
+        if not provider_id:
+            return Response(
+                {"error": "provider_id is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        from apps.Provider.models import ServiceProvider
+
+        provider = get_object_or_404(ServiceProvider, id=provider_id)
+        sr.requested_to_be_offered.remove(provider)
+        return Response({"message": "Request to be offered withdrawn"})
 
     @action(detail=True, methods=["post"])
     def accept_offer(self, request, pk=None):
