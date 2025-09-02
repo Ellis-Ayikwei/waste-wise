@@ -105,8 +105,17 @@ const Login = () => {
         } catch (err: any) {
             console.log('Login - Login failed:', err);
             setErrors(renderErrorMessage(err))
+            if(err?.response?.data?.action_required === 'VERIFY_EMAIL'){
+                navigate('/verify-account', {
+                    state: {
+                        email: formData.email_or_phone,
+                        type: 'login',
+                        accountType: 'user',
+                    },
+                });
+            }
             showNotification({
-                message: err.message || 'Login failed. Please try again.',
+                message: renderErrorMessage(err) || 'Login failed. Please try again.',
                 type: 'error',
                 showHide: true,
             });

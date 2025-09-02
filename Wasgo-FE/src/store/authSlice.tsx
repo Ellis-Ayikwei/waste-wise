@@ -62,7 +62,6 @@ export const LoginUser = createAsyncThunk('auth/LoginUser', async ({ email_or_ph
 
         return user;
     } catch (error: any) {
-        ShowRequestError(error);
         console.error('Error during login:', error);
 
         // Handle different error response formats
@@ -84,7 +83,7 @@ export const LoginUser = createAsyncThunk('auth/LoginUser', async ({ email_or_ph
             }
         }
 
-        return rejectWithValue(errorMessage);
+        return rejectWithValue(error);
     }
 });
 
@@ -316,7 +315,7 @@ export const RegisterUser = createAsyncThunk(
             const response = await authAxiosInstance.post('/register/', payload);
             return response.data;
         } catch (error: any) {
-            ShowRequestError(error);
+            
             console.error('Error during register:', error);
     
             // Handle different error response formats

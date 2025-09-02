@@ -16,7 +16,9 @@ class EmailAlreadyExistsException(APIException):
     """Custom exception for email already exists with 409 status code"""
 
     status_code = status.HTTP_409_CONFLICT
-    default_detail = "User with this email already exists"
+    default_detail = (
+        "User with this email already exists, login or sign up with phone number"
+    )
     default_code = "email_already_exists"
 
 
@@ -24,7 +26,9 @@ class PhoneNumberAlreadyExistsException(APIException):
     """Custom exception for phone number already exists with 409 status code"""
 
     status_code = status.HTTP_409_CONFLICT
-    default_detail = "User with this phone number already exists"
+    default_detail = (
+        "User with this phone number already exists, login or sign up with email"
+    )
     default_code = "phone_number_already_exists"
 
 
@@ -409,7 +413,10 @@ class LoginSerializer(serializers.Serializer):
             if not user.is_active:
                 logger.warning(f"User {email_or_phone} is inactive")
                 raise serializers.ValidationError(
-                    {"detail": "User account is disabled.", "code": "inactive_account"},
+                    detail={
+                        "detail": "User account is inactive.",
+                        "code": "inactive_account",
+                    },
                     code="authorization",
                 )
             logger.info(f"Authentication successful for {email_or_phone}")

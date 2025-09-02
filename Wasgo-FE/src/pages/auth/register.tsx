@@ -83,10 +83,13 @@ const Register: React.FC = () => {
                 })
             ).unwrap();
 
+            console.log("resultAction", resultAction)
+
             if (resultAction.success) {
                 navigate('/verify-account', {
                     state: {
                         phone: values.phone_number,
+                        email: values.email,
                         type: 'registration',
                         accountType: 'user',
                     },
@@ -95,7 +98,7 @@ const Register: React.FC = () => {
 
         } catch (error) {
             console.error('Registration error:', error);
-            setRegisterError('An error occurred during registration. Please try again.');
+            setRegisterError(error || 'An error occurred during registration. Please try again.');
         } finally {
             setSubmitting(false);
         }

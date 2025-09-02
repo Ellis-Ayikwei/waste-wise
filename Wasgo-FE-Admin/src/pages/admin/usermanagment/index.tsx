@@ -23,6 +23,7 @@ import DraggableDataTable, { ColumnDefinition } from '../../../components/ui/Dra
 import FilterSelect from '../../../components/ui/FilterSelect';
 import StatCard from '../../../components/ui/statCard';
 import axiosInstance from '../../../services/axiosInstance';
+import useSWR from 'swr';
 
 interface UserAccount {
     id: string;
@@ -69,24 +70,24 @@ const UserManagement: React.FC = () => {
     const [suspensionReason, setSuspensionReason] = useState('');
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-    // Fetch users from API
-    const fetchUsers = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            const response = await axiosInstance.get('/users/');
-            setUsers(response.data);
-        } catch (err) {
-            setError('Failed to fetch users. Please try again later.');
-            console.error('Error fetching users:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
+    // SWR for users
+    const { data: swrUsers, error: swrError, isLoading: swrLoading, mutate: refreshUsers } = useSWR(
+        '/users/',
+        (url: string) => axiosInstance.get(url).then(res => res.data)
+    );
 
     useEffect(() => {
-        fetchUsers();
-    }, []);
+        setLoading(swrLoading);
+        if (swrError) {
+            setError('Failed to fetch users. Please try again later.');
+            console.error('Error fetching users:', swrError);
+        } else {
+            setError(null);
+        }
+        if (swrUsers) {
+            setUsers(swrUsers);
+        }
+    }, [swrUsers, swrError, swrLoading]);
 
     // Filter users based on active filter
     const getFilteredUsers = () => {
@@ -122,7 +123,7 @@ const UserManagement: React.FC = () => {
                 });
 
                 // Refresh user list after successful update
-                await fetchUsers();
+                await refreshUsers();
 
                 setShowSuspendModal(false);
                 setSuspensionReason('');
@@ -146,7 +147,7 @@ const UserManagement: React.FC = () => {
                 await axiosInstance.delete(`/users/${selectedUser.id}/`);
 
                 // Refresh user list after successful deletion
-                await fetchUsers();
+                await refreshUsers();
 
                 setShowDeleteModal(false);
                 setSelectedUser(null);
@@ -165,7 +166,7 @@ const UserManagement: React.FC = () => {
             });
 
             // Refresh user list after successful verification
-            await fetchUsers();
+            await refreshUsers();
         } catch (err) {
             setError('Failed to verify user. Please try again.');
             console.error('Error verifying user:', err);
@@ -469,7 +470,7 @@ const UserManagement: React.FC = () => {
                 title="Users"
                 exportFileName="users"
                 storeKey="users-table"
-                onRefreshData={fetchUsers}
+                onRefreshData={refreshUsers}
                 extraFilters={
                     <div className="flex flex-wrap gap-2">
                         {[

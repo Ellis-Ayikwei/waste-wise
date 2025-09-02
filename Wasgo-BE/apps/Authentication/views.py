@@ -94,6 +94,7 @@ class RegisterAPIView(APIView):
                             "user_id": str(user.id),
                             "otp_sent": True,
                             "validity_minutes": otp_result.get("validity_minutes"),
+                            "success": True,
                         },
                         status=status.HTTP_201_CREATED,
                     )
@@ -159,7 +160,7 @@ class RegisterAPIView(APIView):
             if isinstance(e, EmailAlreadyExistsException):
                 return Response(
                     {
-                        "message": "User with this email address already exists.",
+                        "message": "User with this email address already exists, login or sign up with another email",
                         "error_code": "EMAIL_ALREADY_EXISTS",
                         "detail": str(e.detail),
                     },
@@ -168,7 +169,7 @@ class RegisterAPIView(APIView):
             elif isinstance(e, PhoneNumberAlreadyExistsException):
                 return Response(
                     {
-                        "message": "User with this phone number already exists.",
+                        "message": "User with this phone number already exists, login or sign up with another number",
                         "error_code": "PHONE_NUMBER_ALREADY_EXISTS",
                         "detail": str(e.detail),
                     },
@@ -193,18 +194,92 @@ class LoginAPIView(APIView):
         serializer = LoginSerializer(data=request.data, context={"request": request})
 
         try:
-            serializer.is_valid(raise_exception=False)
-            if not serializer.is_valid():
-                # Log failed login attempt but return generic error
+            is_valid = serializer.is_valid(raise_exception=False)
+            if not is_valid:
+                # Extract specific error details and map to appropriate status code
                 ip = get_client_ip(request)
-                email = request.data.get("email", "unknown")
-                logger.warning(f"Failed login attempt for {email} from IP {ip}")
+                id_value = request.data.get("email_or_phone", "unknown")
+                logger.warning(f"Failed login attempt for {id_value} from IP {ip}")
+
                 # Increment failed login counter in cache
-                increment_failed_logins(email, ip)
-                return Response(
-                    {"detail": "Invalid credentials"},
-                    status=status.HTTP_401_UNAUTHORIZED,
-                )
+                increment_failed_logins(id_value, ip)
+
+                # Normalize serializer errors
+                errors = serializer.errors or {"detail": ["Authentication failed"]}
+
+                # Try to extract our custom code set in serializer
+                # errors may look like {"detail": [{"message": ..., "code": ...}]} or {"detail": [...]} depending on DRF
+                code = None
+                detail = None
+                # Prefer explicit 'code' field if provided by serializer
+                code_field = errors.get("code")
+                if isinstance(code_field, list) and code_field:
+                    first_code = code_field[0]
+                    code = str(first_code)
+                elif isinstance(code_field, str):
+                    code = code_field
+
+                # Extract human-readable detail
+                detail_field = errors.get("detail")
+                if isinstance(detail_field, list) and detail_field:
+                    first_detail = detail_field[0]
+                    detail = str(first_detail)
+                elif isinstance(detail_field, dict):
+                    detail = detail_field.get("detail") or detail_field.get("message")
+
+                # Fallbacks
+                if not detail:
+                    # Grab a stringified version of errors
+                    detail = errors
+
+                # If account inactive, send activation OTP and include info in response
+                if code == "inactive_account":
+                    try:
+                        identifier = id_value
+                        # Look up user by email or phone
+                        if "@" in identifier:
+                            target_user = User.objects.filter(
+                                email__iexact=identifier
+                            ).first()
+                        else:
+                            target_user = User.objects.filter(
+                                phone_number=identifier
+                            ).first()
+
+                        otp_payload = None
+                        if target_user:
+                            otp_result = send_otp_utility(
+                                target_user, "reactivate", target_user.email or None
+                            )
+                            otp_payload = {
+                                "otp_sent": bool(otp_result.get("success")),
+                                "masked_email": otp_result.get("masked_email"),
+                                "validity_minutes": otp_result.get("validity_minutes"),
+                                "error_code": otp_result.get("error_code"),
+                            }
+                    except Exception:
+                        otp_payload = {"otp_sent": False}
+
+                    return Response(
+                        {
+                            "detail": detail or "User account is inactive.",
+                            "code": code,
+                            "action_required": "VERIFY_EMAIL",
+                            **(otp_payload or {}),
+                        },
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+
+                # Map codes to HTTP status
+                status_map = {
+                    "missing_fields": status.HTTP_400_BAD_REQUEST,
+                    "user_not_found": status.HTTP_404_NOT_FOUND,
+                    "invalid_credentials": status.HTTP_401_UNAUTHORIZED,
+                    "inactive_account": status.HTTP_403_FORBIDDEN,
+                }
+                http_status = status_map.get(code, status.HTTP_400_BAD_REQUEST)
+
+                return Response({"detail": detail, "code": code}, status=http_status)
 
             user = serializer.validated_data["user"]
 
