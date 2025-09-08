@@ -1,38 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-    faBell,
-    faFilter,
-    faSearch,
-    faEye,
-    faEdit,
-    faTrash,
-    faCheck,
-    faCheckDouble,
-    faExclamationTriangle,
-    faInfoCircle,
-    faChartBar,
-    faUsers,
-    faEnvelope,
-    faSms,
-    faMobile,
-    faCalendar,
-    faSort,
-    faSortUp,
-    faSortDown,
-    faDownload,
-    faPlus,
-    faCog,
-    faRefresh,
-    faTimes,
-    faCheckCircle,
-    faExclamationCircle,
-    faClockRotateLeft,
-    faPaperPlane,
-    faArchive,
-    faUndo
-} from '@fortawesome/free-solid-svg-icons';
+import React, { useState, useMemo } from 'react';
+import { Bell, Filter, Search, RefreshCw, Plus, Eye, Send, Trash2, AlertTriangle, Mail, MessageCircle, Smartphone, ArrowUpDown, ArrowUp, ArrowDown, X, CheckCircle, Clock, Check, Undo2 } from 'lucide-react';
 import { format } from 'date-fns';
+import useSWR from 'swr';
+import fetcher from '../../../services/fetcher';
 
 interface Notification {
     id: string;
@@ -71,8 +41,17 @@ interface NotificationStats {
 }
 
 const NotificationManagement: React.FC = () => {
-    const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { data: notificationsData, isLoading: swrLoading, mutate: mutateNotifications } = useSWR<Notification[]>(
+        '/notifications/',
+        fetcher,
+        { refreshInterval: 15000 }
+    );
+    const { data: statsData } = useSWR<NotificationStats>(
+        '/notifications/stats/',
+        fetcher,
+        { refreshInterval: 30000 }
+    );
+    const loading = swrLoading;
     const [selectedNotifications, setSelectedNotifications] = useState<string[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterType, setFilterType] = useState('all');
@@ -83,7 +62,7 @@ const NotificationManagement: React.FC = () => {
     const [showFilters, setShowFilters] = useState(false);
     const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
-    const [stats, setStats] = useState<NotificationStats | null>(null);
+    const stats = statsData;
     const [page, setPage] = useState(1);
     const [perPage] = useState(20);
 
@@ -100,86 +79,11 @@ const NotificationManagement: React.FC = () => {
     const priorities = ['all', 'low', 'normal', 'high', 'urgent'];
     const statuses = ['all', 'read', 'unread', 'delivered', 'failed', 'scheduled'];
 
-    // Mock data - replace with API calls
-    useEffect(() => {
-        fetchNotifications();
-        fetchStats();
-    }, [filterType, filterPriority, filterStatus, sortBy, sortOrder, page]);
 
-    const fetchNotifications = async () => {
-        setLoading(true);
-        try {
-            // Mock API call
-            const mockNotifications: Notification[] = [
-                {
-                    id: '1',
-                    user: { id: '1', name: 'John Doe', email: 'john@example.com' },
-                    title: 'Booking Confirmed',
-                    message: 'Your booking #B001 has been confirmed',
-                    type: 'booking_confirmed',
-                    priority: 'normal',
-                    read: false,
-                    delivered_at: new Date().toISOString(),
-                    created_at: new Date().toISOString(),
-                    email_sent: true,
-                    sms_sent: false,
-                    push_sent: true,
-                    action_url: '/bookings/B001'
-                },
-                {
-                    id: '2',
-                    user: { id: '2', name: 'Jane Smith', email: 'jane@example.com' },
-                    title: 'Payment Failed',
-                    message: 'Payment for booking #B002 failed',
-                    type: 'payment_failed',
-                    priority: 'high',
-                    read: true,
-                    delivered_at: new Date().toISOString(),
-                    created_at: new Date().toISOString(),
-                    email_sent: true,
-                    sms_sent: true,
-                    push_sent: true,
-                }
-            ];
-            setNotifications(mockNotifications);
-        } catch (error) {
-            console.error('Failed to fetch notifications:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const fetchStats = async () => {
-        try {
-            // Mock stats
-            const mockStats: NotificationStats = {
-                total: 1250,
-                unread: 89,
-                delivered: 1180,
-                failed: 15,
-                scheduled: 25,
-                byType: {
-                    'booking_created': 320,
-                    'payment_confirmed': 280,
-                    'bid_received': 150,
-                    'provider_verified': 85,
-                    'system_maintenance': 12
-                },
-                byPriority: {
-                    'low': 450,
-                    'normal': 680,
-                    'high': 95,
-                    'urgent': 25
-                }
-            };
-            setStats(mockStats);
-        } catch (error) {
-            console.error('Failed to fetch stats:', error);
-        }
-    };
+    const effectiveNotifications = Array.isArray(notificationsData) ? notificationsData : [];
 
     const filteredNotifications = useMemo(() => {
-        return notifications.filter(notification => {
+        return effectiveNotifications.filter(notification => {
             const matchesSearch = searchQuery === '' || 
                 notification.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 notification.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -202,7 +106,7 @@ const NotificationManagement: React.FC = () => {
             const comparison = aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
             return sortOrder === 'asc' ? comparison : -comparison;
         });
-    }, [notifications, searchQuery, filterType, filterPriority, filterStatus, sortBy, sortOrder]);
+    }, [effectiveNotifications, searchQuery, filterType, filterPriority, filterStatus, sortBy, sortOrder]);
 
     const handleSort = (field: typeof sortBy) => {
         if (sortBy === field) {
@@ -239,7 +143,7 @@ const NotificationManagement: React.FC = () => {
                     // API call to resend
                     break;
             }
-            fetchNotifications();
+            mutateNotifications();
             setSelectedNotifications([]);
         } catch (error) {
             console.error('Bulk action failed:', error);
@@ -248,17 +152,17 @@ const NotificationManagement: React.FC = () => {
 
     const getNotificationIcon = (type: string) => {
         const iconMap: Record<string, any> = {
-            'booking_created': faBell,
-            'booking_confirmed': faCheckCircle,
-            'booking_cancelled': faTimes,
-            'payment_confirmed': faCheckCircle,
-            'payment_failed': faExclamationCircle,
-            'bid_received': faExclamationTriangle,
-            'provider_verified': faCheckCircle,
-            'system_maintenance': faCog,
-            'message_received': faEnvelope,
+            'booking_created': Bell,
+            'booking_confirmed': CheckCircle,
+            'booking_cancelled': X,
+            'payment_confirmed': CheckCircle,
+            'payment_failed': AlertTriangle,
+            'bid_received': AlertTriangle,
+            'provider_verified': CheckCircle,
+            'system_maintenance': Bell,
+            'message_received': Mail,
         };
-        return iconMap[type] || faBell;
+        return iconMap[type] || Bell;
     };
 
     const getPriorityColor = (priority: string) => {
@@ -289,13 +193,23 @@ const NotificationManagement: React.FC = () => {
         <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
-                <div className="mb-6">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                        Notification Management
-                    </h1>
-                    <p className="text-gray-600 dark:text-gray-400">
-                        Monitor and manage all system notifications
-                    </p>
+                <div className="mb-6 flex items-center justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                            Notification Management
+                        </h1>
+                        <p className="text-gray-600 dark:text-gray-400">
+                            Monitor and manage all system notifications
+                        </p>
+                    </div>
+                    <button className="relative p-2 rounded-full border border-gray-300 dark:border-gray-600" title="Notifications">
+                        <Bell className="w-5 h-5" />
+                        {stats?.unread ? (
+                            <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full px-1">
+                                {stats.unread}
+                            </span>
+                        ) : null}
+                    </button>
                 </div>
 
                 {/* Stats Cards */}
@@ -303,7 +217,7 @@ const NotificationManagement: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
                             <div className="flex items-center">
-                                <FontAwesomeIcon icon={faBell} className="text-blue-500 text-xl mr-3" />
+                                <Bell className="text-blue-500 w-5 h-5 mr-3" />
                                 <div>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">Total</p>
                                     <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
@@ -312,7 +226,7 @@ const NotificationManagement: React.FC = () => {
                         </div>
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
                             <div className="flex items-center">
-                                <FontAwesomeIcon icon={faExclamationCircle} className="text-orange-500 text-xl mr-3" />
+                                <AlertTriangle className="text-orange-500 w-5 h-5 mr-3" />
                                 <div>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">Unread</p>
                                     <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.unread}</p>
@@ -321,7 +235,7 @@ const NotificationManagement: React.FC = () => {
                         </div>
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
                             <div className="flex items-center">
-                                <FontAwesomeIcon icon={faCheckCircle} className="text-green-500 text-xl mr-3" />
+                                <CheckCircle className="text-green-500 w-5 h-5 mr-3" />
                                 <div>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">Delivered</p>
                                     <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.delivered}</p>
@@ -330,7 +244,7 @@ const NotificationManagement: React.FC = () => {
                         </div>
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
                             <div className="flex items-center">
-                                <FontAwesomeIcon icon={faTimes} className="text-red-500 text-xl mr-3" />
+                                <X className="text-red-500 w-5 h-5 mr-3" />
                                 <div>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">Failed</p>
                                     <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.failed}</p>
@@ -339,7 +253,7 @@ const NotificationManagement: React.FC = () => {
                         </div>
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
                             <div className="flex items-center">
-                                <FontAwesomeIcon icon={faClockRotateLeft} className="text-purple-500 text-xl mr-3" />
+                                <Clock className="text-purple-500 w-5 h-5 mr-3" />
                                 <div>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">Scheduled</p>
                                     <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.scheduled}</p>
@@ -356,7 +270,7 @@ const NotificationManagement: React.FC = () => {
                             {/* Search */}
                             <div className="relative flex-1 max-w-md">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <FontAwesomeIcon icon={faSearch} className="text-gray-400" />
+                                    <Search className="w-4 h-4 text-gray-400" />
                                 </div>
                                 <input
                                     type="text"
@@ -375,20 +289,20 @@ const NotificationManagement: React.FC = () => {
                                     onClick={() => setShowFilters(!showFilters)}
                                     className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
                                 >
-                                    <FontAwesomeIcon icon={faFilter} className="mr-2" />
+                                    <Filter className="w-4 h-4 mr-2" />
                                     Filters
                                 </button>
                                 <button
-                                    onClick={fetchNotifications}
+                                    onClick={() => mutateNotifications()}
                                     className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
                                 >
-                                    <FontAwesomeIcon icon={faRefresh} className="mr-2" />
+                                    <RefreshCw className="w-4 h-4 mr-2" />
                                     Refresh
                                 </button>
                                 <button
                                     className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
                                 >
-                                    <FontAwesomeIcon icon={faPlus} className="mr-2" />
+                                    <Plus className="w-4 h-4 mr-2" />
                                     New Notification
                                 </button>
                             </div>
@@ -446,28 +360,28 @@ const NotificationManagement: React.FC = () => {
                                         onClick={() => handleBulkAction('mark_read')}
                                         className="px-3 py-1 text-sm bg-green-600 hover:bg-green-700 text-white rounded"
                                     >
-                                        <FontAwesomeIcon icon={faCheck} className="mr-1" />
+                                        <Check className="w-3 h-3 mr-1" />
                                         Mark Read
                                     </button>
                                     <button
                                         onClick={() => handleBulkAction('mark_unread')}
                                         className="px-3 py-1 text-sm bg-orange-600 hover:bg-orange-700 text-white rounded"
                                     >
-                                        <FontAwesomeIcon icon={faUndo} className="mr-1" />
+                                        <Undo2 className="w-3 h-3 mr-1" />
                                         Mark Unread
                                     </button>
                                     <button
                                         onClick={() => handleBulkAction('resend')}
                                         className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded"
                                     >
-                                        <FontAwesomeIcon icon={faPaperPlane} className="mr-1" />
+                                        <Send className="w-3 h-3 mr-1" />
                                         Resend
                                     </button>
                                     <button
                                         onClick={() => handleBulkAction('delete')}
                                         className="px-3 py-1 text-sm bg-red-600 hover:bg-red-700 text-white rounded"
                                     >
-                                        <FontAwesomeIcon icon={faTrash} className="mr-1" />
+                                        <Trash2 className="w-3 h-3 mr-1" />
                                         Delete
                                     </button>
                                 </div>
@@ -494,10 +408,11 @@ const NotificationManagement: React.FC = () => {
                                     >
                                         <div className="flex items-center">
                                             Title
-                                            <FontAwesomeIcon 
-                                                icon={sortBy === 'title' ? (sortOrder === 'asc' ? faSortUp : faSortDown) : faSort} 
-                                                className="ml-1 text-gray-400"
-                                            />
+                                            {sortBy === 'title' ? (
+                                                sortOrder === 'asc' ? <ArrowUp className="ml-1 w-3 h-3 text-gray-400" /> : <ArrowDown className="ml-1 w-3 h-3 text-gray-400" />
+                                            ) : (
+                                                <ArrowUpDown className="ml-1 w-3 h-3 text-gray-400" />
+                                            )}
                                         </div>
                                     </th>
                                     <th className="text-left py-3 px-4">User</th>
@@ -507,10 +422,11 @@ const NotificationManagement: React.FC = () => {
                                     >
                                         <div className="flex items-center">
                                             Type
-                                            <FontAwesomeIcon 
-                                                icon={sortBy === 'type' ? (sortOrder === 'asc' ? faSortUp : faSortDown) : faSort} 
-                                                className="ml-1 text-gray-400"
-                                            />
+                                            {sortBy === 'type' ? (
+                                                sortOrder === 'asc' ? <ArrowUp className="ml-1 w-3 h-3 text-gray-400" /> : <ArrowDown className="ml-1 w-3 h-3 text-gray-400" />
+                                            ) : (
+                                                <ArrowUpDown className="ml-1 w-3 h-3 text-gray-400" />
+                                            )}
                                         </div>
                                     </th>
                                     <th 
@@ -519,10 +435,11 @@ const NotificationManagement: React.FC = () => {
                                     >
                                         <div className="flex items-center">
                                             Priority
-                                            <FontAwesomeIcon 
-                                                icon={sortBy === 'priority' ? (sortOrder === 'asc' ? faSortUp : faSortDown) : faSort} 
-                                                className="ml-1 text-gray-400"
-                                            />
+                                            {sortBy === 'priority' ? (
+                                                sortOrder === 'asc' ? <ArrowUp className="ml-1 w-3 h-3 text-gray-400" /> : <ArrowDown className="ml-1 w-3 h-3 text-gray-400" />
+                                            ) : (
+                                                <ArrowUpDown className="ml-1 w-3 h-3 text-gray-400" />
+                                            )}
                                         </div>
                                     </th>
                                     <th className="text-left py-3 px-4">Delivery</th>
@@ -532,10 +449,11 @@ const NotificationManagement: React.FC = () => {
                                     >
                                         <div className="flex items-center">
                                             Created
-                                            <FontAwesomeIcon 
-                                                icon={sortBy === 'created_at' ? (sortOrder === 'asc' ? faSortUp : faSortDown) : faSort} 
-                                                className="ml-1 text-gray-400"
-                                            />
+                                            {sortBy === 'created_at' ? (
+                                                sortOrder === 'asc' ? <ArrowUp className="ml-1 w-3 h-3 text-gray-400" /> : <ArrowDown className="ml-1 w-3 h-3 text-gray-400" />
+                                            ) : (
+                                                <ArrowUpDown className="ml-1 w-3 h-3 text-gray-400" />
+                                            )}
                                         </div>
                                     </th>
                                     <th className="text-left py-3 px-4">Actions</th>
@@ -576,10 +494,10 @@ const NotificationManagement: React.FC = () => {
                                             </td>
                                             <td className="py-3 px-4">
                                                 <div className="flex items-center">
-                                                    <FontAwesomeIcon 
-                                                        icon={getNotificationIcon(notification.type)} 
-                                                        className="mr-2 text-gray-400"
-                                                    />
+                                                    {(() => {
+                                                        const IconComp = getNotificationIcon(notification.type);
+                                                        return <IconComp className="mr-2 w-4 h-4 text-gray-400" />;
+                                                    })()}
                                                     <div>
                                                         <p className="font-medium text-gray-900 dark:text-white">
                                                             {notification.title}
@@ -606,28 +524,16 @@ const NotificationManagement: React.FC = () => {
                                                 </span>
                                             </td>
                                             <td className="py-3 px-4">
-                                                <FontAwesomeIcon 
-                                                    icon={faExclamationTriangle} 
-                                                    className={`text-sm ${getPriorityColor(notification.priority)}`}
-                                                />
+                                                <AlertTriangle className={`w-3 h-3 ${getPriorityColor(notification.priority)}`} />
                                                 <span className={`ml-1 text-sm ${getPriorityColor(notification.priority)}`}>
                                                     {notification.priority}
                                                 </span>
                                             </td>
                                             <td className="py-3 px-4">
                                                 <div className="flex items-center space-x-1">
-                                                    <FontAwesomeIcon 
-                                                        icon={faEnvelope} 
-                                                        className={`text-sm ${notification.email_sent ? 'text-green-500' : 'text-gray-300'}`}
-                                                    />
-                                                    <FontAwesomeIcon 
-                                                        icon={faSms} 
-                                                        className={`text-sm ${notification.sms_sent ? 'text-green-500' : 'text-gray-300'}`}
-                                                    />
-                                                    <FontAwesomeIcon 
-                                                        icon={faMobile} 
-                                                        className={`text-sm ${notification.push_sent ? 'text-green-500' : 'text-gray-300'}`}
-                                                    />
+                                                    <Mail className={`w-3 h-3 ${notification.email_sent ? 'text-green-500' : 'text-gray-300'}`} />
+                                                    <MessageCircle className={`w-3 h-3 ${notification.sms_sent ? 'text-green-500' : 'text-gray-300'}`} />
+                                                    <Smartphone className={`w-3 h-3 ${notification.push_sent ? 'text-green-500' : 'text-gray-300'}`} />
                                                 </div>
                                             </td>
                                             <td className="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">
@@ -643,19 +549,19 @@ const NotificationManagement: React.FC = () => {
                                                         className="text-blue-600 hover:text-blue-800"
                                                         title="View Details"
                                                     >
-                                                        <FontAwesomeIcon icon={faEye} />
+                                                        <Eye className="w-4 h-4" />
                                                     </button>
                                                     <button
                                                         className="text-green-600 hover:text-green-800"
                                                         title="Resend"
                                                     >
-                                                        <FontAwesomeIcon icon={faPaperPlane} />
+                                                        <Send className="w-4 h-4" />
                                                     </button>
                                                     <button
                                                         className="text-red-600 hover:text-red-800"
                                                         title="Delete"
                                                     >
-                                                        <FontAwesomeIcon icon={faTrash} />
+                                                        <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 </div>
                                             </td>
@@ -708,7 +614,7 @@ const NotificationManagement: React.FC = () => {
                                         onClick={() => setShowDetailModal(false)}
                                         className="text-gray-400 hover:text-gray-600"
                                     >
-                                        <FontAwesomeIcon icon={faTimes} />
+                                        <X className="w-4 h-4" />
                                     </button>
                                 </div>
 
@@ -747,23 +653,20 @@ const NotificationManagement: React.FC = () => {
                                         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Delivery Status</label>
                                         <div className="mt-1 flex items-center space-x-4">
                                             <div className="flex items-center">
-                                                <FontAwesomeIcon 
-                                                    icon={faEnvelope} 
-                                                    className={`mr-1 ${selectedNotification.email_sent ? 'text-green-500' : 'text-gray-300'}`}
+                                                <Mail 
+                                                    className={`mr-1 w-4 h-4 ${selectedNotification.email_sent ? 'text-green-500' : 'text-gray-300'}`}
                                                 />
                                                 <span className="text-sm">Email</span>
                                             </div>
                                             <div className="flex items-center">
-                                                <FontAwesomeIcon 
-                                                    icon={faSms} 
-                                                    className={`mr-1 ${selectedNotification.sms_sent ? 'text-green-500' : 'text-gray-300'}`}
+                                                <MessageCircle 
+                                                    className={`mr-1 w-4 h-4 ${selectedNotification.sms_sent ? 'text-green-500' : 'text-gray-300'}`}
                                                 />
                                                 <span className="text-sm">SMS</span>
                                             </div>
                                             <div className="flex items-center">
-                                                <FontAwesomeIcon 
-                                                    icon={faMobile} 
-                                                    className={`mr-1 ${selectedNotification.push_sent ? 'text-green-500' : 'text-gray-300'}`}
+                                                <Smartphone 
+                                                    className={`mr-1 w-4 h-4 ${selectedNotification.push_sent ? 'text-green-500' : 'text-gray-300'}`}
                                                 />
                                                 <span className="text-sm">Push</span>
                                             </div>
@@ -807,7 +710,7 @@ const NotificationManagement: React.FC = () => {
                                     <button
                                         className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
                                     >
-                                        <FontAwesomeIcon icon={faPaperPlane} className="mr-2" />
+                                        <Send className="mr-2 w-4 h-4" />
                                         Resend
                                     </button>
                                 </div>

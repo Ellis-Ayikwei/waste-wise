@@ -464,52 +464,18 @@ class PickupRouteViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"])
     def route_stops(self, request, pk=None):
-        """Get all stops on a route with detailed information"""
+        """Get all stops on a route with detailed information using serializer"""
         try:
             route = self.get_object()
             stops = route.stops.all().order_by("stop_order")
 
-            stops_data = []
-            for stop in stops:
-                stops_data.append(
-                    {
-                        "stop_id": stop.id,
-                        "stop_order": stop.stop_order,
-                        "service_request_id": stop.service_request.id,
-                        "service_request_title": stop.service_request.title,
-                        "service_type": stop.service_request.service_type,
-                        "pickup_address": stop.service_request.pickup_address,
-                        "estimated_arrival_time": stop.estimated_arrival_time,
-                        "actual_arrival_time": stop.actual_arrival_time,
-                        "actual_departure_time": stop.actual_departure_time,
-                        "status": stop.status,
-                        "estimated_duration": stop.service_request.estimated_duration_minutes,
-                        "estimated_weight": stop.service_request.estimated_weight_kg,
-                        "estimated_price": stop.service_request.estimated_price,
-                        "waste_type": stop.service_request.waste_type,
-                        "priority": stop.service_request.priority,
-                        "waste_collected_kg": stop.waste_collected_kg,
-                        "revenue_generated": stop.revenue_generated,
-                        "stop_instructions": stop.stop_instructions,
-                        "customer_notes": stop.customer_notes,
-                        "driver_notes": stop.driver_notes,
-                        "is_on_time": stop.is_on_time,
-                        "customer_satisfaction": stop.customer_satisfaction,
-                        "is_delayed": stop.is_delayed,
-                        "stop_efficiency": stop.stop_efficiency,
-                    }
-                )
+            # Serialize stops using the shared serializer
+            stops_serialized = RouteStopSerializer(stops, many=True).data
 
+            return Response(stops_serialized)
+        except PickupRoute.DoesNotExist:
             return Response(
-                {
-                    "route_id": route.id,
-                    "route_name": route.route_name,
-                    "route_status": route.route_status,
-                    "total_stops": len(stops_data),
-                    "completed_stops": route.completed_stops,
-                    "completion_percentage": route.completion_percentage,
-                    "stops": stops_data,
-                }
+                {"detail": "Route not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
         except Exception as e:
@@ -865,6 +831,60 @@ class PickupRouteViewSet(viewsets.ModelViewSet):
             logger.error(f"Error getting route calendar: {str(e)}")
             return Response(
                 {"detail": "Error retrieving route calendar"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=True, methods=["get"], url_path="stats")
+    def stats(self, request, pk=None):
+        """Return comprehensive statistics for a single pickup route"""
+        try:
+            route = self.get_object()
+
+            # Ensure metrics are up-to-date
+            try:
+                route.calculate_route_metrics()
+            except Exception:
+                pass
+
+            base_stats = (
+                route.get_route_statistics()
+                if hasattr(route, "get_route_statistics")
+                else {}
+            )
+
+            # Derive additional fields
+            data = {
+                **base_stats,
+                "route_id": str(route.id),
+                "route_name": route.route_name,
+                "route_status": route.route_status,
+                "scheduled_date": route.scheduled_date,
+                "scheduled_start_time": route.scheduled_start_time,
+                "scheduled_end_time": route.scheduled_end_time,
+                "actual_start_time": route.actual_start_time,
+                "actual_end_time": route.actual_end_time,
+                "route_distance_km": (
+                    float(route.route_distance_km) if route.route_distance_km else 0
+                ),
+                "route_duration_minutes": route.route_duration_minutes or 0,
+                "total_revenue": float(route.total_revenue or 0),
+                "total_cost": float(route.total_cost or 0),
+                "efficiency_score": float(route.route_efficiency_score or 0),
+                "is_active": route.is_active,
+                "priority": route.priority,
+            }
+
+            # Next and upcoming stops if helpers exist
+            if hasattr(route, "get_next_stop"):
+                data["next_stop"] = route.get_next_stop()
+            if hasattr(route, "get_upcoming_stops"):
+                data["upcoming_stops"] = route.get_upcoming_stops()
+
+            return Response(data)
+        except Exception as e:
+            logger.error(f"Error getting route stats: {str(e)}")
+            return Response(
+                {"detail": "Error retrieving route stats"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 

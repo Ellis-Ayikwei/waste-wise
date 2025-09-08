@@ -4,6 +4,7 @@ import usersSlice from './usersSlice';
 import vehicleSlice from './slices/vehicleSlice';
 import paymentSlice from './slices/paymentSlice';
 import serviceRequestSlice from './slices/serviceRequestSice';
+import locationSlice from './slices/locationSlice';
 
 import authSlice from './authSlice';
 import createRequestSlice from './slices/createRequestSlice';
@@ -21,6 +22,7 @@ const rootReducer = combineReducers({
     serviceRequest: createRequestSlice,
     draftRequests: draftRequestsSlice,
     viewMode: viewModeSlice,
+    location: locationSlice,
 });
 
 const store = configureStore({

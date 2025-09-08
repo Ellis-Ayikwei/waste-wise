@@ -162,6 +162,8 @@ const AccountSettings = () => {
                 county: profile.county,
                 postcode: profile.postcode,
                 country: profile.country,
+                base_location: profile.base_location,
+                base_location_address: profile.base_location_address,
                 waste_license_number: profile.waste_license_number,
                 waste_license_expiry: profile.waste_license_expiry,
                 environmental_permit_number: profile.environmental_permit_number,

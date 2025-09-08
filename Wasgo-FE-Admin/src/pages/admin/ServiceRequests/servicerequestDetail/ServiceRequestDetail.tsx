@@ -64,6 +64,7 @@ import ServiceTypeIcon from './components/ServiceTypeIcon';
 import Ghc from '../../../../helper/CurrencyFormatter';
 import confirmDialog from '../../../../helper/confirmDialog';
 import showNotification from '../../../../utilities/showNotifcation';
+import CreateOrEditRequestModal from '../creatnewRequest/createOrEditRequest';
 
 interface SmartBin {
     id: string;
@@ -256,6 +257,7 @@ const ServiceRequestDetail: React.FC = () => {
     const [selectedProvider, setSelectedProvider] = useState('');
     const [offeredPrice, setOfferedPrice] = useState('');
     const [newStatus, setNewStatus] = useState('');
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
     const { data: serviceRequestData, error: serviceRequestError, mutate: mutateServiceRequest } = useSWR(
         id ? `/service-requests/${id}/` : null,
@@ -501,7 +503,7 @@ const ServiceRequestDetail: React.FC = () => {
                         </div>
                         <div className="flex items-center space-x-3">
                             <button
-                                onClick={() => navigate(`/admin/service-requests/${id}/edit`)}
+                                onClick={() => setShowCreateModal(true)}
                                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
                             >
                                 <IconEdit className="w-4 h-4" />
@@ -569,6 +571,8 @@ const ServiceRequestDetail: React.FC = () => {
                                 onAssignProvider={() => setShowAssignModal(true)}
                                 onAcceptOffer={handleAcceptOffer}
                                 onRejectOffer={handleRejectOffer}
+                                onViewProviderDetails={() => {}}
+                                onAssignJobToProvider={() => {}}
                             />
                         )}
 
@@ -993,6 +997,17 @@ const ServiceRequestDetail: React.FC = () => {
                         </div>
                     </div>
                 )}
+
+                {/* Create/Edit Request Modal */}
+                <CreateOrEditRequestModal
+                    isOpen={showCreateModal}
+                    onClose={() => setShowCreateModal(false)}
+                    requestId={serviceRequest?.id}
+                    onSuccess={() => {
+                        mutateServiceRequest();
+                        setShowCreateModal(false);
+                    }}
+                />
             </div>
         </ErrorBoundary>
     );

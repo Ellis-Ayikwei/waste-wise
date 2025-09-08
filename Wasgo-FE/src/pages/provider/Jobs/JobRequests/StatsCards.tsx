@@ -15,7 +15,7 @@ const StatsCards: React.FC<{ stats: Stats }> = ({ stats }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8"
         >
             <motion.div whileHover={{ y: -2 }} className="relative p-6 bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50 group overflow-hidden">
                 <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-500/20 to-transparent"></div>
@@ -51,7 +51,7 @@ const StatsCards: React.FC<{ stats: Stats }> = ({ stats }) => {
                 </div>
             </motion.div>
 
-            <motion.div whileHover={{ y: -2 }} className="relative p-6 bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50 group overflow-hidden">
+            {/* <motion.div whileHover={{ y: -2 }} className="relative p-6 bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50 group overflow-hidden">
                 <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-emerald-500/20 to-transparent"></div>
                 <div className="relative z-10">
                     <div className="flex items-center space-x-3 mb-4">
@@ -83,7 +83,7 @@ const StatsCards: React.FC<{ stats: Stats }> = ({ stats }) => {
                         Declined requests
                     </p>
                 </div>
-            </motion.div>
+            </motion.div> */}
         </motion.div>
     );
 };

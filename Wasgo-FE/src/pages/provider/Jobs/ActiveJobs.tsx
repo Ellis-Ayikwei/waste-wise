@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import useSWR  from 'swr';
 import { 
     Truck, 
     User, 
@@ -36,102 +37,99 @@ import {
     Target,
     Award
 } from 'lucide-react';
+import useAuthUser from 'react-auth-kit/hooks/useAuthUser';
+import axiosInstance from '../../../services/axiosInstance';
+import fetcher from '../../../services/fetcher';
+import IconLoader from '../../../components/Icon/IconLoader';
+
+// API Data Interfaces
+interface ActiveJob {
+    id: string;
+    request_id: string;
+    user: {
+        id: string;
+        first_name: string;
+        last_name: string;
+        email: string;
+        phone_number: string;
+        rating: string;
+    };
+    pickup_address: string;
+    waste_type: string;
+    estimated_weight_kg?: number;
+    estimated_volume_m3?: number;
+    estimated_price: number;
+    status: 'scheduled' | 'in-progress' | 'completed' | 'cancelled';
+    service_date: string;
+    service_time_slot: string;
+    estimated_duration_minutes?: number;
+    distance_km?: number;
+    collection_method?: string;
+    description?: string;
+    special_instructions?: string;
+    created_at: string;
+    updated_at: string;
+    assigned_at?: string;
+    started_at?: string;
+    completed_at?: string;
+    actual_weight_kg?: number;
+    actual_volume_m3?: number;
+    final_price?: number;
+    payment_status: 'pending' | 'paid' | 'failed';
+    is_paid: boolean;
+    priority: 'low' | 'medium' | 'high';
+    is_recurring: boolean;
+    requires_special_handling: boolean;
+    tracking_number?: string;
+    platform_fee?: number;
+    provider_payment_amount?: number;
+}
+
+interface ActiveJobsResponse {
+    jobs: ActiveJob[];
+    total_count: number;
+    stats: {
+        total: number;
+        scheduled: number;
+        in_progress: number;
+        completed: number;
+        total_earnings: number;
+    };
+}
 
 const ActiveJobs = () => {
+    const { user } = useAuthUser();
     const [selectedFilter, setSelectedFilter] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState('list');
 
-    const [activeJobs, setActiveJobs] = useState<any[]>([
-        {
-            id: 1,
-            customer: 'John Doe',
-            email: 'john.doe@example.com',
-            phone: '+233 20 123 4567',
-            address: '123 Main Street, Accra, Ghana',
-            wasteType: 'General Waste',
-            quantity: '2 bags',
-            scheduledDate: '2024-01-25',
-            scheduledTime: '10:00 AM',
-            estimatedDuration: '45 min',
-            earnings: 150,
-            status: 'in-progress',
-            progress: 65,
-            driver: 'Kwame Mensah',
-            vehicle: 'Ford F-650 (GHA-2024-001)',
-            startTime: '10:15 AM',
-            estimatedCompletion: '11:00 AM',
-            description: 'Regular household waste collection',
-            specialInstructions: 'Please ring the bell when arriving',
-            createdAt: '2024-01-20 09:30 AM',
-            rating: 4.8,
-            distance: '2.3 km',
-            vehicleRequired: 'Small Truck',
-            specialRequirements: 'None',
-            urgency: 'normal'
-        },
-        {
-            id: 2,
-            customer: 'Sarah Johnson',
-            email: 'sarah.johnson@example.com',
-            phone: '+233 20 234 5678',
-            address: '456 Oak Avenue, Kumasi, Ghana',
-            wasteType: 'Recyclable Materials',
-            quantity: '5 bags',
-            scheduledDate: '2024-01-25',
-            scheduledTime: '02:00 PM',
-            estimatedDuration: '30 min',
-            earnings: 200,
-            status: 'scheduled',
-            progress: 0,
-            driver: 'Ama Osei',
-            vehicle: 'Mercedes Sprinter (GHA-2024-002)',
-            startTime: null,
-            estimatedCompletion: null,
-            description: 'Office recycling collection - paper, plastic, and cardboard',
-            specialInstructions: 'Enter through the back gate',
-            createdAt: '2024-01-20 11:15 AM',
-            rating: 4.9,
-            distance: '1.8 km',
-            vehicleRequired: 'Medium Truck',
-            specialRequirements: 'Sorting required',
-            urgency: 'high'
-        },
-        {
-            id: 3,
-            customer: 'Mike Wilson',
-            email: 'mike.wilson@example.com',
-            phone: '+233 20 345 6789',
-            address: '789 Pine Road, Takoradi, Ghana',
-            wasteType: 'Organic Waste',
-            quantity: '3 bags',
-            scheduledDate: '2024-01-25',
-            scheduledTime: '09:00 AM',
-            estimatedDuration: '60 min',
-            earnings: 120,
-            status: 'completed',
-            progress: 100,
-            driver: 'Kwame Mensah',
-            vehicle: 'Ford F-650 (GHA-2024-001)',
-            startTime: '09:05 AM',
-            estimatedCompletion: '10:05 AM',
-            actualCompletion: '10:02 AM',
-            description: 'Kitchen waste and garden debris',
-            specialInstructions: 'Use the side entrance',
-            createdAt: '2024-01-19 14:20 PM',
-            rating: 4.7,
-            distance: '3.1 km',
-            vehicleRequired: 'Small Truck',
-            specialRequirements: 'None',
-            urgency: 'normal'
-        }
-    ]);
+    const {data: providerProfile, error:providerError, isLoading: providerIsLoading} = useSWR(`/providers/get_provider_by_user_id/?user_id=${user?.id}`, fetcher)
+    
+
+
+    // Fetch active jobs from API with assigned=true parameter
+    const { data: jobsData, error, isLoading, mutate } = useSWR<ActiveJobsResponse>(
+        user ? `/providers/${providerProfile?.id}/assigned_jobs/` : null,
+        fetcher
+    );
+
+
+    console.log("the provider profile", jobsData)
+  
+    const activeJobs = jobsData || [];
+    const stats = jobsData?.stats || {
+        total: 0,
+        scheduled: 0,
+        in_progress: 0,
+        completed: 0,
+        total_earnings: 0
+    };
 
     const filters = [
-        { id: 'all', name: 'All Jobs', count: activeJobs.length, color: 'from-slate-500 to-slate-600' },
-        { id: 'scheduled', name: 'Scheduled', count: activeJobs.filter(job => job.status === 'scheduled').length, color: 'from-amber-500 to-orange-600' },
-        { id: 'in-progress', name: 'In Progress', count: activeJobs.filter(job => job.status === 'in-progress').length, color: 'from-blue-500 to-indigo-600' },
-        { id: 'completed', name: 'Completed', count: activeJobs.filter(job => job.status === 'completed').length, color: 'from-green-500 to-emerald-600' }
+        { id: 'all', name: 'All Jobs', count: stats.total, color: 'from-slate-500 to-slate-600' },
+        { id: 'scheduled', name: 'Scheduled', count: stats.scheduled, color: 'from-amber-500 to-orange-600' },
+        { id: 'in-progress', name: 'In Progress', count: stats.in_progress, color: 'from-blue-500 to-indigo-600' },
+        { id: 'completed', name: 'Completed', count: stats.completed, color: 'from-green-500 to-emerald-600' }
     ];
 
     const getStatusColor = (status: string) => {
@@ -142,18 +140,20 @@ const ActiveJobs = () => {
                 return 'text-blue-600 bg-blue-50 border-blue-200';
             case 'scheduled':
                 return 'text-amber-600 bg-amber-50 border-amber-200';
+            case 'cancelled':
+                return 'text-red-600 bg-red-50 border-red-200';
             default:
                 return 'text-slate-600 bg-slate-50 border-slate-200';
         }
     };
 
-    const getUrgencyColor = (urgency: string) => {
-        switch (urgency) {
+    const getPriorityColor = (priority: string) => {
+        switch (priority) {
             case 'high':
                 return 'text-red-600 bg-red-50 border-red-200';
             case 'medium':
                 return 'text-amber-600 bg-amber-50 border-amber-200';
-            case 'normal':
+            case 'low':
                 return 'text-emerald-600 bg-emerald-50 border-emerald-200';
             default:
                 return 'text-slate-600 bg-slate-50 border-slate-200';
@@ -161,12 +161,15 @@ const ActiveJobs = () => {
     };
 
     const getWasteTypeIcon = (wasteType: string) => {
-        switch (wasteType) {
-            case 'Recyclable Materials':
+        switch (wasteType?.toLowerCase()) {
+            case 'recyclable':
+            case 'recyclable materials':
                 return Recycle;
-            case 'Organic Waste':
+            case 'organic':
+            case 'organic waste':
                 return Trash2;
-            case 'Hazardous Waste':
+            case 'hazardous':
+            case 'hazardous waste':
                 return Shield;
             default:
                 return Trash2;
@@ -174,70 +177,110 @@ const ActiveJobs = () => {
     };
 
     const getWasteTypeColor = (wasteType: string) => {
-        switch (wasteType) {
-            case 'Recyclable Materials':
+        switch (wasteType?.toLowerCase()) {
+            case 'recyclable':
+            case 'recyclable materials':
                 return 'from-blue-500 to-indigo-600';
-            case 'Organic Waste':
+            case 'organic':
+            case 'organic waste':
                 return 'from-green-500 to-emerald-600';
-            case 'Hazardous Waste':
+            case 'hazardous':
+            case 'hazardous waste':
                 return 'from-red-500 to-red-600';
             default:
                 return 'from-slate-500 to-slate-600';
         }
     };
 
-    const handleStartJob = (jobId: number) => {
-        setActiveJobs(prev => 
-            prev.map(job => 
-                job.id === jobId ? { 
-                    ...job, 
-                    status: 'in-progress', 
-                    startTime: new Date().toLocaleTimeString('en-US', { 
-                        hour: '2-digit', 
-                        minute: '2-digit',
-                        hour12: true 
-                    })
-                } : job
-            )
-        );
+    const handleStartJob = async (jobId: string) => {
+        try {
+            await axiosInstance.patch(`/jobs/${jobId}/start/`);
+            // Refresh data after successful update
+            mutate();
+        } catch (error) {
+            console.error('Error starting job:', error);
+        }
     };
 
-    const handleCompleteJob = (jobId: number) => {
-        setActiveJobs(prev => 
-            prev.map(job => 
-                job.id === jobId ? { 
-                    ...job, 
-                    status: 'completed', 
-                    progress: 100,
-                    actualCompletion: new Date().toLocaleTimeString('en-US', { 
-                        hour: '2-digit', 
-                        minute: '2-digit',
-                        hour12: true 
-                    })
-                } : job
-            )
-        );
+    const handleCompleteJob = async (jobId: string) => {
+        try {
+            await axiosInstance.patch(`/jobs/${jobId}/complete/`);
+            // Refresh data after successful update
+            mutate();
+        } catch (error) {
+            console.error('Error completing job:', error);
+        }
     };
 
-    const handlePauseJob = (jobId: number) => {
-        // Pause job logic
+    const handlePauseJob = async (jobId: string) => {
+        try {
+            await axiosInstance.patch(`/jobs/${jobId}/pause/`);
+            // Refresh data after successful update
+            mutate();
+        } catch (error) {
+            console.error('Error pausing job:', error);
+        }
     };
 
     const filteredJobs = activeJobs.filter(job => {
         const matchesFilter = selectedFilter === 'all' || job.status === selectedFilter;
-        const matchesSearch = job.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            job.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            job.wasteType.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = 
+            `${job.user.first_name} ${job.user.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            job.pickup_address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            job.waste_type.toLowerCase().includes(searchTerm.toLowerCase());
         return matchesFilter && matchesSearch;
     });
 
-    const stats = {
-        total: activeJobs.length,
-        scheduled: activeJobs.filter(job => job.status === 'scheduled').length,
-        inProgress: activeJobs.filter(job => job.status === 'in-progress').length,
-        completed: activeJobs.filter(job => job.status === 'completed').length,
-        totalEarnings: activeJobs.filter(job => job.status === 'completed').reduce((sum, job) => sum + job.earnings, 0)
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('en-GB', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
     };
+
+    const formatTime = (timeString: string) => {
+        return timeString;
+    };
+
+    const formatDuration = (minutes?: number) => {
+        if (!minutes) return 'N/A';
+        return `${minutes} min`;
+    };
+
+    const formatDistance = (km?: number) => {
+        if (!km) return 'N/A';
+        return `${km} km`;
+    };
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+                <div className="text-center">
+<IconLoader />                    
+<p className="mt-4 text-lg text-slate-600">Loading active jobs...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+                <div className="text-center">
+                    <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">Error Loading Jobs</h3>
+                    <p className="text-slate-600 mb-4">Failed to load active jobs. Please try again.</p>
+                    <button
+                        onClick={() => mutate()}
+                        className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                        Retry
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -260,11 +303,11 @@ const ActiveJobs = () => {
                                 <div className="flex items-center space-x-4 mt-4">
                                     <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-3 py-1">
                                         <Truck className="text-blue-300 w-4 h-4" />
-                                        <span className="text-white text-sm font-medium">{stats.inProgress} Active Jobs</span>
+                                        <span className="text-white text-sm font-medium">{stats.in_progress} Active Jobs</span>
                                     </div>
                                     <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-3 py-1">
                                         <Activity className="text-blue-300 w-4 h-4" />
-                                        <span className="text-white text-sm font-medium">₵{stats.totalEarnings} Total Earnings</span>
+                                        <span className="text-white text-sm font-medium">₵{stats.total_earnings} Total Earnings</span>
                                     </div>
                                 </div>
                             </div>
@@ -272,6 +315,7 @@ const ActiveJobs = () => {
                                 <motion.button 
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
+                                    onClick={() => mutate()}
                                     className="p-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transition-all duration-300"
                                 >
                                     <RefreshCw className="w-5 h-5" />
@@ -312,7 +356,7 @@ const ActiveJobs = () => {
                             <p className="text-3xl font-bold text-blue-600 mb-1">{stats.total}</p>
                             <p className="text-sm text-slate-600 flex items-center">
                                 <TrendingUp className="w-4 h-4 text-emerald-500 mr-1" />
-                                All time jobs
+                                All assigned jobs
                             </p>
                         </div>
                     </motion.div>
@@ -349,7 +393,7 @@ const ActiveJobs = () => {
                                 </div>
                                 <h3 className="font-bold text-slate-900">In Progress</h3>
                             </div>
-                            <p className="text-3xl font-bold text-indigo-600 mb-1">{stats.inProgress}</p>
+                            <p className="text-3xl font-bold text-indigo-600 mb-1">{stats.in_progress}</p>
                             <p className="text-sm text-slate-600 flex items-center">
                                 <Timer className="w-4 h-4 text-indigo-500 mr-1" />
                                 Currently active
@@ -477,87 +521,79 @@ const ActiveJobs = () => {
                                 {/* Header */}
                                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4 space-y-2 sm:space-y-0">
                                     <div className="flex items-center space-x-3">
-                                        <div className={`p-2 lg:p-3 bg-gradient-to-r ${getWasteTypeColor(job.wasteType)}`}>
-                                            {React.createElement(getWasteTypeIcon(job.wasteType), { className: "text-white w-5 h-5 lg:w-6 lg:h-6" })}
+                                        <div className={`p-2 lg:p-3 bg-gradient-to-r ${getWasteTypeColor(job.waste_type)}`}>
+                                            {React.createElement(getWasteTypeIcon(job.waste_type), { className: "text-white w-5 h-5 lg:w-6 lg:h-6" })}
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <h3 className="text-base lg:text-lg font-bold text-slate-900 truncate">{job.customer}</h3>
+                                            <h3 className="text-base lg:text-lg font-bold text-slate-900 truncate">
+                                                {job.user.first_name} {job.user.last_name}
+                                            </h3>
                                             <div className="flex flex-wrap items-center gap-1 mt-1">
                                                 <span className={`px-2 py-1 text-xs font-bold border ${getStatusColor(job.status)}`}>
                                                     {job.status.toUpperCase()}
                                                 </span>
-                                                <span className={`px-2 py-1 text-xs font-bold border ${getUrgencyColor(job.urgency)}`}>
-                                                    {job.urgency.toUpperCase()}
+                                                <span className={`px-2 py-1 text-xs font-bold border ${getPriorityColor(job.priority)}`}>
+                                                    {job.priority.toUpperCase()}
                                                 </span>
                                             </div>
                                         </div>
                                     </div>
                                     <div className="flex items-center space-x-1">
                                         <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                                        <span className="text-sm font-semibold text-slate-700">{job.rating}</span>
+                                        <span className="text-sm font-semibold text-slate-700">{job.user.rating || 'N/A'}</span>
                                     </div>
                                 </div>
-
-                                {/* Progress Bar */}
-                                {job.status === 'in-progress' && (
-                                    <div className="mb-4">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="text-sm font-medium text-slate-700">Progress</span>
-                                            <span className="text-sm font-bold text-slate-900">{job.progress}%</span>
-                                        </div>
-                                        <div className="w-full bg-slate-200 h-3">
-                                            <div 
-                                                className="bg-gradient-to-r from-blue-500 to-indigo-600 h-3 transition-all duration-300"
-                                                style={{ width: `${job.progress}%` }}
-                                            ></div>
-                                        </div>
-                                    </div>
-                                )}
 
                                 {/* Job Details */}
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4 text-sm">
                                         <div className="flex items-center space-x-2">
                                             <MapPin className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                                            <span className="text-slate-600 truncate">{job.distance}</span>
+                                            <span className="text-slate-600 truncate">{formatDistance(job.distance_km)}</span>
                                         </div>
                                         <div className="flex items-center space-x-2">
                                             <ClockIcon className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                                            <span className="text-slate-600 truncate">{job.estimatedDuration}</span>
+                                            <span className="text-slate-600 truncate">{formatDuration(job.estimated_duration_minutes)}</span>
                                         </div>
                                         <div className="flex items-center space-x-2">
                                             <Package className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                                            <span className="text-slate-600 truncate">{job.vehicleRequired}</span>
+                                            <span className="text-slate-600 truncate">{job.collection_method || 'N/A'}</span>
                                         </div>
                                         <div className="flex items-center space-x-2">
                                             <DollarSign className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                                            <span className="text-slate-600 font-semibold">₵{job.earnings}</span>
+                                            <span className="text-slate-600 font-semibold">₵{job.estimated_price}</span>
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
                                         <div className="flex items-center space-x-2 text-sm">
                                             <Calendar className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                                            <span className="text-slate-600 text-xs lg:text-sm">{job.scheduledDate} at {job.scheduledTime}</span>
+                                            <span className="text-slate-600 text-xs lg:text-sm">
+                                                {formatDate(job.service_date)} at {formatTime(job.service_time_slot)}
+                                            </span>
                                         </div>
                                         <div className="flex items-center space-x-2 text-sm">
                                             <Shield className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                                            <span className="text-slate-600 text-xs lg:text-sm">{job.specialRequirements}</span>
+                                            <span className="text-slate-600 text-xs lg:text-sm">
+                                                {job.requires_special_handling ? 'Special handling required' : 'No special requirements'}
+                                            </span>
                                         </div>
                                     </div>
 
                                     <div className="pt-4 border-t border-slate-100">
-                                        <p className="text-xs lg:text-sm text-slate-600 mb-3">{job.description}</p>
+                                        <p className="text-xs lg:text-sm text-slate-600 mb-3">
+                                            {job.description || 'No description provided'}
+                                        </p>
                                         
                                         {/* Contact Info */}
                                         <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0 text-sm">
                                             <div className="flex items-center space-x-1">
                                                 <Mail className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                                                <span className="text-slate-600 text-xs lg:text-sm truncate">{job.email}</span>
+                                                <span className="text-slate-600 text-xs lg:text-sm truncate">{job.user.email}</span>
                                             </div>
                                             <div className="flex items-center space-x-1">
                                                 <Phone className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                                                <span className="text-slate-600 text-xs lg:text-sm truncate">{job.phone}</span>
+                                                <span className="text-slate-600 text-xs lg:text-sm truncate">{job.user.phone_number}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -567,7 +603,7 @@ const ActiveJobs = () => {
                                 <div className="mt-6 pt-4 border-t border-slate-100">
                                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
                                         <div className="text-xs text-slate-500">
-                                            Created: {job.createdAt}
+                                            Created: {formatDate(job.created_at)}
                                         </div>
                                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                                             {job.status === 'scheduled' && (

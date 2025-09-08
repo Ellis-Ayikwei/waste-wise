@@ -85,6 +85,7 @@ INSTALLED_APPS = [
     "apps.Analytics",
     "apps.Customer",
     "apps.Campaign",
+    "apps.WebSocket",
     "django_extensions",
 ]
 
@@ -305,12 +306,10 @@ CORS_ALLOW_HEADERS = [
 #     },
 # }
 
+# Temporary in-memory channel layer for testing (not suitable for production)
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [("172.18.112.22", 6379)],
-        },
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
     },
 }
 
@@ -369,13 +368,13 @@ SENDGRID_SANDBOX_MODE_IN_DEBUG = False
 SENDGRID_ECHO_TO_STDOUT = DEBUG  # Only echo to stdout in debug mode
 
 # Print email configuration for debugging
-print("=== SendGrid Email Configuration ===")
-print(f"DEFAULT_FROM_EMAIL: {DEFAULT_FROM_EMAIL}")
-print(
-    f"SENDGRID_API_KEY: {'*' * len(SENDGRID_API_KEY) if SENDGRID_API_KEY else 'None'}"
-)
-print(f"EMAIL_BACKEND: {EMAIL_BACKEND}")
-print("===================================")
+# print("=== SendGrid Email Configuration ===")
+# print(f"DEFAULT_FROM_EMAIL: {DEFAULT_FROM_EMAIL}")
+# print(
+#     f"SENDGRID_API_KEY: {'*' * len(SENDGRID_API_KEY) if SENDGRID_API_KEY else 'None'}"
+# )
+# print(f"EMAIL_BACKEND: {EMAIL_BACKEND}")
+# print("===================================")
 
 
 APPEND_SLASH = True
@@ -392,7 +391,7 @@ STRIPE_SECRET_KEY = os.getenv(
 # Stripe Webhook Configuration
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
 
-print("Stripe WEBHOOK Key:", STRIPE_WEBHOOK_SECRET)
+# print("Stripe WEBHOOK Key:", STRIPE_WEBHOOK_SECRET)
 # Stripe Configuration
 STRIPE_LIVE_MODE = False  # Set to True for production
 STRIPE_CURRENCY = "gbp"  # Default currency

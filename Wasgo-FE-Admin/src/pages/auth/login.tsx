@@ -413,7 +413,7 @@ const Login = () => {
                             </div>
 
                             {/* Admin Stats */}
-                            <motion.div
+                            {/* <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ delay: 1.2 }}
@@ -433,7 +433,7 @@ const Login = () => {
                                         <p className="text-sm text-gray-100">Collections</p>
                                     </div>
                                 </div>
-                            </motion.div>
+                            </motion.div> */}
                         </motion.div>
                     </div>
                 </div>

@@ -16,9 +16,11 @@ import {
     Truck,
     Recycle,
     Award,
-    DollarSign
+    DollarSign,
+    Navigation
 } from 'lucide-react';
 import { ProviderProfile } from './types';
+import AddressAutocomplete from '../../../components/AddressAutocomplete';
 
 interface ProfileTabProps {
     profile: ProviderProfile | null;
@@ -40,6 +42,26 @@ const ProfileTab: React.FC<ProfileTabProps> = ({
     onImageUpload
 }) => {
     if (!profile) return null;
+
+    // Helper function to get base location coordinates in the format we need
+    const getBaseLocationCoordinates = () => {
+        // If we have the new format, use it
+        if (profile.base_location_coordinates) {
+            return profile.base_location_coordinates;
+        }
+        
+        // If we have the API format (coordinates array), convert it
+        if (profile.base_location?.coordinates && profile.base_location.coordinates.length >= 2) {
+            return {
+                lat: profile.base_location.coordinates[1], // API format is [lng, lat]
+                lng: profile.base_location.coordinates[0]
+            };
+        }
+        
+        return null;
+    };
+
+    const baseLocationCoords = getBaseLocationCoordinates();
 
     const businessTypes = [
         { value: 'limited_company', label: 'Limited Company' },
@@ -361,6 +383,79 @@ const ProfileTab: React.FC<ProfileTabProps> = ({
                             disabled={!isEditing}
                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-50"
                         />
+                    </div>
+                </div>
+
+                {/* Base Location Section */}
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                    <h4 className="text-md font-semibold text-gray-900 mb-4 flex items-center">
+                        <Navigation className="w-4 h-4 mr-2" />
+                        Base Location (Starting Point for Routes)
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <MapPin className="inline mr-2 w-4 h-4" />
+                                Base Location Address
+                            </label>
+                            {isEditing ? (
+                                <div className="space-y-3">
+                                    <AddressAutocomplete
+                                        onAddressSelect={(address) => {
+                                            onProfileChange('base_location_address', address.formatted_address);
+                                            onProfileChange('base_location.coordinates', address.coordinates);
+                                        }}
+                                        placeholder="Search for your base location..."
+                                        value={profile.base_location_address || ''}
+                                        style={{ width: '100%' }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (navigator.geolocation) {
+                                                navigator.geolocation.getCurrentPosition(
+                                                    (position) => {
+                                                        const coords = {
+                                                            lat: position.coords.latitude,
+                                                            lng: position.coords.longitude
+                                                        };
+                                                        onProfileChange('base_location_coordinates', coords);
+                                                        // You might want to reverse geocode to get the address
+                                                        onProfileChange('base_location_address', `Current Location (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})`);
+                                                    },
+                                                    (error) => {
+                                                        console.error('Error getting location:', error);
+                                                        alert('Unable to get your current location. Please search for an address instead.');
+                                                    }
+                                                );
+                                            } else {
+                                                alert('Geolocation is not supported by this browser.');
+                                            }
+                                        }}
+                                        className="inline-flex items-center px-3 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                                    >
+                                        <Navigation className="w-4 h-4 mr-2" />
+                                        Use My Current Location
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50">
+                                    {profile.base_location_address || 'No base location set'}
+                                </div>
+                            )}
+                        </div>
+                        
+                        {baseLocationCoords && (
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Coordinates
+                                </label>
+                                <div className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-sm font-mono">
+                                    Lat: {baseLocationCoords.lat?.toFixed(6)}, 
+                                    Lng: {baseLocationCoords.lng?.toFixed(6)}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

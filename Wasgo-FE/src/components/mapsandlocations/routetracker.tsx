@@ -1,8 +1,10 @@
 // RouteTracker.tsx
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, CircleMarker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import polyline from '@mapbox/polyline';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectCurrentLocation, selectIsTracking, startEnhancedTracking, stopEnhancedTracking } from '../../store/slices/locationSlice';
 import 'leaflet/dist/leaflet.css';
 import './RouteTracker.css'; // ← your CSS module with .mapContainer, .loading, .error, etc.
 
@@ -19,6 +21,12 @@ const CONFIG = {
         shadow: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
         start: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
         stop: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+        user: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+    },
+    LIVE_TRACKING: {
+        UPDATE_INTERVAL: 5000, // 5 seconds
+        ACCURACY_RADIUS: 50, // meters
+        PULSE_ANIMATION: true,
     },
 };
 
@@ -106,6 +114,8 @@ interface Props {
     stops: Stop[] | JourneyStop[] | RequestStop[];
     distance?: string; // Optional distance in miles (e.g., "6.17")
     time?: string; // Optional time (e.g., "1h 2m 3s")
+    showLiveTracking?: boolean; // Enable live user tracking
+    enableRouteOptimization?: boolean; // Enable real-time route optimization
 }
 
 // ─── HELPER: fetch with timeout & retries ────────────────────────────────────
@@ -165,11 +175,9 @@ const formatDuration = (seconds: number): string => {
 
 // Transform JourneyStop to RouteTracker Stop format
 const transformJourneyStopsToStops = (journeyStops: JourneyStop[]): Stop[] => {
-    console.log('Transform input journeyStops:', journeyStops);
 
     return journeyStops
         .map((stop, index) => {
-            console.log(`Processing stop ${index}:`, stop);
 
             // Get coordinates from multiple possible sources
             let lat: number, lng: number;
@@ -177,7 +185,6 @@ const transformJourneyStopsToStops = (journeyStops: JourneyStop[]): Stop[] => {
             // Try coordinates array first
             if (stop.coordinates && Array.isArray(stop.coordinates) && stop.coordinates.length === 2 && stop.coordinates[0] !== null && stop.coordinates[1] !== null) {
                 [lat, lng] = stop.coordinates;
-                console.log(`Stop ${index}: Using coordinates array:`, [lat, lng]);
             }
             // Try location object next
             else if (
@@ -189,13 +196,11 @@ const transformJourneyStopsToStops = (journeyStops: JourneyStop[]): Stop[] => {
             ) {
                 lat = stop.location.latitude;
                 lng = stop.location.longitude;
-                console.log(`Stop ${index}: Using location object:`, [lat, lng]);
             }
             // Try direct properties (fallback)
             else if (typeof (stop as any).latitude === 'number' && typeof (stop as any).longitude === 'number') {
                 lat = (stop as any).latitude;
                 lng = (stop as any).longitude;
-                console.log(`Stop ${index}: Using direct properties:`, [lat, lng]);
             } else {
                 console.warn(`Stop ${index} missing valid coordinates:`, {
                     coordinates: stop.coordinates,
@@ -224,23 +229,19 @@ const transformJourneyStopsToStops = (journeyStops: JourneyStop[]): Stop[] => {
             }
 
             const transformedStop = { lat, lng, role };
-            console.log(`Stop ${index} transformed:`, transformedStop);
             return transformedStop;
         })
         .filter((stop): stop is Stop => {
             const isValid = stop !== null;
-            if (!isValid) console.log('Filtered out invalid stop');
             return isValid;
         });
 };
 
 // Transform RequestStop to RouteTracker Stop format
 const transformRequestStopsToStops = (requestStops: RequestStop[]): Stop[] => {
-    console.log('Transform input requestStops:', requestStops);
 
     return requestStops
         .map((stop, index) => {
-            console.log(`Processing request stop ${index}:`, stop);
 
             // Get coordinates from location object
             let lat: number, lng: number;
@@ -254,7 +255,6 @@ const transformRequestStopsToStops = (requestStops: RequestStop[]): Stop[] => {
             ) {
                 lat = stop.location.latitude;
                 lng = stop.location.longitude;
-                console.log(`Request stop ${index}: Using location object:`, [lat, lng]);
             } else {
                 console.warn(`Request stop ${index} missing valid coordinates:`, {
                     location: stop.location,
@@ -265,7 +265,6 @@ const transformRequestStopsToStops = (requestStops: RequestStop[]): Stop[] => {
 
             // Validate coordinates are valid numbers
             if (typeof lat !== 'number' || typeof lng !== 'number' || isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-                console.warn(`Request stop ${index} has invalid coordinates:`, { lat, lng, stop });
                 return null;
             }
 
@@ -280,23 +279,19 @@ const transformRequestStopsToStops = (requestStops: RequestStop[]): Stop[] => {
             }
 
             const transformedStop = { lat, lng, role };
-            console.log(`Request stop ${index} transformed:`, transformedStop);
             return transformedStop;
         })
         .filter((stop): stop is Stop => {
             const isValid = stop !== null;
-            if (!isValid) console.log('Filtered out invalid request stop');
             return isValid;
         });
 };
 
 // Transform RequestLocation to RouteTracker Stop format (for all_locations)
 const transformRequestLocationsToStops = (requestLocations: RequestLocation[]): Stop[] => {
-    console.log('Transform input requestLocations:', requestLocations);
 
     return requestLocations
         .map((location, index) => {
-            console.log(`Processing request location ${index}:`, location);
 
             // Get coordinates directly from location object
             let lat: number, lng: number;
@@ -309,7 +304,6 @@ const transformRequestLocationsToStops = (requestLocations: RequestLocation[]): 
             ) {
                 lat = location.latitude;
                 lng = location.longitude;
-                console.log(`Request location ${index}: Using coordinates:`, [lat, lng]);
             } else {
                 console.warn(`Request location ${index} missing valid coordinates:`, {
                     latitude: location.latitude,
@@ -321,7 +315,6 @@ const transformRequestLocationsToStops = (requestLocations: RequestLocation[]): 
 
             // Validate coordinates are valid numbers
             if (typeof lat !== 'number' || typeof lng !== 'number' || isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-                console.warn(`Request location ${index} has invalid coordinates:`, { lat, lng, location });
                 return null;
             }
 
@@ -336,12 +329,10 @@ const transformRequestLocationsToStops = (requestLocations: RequestLocation[]): 
             }
 
             const transformedStop = { lat, lng, role };
-            console.log(`Request location ${index} transformed:`, transformedStop);
             return transformedStop;
         })
         .filter((stop): stop is Stop => {
             const isValid = stop !== null;
-            if (!isValid) console.log('Filtered out invalid request location');
             return isValid;
         });
 };
@@ -389,12 +380,33 @@ const isRequestStops = (stops: Stop[] | JourneyStop[] | RequestStop[]): stops is
     return result;
 };
 
-// ─── COMPONENT ───────────────────────────────────────────────────────────────
-const RouteTracker: React.FC<Props> = ({ stops, distance, time }) => {
-    // --- State
+// ─── MAP BOUNDS COMPONENT ──────────────────────────────────────────────────────
+const MapBoundsFitter: React.FC<{ stops: Stop[] }> = ({ stops }) => {
+    const map = useMap();
+    
+    useEffect(() => {
+        if (stops && stops.length > 1) {
+            const bounds = L.latLngBounds(stops.map(stop => [stop.lat, stop.lng]));
+            map.fitBounds(bounds, { padding: [20, 20] });
+            console.log('Map bounds fitted to stops:', bounds);
+        }
+    }, [stops, map]);
+    
+    return null;
+};
+
+// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
+const RouteTracker: React.FC<Props> = ({ stops, distance, time, showLiveTracking = false, enableRouteOptimization = false }) => {
+    const dispatch = useDispatch();
+    const currentLocation = useSelector(selectCurrentLocation);
+    const isTracking = useSelector(selectIsTracking);
+    
     const [routes, setRoutes] = useState<RouteSegment[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [mapCenter, setMapCenter] = useState<[number, number]>([5.6037, -0.1870]); // Default to Accra, Ghana - will be updated based on route
+    const [userAccuracy, setUserAccuracy] = useState<number | null>(null);
+    
     const abortRef = useRef<AbortController | null>(null);
     const cacheRef = useRef<Map<string, RouteSegment>>(new Map());
 
@@ -402,17 +414,72 @@ const RouteTracker: React.FC<Props> = ({ stops, distance, time }) => {
     const processedStops: Stop[] = useMemo(() => {
         if (!stops || stops.length === 0) return [];
 
-        if (isRequestStops(stops)) {
-            const transformed = transformRequestStopsToStops(stops);
-            return transformed;
-        } else if (isJourneyStops(stops)) {
-            const transformed = transformJourneyStopsToStops(stops);
-            return transformed;
-        } else {
-            return stops as Stop[];
-        }
+        // Simple transformation - assume stops already have lat/lng/role structure
+        return stops.map((stop: any, index) => {
+            // If it already has the right structure, use it
+            if (stop.lat && stop.lng && stop.role) {
+                return stop as Stop;
+            }
+            
+            // Try to extract coordinates from various structures
+            let lat: number, lng: number;
+            
+            if (stop.latitude && stop.longitude) {
+                lat = stop.latitude;
+                lng = stop.longitude;
+            } else if (stop.location?.latitude && stop.location?.longitude) {
+                lat = stop.location.latitude;
+                lng = stop.location.longitude;
+            } else if (stop.coordinates && Array.isArray(stop.coordinates) && stop.coordinates.length === 2) {
+                [lat, lng] = stop.coordinates;
+            } else {
+                console.warn('Stop missing coordinates:', stop);
+                return null;
+            }
+            
+            // Determine role
+            let role: StopRole = 'intermediate';
+            if (index === 0) role = 'start';
+            else if (index === stops.length - 1) role = 'stop';
+            else if (stop.role) role = stop.role;
+            
+            return { lat, lng, role };
+        }).filter(Boolean) as Stop[];
     }, [stops]);
 
+    // Calculate map center based on route stops
+    useEffect(() => {
+  
+        
+        if (showLiveTracking && currentLocation) {
+            // When live tracking, center on user's current location
+            setMapCenter([currentLocation.lat, currentLocation.lng]);
+            console.log('Map center updated to user location:', [currentLocation.lat, currentLocation.lng]);
+        } else if (processedStops && processedStops.length > 0) {
+            // Calculate center point of all stops
+            const lats = processedStops.map(stop => stop.lat);
+            const lngs = processedStops.map(stop => stop.lng);
+            
+            const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+            const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
+            
+            setMapCenter([centerLat, centerLng]);
+            console.log('Map center updated to route center:', [centerLat, centerLng]);
+            console.log('Map center bounds:', { minLat: Math.min(...lats), maxLat: Math.max(...lats), minLng: Math.min(...lngs), maxLng: Math.max(...lngs) });
+        } else {
+            console.log('RouteTracker - No valid stops found, keeping default center');
+        }
+    }, [processedStops, showLiveTracking, currentLocation]);
+
+    // Additional effect to handle initial stops loading
+    useEffect(() => {
+        if (stops && stops.length > 0 && processedStops.length === 0) {
+            console.log('RouteTracker - Stops loaded but not processed yet, waiting...');
+        }
+    }, [stops, processedStops]);
+
+    // Debug logging
+    
     // --- Validate stops prop at runtime
     useEffect(() => {
         if (!Array.isArray(processedStops) || processedStops.length < 2) {
@@ -488,6 +555,33 @@ const RouteTracker: React.FC<Props> = ({ stops, distance, time }) => {
     // --- Pick map center (start)
     const start = processedStops.find((s) => s.role === 'start') || processedStops[0];
 
+    // --- Live tracking controls
+    const handleStartTracking = () => {
+        dispatch(startEnhancedTracking() as any);
+    };
+
+    const handleStopTracking = () => {
+        dispatch(stopEnhancedTracking() as any);
+    };
+
+    // --- Update map center when user location changes
+    useEffect(() => {
+        if (currentLocation && showLiveTracking) {
+            setMapCenter([currentLocation.lat, currentLocation.lng]);
+        }
+    }, [currentLocation, showLiveTracking]);
+
+    // --- Get user accuracy from geolocation
+    useEffect(() => {
+        if (navigator.geolocation && showLiveTracking) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => setUserAccuracy(pos.coords.accuracy),
+                (err) => console.warn('Accuracy error:', err),
+                { enableHighAccuracy: true }
+            );
+        }
+    }, [showLiveTracking]);
+
     // Safety check to ensure we have valid stops
     if (!processedStops || processedStops.length === 0) {
         return (
@@ -500,15 +594,106 @@ const RouteTracker: React.FC<Props> = ({ stops, distance, time }) => {
     // --- Render
     return (
         <div className="rt-container">
+            {/* Live Tracking Controls */}
+            {showLiveTracking && (
+                <div className="rt-tracking-controls">
+                    <div className="rt-tracking-status">
+                        <span className={`rt-tracking-indicator ${isTracking ? 'active' : 'inactive'}`}>
+                            {isTracking ? '🟢' : '🔴'}
+                        </span>
+                        <span className="rt-tracking-text">
+                            {isTracking ? 'Live Tracking Active' : 'Tracking Inactive'}
+                        </span>
+                        {userAccuracy && (
+                            <span className="rt-accuracy">±{Math.round(userAccuracy)}m</span>
+                        )}
+                    </div>
+                    <div className="rt-tracking-buttons">
+                        {!isTracking ? (
+                            <button 
+                                onClick={handleStartTracking}
+                                className="rt-track-btn rt-track-start"
+                                title="Start live tracking"
+                            >
+                                ▶️ Start Tracking
+                            </button>
+                        ) : (
+                            <button 
+                                onClick={handleStopTracking}
+                                className="rt-track-btn rt-track-stop"
+                                title="Stop live tracking"
+                            >
+                                ⏹️ Stop Tracking
+                            </button>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {loading && !distance && !time && <div className="rt-loading">Fetching routes…</div>}
             {error && <div className="rt-error">Error: {error}</div>}
 
-            <MapContainer center={start ? [start.lat, start.lng] : [51.505, -0.09]} zoom={CONFIG.INITIAL_ZOOM} className="rt-mapContainer">
+            <MapContainer 
+                center={mapCenter} 
+                zoom={CONFIG.INITIAL_ZOOM} 
+                className="rt-mapContainer"
+                key={mapCenter.join(',')} // Force re-render when center changes
+            >
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                
+                {/* Auto-fit bounds to stops */}
+                <MapBoundsFitter stops={processedStops} />
 
-                {processedStops && processedStops.length > 0 && processedStops.map((s, i) => (
+                {/* Live User Position Marker */}
+                {showLiveTracking && currentLocation && (
+                    <>
+                        <Marker
+                            position={[currentLocation.lat, currentLocation.lng]}
+                            icon={new L.Icon({ 
+                                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+                                iconSize: [32, 32],
+                                iconAnchor: [16, 32],
+                                popupAnchor: [0, -32]
+                            })}
+                        >
+                            <Popup>
+                                <div className="text-center">
+                                    <div className="text-2xl mb-2">🚛</div>
+                                    <strong>Driver Location</strong>
+                                    <br />
+                                    {currentLocation.lat.toFixed(5)}, {currentLocation.lng.toFixed(5)}
+                                    {userAccuracy && (
+                                        <>
+                                            <br />
+                                            <small className="text-gray-500">Accuracy: ±{Math.round(userAccuracy)}m</small>
+                                        </>
+                                    )}
+                                </div>
+                            </Popup>
+                        </Marker>
+                        
+                        {/* Accuracy circle */}
+                        {userAccuracy && (
+                            <CircleMarker
+                                center={[currentLocation.lat, currentLocation.lng]}
+                                radius={userAccuracy}
+                                fillColor="#3B82F6"
+                                color="#3B82F6"
+                                weight={1}
+                                opacity={0.2}
+                                fillOpacity={0.1}
+                                className="rt-accuracy-circle"
+                            />
+                        )}
+                    </>
+                )}
+
+                {/* Route Stops Markers */}
+                {processedStops && processedStops.length > 0 && processedStops.map((s, i) => {
+                   
+                    return (
                     <Marker
-                        key={i}
+                            key={`stop-${i}`}
                         position={[s.lat, s.lng]}
                         icon={
                             s.role === 'start'
@@ -520,11 +705,14 @@ const RouteTracker: React.FC<Props> = ({ stops, distance, time }) => {
                     >
                         <Popup>
                             <strong>{s.role.toUpperCase()}</strong>
+                                <br />
+                                Stop {i + 1}
                             <br />
                             {s.lat?.toFixed(5) || 'N/A'}, {s.lng?.toFixed(5) || 'N/A'}
                         </Popup>
                     </Marker>
-                ))}
+                    );
+                })}
 
                 {/* Only show route lines if we don't have distance/time (to avoid API calculations) */}
                 {!distance && !time && routes.map((r, i) => r.coords.length > 0 && <Polyline key={i} positions={r.coords} className="rt-polyline" />)}
@@ -546,7 +734,8 @@ const RouteTracker: React.FC<Props> = ({ stops, distance, time }) => {
                 )}
             </MapContainer>
 
-            {processedStops && processedStops.length > 0 && (
+            {/* Hide the table by default */}
+            {/* {processedStops && processedStops.length > 0 && (
                 <table className="rt-table">
                     <thead>
                         <tr>
@@ -569,7 +758,7 @@ const RouteTracker: React.FC<Props> = ({ stops, distance, time }) => {
                         ))}
                     </tbody>
                 </table>
-            )}
+            )} */}
         </div>
     );
 };

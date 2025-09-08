@@ -8,27 +8,27 @@ Hello {{ user_name }}!
 {{ message }}
 
 {% if request %}
-BOOKING DETAILS
----------------
-Booking Reference: {{ request.tracking_number|default:"#REF" }}
-{% if request.pickup_location %}Pickup Location: {{ request.pickup_location.address|default:"TBD" }}{% endif %}
-{% if request.delivery_location %}Delivery Location: {{ request.delivery_location.address|default:"TBD" }}{% endif %}
-{% if request.preferred_date %}Preferred Date: {{ request.preferred_date|date:"d M Y" }}{% endif %}
-{% if request.estimated_price %}Estimated Price: £{{ request.estimated_price }}{% endif %}
+WASTE COLLECTION REQUEST DETAILS
+----------------------------------
+Request Reference: {{ request.tracking_number|default:"#REF" }}
+{% if request.pickup_location %}Collection Location: {{ request.pickup_location.address|default:"TBD" }}{% endif %}
+{% if request.delivery_location %}Disposal Location: {{ request.delivery_location.address|default:"TBD" }}{% endif %}
+{% if request.preferred_date %}Preferred Collection Date: {{ request.preferred_date|date:"d M Y" }}{% endif %}
+{% if request.estimated_price %}Estimated Cost: GHS {{ request.estimated_price }}{% endif %}
 {% endif %}
 
 WHAT HAPPENS NEXT?
 ------------------
-• Service providers will review your booking request
+• Waste collection providers will review your collection request
 • You'll receive notifications when providers submit bids
-• You can compare bids and choose the best provider
-• Once you accept a bid, we'll connect you with your provider
+• You can compare bids and choose the best waste collection provider
+• Once you accept a bid, we'll connect you with your collection provider
 
 {% if action_url %}
-View your booking: {{ action_url }}
+View your collection request: {{ action_url }}
 {% endif %}
 
-Need help? Contact our support team at support@wasgo.com
+Need help with your waste collection request? Contact our support team at support@wasgo.com
 
 ---
 This is an automated message, please do not reply to this email.

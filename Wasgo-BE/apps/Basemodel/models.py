@@ -13,7 +13,7 @@ import uuid
 class Basemodel(models.Model):
     objects: models.Manager()  # Default manager
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    created_at = models.DateTimeField(auto_now=True, editable=False, null=False)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False, null=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False, null=False)
 
     def to_dict(self, exclude_fields=None):

@@ -97,6 +97,7 @@ const Sensors: React.FC = () => {
 
     // Fetch sensors data
     const { data: sensorsData, isLoading, mutate } = useSwr<Sensor[]>('waste/sensors/', fetcher);
+    console.log("the sensors data", sensorsData);
 
     const sensors = sensorsData || [];
 
@@ -379,6 +380,7 @@ const Sensors: React.FC = () => {
                         title="Sensors"
                         loading={isLoading}
                         storeKey="sensors-table"
+                        onRefreshData={handleRefresh}
                     />
                 </CardContent>
             </Card>

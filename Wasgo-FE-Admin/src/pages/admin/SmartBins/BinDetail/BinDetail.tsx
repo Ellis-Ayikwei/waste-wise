@@ -32,6 +32,7 @@ interface SmartBinData {
         needs_collection: boolean;
         needs_maintenance: boolean;
         bin_id: string;
+        bin_number: string;
         sensor: any;
         user: any;
         sensor_id: string | null;
@@ -66,6 +67,11 @@ interface SmartBinData {
         notes: string;
         is_public: boolean;
         bin_type: number;
+        // Physical dimensions
+        width_cm: number;
+        height_cm: number;
+        depth_cm: number;
+        volume_liters: number;
     };
 }
 

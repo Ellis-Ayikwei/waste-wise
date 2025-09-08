@@ -4,6 +4,8 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
+from django.db.models.signals import post_init
+from django.dispatch import receiver
 from apps.Basemodel.models import Basemodel
 from apps.User.models import User
 import logging
@@ -91,6 +93,9 @@ class ServiceProvider(Basemodel):
     # GIS Location
     base_location = gis_models.PointField(
         srid=4326, help_text="Provider's base location"
+    )
+    base_location_address = models.CharField(
+        max_length=500, blank=True, help_text="Human-readable address of base location"
     )
     service_area = gis_models.PolygonField(
         srid=4326, null=True, blank=True, help_text="Geographic service area"
@@ -259,6 +264,92 @@ class ServiceProvider(Basemodel):
             models.Index(fields=["base_location"]),
         ]
 
+    def auto_assign_pending_requests_to_routes(self):
+        """Automatically assign pending service requests to pickup routes"""
+        try:
+            from apps.ServiceRequest.models import ServiceRequest
+
+            # Get all pending/assigned requests for this provider that aren't in any route
+            # Check if they have any route_stops (meaning they're already in a route)
+            pending_requests = (
+                ServiceRequest.objects.filter(
+                    assigned_provider=self,
+                    status__in=["pending", "assigned"],
+                )
+                .exclude(
+                    route_stops__isnull=False  # Exclude requests that already have route stops
+                )
+                .order_by("created_at")
+            )
+
+            if not pending_requests.exists():
+                logger.debug(f"No pending requests to assign for provider {self.id}")
+                return
+
+            logger.info(
+                f"Found {pending_requests.count()} pending requests for provider {self.id}"
+            )
+
+            # Get or create today's route
+            today = timezone.now().date()
+            today_route, created = PickupRoute.objects.get_or_create(
+                provider=self,
+                scheduled_date=today,
+                defaults={
+                    "route_name": f"Daily Route - {today.strftime('%Y-%m-%d')}",
+                    "route_description": f"Auto-generated route for {today.strftime('%Y-%m-%d')}",
+                    "route_type": "daily",
+                    "route_status": "planned",
+                    "start_location": self.base_location,
+                    "end_location": self.base_location,
+                    "scheduled_start_time": self.service_hours_start
+                    or timezone.now().time(),
+                    "scheduled_end_time": self.service_hours_end
+                    or timezone.now().time(),
+                    "vehicle_type": "truck",
+                    "is_active": True,
+                },
+            )
+
+            if created:
+                logger.info(
+                    f"Created new pickup route {today_route.id} for provider {self.id}"
+                )
+
+            # Add pending requests to the route
+            for request in pending_requests:
+                try:
+                    # Calculate estimated arrival time based on route start time
+                    estimated_arrival = today_route.scheduled_start_time
+
+                    # Add the request to the route
+                    today_route.add_stop(
+                        service_request=request,
+                        estimated_arrival_time=estimated_arrival,
+                    )
+
+                    logger.info(
+                        f"Added service request {request.id} to route {today_route.id}"
+                    )
+
+                except Exception as e:
+                    logger.error(
+                        f"Error adding request {request.id} to route: {str(e)}"
+                    )
+                    continue
+
+            # Update route metrics
+            today_route.calculate_route_metrics()
+
+            logger.info(
+                f"Successfully assigned {pending_requests.count()} requests to route {today_route.id}"
+            )
+
+        except Exception as e:
+            logger.error(
+                f"Error in auto_assign_pending_requests_to_routes for provider {self.id}: {str(e)}"
+            )
+
     def update_metrics(self):
         """Update provider metrics based on completed jobs"""
         from apps.ServiceRequest.models import ServiceRequest
@@ -314,13 +405,7 @@ class ServiceProvider(Basemodel):
     def decline_service_request(self, service_request, reason=""):
         """Decline a service request that was offered to this provider"""
         if service_request in self.offered_service_requests.all():
-            # Track declined provider
-            try:
-                service_request.declined_providers.add(self)
-            except Exception:
-                pass
-
-            service_request.offer_response = "rejected"
+            service_request.offer_response = "declined"
             service_request.decline_reason = reason
             service_request.save()
 
@@ -366,6 +451,29 @@ class ServiceProvider(Basemodel):
             )
 
 
+@receiver(post_init, sender=ServiceProvider)
+def service_provider_post_init(sender, instance, **kwargs):
+    """Post-init signal handler for ServiceProvider to auto-assign pending requests to routes"""
+    try:
+        # Only run if this is a real instance (not a new one being created)
+        if instance.pk:
+            # Use a small delay to avoid blocking the main thread
+            import threading
+            import time
+
+            def delayed_auto_assign():
+                time.sleep(0.1)  # Small delay to ensure the instance is fully loaded
+                instance.auto_assign_pending_requests_to_routes()
+
+            # Run in background thread to avoid blocking
+            thread = threading.Thread(target=delayed_auto_assign)
+            thread.daemon = True
+            thread.start()
+
+    except Exception as e:
+        logger.error(f"Error in service_provider_post_init: {str(e)}")
+
+
 # ProviderAvailability model removed - functionality merged into unified Availability model in User app
 
 
@@ -390,6 +498,13 @@ class ProviderEarnings(Basemodel):
         null=True,
         blank=True,
         related_name="earnings_records",
+    )
+    payment = models.ForeignKey(
+        "Payment.Payment",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="provider_earnings",
     )
     transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -639,24 +754,22 @@ class PickupRoute(Basemodel):
         from apps.ServiceRequest.models import ServiceRequest
 
         # Count total stops (service requests assigned to this route)
-        self.total_stops = ServiceRequest.objects.filter(assigned_route=self).count()
+        self.total_stops = RouteStop.objects.filter(route=self).count()
 
         # Count completed stops
-        self.completed_stops = ServiceRequest.objects.filter(
-            assigned_route=self, status="completed"
+        self.completed_stops = RouteStop.objects.filter(
+            route=self, status="completed"
         ).count()
 
         # Calculate total waste collected
-        completed_requests = ServiceRequest.objects.filter(
-            assigned_route=self, status="completed"
-        )
+        completed_stops = RouteStop.objects.filter(route=self, status="completed")
         self.total_waste_collected = sum(
-            request.actual_weight_kg or 0 for request in completed_requests
+            stop.waste_collected_kg or 0 for stop in completed_stops
         )
 
         # Calculate total revenue
         self.total_revenue = sum(
-            request.final_price or 0 for request in completed_requests
+            stop.revenue_generated or 0 for stop in completed_stops
         )
 
         # Calculate efficiency score if actual times are available
@@ -695,7 +808,9 @@ class PickupRoute(Basemodel):
         self.actual_end_time = timezone.now()
 
         # Update all remaining pending service requests to completed
-        pending_stops = self.stops.filter(status__in=["pending", "in_progress"])
+        pending_stops = RouteStop.objects.filter(
+            route=self, status__in=["pending", "in_progress"]
+        )
         for stop in pending_stops:
             if stop.service_request:
                 stop.service_request.status = "completed"
@@ -721,7 +836,7 @@ class PickupRoute(Basemodel):
         self.save()
 
     def add_service_request(self, service_request, stop_order=None):
-        """Add a service request to this route with optional stop order"""
+        """Add a service request to this route by creating a RouteStop"""
         from apps.ServiceRequest.models import ServiceRequest
 
         if service_request.status not in ["pending", "assigned"]:
@@ -735,73 +850,143 @@ class PickupRoute(Basemodel):
                 "Service request is already assigned to another route"
             )
 
+        # Check if this service request already has a stop on this route
+        if RouteStop.objects.filter(
+            route=self, service_request=service_request
+        ).exists():
+            raise ValidationError("Service request already has a stop on this route")
+
         # Assign to this route
         service_request.assigned_route = self
         service_request.save()
 
-        # Create a RouteStop for this service request if it doesn't exist
-        if (
-            not hasattr(service_request, "route_stops")
-            or not service_request.route_stops.exists()
-        ):
-            # Auto-determine stop order if not provided
-            if stop_order is None:
-                existing_stops = self.stops.all()
-                stop_order = existing_stops.count() + 1
+        # Auto-determine stop order if not provided
+        if stop_order is None:
+            existing_stops = self.stops.all()
+            stop_order = existing_stops.count() + 1
 
-            # Create the route stop
-            RouteStop.objects.create(
-                route=self,
-                service_request=service_request,
-                stop_order=stop_order,
-                estimated_arrival_time=self.scheduled_start_time,  # Default to route start time
-                status="pending",
-            )
+        # Create the route stop
+        RouteStop.objects.create(
+            route=self,
+            service_request=service_request,
+            stop_order=stop_order,
+            estimated_arrival_time=self.scheduled_start_time,  # Default to route start time
+            status="pending",
+        )
 
         # Recalculate route metrics
         self.calculate_route_metrics()
 
-    def remove_service_request(self, service_request):
-        """Remove a service request from this route"""
+    def add_stop(self, service_request, stop_order=None, estimated_arrival_time=None):
+        """Add a stop to this route"""
         from apps.ServiceRequest.models import ServiceRequest
 
-        if service_request.assigned_route == self:
-            # Remove the route stop first
-            try:
-                route_stop = RouteStop.objects.get(
-                    route=self, service_request=service_request
-                )
-                route_stop.delete()
-            except RouteStop.DoesNotExist:
-                pass  # No route stop found, continue with removal
+        if service_request.status not in ["pending", "assigned"]:
+            raise ValidationError(
+                "Can only add pending or assigned service requests to routes"
+            )
 
-            # Remove route assignment and reset service request status
-            service_request.assigned_route = None
-            if service_request.status in ["assigned", "in_progress"]:
-                service_request.status = "pending"  # Reset to pending for reassignment
-                service_request.assigned_at = None
-                service_request.assigned_provider = None
+        # Check if this service request already has a stop on this route
+        if RouteStop.objects.filter(
+            route=self, service_request=service_request
+        ).exists():
+            raise ValidationError("Service request already has a stop on this route")
 
+        # Check if service request is already assigned to another route
+        existing_stop = RouteStop.objects.filter(
+            service_request=service_request
+        ).first()
+        if existing_stop and existing_stop.route != self:
+            raise ValidationError(
+                "Service request is already assigned to another route"
+            )
+
+        # Auto-determine stop order if not provided
+        if stop_order is None:
+            existing_stops = self.stops.all()
+            stop_order = existing_stops.count() + 1
+
+        # Use provided estimated arrival time or default to route start time
+        if estimated_arrival_time is None:
+            estimated_arrival_time = self.scheduled_start_time
+
+        # Create the route stop
+        RouteStop.objects.create(
+            route=self,
+            service_request=service_request,
+            stop_order=stop_order,
+            estimated_arrival_time=estimated_arrival_time,
+            status="pending",
+        )
+
+        # Recalculate route metrics
+        self.calculate_route_metrics()
+
+    def remove_stop(self, route_stop):
+        """Remove a specific stop from this route"""
+        if route_stop.route != self:
+            raise ValidationError("Route stop does not belong to this route")
+
+        # Get the service request before deleting the stop
+        service_request = route_stop.service_request
+
+        # Delete the route stop
+        route_stop.delete()
+
+        # Reset service request status if it was assigned to this route
+        if service_request.status in ["assigned", "in_progress"]:
+            service_request.status = "pending"  # Reset to pending for reassignment
+            service_request.assigned_at = None
+            service_request.assigned_provider = None
             service_request.save()
 
             logger.info(
                 f"Service request {service_request.id} removed from route {self.id} and reset to pending"
             )
 
-            # Recalculate route metrics
-            self.calculate_route_metrics()
+        # Recalculate route metrics
+        self.calculate_route_metrics()
+
+    def remove_service_request(self, service_request):
+        """Remove a service request from this route by finding and removing its stop"""
+        # Find the route stop for this service request
+        try:
+            route_stop = RouteStop.objects.get(
+                route=self, service_request=service_request
+            )
+            self.remove_stop(route_stop)
+        except RouteStop.DoesNotExist:
+            logger.warning(
+                f"Service request {service_request.id} not found in route {self.id}"
+            )
+
+    def get_stops(self):
+        """Get all stops on this route ordered by stop order"""
+        return self.stops.all().order_by("stop_order")
+
+    def get_pending_stops(self):
+        """Get pending stops on this route"""
+        return self.stops.filter(status="pending").order_by("stop_order")
+
+    def get_completed_stops(self):
+        """Get completed stops on this route"""
+        return self.stops.filter(status="completed").order_by("stop_order")
 
     def get_service_requests(self):
-        """Get all service requests assigned to this route"""
-        return self.assigned_service_requests.all()
+        """Get all service requests assigned to this route through stops"""
+        return self.stops.values_list("service_request", flat=True)
 
     def get_pending_requests(self):
-        """Get pending service requests on this route"""
-        return self.assigned_service_requests.filter(status__in=["pending", "assigned"])
+        """Get pending service requests on this route through stops"""
+        return self.stops.filter(status="pending").values_list(
+            "service_request", flat=True
+        )
 
     def get_completed_requests(self):
-        """Get completed service requests on this route"""
-        return self.assigned_service_requests.filter(status="completed")
+        """Get completed service requests on this route through stops"""
+        return self.stops.filter(status="completed").values_list(
+            "service_request", flat=True
+        )
 
     def reorder_stops(self, new_order):
         """Reorder stops on the route"""
@@ -892,6 +1077,127 @@ class PickupRoute(Basemodel):
 
         return stops_data
 
+    def get_stop_by_order(self, stop_order):
+        """Get a specific stop by its order number"""
+        try:
+            return self.stops.get(stop_order=stop_order)
+        except RouteStop.DoesNotExist:
+            return None
+
+    def get_stop_by_service_request(self, service_request):
+        """Get a stop by its associated service request"""
+        try:
+            return self.stops.get(service_request=service_request)
+        except RouteStop.DoesNotExist:
+            return None
+
+    def move_stop(self, stop, new_order):
+        """Move a stop to a new position in the route"""
+        if stop.route != self:
+            raise ValidationError("Stop does not belong to this route")
+
+        old_order = stop.stop_order
+
+        if new_order == old_order:
+            return  # No change needed
+
+        # Update stop orders for affected stops
+        if new_order > old_order:
+            # Moving forward: decrease order of stops in between
+            self.stops.filter(
+                stop_order__gt=old_order, stop_order__lte=new_order
+            ).update(stop_order=models.F("stop_order") - 1)
+        else:
+            # Moving backward: increase order of stops in between
+            self.stops.filter(
+                stop_order__gte=new_order, stop_order__lt=old_order
+            ).update(stop_order=models.F("stop_order") + 1)
+
+        # Set the new order for the moved stop
+        stop.stop_order = new_order
+        stop.save()
+
+        # Recalculate route metrics
+        self.calculate_route_metrics()
+
+    def insert_stop_at_position(
+        self, service_request, position, estimated_arrival_time=None
+    ):
+        """Insert a stop at a specific position, shifting others as needed"""
+        # Shift existing stops to make room
+        self.stops.filter(stop_order__gte=position).update(
+            stop_order=models.F("stop_order") + 1
+        )
+
+        # Create the new stop
+        self.add_stop(
+            service_request=service_request,
+            stop_order=position,
+            estimated_arrival_time=estimated_arrival_time,
+        )
+
+    def get_route_statistics(self):
+        """Get comprehensive route statistics"""
+        total_stops = self.stops.count()
+        pending_stops = self.stops.filter(status="pending").count()
+        in_progress_stops = self.stops.filter(status="in_progress").count()
+        completed_stops = self.stops.filter(status="completed").count()
+        skipped_stops = self.stops.filter(status="skipped").count()
+
+        total_waste = sum(stop.waste_collected_kg or 0 for stop in self.stops.all())
+        total_revenue = sum(stop.revenue_generated or 0 for stop in self.stops.all())
+
+        return {
+            "total_stops": total_stops,
+            "total_jobs": self.get_service_requests().count(),
+            "pending_stops": pending_stops,
+            "in_progress_stops": in_progress_stops,
+            "completed_stops": completed_stops,
+            "skipped_stops": skipped_stops,
+            "completion_percentage": (
+                (completed_stops / total_stops * 100) if total_stops > 0 else 0
+            ),
+            "total_waste_collected_kg": total_waste,
+            "total_revenue": total_revenue,
+            "average_waste_per_stop": (
+                total_waste / total_stops if total_stops > 0 else 0
+            ),
+            "average_revenue_per_stop": (
+                total_revenue / total_stops if total_stops > 0 else 0
+            ),
+        }
+
+    def bulk_update_stops(self, stop_updates):
+        """Bulk update multiple stops on the route
+
+        stop_updates: list of dicts with keys: stop_id, field_name, new_value
+        """
+        updated_stops = []
+
+        for update in stop_updates:
+            try:
+                stop = self.stops.get(id=update["stop_id"])
+                field_name = update["field_name"]
+                new_value = update["new_value"]
+
+                if hasattr(stop, field_name):
+                    setattr(stop, field_name, new_value)
+                    stop.save()
+                    updated_stops.append(stop.id)
+                else:
+                    logger.warning(f"Field {field_name} not found on RouteStop")
+
+            except RouteStop.DoesNotExist:
+                logger.warning(f"Stop {update.get('stop_id')} not found")
+            except Exception as e:
+                logger.error(f"Error updating stop {update.get('stop_id')}: {str(e)}")
+
+        # Recalculate route metrics after bulk update
+        if updated_stops:
+            self.calculate_route_metrics()
+
+        return updated_stops
+
     def get_route_optimization_suggestions(self):
         """Get suggestions for route optimization"""
         suggestions = []
@@ -910,6 +1216,43 @@ class PickupRoute(Basemodel):
             suggestions.append(
                 "Route distance is high. Consider using multiple vehicles or drivers."
             )
+
+        # Check for stops that are too close together
+        stops = self.stops.all().order_by("stop_order")
+        for i in range(len(stops) - 1):
+            current_stop = stops[i]
+            next_stop = stops[i + 1]
+
+            # Calculate estimated time between stops
+            if current_stop.estimated_arrival_time and next_stop.estimated_arrival_time:
+                time_diff = (
+                    next_stop.estimated_arrival_time.hour * 60
+                    + next_stop.estimated_arrival_time.minute
+                ) - (
+                    current_stop.estimated_arrival_time.hour * 60
+                    + current_stop.estimated_arrival_time.minute
+                )
+
+                if time_diff < 15:  # Less than 15 minutes between stops
+                    suggestions.append(
+                        f"Stops {current_stop.stop_order} and {next_stop.stop_order} are too close together. "
+                        f"Consider adjusting timing or combining stops."
+                    )
+
+        # Check for stops with similar waste types that could be grouped
+        waste_types = {}
+        for stop in stops:
+            waste_type = stop.service_request.waste_type
+            if waste_type not in waste_types:
+                waste_types[waste_type] = []
+            waste_types[waste_type].append(stop.stop_order)
+
+        for waste_type, stop_orders in waste_types.items():
+            if len(stop_orders) > 1:
+                suggestions.append(
+                    f"Multiple stops ({', '.join(map(str, stop_orders))}) have waste type '{waste_type}'. "
+                    f"Consider grouping them together for efficiency."
+                )
 
         return suggestions
 
@@ -959,6 +1302,29 @@ class PickupRoute(Basemodel):
 
         if self.route_duration_minutes and self.route_duration_minutes < 0:
             raise ValidationError("Route duration cannot be negative")
+
+
+@receiver(post_init, sender=PickupRoute)
+def pickup_route_post_init(sender, instance, **kwargs):
+    """Post-init signal handler for RouteStop to auto-assign pending requests to routes"""
+    try:
+        # Only run if this is a real instance (not a new one being created)
+        if instance.pk:
+            # Use a small delay to avoid blocking the main thread
+            import threading
+            import time
+
+            def delayed_auto_route_function():
+                time.sleep(0.1)  # Small delay to ensure the instance is fully loaded
+                instance.calculate_route_metrics()
+
+            # Run in background thread to avoid blocking
+            thread = threading.Thread(target=delayed_auto_route_function)
+            thread.daemon = True
+            thread.start()
+
+    except Exception as e:
+        logger.error(f"Error in service_provider_post_init: {str(e)}")
 
 
 class RouteStop(Basemodel):
@@ -1065,6 +1431,7 @@ class RouteStop(Basemodel):
 
     def complete_stop(self):
         """Mark stop as completed"""
+        print("completing stop..................././////.../")
         self.status = "completed"
         self.actual_departure_time = timezone.now()
 
@@ -1101,7 +1468,64 @@ class RouteStop(Basemodel):
             )
 
         # Update route metrics
-        self.route.calculate_metrics()
+        self.route.calculate_route_metrics()
+        self.revenue_generated = self.service_request.offered_price
+        self.save()
+
+    def start_stop(self):
+        """Mark stop as in progress"""
+        self.status = "in_progress"
+        self.actual_arrival_time = timezone.now()
+        self.save()
+
+        # Update the associated service request status if it's assigned to this route
+        if self.service_request and self.service_request.assigned_route == self.route:
+            if self.service_request.status == "pending":
+                self.service_request.status = "in_progress"
+                self.service_request.save()
+
+                logger.info(
+                    f"Service request {self.service_request.id} marked as in progress from route stop {self.id}"
+                )
+
+    def update_arrival_time(self, new_arrival_time):
+        """Update the estimated arrival time for this stop"""
+        self.estimated_arrival_time = new_arrival_time
+        self.save()
+
+    def update_departure_time(self, new_departure_time):
+        """Update the actual departure time and calculate duration"""
+        self.actual_departure_time = new_departure_time
+
+        # Calculate stop duration if arrival time is available
+        if self.actual_arrival_time:
+            duration = (
+                self.actual_departure_time - self.actual_arrival_time
+            ).total_seconds() / 60
+            self.stop_duration_minutes = int(duration)
+
+        self.save()
+
+    def update_stop_data(
+        self,
+        waste_collected=None,
+        revenue_generated=None,
+        customer_satisfaction=None,
+        driver_notes=None,
+    ):
+        """Update stop-specific data"""
+        if waste_collected is not None:
+            self.waste_collected_kg = waste_collected
+
+        if revenue_generated is not None:
+            self.revenue_generated = revenue_generated
+
+        if customer_satisfaction is not None:
+            self.customer_satisfaction = customer_satisfaction
+
+        if driver_notes is not None:
+            self.driver_notes = driver_notes
+
         self.save()
 
     def skip_stop(self, reason=""):

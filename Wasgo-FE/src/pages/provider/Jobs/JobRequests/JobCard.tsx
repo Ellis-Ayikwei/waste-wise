@@ -36,6 +36,7 @@ interface Props {
 const JobCard: React.FC<Props> = ({ job, offers, index, viewMode, getStatusColor, getWasteTypeIcon, getWasteTypeColor, formatDate, onAccept, onReject, onRequestToBeOffered, onCancelRequestToBeOffered,isLoading, activeTab }) => {
     const showActionButtions = ["pending", "draft", "offered"]
     const offer = offers.find(offer => offer.id === job.id)
+    const isCompleted = (job.status || '').toLowerCase() === 'completed'
     return (
         <motion.div
             key={job.id}
@@ -102,7 +103,7 @@ const JobCard: React.FC<Props> = ({ job, offers, index, viewMode, getStatusColor
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
                         <div className="text-xs text-slate-500">Requested: {formatDate(job.created_at)}</div>
                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
-                            {showActionButtions.includes(job.status) && !job?.i_accepted && activeTab === 'my-offers' && (
+                            {!isCompleted && showActionButtions.includes(job.status) && !job?.i_accepted && activeTab === 'my-offers' && (
                                 <>
                                     <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => onAccept(job.id)} disabled={isLoading} className="px-3 lg:px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-xs lg:text-sm font-semibold hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 disabled:opacity-50">
                                         <Check className="w-4 h-4" />
@@ -115,27 +116,38 @@ const JobCard: React.FC<Props> = ({ job, offers, index, viewMode, getStatusColor
                                 </>
                             )}
 
-                            {!offer && <motion.button whileHover={{ scale: 1.05 }} 
-                            whileTap={{ scale: 0.95 }} 
-                            onClick={() => onRequestToBeOffered(job.id)} 
-                            disabled={isLoading} className="px-3 lg:px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-xs lg:text-sm font-semibold hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 disabled:opacity-50">
-                                Request to be offered this job</motion.button>}
-                            {offer && <motion.button whileHover={{ scale: 1.05 }} 
-                            whileTap={{ scale: 0.95 }} 
-                            onClick={() => onCancelRequestToBeOffered(job.id)} 
-                            disabled={isLoading} className="px-3 lg:px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-xs lg:text-sm font-semibold hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 disabled:opacity-50">
-                                Cancel request to be offered this job</motion.button>}
-
-                            {job?.i_accepted && activeTab === 'my-offers' && <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => onReject(job.id)} disabled={isLoading} className="px-3 lg:px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white text-xs lg:text-sm font-semibold hover:from-red-700 hover:to-red-800 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 disabled:opacity-50">
-                                        <X className="w-4 h-4" />
-                                        <span>{isLoading ? 'Processing...' : 'Reject'}</span>
-                                    </motion.button>}
-                            <Link to={`/provider/job/${job.id}`}>
-                                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="px-3 lg:px-4 py-2 bg-white border border-slate-200 text-slate-700 text-xs lg:text-sm font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all duration-300 flex items-center justify-center space-x-2">
-                                    <Eye className="w-4 h-4" />
-                                    <span>Details</span>
+                            {!isCompleted && !offer && !job?.i_accepted && !job?.i_requested_to_be_offered && (
+                                <motion.button whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => onRequestToBeOffered(job.id)}
+                                    disabled={isLoading} className="px-3 lg:px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-xs lg:text-sm font-semibold hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 disabled:opacity-50">
+                                    Request to be offered this job
                                 </motion.button>
-                            </Link>
+                            )}
+                            {job?.i_requested_to_be_offered && (
+                                <motion.button whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => onCancelRequestToBeOffered(job.id)}
+                                    disabled={isLoading} className="px-3 lg:px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white text-xs lg:text-sm font-semibold hover:from-red-700 hover:to-red-800 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 disabled:opacity-50">
+                                    Cancel request to be offered this job
+                                </motion.button>
+                            )}
+
+                            {!isCompleted && job?.i_accepted && activeTab === 'my-offers' && (
+                                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => onReject(job.id)} disabled={isLoading} className="px-3 lg:px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white text-xs lg:text-sm font-semibold hover:from-red-700 hover:to-red-800 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 disabled:opacity-50">
+                                    <X className="w-4 h-4" />
+                                    <span>{isLoading ? 'Processing...' : 'Reject'}</span>
+                                </motion.button>
+                            )}
+                            
+                            {isCompleted && (
+                                <Link to={`/provider/job/${job.id}`}>
+                                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="px-3 lg:px-4 py-2 bg-white border border-slate-200 text-slate-700 text-xs lg:text-sm font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all duration-300 flex items-center justify-center space-x-2">
+                                        <Eye className="w-4 h-4" />
+                                        <span>Details</span>
+                                    </motion.button>
+                                </Link>
+                            )}
                         </div>
                     </div>
                 </div>

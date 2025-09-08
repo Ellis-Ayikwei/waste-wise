@@ -6,15 +6,21 @@ from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 from .models import (
     ServiceProvider,
+    PickupRoute,  # added
+    RouteStop,  # added
+    ProviderEarnings,
 )
 from .serializer import (
     ServiceProviderSerializer,
+    PickupRouteSerializer,  # added
+    RouteStopSerializer,  # added
 )
 from apps.ServiceRequest.serializers import ServiceRequestSerializer
 from apps.ServiceRequest.models import ServiceRequest
 from apps.User.models import User
 from django.db import transaction
 import logging
+from django.http import Http404
 
 logger = logging.getLogger(__name__)
 
@@ -354,6 +360,7 @@ class ServiceProviderViewSet(viewsets.ModelViewSet):
                 )
 
             status_filter = request.query_params.get("status", "pending")
+            assigned = request.query_params.get("assigned")
 
             # Get service requests that match the status filter
             queryset = ServiceRequest.objects.filter(status=status_filter)
@@ -361,6 +368,8 @@ class ServiceProviderViewSet(viewsets.ModelViewSet):
             # If status is pending, get requests without a provider assigned
             if status_filter == "pending":
                 queryset = queryset.filter(assigned_provider__isnull=True)
+            # if assigned:
+            #     queryset = queryset.filter(assigned_provider__user_id=provider)
 
             # Debug logging
             logger.info(
@@ -522,6 +531,7 @@ class ServiceProviderViewSet(viewsets.ModelViewSet):
                         "status": "paid",  # Placeholder - implement payment status
                         "completed_at": service_request.created_at.isoformat(),
                         "waste_type": service_request.waste_type or "general",
+                        "amount": service_request.offered_price,
                     }
                     earnings_data.append(earning_data)
                 except Exception as e:
@@ -540,6 +550,53 @@ class ServiceProviderViewSet(viewsets.ModelViewSet):
             logger.error(f"Error getting recent earnings: {str(e)}")
             return Response(
                 {"detail": "Error retrieving recent earnings"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=True, methods=["get"], url_path="cashouts")
+    def cashouts(self, request, pk=None):
+        """Return provider cashout (withdrawal) transactions and summary."""
+        try:
+            provider = self.get_object()
+
+            withdrawals = ProviderEarnings.objects.filter(
+                provider=provider, transaction_type="withdrawal"
+            ).order_by("-created_at")
+
+            items = []
+            total_cashed_out = 0.0
+            for w in withdrawals:
+                amt = float(w.amount or 0)
+                total_cashed_out += amt
+                items.append(
+                    {
+                        "id": str(w.id),
+                        "amount": amt,
+                        "reference": w.reference or "",
+                        "description": w.description or "",
+                        "is_settled": bool(w.is_settled),
+                        "settled_at": w.settled_at.isoformat() if w.settled_at else None,
+                        "created_at": w.created_at.isoformat() if hasattr(w, "created_at") and w.created_at else None,
+                    }
+                )
+
+            balance = float(getattr(provider, "balance", 0) or 0)
+            total_earnings = float(getattr(provider, "total_earnings", 0) or 0)
+
+            return Response(
+                {
+                    "summary": {
+                        "total_cashed_out": total_cashed_out,
+                        "balance": balance,
+                        "total_earnings": total_earnings,
+                    },
+                    "results": items,
+                }
+            )
+        except Exception as e:
+            logger.error(f"Error fetching cashouts for provider {pk}: {str(e)}")
+            return Response(
+                {"detail": "Error fetching cashouts"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
@@ -1182,3 +1239,913 @@ class ServiceProviderViewSet(viewsets.ModelViewSet):
             )
 
         return Response(results)
+
+    @action(detail=True, methods=["get"])
+    def assigned_jobs(self, request, pk=None):
+        """Get all assigned jobs for a specific provider"""
+        try:
+            # Get the provider instance
+            provider = self.get_object()
+            user = provider.user
+
+            if user.user_type != "provider":
+                return Response(
+                    {"detail": "User is not a service provider"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Get assigned service requests
+            assigned_requests = ServiceRequest.objects.filter(
+                assigned_provider=provider
+            )
+
+            # Filter by status if provided
+            status_filter = request.query_params.get("status")
+            if status_filter:
+                assigned_requests = assigned_requests.filter(status=status_filter)
+
+            # Order by creation date (newest first)
+            assigned_requests = assigned_requests.order_by("-created_at")
+
+            # Debug logging
+            logger.info(
+                f"Provider {provider.id} has {assigned_requests.count()} assigned service requests"
+            )
+
+            # Serialize the data using the serializer for full request details
+            serializer = ServiceRequestSerializer(assigned_requests, many=True)
+            assigned_jobs_data = serializer.data
+
+            # If no assigned jobs, return empty list
+            if not assigned_jobs_data:
+                logger.info(f"No assigned jobs found for provider {provider.id}")
+
+            return Response(assigned_jobs_data)
+
+        except ObjectDoesNotExist:
+            return Response(
+                {"detail": "Provider not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error getting assigned jobs: {str(e)}")
+            return Response(
+                {"detail": "Error retrieving assigned jobs"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=True, methods=["get"])
+    def assigned_jobs_summary(self, request, pk=None):
+        """Get a summary of assigned jobs with statistics for a specific provider"""
+        try:
+            # Get the provider instance
+            provider = self.get_object()
+            user = provider.user
+
+            if user.user_type != "provider":
+                return Response(
+                    {"detail": "User is not a service provider"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Get assigned service requests
+            assigned_requests = ServiceRequest.objects.filter(
+                assigned_provider=provider
+            )
+
+            # Calculate statistics
+            total_assigned = assigned_requests.count()
+            pending = assigned_requests.filter(status="assigned").count()
+            in_progress = assigned_requests.filter(status="in_progress").count()
+            completed = assigned_requests.filter(status="completed").count()
+            cancelled = assigned_requests.filter(status="cancelled").count()
+
+            # Calculate total earnings
+            total_earnings = sum(
+                job.provider_payment_amount or 0
+                for job in assigned_requests.filter(status="completed")
+            )
+
+            # Calculate completion rate
+            completion_rate = (
+                (completed / total_assigned * 100) if total_assigned > 0 else 0
+            )
+
+            summary = {
+                "provider_id": str(provider.id),
+                "provider_name": provider.business_name,
+                "total_assigned_jobs": total_assigned,
+                "status_breakdown": {
+                    "pending": pending,
+                    "in_progress": in_progress,
+                    "completed": completed,
+                    "cancelled": cancelled,
+                },
+                "total_earnings": total_earnings,
+                "completion_rate": round(completion_rate, 2),
+            }
+
+            return Response(summary)
+
+        except ObjectDoesNotExist:
+            return Response(
+                {"detail": "Provider not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error getting assigned jobs summary: {str(e)}")
+            return Response(
+                {"detail": "Error retrieving assigned jobs summary"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=True, methods=["post"])
+    def start_assigned_job(self, request, pk=None):
+        """Start an assigned job (change status to in_progress)"""
+        try:
+            # Get the provider instance
+            provider = self.get_object()
+            user = provider.user
+
+            if user.user_type != "provider":
+                return Response(
+                    {"detail": "User is not a service provider"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Get the job ID from the request
+            job_id = request.data.get("job_id")
+            if not job_id:
+                return Response(
+                    {"detail": "job_id is required"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Get the service request
+            try:
+                service_request = ServiceRequest.objects.get(
+                    id=job_id, assigned_provider=provider
+                )
+            except ServiceRequest.DoesNotExist:
+                return Response(
+                    {"detail": "Job not found or not assigned to you"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            # Check if job can be started
+            if service_request.status != "assigned":
+                return Response(
+                    {"detail": "Only assigned jobs can be started"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Start the job
+            service_request.status = "in_progress"
+            if hasattr(service_request, "started_at"):
+                service_request.started_at = timezone.now()
+            service_request.save()
+
+            logger.info(f"Job {service_request.id} started by provider {provider.id}")
+
+            return Response(
+                {
+                    "status": "success",
+                    "message": "Job started successfully",
+                    "job_id": str(service_request.id),
+                    "new_status": service_request.status,
+                }
+            )
+
+        except ObjectDoesNotExist:
+            return Response(
+                {"detail": "Provider not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error starting assigned job: {str(e)}")
+            return Response(
+                {"detail": "Error starting job"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=True, methods=["post"])
+    def complete_assigned_job(self, request, pk=None):
+        """Complete an in-progress assigned job"""
+        try:
+            # Get the provider instance
+            provider = self.get_object()
+            user = provider.user
+
+            if user.user_type != "provider":
+                return Response(
+                    {"detail": "User is not a service provider"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Get the job ID from the request
+            job_id = request.data.get("job_id")
+            if not job_id:
+                return Response(
+                    {"detail": "job_id is required"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Get the service request
+            try:
+                service_request = ServiceRequest.objects.get(
+                    id=job_id, assigned_provider=provider
+                )
+            except ServiceRequest.DoesNotExist:
+                return Response(
+                    {"detail": "Job not found or not assigned to you"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            # Check if job can be completed
+            if service_request.status != "in_progress":
+                return Response(
+                    {"detail": "Only in-progress jobs can be completed"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Get completion data from request
+            actual_weight = request.data.get("actual_weight_kg")
+            completion_notes = request.data.get("completion_notes", "")
+
+            # Complete the job
+            service_request.status = "completed"
+            if hasattr(service_request, "completed_at"):
+                service_request.completed_at = timezone.now()
+            if hasattr(service_request, "actual_weight_kg") and actual_weight:
+                service_request.actual_weight_kg = actual_weight
+            if hasattr(service_request, "completion_notes") and completion_notes:
+                service_request.completion_notes = completion_notes
+            service_request.save()
+
+            logger.info(f"Job {service_request.id} completed by provider {provider.id}")
+
+            return Response(
+                {
+                    "status": "success",
+                    "message": "Job completed successfully",
+                    "job_id": str(service_request.id),
+                    "new_status": service_request.status,
+                }
+            )
+
+        except ObjectDoesNotExist:
+            return Response(
+                {"detail": "Provider not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error completing assigned job: {str(e)}")
+            return Response(
+                {"detail": "Error completing job"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=True, methods=["post"])
+    def cancel_assigned_job(self, request, pk=None):
+        """Cancel an assigned or in-progress job"""
+        try:
+            # Get the provider instance
+            provider = self.get_object()
+            user = provider.user
+
+            if user.user_type != "provider":
+                return Response(
+                    {"detail": "User is not a service provider"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Get the job ID from the request
+            job_id = request.data.get("job_id")
+            if not job_id:
+                return Response(
+                    {"detail": "job_id is required"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Get the service request
+            try:
+                service_request = ServiceRequest.objects.get(
+                    id=job_id, assigned_provider=provider
+                )
+            except ServiceRequest.DoesNotExist:
+                return Response(
+                    {"detail": "Job not found or not assigned to you"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            # Check if job can be cancelled
+            if service_request.status not in ["assigned", "in_progress"]:
+                return Response(
+                    {"detail": "Only assigned or in-progress jobs can be cancelled"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Get cancellation reason
+            cancellation_reason = request.data.get(
+                "cancellation_reason", "Cancelled by provider"
+            )
+
+            # Cancel the job
+            service_request.status = "cancelled"
+            if hasattr(service_request, "cancelled_at"):
+                service_request.cancelled_at = timezone.now()
+            if hasattr(service_request, "cancellation_reason"):
+                service_request.cancellation_reason = cancellation_reason
+            service_request.assigned_provider = None  # Remove assignment
+            if hasattr(service_request, "assigned_at"):
+                service_request.assigned_at = None
+            service_request.save()
+
+            logger.info(f"Job {service_request.id} cancelled by provider {provider.id}")
+
+            return Response(
+                {
+                    "status": "success",
+                    "message": "Job cancelled successfully",
+                    "job_id": str(service_request.id),
+                    "new_status": service_request.status,
+                }
+            )
+
+        except ObjectDoesNotExist:
+            return Response(
+                {"detail": "Provider not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error cancelling assigned job: {str(e)}")
+            return Response(
+                {"detail": "Error cancelling job"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=True, methods=["get", "post"], url_path="routes")
+    def routes(self, request, pk=None):
+        """List or create pickup routes for this provider"""
+        provider = self.get_object()
+        if request.method.lower() == "get":
+            routes_qs = PickupRoute.objects.filter(provider=provider).order_by(
+                "-scheduled_date", "-created_at"
+            )
+            serializer = PickupRouteSerializer(routes_qs, many=True)
+            return Response(serializer.data)
+        data = request.data.copy()
+        data["provider"] = str(provider.id)
+        serializer = PickupRouteSerializer(data=data)
+        if serializer.is_valid():
+            route = serializer.save()
+            return Response(
+                PickupRouteSerializer(route).data, status=status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["get"], url_path="route_stops")
+    def route_stops(self, request, pk=None):
+        """List stops for a specific route of this provider (requires route_id)"""
+        provider = self.get_object()
+        route_id = request.query_params.get("route_id")
+        if not route_id:
+            return Response(
+                {"detail": "route_id is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            route = PickupRoute.objects.get(id=route_id, provider=provider)
+        except PickupRoute.DoesNotExist:
+            return Response(
+                {"detail": "Route not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        stops_qs = route.stops.all().order_by("stop_order")
+        serializer = RouteStopSerializer(stops_qs, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["post"], url_path="add_stop")
+    def add_stop(self, request, pk=None):
+        """Add a stop to a route (route_id, service_request_id, optional stop_order, estimated_arrival_time)"""
+        provider = self.get_object()
+        route_id = request.data.get("route_id")
+        service_request_id = request.data.get("service_request_id")
+        stop_order = request.data.get("stop_order")
+        estimated_arrival_time = request.data.get("estimated_arrival_time")
+        if not route_id or not service_request_id:
+            return Response(
+                {"detail": "route_id and service_request_id are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            route = PickupRoute.objects.get(id=route_id, provider=provider)
+        except PickupRoute.DoesNotExist:
+            return Response(
+                {"detail": "Route not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        try:
+            sr = ServiceRequest.objects.get(id=service_request_id)
+        except ServiceRequest.DoesNotExist:
+            return Response(
+                {"detail": "ServiceRequest not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        try:
+            if estimated_arrival_time:
+                route.add_stop(
+                    service_request=sr,
+                    stop_order=stop_order,
+                    estimated_arrival_time=estimated_arrival_time,
+                )
+            else:
+                route.add_stop(service_request=sr, stop_order=stop_order)
+            return Response({"detail": "Stop added successfully"})
+        except Exception as e:
+            logger.error(f"Error adding stop: {str(e)}")
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["delete"], url_path="remove_stop")
+    def remove_stop(self, request, pk=None):
+        """Remove a stop from a route (route_id and stop_id OR service_request_id)"""
+        provider = self.get_object()
+        route_id = request.query_params.get("route_id") or request.data.get("route_id")
+        stop_id = request.query_params.get("stop_id") or request.data.get("stop_id")
+        service_request_id = request.query_params.get(
+            "service_request_id"
+        ) or request.data.get("service_request_id")
+        if not route_id or (not stop_id and not service_request_id):
+            return Response(
+                {"detail": "route_id and (stop_id or service_request_id) are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            route = PickupRoute.objects.get(id=route_id, provider=provider)
+        except PickupRoute.DoesNotExist:
+            return Response(
+                {"detail": "Route not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        try:
+            if stop_id:
+                stop = RouteStop.objects.get(id=stop_id, route=route)
+                route.remove_stop(stop)
+            else:
+                sr = ServiceRequest.objects.get(id=service_request_id)
+                route.remove_service_request(sr)
+            return Response({"detail": "Stop removed successfully"})
+        except (RouteStop.DoesNotExist, ServiceRequest.DoesNotExist):
+            return Response(
+                {"detail": "Stop or ServiceRequest not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            logger.error(f"Error removing stop: {str(e)}")
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["post"], url_path="complete_stop")
+    def complete_stop(self, request, pk=None):
+        """Complete a specific stop (stop_id required)"""
+        provider = self.get_object()
+        stop_id = request.data.get("stop_id")
+        if not stop_id:
+            return Response(
+                {"detail": "stop_id is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            stop = RouteStop.objects.select_related("route").get(
+                id=stop_id, route__provider=provider
+            )
+            stop.complete_stop()
+            return Response({"detail": "Stop completed successfully"})
+        except RouteStop.DoesNotExist:
+            return Response(
+                {"detail": "Stop not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error completing stop: {str(e)}")
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["post"], url_path="skip_stop")
+    def skip_stop(self, request, pk=None):
+        """Skip a specific stop (stop_id required, optional reason)"""
+        provider = self.get_object()
+        stop_id = request.data.get("stop_id")
+        reason = request.data.get("reason", "")
+        if not stop_id:
+            return Response(
+                {"detail": "stop_id is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            stop = RouteStop.objects.select_related("route").get(
+                id=stop_id, route__provider=provider
+            )
+            stop.skip_stop(reason=reason)
+            return Response({"detail": "Stop skipped successfully"})
+        except RouteStop.DoesNotExist:
+            return Response(
+                {"detail": "Stop not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error skipping stop: {str(e)}")
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["get"], url_path="route_metrics")
+    def route_metrics(self, request, pk=None):
+        """Get metrics/statistics for a specific route (route_id required)"""
+        provider = self.get_object()
+        route_id = request.query_params.get("route_id")
+        if not route_id:
+            return Response(
+                {"detail": "route_id is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            route = PickupRoute.objects.get(id=route_id, provider=provider)
+        except PickupRoute.DoesNotExist:
+            return Response(
+                {"detail": "Route not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        route.calculate_route_metrics()
+        return Response(route.get_route_statistics())
+
+    @action(detail=True, methods=["post"], url_path="complete_route")
+    def complete_route(self, request, pk=None):
+        """Mark a route as completed (route_id required)"""
+        provider = self.get_object()
+        route_id = request.data.get("route_id")
+        if not route_id:
+            return Response(
+                {"detail": "route_id is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            route = PickupRoute.objects.get(id=route_id, provider=provider)
+            route.complete_route()
+            return Response({"detail": "Route completed successfully"})
+        except PickupRoute.DoesNotExist:
+            return Response(
+                {"detail": "Route not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error completing route: {str(e)}")
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["get"], url_path="route-stats")
+    def route_stats(self, request, pk=None):
+        """Get comprehensive route statistics for a provider"""
+        try:
+            provider = self.get_object()
+
+            # Get all routes for this provider
+            routes = PickupRoute.objects.filter(provider=provider)
+
+            # Calculate comprehensive stats
+            total_routes = routes.count()
+            active_routes = routes.filter(is_active=True).count()
+            completed_routes = routes.filter(route_status="completed").count()
+
+            # Get all route stops across all routes
+            all_stops = RouteStop.objects.filter(route__provider=provider)
+            total_stops = all_stops.count()
+            completed_stops = all_stops.filter(status="completed").count()
+            pending_stops = all_stops.filter(status="pending").count()
+            in_progress_stops = all_stops.filter(status="in_progress").count()
+
+            # Calculate total metrics
+            total_distance = sum(route.route_distance_km or 0 for route in routes)
+            total_duration = sum(route.route_duration_minutes or 0 for route in routes)
+            total_earnings = sum(route.total_revenue or 0 for route in routes)
+            total_waste = sum(route.total_waste_collected or 0 for route in routes)
+
+            # Calculate efficiency (average of all routes)
+            efficiency_scores = [
+                route.route_efficiency_score
+                for route in routes
+                if route.route_efficiency_score
+            ]
+            avg_efficiency = (
+                sum(efficiency_scores) / len(efficiency_scores)
+                if efficiency_scores
+                else 0
+            )
+
+            # Calculate completion rate
+            completion_rate = (
+                (completed_stops / total_stops * 100) if total_stops > 0 else 0
+            )
+
+            # Estimate fuel consumption (rough calculation)
+            fuel_consumption = total_distance * 0.15  # Assuming 15L per 100km
+
+            # Calculate carbon saved (rough estimate)
+            carbon_saved = (
+                total_waste * 0.5
+            )  # Assuming 0.5kg CO2 saved per kg waste recycled
+
+            stats = {
+                "total_jobs": total_stops,
+                "completed_jobs": completed_stops,
+                "pending_jobs": pending_stops,
+                "in_progress_jobs": in_progress_stops,
+                "total_distance": f"{total_distance:.1f} km",
+                "estimated_duration": (
+                    f"{total_duration // 60}h {total_duration % 60}m"
+                    if total_duration
+                    else "0h 0m"
+                ),
+                "total_earnings": float(total_earnings),
+                "route_efficiency": round(avg_efficiency, 1),
+                "fuel_consumption": f"{fuel_consumption:.1f}L",
+                "carbon_saved": round(carbon_saved, 1),
+                "total_routes": total_routes,
+                "active_routes": active_routes,
+                "completed_routes": completed_routes,
+                "completion_rate": round(completion_rate, 1),
+                "total_waste_collected": float(total_waste),
+            }
+
+            return Response(stats)
+
+        except Http404:
+            return Response(
+                {"detail": "Provider not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error getting route stats: {str(e)}")
+            return Response(
+                {"detail": "Error retrieving route statistics"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=True, methods=["get"], url_path="route-jobs")
+    def route_jobs(self, request, pk=None):
+        """Get all jobs (stops) from all routes for a provider"""
+        try:
+            provider = self.get_object()
+
+            # Get all route stops for this provider
+            stops = (
+                RouteStop.objects.filter(route__provider=provider)
+                .select_related("route", "service_request", "service_request__user")
+                .order_by("route__scheduled_date", "stop_order")
+            )
+
+            jobs_data = []
+            for stop in stops:
+                # Calculate distance from previous stop
+                distance_from_previous = "0 km"
+                if stop.stop_order > 1:
+                    # This is a simplified calculation - in real app you'd use actual coordinates
+                    distance_from_previous = f"{(stop.stop_order - 1) * 0.5:.1f} km"
+
+                job_data = {
+                    "id": str(stop.id),
+                    "customer_name": f"{stop.service_request.user.first_name} {stop.service_request.user.last_name}",
+                    "customer_address": stop.service_request.pickup_address
+                    or "Address not specified",
+                    "waste_type": stop.service_request.waste_type or "General Waste",
+                    "quantity": (
+                        f"{stop.service_request.estimated_weight_kg or 0} kg"
+                        if stop.service_request.estimated_weight_kg
+                        else "Not specified"
+                    ),
+                    "scheduled_time": (
+                        stop.estimated_arrival_time.strftime("%I:%M %p")
+                        if stop.estimated_arrival_time
+                        else "Not scheduled"
+                    ),
+                    "estimated_duration": f"{stop.service_request.estimated_duration_minutes or 30} min",
+                    "budget": float(stop.service_request.estimated_price or 0),
+                    "status": stop.status,
+                    "priority": getattr(stop.service_request, "priority", "medium"),
+                    "distance_from_previous": distance_from_previous,
+                    "estimated_arrival": (
+                        stop.estimated_arrival_time.strftime("%I:%M %p")
+                        if stop.estimated_arrival_time
+                        else "Not specified"
+                    ),
+                    "actual_arrival": (
+                        stop.actual_arrival_time.strftime("%I:%M %p")
+                        if stop.actual_arrival_time
+                        else None
+                    ),
+                    "actual_departure": (
+                        stop.actual_departure_time.strftime("%I:%M %p")
+                        if stop.actual_departure_time
+                        else None
+                    ),
+                    "notes": stop.stop_instructions or "",
+                    "special_requirements": stop.customer_notes or "",
+                    "latitude": None,  # Would need to extract from pickup_location if available
+                    "longitude": None,  # Would need to extract from pickup_location if available
+                    "customer_phone": stop.service_request.user.phone_number or "",
+                    "customer_email": stop.service_request.user.email or "",
+                    "route_id": str(stop.route.id),
+                    "route_name": stop.route.route_name,
+                    "stop_order": stop.stop_order,
+                }
+                jobs_data.append(job_data)
+
+            return Response(jobs_data)
+
+        except Http404:
+            return Response(
+                {"detail": "Provider not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error getting route jobs: {str(e)}")
+            return Response(
+                {"detail": "Error retrieving route jobs"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=True, methods=["post"], url_path="jobs/(?P<job_id>[^/.]+)/start")
+    def start_job(self, request, pk=None, job_id=None):
+        """Start a specific job (route stop)"""
+        try:
+            provider = self.get_object()
+
+            if not job_id:
+                return Response(
+                    {"detail": "job_id is required"}, status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Find the route stop
+            try:
+                stop = RouteStop.objects.select_related("route").get(
+                    id=job_id, route__provider=provider
+                )
+            except RouteStop.DoesNotExist:
+                return Response(
+                    {"detail": "Job not found"}, status=status.HTTP_404_NOT_FOUND
+                )
+
+            # Start the stop
+            stop.start_stop()
+
+            return Response(
+                {
+                    "detail": "Job started successfully",
+                    "job_id": job_id,
+                    "status": "in_progress",
+                }
+            )
+
+        except Http404:
+            return Response(
+                {"detail": "Provider not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error starting job: {str(e)}")
+            return Response(
+                {"detail": "Error starting job"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=True, methods=["post"], url_path="jobs/(?P<job_id>[^/.]+)/complete")
+    def complete_job(self, request, pk=None, job_id=None):
+        """Complete a specific job (route stop)"""
+        try:
+            provider = self.get_object()
+
+            if not job_id:
+                return Response(
+                    {"detail": "job_id is required"}, status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Find the route stop
+            try:
+                stop = RouteStop.objects.select_related("route").get(
+                    id=job_id, route__provider=provider
+                )
+            except RouteStop.DoesNotExist:
+                return Response(
+                    {"detail": "Job not found"}, status=status.HTTP_404_NOT_FOUND
+                )
+
+            # Complete the stop
+            stop.complete_stop()
+
+            return Response(
+                {
+                    "detail": "Job completed successfully",
+                    "job_id": job_id,
+                    "status": "completed",
+                }
+            )
+
+        except Http404:
+            return Response(
+                {"detail": "Provider not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error completing job: {str(e)}")
+            return Response(
+                {"detail": "Error completing job"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=True, methods=["post"], url_path="jobs/(?P<job_id>[^/.]+)/skip")
+    def skip_job(self, request, pk=None, job_id=None):
+        """Skip a specific job (route stop)"""
+        try:
+            provider = self.get_object()
+
+            if not job_id:
+                return Response(
+                    {"detail": "job_id is required"}, status=status.HTTP_400_BAD_REQUEST
+                )
+
+            reason = request.data.get("reason", "No reason provided")
+
+            # Find the route stop
+            try:
+                stop = RouteStop.objects.select_related("route").get(
+                    id=job_id, route__provider=provider
+                )
+            except RouteStop.DoesNotExist:
+                return Response(
+                    {"detail": "Job not found"}, status=status.HTTP_404_NOT_FOUND
+                )
+
+            # Skip the stop
+            stop.skip_stop(reason=reason)
+
+            return Response(
+                {
+                    "detail": "Job skipped successfully",
+                    "job_id": job_id,
+                    "status": "skipped",
+                    "reason": reason,
+                }
+            )
+
+        except Http404:
+            return Response(
+                {"detail": "Provider not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error skipping job: {str(e)}")
+            return Response(
+                {"detail": "Error skipping job"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=True, methods=["post"], url_path="optimize-route")
+    def optimize_route(self, request, pk=None):
+        """Optimize the provider's routes based on criteria"""
+        try:
+            provider = self.get_object()
+
+            optimization_type = request.data.get("optimization_type", "distance")
+
+            # Get all active routes for this provider
+            active_routes = PickupRoute.objects.filter(
+                provider=provider,
+                is_active=True,
+                route_status__in=["planned", "active"],
+            )
+
+            optimized_routes = []
+            for route in active_routes:
+                try:
+                    # Apply optimization based on type
+                    if optimization_type == "distance":
+                        route.optimize_stop_sequence()
+                    elif optimization_type == "time":
+                        # Sort by estimated arrival time
+                        stops = route.stops.all().order_by("estimated_arrival_time")
+                        for index, stop in enumerate(stops, 1):
+                            stop.stop_order = index
+                            stop.save()
+                    elif optimization_type == "earnings":
+                        # Sort by estimated price (highest first)
+                        stops = route.stops.all().order_by(
+                            "-service_request__estimated_price"
+                        )
+                        for index, stop in enumerate(stops, 1):
+                            stop.stop_order = index
+                            stop.save()
+                    elif optimization_type == "priority":
+                        # Sort by priority (highest first)
+                        stops = route.stops.all().order_by("-service_request__priority")
+                        for index, stop in enumerate(stops, 1):
+                            stop.stop_order = index
+                            stop.save()
+
+                    # Recalculate route metrics
+                    route.calculate_route_metrics()
+                    optimized_routes.append(str(route.id))
+
+                except Exception as e:
+                    logger.error(f"Error optimizing route {route.id}: {str(e)}")
+                    continue
+
+            return Response(
+                {
+                    "detail": f"Route optimization completed for {len(optimized_routes)} routes",
+                    "optimization_type": optimization_type,
+                    "optimized_routes": optimized_routes,
+                }
+            )
+
+        except Http404:
+            return Response(
+                {"detail": "Provider not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error optimizing routes: {str(e)}")
+            return Response(
+                {"detail": "Error optimizing routes"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

@@ -419,7 +419,18 @@ class LoginSerializer(serializers.Serializer):
                     },
                     code="authorization",
                 )
+            inaccessible = ["suspended", "deleted", "banned"]
+            if user.account_status in inaccessible:
+                logger.warning(f"User {email_or_phone} is inactive")
+                raise serializers.ValidationError(
+                    detail={
+                        "detail": "User account is either banned, suspended or deleted please contact admin",
+                        "code": "suspended_or_banned_or_deleted",
+                    },
+                    code="authorization",
+                )
             logger.info(f"Authentication successful for {email_or_phone}")
+
         else:
             # Check if user exists but credentials are invalid
             if "@" in email_or_phone:

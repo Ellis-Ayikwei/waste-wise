@@ -41,16 +41,16 @@ const BinSelection: React.FC<BinSelectionProps> = ({
                     <IconDatabase className="w-4 h-4" />
                     <span>Smart Bins Needing Service</span>
                 </h5>
-                {binsNeedingService.length > 0 && (
+                {binsNeedingService?.length > 0 && (
                     <span className="text-xs text-gray-500">
-                        {binsNeedingService.length} bin{binsNeedingService.length !== 1 ? 's' : ''} need attention
+                        {binsNeedingService?.length} bin{binsNeedingService?.length !== 1 ? 's' : ''} need attention
                     </span>
                 )}
             </div>
 
-            {binsNeedingService.length > 0 ? (
+            {binsNeedingService?.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {binsNeedingService.map((bin: SmartBin) => (
+                    {binsNeedingService?.map((bin: SmartBin) => (
                         <div
                             key={bin.id}
                             onClick={() => onBinSelection(bin)}

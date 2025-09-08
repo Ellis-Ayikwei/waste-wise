@@ -41,6 +41,8 @@ const AssignUserModal: React.FC<AssignUserModalProps> = ({
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    console.log(binData);
+
     // Fetch all users
     const { data: usersData, isLoading } = useSwr<User[]>('users/', fetcher);
     const users = usersData || [];
@@ -78,7 +80,7 @@ const AssignUserModal: React.FC<AssignUserModalProps> = ({
                 // }
             };
 
-            await axiosInstance.put(`waste/bins/${binData?.id}/assign_to_user/`, updateData);
+            await axiosInstance.put(`waste/bins/${binData}/assign_to_user/`, updateData);
             showNotification({
                 showHide: true,
                 message: `User ${selectedUser.first_name} ${selectedUser.last_name} assigned successfully`,

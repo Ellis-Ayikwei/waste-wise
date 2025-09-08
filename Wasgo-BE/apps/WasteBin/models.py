@@ -6,6 +6,15 @@ from apps.Basemodel.models import Basemodel
 import uuid
 from datetime import datetime
 
+# WebSocket integration
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+import logging
+
+logger = logging.getLogger(__name__)
+
 User = get_user_model()
 
 
@@ -127,6 +136,14 @@ class SmartBin(Basemodel):
         default=0, help_text="Current waste weight in kilograms"
     )
 
+    # Physical Dimensions (in centimeters)
+    width_cm = models.FloatField(default=60.0, help_text="Bin width in centimeters")
+    height_cm = models.FloatField(default=100.0, help_text="Bin height in centimeters")
+    depth_cm = models.FloatField(default=60.0, help_text="Bin depth in centimeters")
+    volume_liters = models.FloatField(
+        null=True, blank=True, help_text="Calculated volume in liters"
+    )
+
     # Timestamps
     last_reading_at = models.DateTimeField(
         null=True, blank=True, help_text="Last sensor reading timestamp"
@@ -235,6 +252,26 @@ class SmartBin(Basemodel):
         else:
             self.is_online = False
 
+    def calculate_volume_liters(self):
+        """Calculate bin volume in liters from dimensions"""
+        # Convert cm³ to liters (1 liter = 1000 cm³)
+        volume_cm3 = self.width_cm * self.height_cm * self.depth_cm
+        volume_liters = volume_cm3 / 1000.0
+        return round(volume_liters, 2)
+
+    def calculate_volume_m3(self):
+        """Calculate bin volume in cubic meters"""
+        # Convert cm to m and calculate volume
+        width_m = self.width_cm / 100.0
+        height_m = self.height_cm / 100.0
+        depth_m = self.depth_cm / 100.0
+        volume_m3 = width_m * height_m * depth_m
+        return round(volume_m3, 4)
+
+    def get_dimensions_display(self):
+        """Get formatted dimensions string"""
+        return f"{self.width_cm}cm × {self.height_cm}cm × {self.depth_cm}cm"
+
     def save(self, *args, **kwargs):
         """Override save method to auto-generate bin_number and check online status"""
         # Auto-generate bin_number if not provided
@@ -244,6 +281,10 @@ class SmartBin(Basemodel):
         # Auto-generate QR code if not provided
         if not self.qr_code:
             self.qr_code = f"QR-{self.bin_number}"
+
+        # Auto-calculate volume from dimensions
+        if self.width_cm and self.height_cm and self.depth_cm:
+            self.volume_liters = self.calculate_volume_liters()
 
         # Check online status before saving
         if self.sensor:
@@ -663,3 +704,88 @@ class BinAlert(Basemodel):
         verbose_name = "Bin Alert"
         verbose_name_plural = "Bin Alerts"
         ordering = ["-created_at", "-priority"]
+
+
+# WebSocket Signal Receivers
+@receiver(post_save, sender=SmartBin)
+def send_bin_status_update(sender, instance, created, **kwargs):
+    """Send real-time update when bin status changes"""
+    if not created:  # Only on updates, not creation
+        try:
+            channel_layer = get_channel_layer()
+
+            # Send update to bin owner
+            async_to_sync(channel_layer.group_send)(
+                f"user_{instance.user.id}",
+                {
+                    "type": "bin_status_update",
+                    "data": {
+                        "bin_id": str(instance.id),
+                        "bin_number": instance.bin_number,
+                        "fill_level": instance.fill_level,
+                        "status": instance.status,
+                        "is_online": instance.is_online,
+                        "location": instance.address,
+                        "bin_type": (
+                            instance.bin_type.name if instance.bin_type else None
+                        ),
+                        "message": f"Bin {instance.bin_number} is {instance.fill_level}% full",
+                        "timestamp": instance.updated_at.isoformat(),
+                        "needs_collection": instance.fill_level >= 80,
+                    },
+                },
+            )
+
+            # Send alert if bin is full
+            if instance.fill_level >= 90:
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{instance.user.id}",
+                    {
+                        "type": "sensor_alert",
+                        "data": {
+                            "bin_id": str(instance.id),
+                            "bin_number": instance.bin_number,
+                            "alert_type": "full",
+                            "fill_level": instance.fill_level,
+                            "message": f"🚨 URGENT: Bin {instance.bin_number} is {instance.fill_level}% full and needs immediate collection!",
+                            "priority": "high",
+                            "location": instance.address,
+                            "timestamp": instance.updated_at.isoformat(),
+                        },
+                    },
+                )
+        except Exception as e:
+            logger.error(
+                f"Error sending WebSocket update for SmartBin {instance.id}: {e}"
+            )
+
+
+@receiver(post_save, sender=BinAlert)
+def send_bin_alert_update(sender, instance, created, **kwargs):
+    """Send real-time alert when bin alert is created"""
+    if created:  # Only on creation
+        try:
+            channel_layer = get_channel_layer()
+
+            # Send alert to bin owner
+            async_to_sync(channel_layer.group_send)(
+                f"user_{instance.bin.user.id}",
+                {
+                    "type": "sensor_alert",
+                    "data": {
+                        "alert_id": str(instance.id),
+                        "bin_id": str(instance.bin.id),
+                        "bin_number": instance.bin.bin_number,
+                        "alert_type": instance.alert_type,
+                        "priority": instance.priority,
+                        "message": instance.message,
+                        "location": instance.bin.address,
+                        "timestamp": instance.created_at.isoformat(),
+                        "is_resolved": instance.is_resolved,
+                    },
+                },
+            )
+        except Exception as e:
+            logger.error(
+                f"Error sending WebSocket alert for BinAlert {instance.id}: {e}"
+            )

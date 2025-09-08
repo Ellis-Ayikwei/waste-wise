@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
     Bell, 
@@ -30,7 +29,8 @@ import {
     Shield,
     Zap,
     Loader2,
-    AlertCircle
+    AlertCircle,
+    Route
 } from 'lucide-react';
 import useSWR from 'swr';
 import useAuthUser from 'react-auth-kit/hooks/useAuthUser';
@@ -43,6 +43,7 @@ import ControlsBar from './ControlsBar';
 import FiltersBar from './FiltersBar';
 import JobCard from './JobCard';
 import EmptyState from './EmptyState';
+import { Link } from 'react-router-dom';
 
 // Types for the job data
 interface JobRequest {
@@ -260,8 +261,8 @@ const JobRequests = () => {
         }
         setIsLoading(true);
         try {
-            await axiosInstance.post(`/providers/${provider.id}/request_to_be_offered/?job_id=${jobId}`, {
-                job_id: jobId
+            await axiosInstance.post(`/service-requests/${jobId}/request_offer/`, {
+                provider_id: provider.id
             });
             refreshRequests();
         } catch (error) {
@@ -277,8 +278,8 @@ const JobRequests = () => {
         }
         setIsLoading(true);
         try {
-            await axiosInstance.post(`/providers/${provider.id}/cancel_request_to_be_offered/?job_id=${jobId}`, {
-                job_id: jobId
+            await axiosInstance.post(`/service-requests/${jobId}/withdraw_request_offer/`, {
+                provider_id: provider.id
             });
             refreshRequests();
         } catch (error) {
@@ -327,6 +328,23 @@ const JobRequests = () => {
             />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Quick access to Routes */}
+                <div className="mb-6 flex items-center justify-between">
+                    <div className="flex items-center space-x-2 text-slate-600">
+                        <Route className="w-4 h-4" />
+                        <span className="text-sm">Plan and manage your pickup routes</span>
+                    </div>
+                    <Link to="/provider/pickup-routes">
+                        <motion.button 
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                        >
+                            <Route className="w-4 h-4" />
+                            <span>Go to Routes</span>
+                        </motion.button>
+                    </Link>
+                </div>
                 <TabsBar tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
                 <StatsCards stats={stats} />

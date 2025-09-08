@@ -128,8 +128,8 @@
             
             {% if bid %}
             <div class="bid-card">
-                <div style="font-size: 16px; margin-bottom: 5px;">New Bid Received</div>
-                <div class="bid-amount">£{{ bid.amount }}</div>
+                <div style="font-size: 16px; margin-bottom: 5px;">New Collection Bid Received</div>
+                <div class="bid-amount">GHS {{ bid.amount }}</div>
                 <div style="font-size: 14px; opacity: 0.9;">
                     {% if bid.estimated_completion_time %}
                     Estimated completion: {{ bid.estimated_completion_time|date:"d M Y" }}
@@ -148,7 +148,7 @@
                     <div class="provider-avatar">
                         {{ provider.company_name|first|upper|default:"P" }}
                     </div>
-                    <h3 style="margin: 0 0 15px 0; color: #22C55E;">Provider Details</h3>
+                    <h3 style="margin: 0 0 15px 0; color: #22C55E;">Waste Collection Provider Details</h3>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Company:</span>
@@ -179,21 +179,21 @@
             
             <div class="cta-buttons">
                 {% if action_url %}
-                <a href="{{ action_url }}" class="cta-button">{{ action_text|default:"View All Bids" }}</a>
+                <a href="{{ action_url }}" class="cta-button">{{ action_text|default:"View All Collection Bids" }}</a>
                 {% endif %}
-                <a href="#" class="cta-button secondary">Compare Providers</a>
+                <a href="#" class="cta-button secondary">Compare Collection Providers</a>
             </div>
             
             <div style="background-color: #f0fdf4; padding: 15px; border-radius: 8px; margin-top: 20px;">
                 <p style="margin: 0; font-size: 14px; color: #166534;">
-                    <strong>💡 Tip:</strong> Compare multiple bids to find the best value. 
-                    Consider provider ratings, reviews, and availability when making your decision.
+                    <strong>💡 Tip:</strong> Compare multiple collection bids to find the best value. 
+                    Consider provider ratings, reviews, and waste handling capabilities when making your decision.
                 </p>
             </div>
         </div>
         
         <div class="footer">
-            <p>Need help choosing? Contact our support team at <a href="mailto:support@wasgo.com">support@wasgo.com</a></p>
+            <p>Need help choosing a waste collection provider? Contact our support team at <a href="mailto:support@wasgo.com">support@wasgo.com</a></p>
             <p>&copy; {{ current_year }} {{ app_name }}. All rights reserved.</p>
         </div>
     </div>

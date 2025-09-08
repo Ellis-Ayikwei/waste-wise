@@ -173,12 +173,18 @@ class ServiceRequestViewSet(viewsets.ModelViewSet):
             provider_id = request.data.get("provider_id")
             offered_price = request.data.get("offered_price")
             expires_at = request.data.get("expires_at")
+            auto_pricing = request.data.get("auto_pricing")
 
-            if not provider_id or not offered_price:
+            if not provider_id or not offered_price or auto_pricing is None:
                 return Response(
-                    {"error": "provider_id and offered_price are required"},
+                    {
+                        "error": "provider_id and offered_price and auto_pricing are required"
+                    },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+
+            if auto_pricing:
+                offered_price = service_request.calculate_offered_price()
 
             from apps.Provider.models import ServiceProvider
 
@@ -202,7 +208,7 @@ class ServiceRequestViewSet(viewsets.ModelViewSet):
             # Add provider to offered_providers and update status
             service_request.offered_providers.add(provider)
             service_request.status = "offered"
-            service_request.offered_price = Decimal(offered_price)
+            service_request.offered_price = offered_price
             if expires_at:
                 service_request.offer_expires_at = expires_at
             else:
@@ -219,7 +225,7 @@ class ServiceRequestViewSet(viewsets.ModelViewSet):
                     "message": f"Offer sent to {provider.business_name}",
                     "service_request_id": str(service_request.id),
                     "provider_id": str(provider.id),
-                    "offered_price": str(offered_price),
+                    "offered_price": offered_price,
                     "expires_at": service_request.offer_expires_at,
                 },
                 status=status.HTTP_200_OK,
@@ -490,6 +496,78 @@ class ServiceRequestViewSet(viewsets.ModelViewSet):
             return Response(
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @action(detail=True, methods=["post"])
+    def update_status(self, request, pk=None):
+        """Update the status of a service request"""
+        try:
+            service_request = self.get_object()
+            new_status = request.data.get("status")
+            notes = request.data.get("notes", "")
+
+            if not new_status:
+                return Response(
+                    {"detail": "status is required"}, status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Validate status transition
+            valid_statuses = [
+                "pending",
+                "assigned",
+                "in_progress",
+                "completed",
+                "cancelled",
+                "rejected",
+                "expired",
+            ]
+
+            if new_status not in valid_statuses:
+                return Response(
+                    {
+                        "detail": f"Invalid status. Valid statuses are: {', '.join(valid_statuses)}"
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Update status using the service
+            try:
+                ServiceRequestService.update_status(
+                    service_request=service_request,
+                    new_status=new_status,
+                    notes=notes,
+                    user=request.user,
+                )
+
+                return Response(
+                    {
+                        "detail": "Status updated successfully",
+                        "service_request_id": str(service_request.id),
+                        "old_status": service_request.status,
+                        "new_status": new_status,
+                        "updated_at": timezone.now().isoformat(),
+                    }
+                )
+
+            except Exception as e:
+                logger.error(f"Error updating service request status: {str(e)}")
+                return Response(
+                    {"detail": f"Error updating status: {str(e)}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        except Exception as e:
+            logger.error(f"Error in update_status action: {str(e)}")
+            return Response(
+                {"detail": "Error updating service request status"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=True, methods=["post"])
+    def auto_calculate_offered_price(self, request, pk=None):
+        """Auto calculate the offered price for a service request"""
+        service_request = self.get_object()
+        offered_price = service_request.calculate_offered_price()
+        return Response({"offered_price": offered_price}, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"])
     def statistics(self, request):

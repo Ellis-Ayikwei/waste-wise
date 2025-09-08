@@ -23,19 +23,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import Input from '../../../components/ui/Input';
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '../../../components/ui/Modal';
-import Label from '../../../components/ui/Label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/Select';
 import StatCard from '../../../components/ui/statCard';
 import DraggableDataTable from '../../../components/ui/DraggableDataTable';
-import AddressAutocomplete from '../../../components/AddressAutocomplete';
 import { setPageTitle } from '../../../store/themeConfigSlice';
 import useSwr from 'swr';
 import fetcher from '../../../services/fetcher';
 import AssignUserModal from './BinDetail/components/AssignUserModal';
+import AddBinModal from './AddBinModal';
+import DateTimeUtil from '../../../utilities/dateTimeUtil';
 
 // Interface for bin data
 interface SmartBinData {
+    created_at: string | number;
     id: string;
     bin_id: string;
     name: string;
@@ -50,6 +50,11 @@ interface SmartBinData {
     bin_type_display: string;
     user_id: string | null;
     user_name: string | null;
+    user?: {
+        id: string;
+        first_name: string;
+        last_name: string;
+    };
     sensor_id: string | null;
     battery_level: number | null;
     signal_strength: number | null;
@@ -57,18 +62,6 @@ interface SmartBinData {
     last_reading_at: string | null;
 }
 
-// Interface for new bin form
-interface NewBinForm {
-    name: string;
-    address: string;
-    area: string;
-    latitude: number;
-    longitude: number;
-    bin_type: number;
-    status: string;
-    user_id: string | null;
-    sensor_id: string | null;
-}
 
 const BinManagement: React.FC = () => {
     const dispatch = useDispatch();
@@ -78,20 +71,12 @@ const BinManagement: React.FC = () => {
     const [statusFilter, setStatusFilter] = useState('all');
     const [showAddModal, setShowAddModal] = useState(false);
     const [showAssignUserModal, setShowAssignUserModal] = useState(false);
-    const [newBinForm, setNewBinForm] = useState<NewBinForm>({
-        name: '',
-        address: '',
-        area: '',
-        latitude: 0,
-        longitude: 0,
-        bin_type: 1,
-        status: 'active',
-        user_id: null,
-        sensor_id: null
-    });
+    const [binToAssignUser, setBinToAssignUser] = useState<string | null>(null);
 
     // Fetch bin data
     const { data: binData, isLoading, mutate } = useSwr<SmartBinData[]>('waste/bins/', fetcher);
+
+    console.log("the bin data", binData)
 
     useEffect(() => {
         dispatch(setPageTitle('Bin Management'));
@@ -133,11 +118,11 @@ const BinManagement: React.FC = () => {
     // Table columns configuration
     const columns = [
         {
-            accessor: 'bin_id',
+            accessor: 'bin_number',
             title: 'Bin ID',
             sortable: true,
             render: (bin: SmartBinData) => (
-                <span className="font-mono text-sm">{bin.bin_id}</span>
+                <span className="font-mono text-sm">{bin.bin_number}</span>
             )
         },
         {
@@ -162,12 +147,24 @@ const BinManagement: React.FC = () => {
             )
         },
         {
+            accessor: 'created_at',
+            title: 'Created At',
+            sortable: true,
+            render: (bin: SmartBinData) => (
+                <div className="max-w-xs truncate" title={bin.created_at}>
+                    {bin.created_at ? DateTimeUtil({date: bin.created_at, format: 'MMM D, YYYY'}) : 'N/A'}
+                </div>
+            )
+        },
+        {
             accessor: 'user',
             title: 'Assigned User',
             sortable: true,
             render: (bin: SmartBinData) => (
                 <div className="max-w-xs truncate" title={bin?.user?.first_name + ' ' + bin?.user?.last_name || 'N/A'}>
-                    {bin?.user ? bin?.user?.first_name + ' ' + bin?.user?.last_name : (<button className="text-blue-500 hover:text-blue-600" onClick={() => setShowAssignUserModal(true)}>Assign User</button>)}
+                    {bin?.user ? bin?.user?.first_name + ' ' 
+                    + bin?.user?.last_name 
+                    : (<button className="text-blue-500 hover:text-blue-600" onClick={() => {setShowAssignUserModal(true); setBinToAssignUser(bin.id)}}>Assign User</button>)}
                 </div>
             )
         },
@@ -268,70 +265,6 @@ const BinManagement: React.FC = () => {
         }
     ];
 
-    const handleAddBin = async () => {
-        try {
-            // Validate required fields
-            if (!newBinForm.name || !newBinForm.address || !newBinForm.area) {
-                alert('Please fill in all required fields');
-                return;
-            }
-
-            // Prepare the payload based on the serializer structure
-            const payload = {
-                name: newBinForm.name,
-                address: newBinForm.address,
-                area: newBinForm.area,
-                latitude: newBinForm.latitude,
-                longitude: newBinForm.longitude,
-                bin_type: newBinForm.bin_type,
-                status: newBinForm.status,
-                user_id: newBinForm.user_id,
-                sensor_id: newBinForm.sensor_id
-            };
-
-            // Make the API call to create a new bin
-            const response = await fetch('/api/bins/', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                },
-                body: JSON.stringify(payload)
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                console.log('Bin created successfully:', result);
-                
-                // Close modal and reset form
-                setShowAddModal(false);
-                setNewBinForm({
-                    name: '',
-                    address: '',
-                    area: '',
-                    latitude: 0,
-                    longitude: 0,
-                    bin_type: 1,
-                    status: 'active',
-                    user_id: null,
-                    sensor_id: null
-                });
-                
-                // Refresh data
-                mutate();
-                
-                // Show success message
-                alert('Bin created successfully!');
-            } else {
-                const errorData = await response.json();
-                console.error('Error creating bin:', errorData);
-                alert(`Error creating bin: ${errorData.message || 'Unknown error'}`);
-            }
-        } catch (error) {
-            console.error('Error adding bin:', error);
-            alert('Error creating bin. Please try again.');
-        }
-    };
 
     if (loading || isLoading) {
         return (
@@ -343,6 +276,13 @@ const BinManagement: React.FC = () => {
             </div>
         );
     }
+
+
+    const renderBulkActions = (selectedRecords: SmartBinData[]) => (
+        <div className="flex items-center gap-2">
+            <button className="text-blue-500 hover:text-blue-600" onClick={() => {setShowAssignUserModal(true); setBinToAssignUser(selectedRecords.map(bin => bin.bin_number).join(','));}}>Assign User</button>
+        </div>
+    );
 
     return (
         <div className="space-y-6">
@@ -451,7 +391,10 @@ const BinManagement: React.FC = () => {
                         title="Smart Bins"
                         loading={isLoading}
                         storeKey="bin-management-table"
-                    />
+                        bulkActions={renderBulkActions}      
+                        onRefreshData={() => mutate()}              
+
+/>
                 </CardContent>
             </Card>
 
@@ -459,128 +402,16 @@ const BinManagement: React.FC = () => {
 <AssignUserModal
     isOpen={showAssignUserModal}
     onClose={() => setShowAssignUserModal(false)}
-    binData={binData}
+    binData={binToAssignUser}
     onSuccess={() => mutate()}
 />
 
             {/* Add Bin Modal */}
-            <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)}>
-                <ModalContent>
-                    <ModalHeader>
-                        <h2 className="text-xl font-semibold">Add New Bin</h2>
-                    </ModalHeader>
-                    <ModalBody>
-                        <div className="space-y-4">
-                            <div>
-                                <Label htmlFor="name">Bin Name</Label>
-                                <Input
-                                    id="name"
-                                    value={newBinForm.name}
-                                    onChange={(e) => setNewBinForm({...newBinForm, name: e.target.value})}
-                                    placeholder="Enter bin name"
-                                />
-                            </div>
-                            
-                            <div>
-                                <AddressAutocomplete
-                                    placeholder="Enter full address"
-                                    value={newBinForm.address}
-                                    onAddressChange={(value) => setNewBinForm({...newBinForm, address: value})}
-                                    onAddressSelect={(addressData) => {
-                                        setNewBinForm({
-                                            ...newBinForm, 
-                                            address: addressData.formatted_address,
-                                            latitude: addressData.coordinates.lat,
-                                            longitude: addressData.coordinates.lng
-                                        });
-                                    }}
-                                    label="Address"
-                                    showDetails={false}
-                                    showPostcodeAddresses={false}
-                                />
-                            </div>
-                            
-                            <div>
-                                <Label htmlFor="area">Area</Label>
-                                <Input
-                                    id="area"
-                                    value={newBinForm.area}
-                                    onChange={(e) => setNewBinForm({...newBinForm, area: e.target.value})}
-                                    placeholder="Enter area/zone"
-                                />
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <Label htmlFor="latitude">Latitude</Label>
-                                    <Input
-                                        id="latitude"
-                                        type="number"
-                                        step="any"
-                                        value={newBinForm.latitude}
-                                        onChange={(e) => setNewBinForm({...newBinForm, latitude: parseFloat(e.target.value) || 0})}
-                                        placeholder="0.000000"
-                                    />
-                                </div>
-                                <div>
-                                    <Label htmlFor="longitude">Longitude</Label>
-                                    <Input
-                                        id="longitude"
-                                        type="number"
-                                        step="any"
-                                        value={newBinForm.longitude}
-                                        onChange={(e) => setNewBinForm({...newBinForm, longitude: parseFloat(e.target.value) || 0})}
-                                        placeholder="0.000000"
-                                    />
-                                </div>
-                            </div>
-                            
-                            <div>
-                                <Label htmlFor="bin_type">Bin Type</Label>
-                                <Select 
-                                    value={newBinForm.bin_type.toString()} 
-                                    onValueChange={(value) => setNewBinForm({...newBinForm, bin_type: parseInt(value)})}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select bin type" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="1">General Waste</SelectItem>
-                                        <SelectItem value="2">Recyclable</SelectItem>
-                                        <SelectItem value="3">Organic</SelectItem>
-                                        <SelectItem value="4">Hazardous</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            
-                            <div>
-                                <Label htmlFor="status">Status</Label>
-                                <Select 
-                                    value={newBinForm.status} 
-                                    onValueChange={(value) => setNewBinForm({...newBinForm, status: value})}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="active">Active</SelectItem>
-                                        <SelectItem value="inactive">Inactive</SelectItem>
-                                        <SelectItem value="maintenance">Maintenance</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                    </ModalBody>
-                    <ModalFooter>
-                        <Button variant="outline" onClick={() => setShowAddModal(false)}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleAddBin}>
-                            Add Bin
-                        </Button>
-                    </ModalFooter>
-                </ModalContent>
-            </Modal>
+            <AddBinModal
+                isOpen={showAddModal}
+                onClose={() => setShowAddModal(false)}
+                onSuccess={() => mutate()}
+            />
         </div>
     );
 };

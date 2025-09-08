@@ -1,4 +1,8 @@
 import React from 'react';
+import axiosInstance from '../../../../services/axiosInstance';
+import showNotification from '../../../../utilities/showNotifcation';
+import renderErrorMessage from '../../../../helper/renderErrorMessage';
+import confirmDialog from '../../../../helper/confirmDialog';
 
 interface Address {
   id: string;
@@ -88,6 +92,41 @@ const UserOverview: React.FC<UserOverviewProps> = ({ user, setUser, isEditing, s
     setUser(updatedUser);
   };
 
+  const handleVerifyAndActivateUser = async() =>{
+    if(await confirmDialog({
+    
+     title:"Activate and Verify User?",
+     note: "This will enbale the user to login into the system",
+     
+     recommended: "make sure the email and others are valid",
+     finalQuestion: "are you sure you want to activate this user?",
+     type: 'warning',
+    
+     })){
+
+
+       try{
+           const response = await axiosInstance.patch(`/users/${user.id}/activate/`,{
+             is_active:true
+           })
+           if(response.status === 200 ){
+             showNotification({
+               message: "User activated successfully, user can now login",
+               type: 'success',
+               showHide: true
+             })
+           }
+       }
+       catch(error){
+         showNotification({
+           message: renderErrorMessage(error),
+           type: 'error', 
+           showHide:true})
+   
+       }
+     }
+     }
+
   const formatDate = (dateString: string): string => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-GB', {
@@ -155,7 +194,9 @@ const UserOverview: React.FC<UserOverviewProps> = ({ user, setUser, isEditing, s
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {renderInput('First Name', 'first_name', user.first_name, 'text', true)}
             {renderInput('Last Name', 'last_name', user.last_name, 'text', true)}
-            {renderInput('Email', 'email', user.email, 'email', true)}
+            <div className='flex gap-2'>{renderInput('Email', 'email', user.email, 'email', true)}
+              {!user?.is_active && <button onClick={()=>handleVerifyAndActivateUser()} className='btn btn-primary btn-sm py-0'>Verify and Activate User</button>}
+            </div>
             {renderInput('Phone Number', 'phone_number', user.phone_number, 'tel', true)}
             {renderSelect('User Type', 'user_type', user.user_type, ['customer', 'provider', 'admin'], true)}
             {renderSelect('Account Status', 'account_status', user.account_status, ['active', 'pending', 'suspended', 'inactive'], true)}

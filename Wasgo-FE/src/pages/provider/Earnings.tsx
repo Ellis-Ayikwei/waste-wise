@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
+import useSWR from 'swr';
+import useAuthUser from 'react-auth-kit/hooks/useAuthUser';
+import fetcher from '../../services/fetcher';
 import { 
     DollarSign, 
     TrendingUp, 
@@ -58,79 +61,96 @@ const Earnings = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState('list');
 
-    const [earningsData, setEarningsData] = useState({
-        totalEarnings: 15420,
-        thisMonth: 3240,
-        lastMonth: 2980,
-        pendingPayments: 1560,
-        completedPayments: 13860,
-        totalJobs: 89,
-        averagePerJob: 173,
-        growthRate: 8.7
-    });
+    const authUser = useAuthUser() as any;
 
-    const [transactions, setTransactions] = useState([
-        {
-            id: 1,
-            customer: 'John Doe',
-            jobType: 'General Waste Collection',
-            amount: 150,
-            status: 'completed',
-            date: '2024-01-25',
-            time: '10:30 AM',
-            paymentMethod: 'Mobile Money',
-            reference: 'TXN-2024-001',
-            description: 'Regular household waste collection'
-        },
-        {
-            id: 2,
-            customer: 'Sarah Johnson',
-            jobType: 'Recyclable Materials',
-            amount: 200,
-            status: 'pending',
-            date: '2024-01-25',
-            time: '02:15 PM',
-            paymentMethod: 'Bank Transfer',
-            reference: 'TXN-2024-002',
-            description: 'Office recycling collection'
-        },
-        {
-            id: 3,
-            customer: 'Mike Wilson',
-            jobType: 'Organic Waste',
-            amount: 120,
-            status: 'completed',
-            date: '2024-01-24',
-            time: '09:45 AM',
-            paymentMethod: 'Cash',
-            reference: 'TXN-2024-003',
-            description: 'Kitchen waste collection'
-        },
-        {
-            id: 4,
-            customer: 'Emily Brown',
-            jobType: 'Hazardous Waste',
-            amount: 350,
-            status: 'processing',
-            date: '2024-01-24',
-            time: '03:20 PM',
-            paymentMethod: 'Credit Card',
-            reference: 'TXN-2024-004',
-            description: 'Electronic waste disposal'
-        },
-        {
-            id: 5,
-            customer: 'David Lee',
-            jobType: 'General Waste Collection',
-            amount: 180,
-            status: 'completed',
-            date: '2024-01-23',
-            time: '11:00 AM',
-            paymentMethod: 'Mobile Money',
-            reference: 'TXN-2024-005',
-            description: 'Commercial waste collection'
-        }
-    ]);
+    // Get provider by user id
+    const { data: provider } = useSWR<any>(
+        authUser && authUser.user ? `/providers/get_provider_by_user_id/?user_id=${authUser.user.id}` : null,
+        fetcher
+    );
+
+    // Get recent earnings for provider
+    const { data: recentEarnings, error: earningsError, isLoading: earningsLoading, mutate: refreshEarnings } = useSWR<any>(
+        authUser && provider ? `/providers/${provider.id}/recent_earnings/` : null,
+        fetcher
+    );
+
+    // Get cashouts summary and transactions
+    const { data: cashouts, error: cashoutsError, isLoading: cashoutsLoading, mutate: refreshCashouts } = useSWR<any>(
+        authUser && provider ? `/providers/${provider.id}/cashouts/` : null,
+        fetcher
+    );
+
+    console.log("recent earnings", recentEarnings)
+
+    type UiTransaction = {
+        id: string | number;
+        customer: string;
+        jobType: string;
+        amount: number;
+        status: 'completed' | 'pending' | 'processing' | string;
+        date: string;
+        time: string;
+        paymentMethod: string;
+        reference: string;
+        description: string;
+    };
+
+    const transactions: UiTransaction[] = useMemo(() => {
+        const apiItems: any[] = Array.isArray(recentEarnings) ? recentEarnings : [];
+        return apiItems.map((it) => {
+            const d = it.completed_at ? new Date(it.completed_at) : null;
+            const date = d ? d.toISOString().slice(0, 10) : '';
+            const time = d ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+            const status = it.status === 'paid' ? 'completed' : (it.status || 'completed');
+            return {
+                id: it.id || it.job_id || Math.random().toString(36).slice(2),
+                customer: it.customer_name || 'Customer',
+                jobType: it.waste_type || 'General Waste',
+                amount: Number(it.amount || 0),
+                status,
+                date,
+                time,
+                paymentMethod: 'Mobile Money',
+                reference: it.job_id ? `JOB-${it.job_id}` : 'N/A',
+                description: it.description || 'Service request payment',
+            } as UiTransaction;
+        });
+    }, [recentEarnings]);
+
+    const earningsData = useMemo(() => {
+        const totalEarnings = transactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+        const totalJobs = transactions.length;
+        const averagePerJob = totalJobs ? Math.round(totalEarnings / totalJobs) : 0;
+
+        const now = new Date();
+        const thisMonthAmt = transactions
+            .filter((t) => t.date && new Date(t.date).getMonth() === now.getMonth() && new Date(t.date).getFullYear() === now.getFullYear())
+            .reduce((s, t) => s + t.amount, 0);
+        const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastMonthAmt = transactions
+            .filter((t) => {
+                if (!t.date) return false;
+                const dt = new Date(t.date);
+                return dt.getMonth() === lastMonthDate.getMonth() && dt.getFullYear() === lastMonthDate.getFullYear();
+            })
+            .reduce((s, t) => s + t.amount, 0);
+
+        const completedPayments = transactions.filter((t) => t.status === 'completed').reduce((s, t) => s + t.amount, 0);
+        const pendingPayments = transactions.filter((t) => t.status === 'pending' || t.status === 'processing').reduce((s, t) => s + t.amount, 0);
+        const growthRate = lastMonthAmt ? Number((((thisMonthAmt - lastMonthAmt) / lastMonthAmt) * 100).toFixed(1)) : 0;
+
+        return {
+            totalEarnings,
+            thisMonth: thisMonthAmt,
+            lastMonth: lastMonthAmt,
+            pendingPayments,
+            completedPayments,
+            totalJobs,
+            averagePerJob,
+            growthRate,
+        };
+    }, [transactions]);
 
     const periods = [
         { id: 'week', name: 'This Week' },
@@ -205,7 +225,8 @@ const Earnings = () => {
         completedPayments: earningsData.completedPayments,
         totalJobs: earningsData.totalJobs,
         averagePerJob: earningsData.averagePerJob,
-        growthRate: earningsData.growthRate
+        growthRate: earningsData.growthRate,
+        cashedOut: Number(cashouts?.summary?.total_cashed_out ?? Math.max(0, Number((provider?.total_earnings ?? 0)) - Number((provider?.balance ?? 0)))),
     };
 
     return (
@@ -241,6 +262,10 @@ const Earnings = () => {
                                 <motion.button 
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
+                                    onClick={() => {
+                                        if (refreshEarnings) refreshEarnings();
+                                        if (refreshCashouts) refreshCashouts();
+                                    }}
                                     className="p-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transition-all duration-300"
                                 >
                                     <RefreshCw className="w-5 h-5" />
@@ -342,6 +367,27 @@ const Earnings = () => {
                             <p className="text-sm text-slate-600 flex items-center">
                                 <Truck className="w-4 h-4 text-purple-500 mr-1" />
                                 Based on {stats.totalJobs} jobs
+                            </p>
+                        </div>
+                    </motion.div>
+
+                    {/* Cashed Out */}
+                    <motion.div 
+                        whileHover={{ y: -2 }}
+                        className="relative p-6 bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 border border-white/50 group overflow-hidden"
+                    >
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-emerald-500/20 to-transparent"></div>
+                        <div className="relative z-10">
+                            <div className="flex items-center space-x-3 mb-4">
+                                <div className="p-3 bg-emerald-600">
+                                    <Wallet className="w-6 h-6 text-white" />
+                                </div>
+                                <h3 className="font-bold text-slate-900">Cashed Out</h3>
+                            </div>
+                            <p className="text-3xl font-bold text-emerald-700 mb-1">₵{Number(stats.cashedOut || 0).toLocaleString()}</p>
+                            <p className="text-sm text-slate-600 flex items-center">
+                                <CheckCircle className="w-4 h-4 text-emerald-500 mr-1" />
+                                Paid out to provider
                             </p>
                         </div>
                     </motion.div>
@@ -483,7 +529,6 @@ const Earnings = () => {
                                         </div>
                                     </div>
                                     <div className="flex items-center space-x-1">
-                                        <DollarSign className="w-4 h-4 text-emerald-400" />
                                         <span className="text-lg font-semibold text-slate-700">₵{transaction.amount}</span>
                                     </div>
                                 </div>

@@ -28,6 +28,8 @@ import ErrorBoundary from '../../../components/ErrorBoundary';
 import toast from 'react-hot-toast';
 import fetcher  from '../../../services/fetcher';
 import useSWR from 'swr';
+import useWebSocket from '../../../hooks/useWebSocket';
+import WebSocketStatus from '../../../components/WebSocketStatus';
 import axiosInstance from '../../../services/axiosInstance';
 import IconChecks from '../../../components/Icon/IconChecks';
 import DraggableDataTable from '../../../components/ui/DraggableDataTable';
@@ -37,6 +39,8 @@ import CreateOrEditRequestModal from './creatnewRequest/createOrEditRequest';
 import Ghc from '../../../helper/CurrencyFormatter';
 import showNotification from '../../../utilities/showNotifcation';
 import confirmDialog from '../../../helper/confirmDialog';
+import { Edit } from 'lucide-react';
+import DateTimeUtil from '../../../utilities/dateTimeUtil';
 
 interface ServiceRequest {
     id: string;
@@ -117,6 +121,34 @@ const ServiceRequestManagement: React.FC = () => {
     const serviceRequests = serviceRequestsData || [];
     const providers = providersData || [];
     const isLoading = !serviceRequestsData && !serviceRequestsError;
+
+    // WebSocket for real-time updates
+    const { isConnected } = useWebSocket({
+        onServiceRequestUpdate: (data) => {
+            // Refresh the service requests list when updates are received
+            mutateServiceRequests();
+            toast.success(`Service Request #${data.requestId} updated: ${data.message}`);
+        },
+        onNewServiceRequest: (data) => {
+            // Handle new service request notifications
+            mutateServiceRequests();
+            toast.info(`New Service Request: ${data.message}`, {
+                icon: '🆕'
+            });
+        },
+        onAdminAlert: (data) => {
+            // Handle admin-specific alerts
+            toast.error(`${data.title}: ${data.message}`);
+        },
+        onNotification: (data) => {
+            // Handle general notifications
+            toast(data.message, {
+                icon: data.severity === 'error' ? '❌' : 
+                      data.severity === 'warning' ? '⚠️' : 
+                      data.severity === 'success' ? '✅' : 'ℹ️'
+            });
+        }
+    });
 
     const totalRequests = Array.isArray(serviceRequests) ? serviceRequests.length : 0;
     const pendingRequests = Array.isArray(serviceRequests) ? serviceRequests.filter(req => req.status === 'pending').length : 0;
@@ -432,6 +464,21 @@ const ServiceRequestManagement: React.FC = () => {
             )
         },
         {
+            accessor: 'pickup_address',
+            title: 'Pickup Address',
+            sortable: true,
+            render: (request: ServiceRequest) => (
+                <div className="text-sm">{request.pickup_address}</div>
+            )
+        },{
+            accessor: 'created_at',
+            title: 'Created At',
+            sortable: true,
+            render: (request: ServiceRequest) => (
+                <div className="text-sm">{DateTimeUtil({date: request.created_at, showTime: true, showRelative: true, status: 'DD/MM/YYYY HH:mm'})}</div>
+            )
+        },
+        {
             accessor: 'price',
             title: 'Price',
             sortable: true,
@@ -557,7 +604,7 @@ const ServiceRequestManagement: React.FC = () => {
                         </button>
                     )}
 
-                    {!['completed', 'cancelled', 'failed'].includes(request.status) && (
+                    {![ 'cancelled', 'failed'].includes(request.status) && (
                         <button
                             onClick={() => {
                                 setSelectedRequest(request);
@@ -566,7 +613,7 @@ const ServiceRequestManagement: React.FC = () => {
                             className="p-1 text-orange-600 hover:text-orange-800 transition-colors"
                             title="Change Status"
                         >
-                            <IconEdit className="w-4 h-4" />
+                            <Edit className="w-4 h-4" />
                         </button>
                     )}
 
@@ -592,6 +639,8 @@ const ServiceRequestManagement: React.FC = () => {
         }
     ];
 
+   
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center h-64">
@@ -606,7 +655,10 @@ const ServiceRequestManagement: React.FC = () => {
                 {/* Header */}
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Service Requests</h1>
+                        <div className="flex items-center space-x-3">
+                            <h1 className="text-2xl font-bold text-gray-900">Service Requests</h1>
+                            <WebSocketStatus showText={false} />
+                        </div>
                         <p className="text-gray-600">Manage all service requests, jobs, and bookings in one place</p>
                     </div>
                     <button
@@ -697,6 +749,7 @@ const ServiceRequestManagement: React.FC = () => {
                         columns={columns}
                         loading={isLoading}
                         title="Service Requests"
+                        onRefreshData={() => mutateServiceRequests()}
                     />
                 </div>
 

@@ -28,6 +28,7 @@ class SensorSerializer(serializers.ModelSerializer):
     remaining_warranty_days = serializers.IntegerField(read_only=True)
     health_score = serializers.IntegerField(read_only=True)
     readings_count = serializers.SerializerMethodField()
+    assigned_bin = serializers.SerializerMethodField()
 
     class Meta:
         model = Sensor
@@ -37,6 +38,16 @@ class SensorSerializer(serializers.ModelSerializer):
     def get_readings_count(self, obj):
         """Get the number of readings for this sensor"""
         return obj.readings.count()
+
+    def get_assigned_bin(self, obj):
+        """Get the bin this sensor is assigned to"""
+        if hasattr(obj, "assigned_bin") and obj.assigned_bin:
+            return {
+                "id": obj.assigned_bin.id,
+                "bin_number": obj.assigned_bin.bin_number,
+                "name": obj.assigned_bin.name,
+            }
+        return None
 
 
 class SensorReadingSerializer(serializers.ModelSerializer):
@@ -193,6 +204,12 @@ class SmartBinSerializer(GeoFeatureModelSerializer):
     signal_strength = serializers.SerializerMethodField()
     is_online = serializers.SerializerMethodField()
 
+    # Add dimension-related computed fields
+    dimensions_display = serializers.CharField(
+        source="get_dimensions_display", read_only=True
+    )
+    volume_m3 = serializers.SerializerMethodField()
+
     class Meta:
         model = SmartBin
         geo_field = "location"
@@ -209,9 +226,8 @@ class SmartBinSerializer(GeoFeatureModelSerializer):
 
     def get_is_online(self, obj):
         """Get current online status"""
-        # Update the online status and return it
-        obj.check_and_set_online()
-        return obj.is_online
+        # Return current online status without modifying the object
+        return obj.current_online_status
 
     def get_user(self, obj):
         """Get full user data if user exists"""
@@ -220,6 +236,10 @@ class SmartBinSerializer(GeoFeatureModelSerializer):
 
             return UserSerializer(obj.user).data
         return None
+
+    def get_volume_m3(self, obj):
+        """Get volume in cubic meters"""
+        return obj.calculate_volume_m3()
 
 
 class SmartBinListSerializer(GeoFeatureModelSerializer):
@@ -239,10 +259,18 @@ class SmartBinListSerializer(GeoFeatureModelSerializer):
     signal_strength = serializers.SerializerMethodField()
     is_online = serializers.SerializerMethodField()
 
+    # Add dimension-related fields
+    dimensions_display = serializers.CharField(
+        source="get_dimensions_display", read_only=True
+    )
+    volume_m3 = serializers.SerializerMethodField()
+
     class Meta:
         model = SmartBin
         geo_field = "location"
         fields = [
+            "created_at",
+            "updated_at",
             "id",
             "bin_number",
             "name",
@@ -261,7 +289,15 @@ class SmartBinListSerializer(GeoFeatureModelSerializer):
             "signal_strength",
             "is_online",
             "last_reading_at",
+            "width_cm",
+            "height_cm",
+            "depth_cm",
+            "volume_liters",
+            "dimensions_display",
+            "volume_m3",
         ]
+
+        read_only_fields = ["created_at", "updated_at"]
 
     def get_battery_level(self, obj):
         """Get battery level from sensor if available"""
@@ -273,9 +309,12 @@ class SmartBinListSerializer(GeoFeatureModelSerializer):
 
     def get_is_online(self, obj):
         """Get current online status"""
-        # Update the online status and return it
-        obj.check_and_set_online()
-        return obj.is_online
+        # Return current online status without modifying the object
+        return obj.current_online_status
+
+    def get_volume_m3(self, obj):
+        """Get volume in cubic meters"""
+        return obj.calculate_volume_m3()
 
 
 class SmartBinListJSONSerializer(serializers.ModelSerializer):
@@ -315,7 +354,11 @@ class SmartBinListJSONSerializer(serializers.ModelSerializer):
             "signal_strength",
             "is_online",
             "last_reading_at",
+            "created_at",
+            "updated_at",
         ]
+
+        read_only_fields = ["created_at", "updated_at"]
 
     def get_battery_level(self, obj):
         """Get battery level from sensor if available"""
@@ -339,9 +382,8 @@ class SmartBinListJSONSerializer(serializers.ModelSerializer):
 
     def get_is_online(self, obj):
         """Get current online status"""
-        # Update the online status and return it
-        obj.check_and_set_online()
-        return obj.is_online
+        # Return current online status without modifying the object
+        return obj.current_online_status
 
     def get_user(self, obj):
         """Get full user data if user exists"""

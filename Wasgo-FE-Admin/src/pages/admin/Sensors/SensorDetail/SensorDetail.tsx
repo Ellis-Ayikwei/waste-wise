@@ -127,6 +127,8 @@ const SensorDetail: React.FC = () => {
         fetcher
     );
 
+    console.log("the sensor detail data", sensorData);
+
     // Fetch sensor alerts
     const { data: alertsData, isLoading: alertsLoading } = useSwr<SensorAlert[]>(
         id ? `waste/sensors/${id}/alerts/` : null,
@@ -176,6 +178,9 @@ const SensorDetail: React.FC = () => {
                     alerts={alerts}
                     readingsLoading={false} // No separate loading state for readings
                     alertsLoading={alertsLoading}
+                    onSuccess={() => {
+                        mutate();
+                    }}
                 />
 
                 {/* Edit Modal */}

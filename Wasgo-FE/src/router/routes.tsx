@@ -97,8 +97,9 @@ import PickupRequestsPage from '../pages/customer/PickupRequests/PickupRequestsP
 import ServiceRequestDetail from '../pages/customer/ServiceRequest/ServiceRequestDetail';
 import UserAccountSetting from '../pages/userAccountSetting';
 import JobRequests from '../pages/provider/Jobs/JobRequests/JobRequests';
-import PickupRoute from '../pages/provider/Jobs/PickupRoute';
-import ActiveJobs from '../pages/provider/ActiveJobs';
+import RouteDetail from '../pages/provider/Jobs/RouteDetail';
+import RoutesList from '../pages/provider/Jobs/RoutesList';
+import ActiveJobs from '../pages/provider/Jobs/ActiveJobs';
 import FleetManagement from '../pages/provider/FleetManagement';
 import Earnings from '../pages/provider/Earnings';
 import Dashboard from '../pages/Dasboard/Dashboard';
@@ -758,19 +759,19 @@ const routes = [
         layout: 'default',
     },
     {
-        path: '/provider/routes',
+        path: '/provider/pickup-routes',
         element: (
             <ProtectedRoute providerOnly>
-                <BookingTracking />
+                <RoutesList />
             </ProtectedRoute>
         ),
         layout: 'default',
     },
     {
-        path: '/provider/pickup-routes',
+        path: '/provider/routes/:routeId',
         element: (
             <ProtectedRoute providerOnly>
-                <PickupRoute />
+                <RouteDetail />
             </ProtectedRoute>
         ),
         layout: 'default',

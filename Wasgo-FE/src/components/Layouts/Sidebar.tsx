@@ -68,6 +68,8 @@ import {
 } from '@tabler/icons-react';
 
 import logo from '/assets/images/wasgologo/wasgo.png';
+import useSWR from 'swr';
+import fetcher from '../../services/fetcher';
 
 const Sidebar = () => {
     const [currentMenu, setCurrentMenu] = useState<string>('');
@@ -128,6 +130,10 @@ const Sidebar = () => {
         return '/dashboard';
     };
 
+    const { data: smartBinsData } = useSWR<any>(`/customers/${user?.id}/bins/`, fetcher);
+
+    console.log("smartBinsData", smartBinsData);
+
     // Customer navigation items - IoT Smart Waste Management focused
     const customerNavItems = [
         {
@@ -142,7 +148,7 @@ const Sidebar = () => {
             path: '/smart-bins',
             icon: <IconDatabase className="!w-8 !h-8 !text-white" />,
             label: 'Smart Bins',
-            badge: '3',
+            badge: smartBinsData?.count || 0,
             children: null,
         },
         {
@@ -232,36 +238,17 @@ const Sidebar = () => {
             badge: '5',
             children: null,
         },
-        {
-            name: 'active-jobs',
-            path: '/provider/active-jobs',
-            icon: <IconTruckDelivery className="!w-8 !h-8 !text-white" />,
-            label: 'Active Jobs',
-            badge: '2',
-            children: null,
-        },
-        {
-            name: 'smart-bin-alerts',
-            path: '/provider/smart-bin-alerts',
-            icon: <IconDatabase className="!w-8 !h-8 !text-white" />,
-            label: 'Smart Bin Alerts',
-            badge: '3',
-            children: null,
-        },
-        {
-            name: 'fleet-management',
-            path: '/provider/fleet',
-            icon: <IconTruck className="!w-8 !h-8 !text-white" />,
-            label: 'Fleet Management',
-            children: null,
-        },
-        {
-            name: 'analytics',
-            path: '/provider/analytics',
-            icon: <IconFileAnalytics className="!w-8 !h-8 !text-white" />,
-            label: 'Analytics',
-            children: null,
-        },
+        // {
+        //     name: 'active-jobs',
+        //     path: '/provider/active-jobs',
+        //     icon: <IconTruckDelivery className="!w-8 !h-8 !text-white" />,
+        //     label: 'Active Jobs',
+        //     badge: '2',
+        //     children: null,
+        // },
+       
+       
+       
         {
             name: 'earnings',
             path: '/provider/earnings',

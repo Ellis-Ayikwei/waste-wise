@@ -143,33 +143,33 @@
             
             {% if request %}
             <div class="booking-details">
-                <h3 style="margin-top: 0; color: #2E7D32;">Booking Details</h3>
+                <h3 style="margin-top: 0; color: #2E7D32;">Waste Collection Request Details</h3>
                 <div class="detail-row">
-                    <span class="detail-label">Booking Reference:</span>
+                    <span class="detail-label">Request Reference:</span>
                     <span class="detail-value">{{ request.tracking_number|default:"#REF" }}</span>
                 </div>
                 {% if request.pickup_location %}
                 <div class="detail-row">
-                    <span class="detail-label">Pickup Location:</span>
+                    <span class="detail-label">Collection Location:</span>
                     <span class="detail-value">{{ request.pickup_location.address|default:"TBD" }}</span>
                 </div>
                 {% endif %}
                 {% if request.delivery_location %}
                 <div class="detail-row">
-                    <span class="detail-label">Delivery Location:</span>
+                    <span class="detail-label">Disposal Location:</span>
                     <span class="detail-value">{{ request.delivery_location.address|default:"TBD" }}</span>
                 </div>
                 {% endif %}
                 {% if request.preferred_date %}
                 <div class="detail-row">
-                    <span class="detail-label">Preferred Date:</span>
+                    <span class="detail-label">Preferred Collection Date:</span>
                     <span class="detail-value">{{ request.preferred_date|date:"d M Y" }}</span>
                 </div>
                 {% endif %}
                 {% if request.estimated_price %}
                 <div class="detail-row">
-                    <span class="detail-label">Estimated Price:</span>
-                    <span class="detail-value">£{{ request.estimated_price }}</span>
+                    <span class="detail-label">Estimated Cost:</span>
+                    <span class="detail-value">GHS {{ request.estimated_price }}</span>
                 </div>
                 {% endif %}
             </div>
@@ -178,20 +178,20 @@
             <div class="next-steps">
                 <h3>What happens next?</h3>
                 <ul>
-                    <li>Service providers will review your booking request</li>
+                    <li>Waste collection providers will review your collection request</li>
                     <li>You'll receive notifications when providers submit bids</li>
-                    <li>You can compare bids and choose the best provider</li>
-                    <li>Once you accept a bid, we'll connect you with your provider</li>
+                    <li>You can compare bids and choose the best waste collection provider</li>
+                    <li>Once you accept a bid, we'll connect you with your collection provider</li>
                 </ul>
             </div>
             
             {% if action_url %}
-            <a href="{{ action_url }}" class="cta-button">{{ action_text|default:"View Booking" }}</a>
+            <a href="{{ action_url }}" class="cta-button">{{ action_text|default:"View Collection Request" }}</a>
             {% endif %}
         </div>
         
         <div class="footer">
-            <p>Need help? Contact our support team at <a href="mailto:support@wasgo.com">support@wasgo.com</a></p>
+            <p>Need help with your waste collection request? Contact our support team at <a href="mailto:support@wasgo.com">support@wasgo.com</a></p>
             <p>&copy; {{ current_year }} {{ app_name }}. All rights reserved.</p>
         </div>
     </div>

@@ -14,7 +14,8 @@ import {
     IconLoader, 
     IconDatabase, 
     IconBattery, 
-    IconWifi
+    IconWifi,
+    IconCurrentLocation
 } from '@tabler/icons-react';
 import AddressAutocomplete from '../../../components/AddressAutocomplete';
 import axiosInstance from '../../../services/axiosInstance';
@@ -22,6 +23,8 @@ import useSWR from 'swr';
 import fetcher from '../../../services/fetcher';
 import showNotification from '../../../utilities/showNotifcation';
 import useAuthUser from 'react-auth-kit/hooks/useAuthUser';
+import useWebSocket from '../../../hooks/useWebSocket';
+import WebSocketStatus from '../../../components/WebSocketStatus';
 
 interface ServiceRequestModalProps {
     editMode?: boolean;
@@ -41,7 +44,7 @@ interface ServiceRequestModalProps {
 
 interface SmartBin {
     id: string;
-    properties: {
+   
         bin_type_display: string;
         needs_collection: boolean;
         needs_maintenance: boolean;
@@ -53,7 +56,7 @@ interface SmartBin {
             needs_maintenance: boolean;
             needs_calibration: boolean;
         };
-    };
+   
 }
 
 interface ServiceRequest {
@@ -130,22 +133,50 @@ const CreateServiceRequestModal: React.FC<ServiceRequestModalProps> = ({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [activeStep, setActiveStep] = useState(1);
     const [selectedBin, setSelectedBin] = useState<SmartBin | null>(null);
+    const [isGettingLocation, setIsGettingLocation] = useState(false);
     const auth = useAuthUser();
     const user = auth?.user as any;
+
+    // WebSocket for real-time updates
+    const { isConnected } = useWebSocket({
+        onServiceRequestUpdate: (data) => {
+            // Handle real-time service request updates
+            if (data.requestId === requestId) {
+                showNotification({
+                    message: `Your service request has been updated: ${data.message}`,
+                    type: 'info',
+                    showHide: true
+                });
+            }
+        },
+        onNotification: (data) => {
+            // Handle general notifications
+            showNotification({
+                message: data.message,
+                type: data.severity,
+                showHide: true
+            });
+        }
+    });
+
+    // cons {data: customerData, error: customerDataError, isLoading: customerDataLoading } = useSWR('/cusomters')
     
 
 
     // Fetch user's bins
-    const { data: userBinsData } = useSWR('/customer/bins/', fetcher);
+    const { data: userBinsData } = useSWR(`/customers/${user.id}/bins/`, fetcher);
     const userBins = userBinsData || [];
+    console.log("the bin data", userBins)
 
     // Filter bins that need service
-    const binsNeedingService = userBins?.filter((bin: SmartBin) => 
-        bin.properties.needs_collection || 
-        bin.properties.needs_maintenance ||
-        bin.properties.sensor?.needs_maintenance ||
-        bin.properties.sensor?.needs_calibration
-    );
+    const binsNeedingService = userBins.results
+    
+    // const binsNeedingService = Array.isArray (userBins) && userBins?.filter((bin: SmartBin) => 
+    //     bin.needs_collection || 
+    //     bin.needs_maintenance ||
+    //     bin.sensor?.needs_maintenance ||
+    //     bin.sensor?.needs_calibration
+    // );
 
     // Handle pre-selected bin
     useEffect(() => {
@@ -185,6 +216,88 @@ const CreateServiceRequestModal: React.FC<ServiceRequestModalProps> = ({
         }));
     };
 
+    // Get current location function
+    const getCurrentLocation = () => {
+        if (!navigator.geolocation) {
+            showNotification('Geolocation is not supported by this browser.', 'error');
+            return;
+        }
+
+        setIsGettingLocation(true);
+
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                try {
+                    const { latitude, longitude } = position.coords;
+                    
+                    // Use browser's built-in reverse geocoding or fallback to coordinates
+                    try {
+                        // Try to use a simple reverse geocoding approach
+                        const response = await fetch(
+                            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+                        );
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.localityInfo && data.localityInfo.administrative) {
+                                const admin = data.localityInfo.administrative[0];
+                                const locality = data.localityInfo.locality[0];
+                                const formattedAddress = `${locality?.name || ''}, ${admin?.name || ''}, ${data.countryName || ''}`.replace(/^,\s*|,\s*$/g, '');
+                                
+                                setFormData(prev => ({
+                                    ...prev,
+                                    pickup_address: formattedAddress || `Current Location (${latitude.toFixed(6)}, ${longitude.toFixed(6)})`,
+                                    pickup_location: `${latitude},${longitude}`
+                                }));
+                                
+                                showNotification('Current location set successfully!', 'success');
+                                return;
+                            }
+                        }
+                    } catch (reverseGeocodeError) {
+                        console.log('Reverse geocoding failed, using coordinates:', reverseGeocodeError);
+                    }
+                    
+                    // Fallback: use coordinates if reverse geocoding fails
+                    setFormData(prev => ({
+                        ...prev,
+                        pickup_address: `Current Location (${latitude.toFixed(6)}, ${longitude.toFixed(6)})`,
+                        pickup_location: `${latitude},${longitude}`
+                    }));
+                    showNotification({message: 'Location set successfully!', type: 'success', showHide: true});
+                } catch (error) {
+                    console.error('Error getting location:', error);
+                    showNotification({message: 'Failed to get your current location. Please try again.', type: 'error', showHide: true});
+                } finally {
+                    setIsGettingLocation(false);
+                }
+            },
+            (error) => {
+                setIsGettingLocation(false);
+                let errorMessage = 'Unable to get your current location.';
+                
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage = 'Location access denied. Please enable location permissions.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage = 'Location information is unavailable.';
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage = 'Location request timed out.';
+                        break;
+                }
+                
+                showNotification({message: errorMessage, type: 'error', showHide: true});
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 300000 // 5 minutes
+            }
+        );
+    };
+
     const handleInputChange = (field: keyof ServiceRequest, value: any) => {
         setFormData(prev => ({
             ...prev,
@@ -195,21 +308,21 @@ const CreateServiceRequestModal: React.FC<ServiceRequestModalProps> = ({
     const handleBinSelection = (bin: SmartBin) => {
         setSelectedBin(bin);
         handleInputChange('smart_bin', bin.id);
-        handleInputChange('pickup_address', bin.properties.address);
+        handleInputChange('pickup_address', bin.address);
     };
 
     const getBinStatusColor = (bin: SmartBin) => {
-        if (bin.properties.needs_collection) return 'text-red-600 bg-red-50 border-red-200';
-        if (bin.properties.needs_maintenance) return 'text-orange-600 bg-orange-50 border-orange-200';
-        if (bin.properties.sensor?.needs_maintenance || bin.properties.sensor?.needs_calibration) return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+        if (bin.needs_collection) return 'text-red-600 bg-red-50 border-red-200';
+        if (bin.needs_maintenance) return 'text-orange-600 bg-orange-50 border-orange-200';
+        if (bin.sensor?.needs_maintenance || bin.sensor?.needs_calibration) return 'text-yellow-600 bg-yellow-50 border-yellow-200';
         return 'text-green-600 bg-green-50 border-green-200';
     };
 
     const getBinStatusText = (bin: SmartBin) => {
-        if (bin.properties.needs_collection) return 'Needs Collection';
-        if (bin.properties.needs_maintenance) return 'Needs Maintenance';
-        if (bin.properties.sensor?.needs_maintenance) return 'Sensor Maintenance';
-        if (bin.properties.sensor?.needs_calibration) return 'Sensor Calibration';
+        if (bin.needs_collection) return 'Needs Collection';
+        if (bin.needs_maintenance) return 'Needs Maintenance';
+        if (bin.sensor?.needs_maintenance) return 'Sensor Maintenance';
+        if (bin.sensor?.needs_calibration) return 'Sensor Calibration';
         return 'Operational';
     };
 
@@ -337,12 +450,15 @@ const CreateServiceRequestModal: React.FC<ServiceRequestModalProps> = ({
                             leaveTo="opacity-0 scale-95"
                         >
                             <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                                <Dialog.Title
-                                    as="h3"
-                                    className="text-lg font-medium leading-6 text-gray-900 mb-4"
-                                >
-                                    {requestId ? 'Edit Service Request' : 'Create New Service Request'}
-                                </Dialog.Title>
+                                <div className="flex items-center justify-between mb-4">
+                                    <Dialog.Title
+                                        as="h3"
+                                        className="text-lg font-medium leading-6 text-gray-900"
+                                    >
+                                        {requestId ? 'Edit Service Request' : 'Create New Service Request'}
+                                    </Dialog.Title>
+                                    <WebSocketStatus showText={false} />
+                                </div>
 
                                 {/* Step Indicator */}
                                 <div className="flex items-center justify-center mb-6">
@@ -408,8 +524,8 @@ const CreateServiceRequestModal: React.FC<ServiceRequestModalProps> = ({
                                                         Select Bin *
                                                     </label>
                                                     <div className="space-y-3 max-h-64 overflow-y-auto">
-                                                        {binsNeedingService.length > 0 ? (
-                                                            binsNeedingService.map((bin: SmartBin) => (
+                                                        {binsNeedingService?.length > 0 ? (
+                                                            binsNeedingService?.map((bin: SmartBin) => (
                                                                 <div
                                                                     key={bin.id}
                                                                     onClick={() => handleBinSelection(bin)}
@@ -424,10 +540,10 @@ const CreateServiceRequestModal: React.FC<ServiceRequestModalProps> = ({
                                                                             <IconDatabase className="w-5 h-5 text-blue-600" />
                                                                             <div>
                                                                                 <h5 className="font-medium text-gray-900">
-                                                                                    {bin.properties.bin_number}
+                                                                                    {bin.bin_number}
                                                                                 </h5>
                                                                                 <p className="text-sm text-gray-600">
-                                                                                    {bin.properties.bin_type_display}
+                                                                                    {bin.bin_type_display}
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -438,15 +554,15 @@ const CreateServiceRequestModal: React.FC<ServiceRequestModalProps> = ({
                                                                     <div className="space-y-2">
                                                                         <div className="flex items-center space-x-2 text-sm text-gray-600">
                                                                             <IconMapPin className="w-4 h-4" />
-                                                                            <span>{bin.properties.address}</span>
+                                                                            <span>{bin.address}</span>
                                                                         </div>
                                                                         <div className="flex items-center space-x-2 text-sm text-gray-600">
                                                                             <IconBattery className="w-4 h-4" />
-                                                                            <span>Battery: {bin.properties.sensor?.battery_level || 0}%</span>
+                                                                            <span>Battery: {bin.sensor?.battery_level || 0}%</span>
                                                                         </div>
                                                                         <div className="flex items-center space-x-2 text-sm text-gray-600">
                                                                             <IconWifi className="w-4 h-4" />
-                                                                            <span>Signal: {bin.properties.sensor?.signal_strength || 0}/5</span>
+                                                                            <span>Signal: {bin.sensor?.signal_strength || 0}/5</span>
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -472,16 +588,33 @@ const CreateServiceRequestModal: React.FC<ServiceRequestModalProps> = ({
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     {/* Pickup Address with Search */}
                                                     <div className="md:col-span-2">
-                                                        <AddressAutocomplete
-                                                            placeholder="Search for an address or use current location"
-                                                            value={formData.pickup_address}
-                                                            onAddressChange={(value) => handleInputChange('pickup_address', value)}
-                                                            onAddressSelect={handleAddressSelect}
-                                                            label="Pickup Address *"
-                                                            required={true}
-                                                            showDetails={false}
-                                                            showPostcodeAddresses={false}
-                                                        />
+                                                        <div className="space-y-3">
+                                                            <AddressAutocomplete
+                                                                placeholder="Search for an address or use current location"
+                                                                value={formData.pickup_address}
+                                                                onAddressChange={(value) => handleInputChange('pickup_address', value)}
+                                                                onAddressSelect={handleAddressSelect}
+                                                                label="Pickup Address"
+                                                                required={true}
+                                                                showDetails={false}
+                                                                showPostcodeAddresses={false}
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={getCurrentLocation}
+                                                                disabled={isGettingLocation}
+                                                                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            >
+                                                                {isGettingLocation ? (
+                                                                    <IconLoader className="w-4 h-4 animate-spin" />
+                                                                ) : (
+                                                                    <IconCurrentLocation className="w-4 h-4" />
+                                                                )}
+                                                                <span>
+                                                                    {isGettingLocation ? 'Getting Location...' : 'Use My Current Location'}
+                                                                </span>
+                                                            </button>
+                                                        </div>
                                                     </div>
 
                                                     {/* Service Date and Time */}

@@ -46,6 +46,11 @@ export interface ProviderProfile {
         type: string;
         coordinates: number[];
     };
+    base_location_address?: string;
+    base_location_coordinates?: {
+        lat: number;
+        lng: number;
+    };
     service_area?: {
         type: string;
         coordinates: number[][][];

@@ -3,18 +3,18 @@
 
 Great news {{ user_name }}!
 
-💰 NEW BID RECEIVED
+💰 NEW COLLECTION BID RECEIVED
 
 {% if bid %}
-Bid Amount: £{{ bid.amount }}
+Bid Amount: GHS {{ bid.amount }}
 {% if bid.estimated_completion_time %}Estimated completion: {{ bid.estimated_completion_time|date:"d M Y" }}{% endif %}
 {% endif %}
 
 {{ message }}
 
 {% if provider %}
-PROVIDER DETAILS
-----------------
+WASTE COLLECTION PROVIDER DETAILS
+----------------------------------
 Company: {{ provider.company_name }}
 {% if provider.rating %}Rating: ⭐ {{ provider.rating }}/5{% endif %}
 {% if provider.user.phone_number %}Phone: {{ provider.user.phone_number }}{% endif %}
@@ -25,13 +25,13 @@ Notes from Provider:
 {% endif %}
 
 {% if action_url %}
-View all bids: {{ action_url }}
+View all collection bids: {{ action_url }}
 {% endif %}
 
-💡 TIP: Compare multiple bids to find the best value. 
-Consider provider ratings, reviews, and availability when making your decision.
+💡 TIP: Compare multiple collection bids to find the best value. 
+Consider provider ratings, reviews, and waste handling capabilities when making your decision.
 
-Need help choosing? Contact our support team at support@wasgo.com
+Need help choosing a waste collection provider? Contact our support team at support@wasgo.com
 
 ---
 This is an automated message, please do not reply to this email.

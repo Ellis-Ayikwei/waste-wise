@@ -326,9 +326,13 @@ class Command(BaseCommand):
             else:
                 status = "active"
 
+            # Generate realistic bin dimensions based on bin type
+            bin_type = random.choice(bin_types)
+            dimensions = self.get_bin_dimensions(bin_type.name)
+
             bin = SmartBin.objects.create(
                 name=f"{random.choice(landmarks)} Bin {i+1}",
-                bin_type=random.choice(bin_types),
+                bin_type=bin_type,
                 sensor=sensor,
                 location=Point(lng, lat, srid=4326),
                 address=f'{random.randint(1, 999)} {random.choice(landmarks)}, {location["area"]}',
@@ -346,6 +350,10 @@ class Command(BaseCommand):
                 status=status,
                 capacity_kg=random.choice([100, 150, 200]),
                 current_weight_kg=fill_level * random.uniform(0.8, 1.2),
+                # Add physical dimensions
+                width_cm=dimensions["width_cm"],
+                height_cm=dimensions["height_cm"],
+                depth_cm=dimensions["depth_cm"],
                 installation_date=timezone.now().date()
                 - timedelta(days=random.randint(30, 365)),
                 has_compactor=random.random() < 0.1,
@@ -366,6 +374,47 @@ class Command(BaseCommand):
                 )
 
         return bins
+
+    def get_bin_dimensions(self, bin_type_name):
+        """Get realistic dimensions for different bin types"""
+        dimension_configs = {
+            "general": {
+                "width_cm": random.uniform(50, 70),  # 50-70cm wide
+                "height_cm": random.uniform(80, 120),  # 80-120cm tall
+                "depth_cm": random.uniform(50, 70),  # 50-70cm deep
+            },
+            "recyclable": {
+                "width_cm": random.uniform(60, 80),  # 60-80cm wide
+                "height_cm": random.uniform(90, 130),  # 90-130cm tall
+                "depth_cm": random.uniform(60, 80),  # 60-80cm deep
+            },
+            "organic": {
+                "width_cm": random.uniform(
+                    40, 60
+                ),  # 40-60cm wide (smaller for organic)
+                "height_cm": random.uniform(70, 100),  # 70-100cm tall
+                "depth_cm": random.uniform(40, 60),  # 40-60cm deep
+            },
+            "hazardous": {
+                "width_cm": random.uniform(30, 50),  # 30-50cm wide (smaller for safety)
+                "height_cm": random.uniform(60, 90),  # 60-90cm tall
+                "depth_cm": random.uniform(30, 50),  # 30-50cm deep
+            },
+            "electronic": {
+                "width_cm": random.uniform(50, 70),  # 50-70cm wide
+                "height_cm": random.uniform(80, 110),  # 80-110cm tall
+                "depth_cm": random.uniform(50, 70),  # 50-70cm deep
+            },
+        }
+
+        # Default dimensions for any unlisted bin types
+        default_dimensions = {
+            "width_cm": random.uniform(50, 70),
+            "height_cm": random.uniform(80, 120),
+            "depth_cm": random.uniform(50, 70),
+        }
+
+        return dimension_configs.get(bin_type_name, default_dimensions)
 
     def create_users(self, count):
         """Create users and customer profiles"""
@@ -396,7 +445,7 @@ class Command(BaseCommand):
             while CustomerProfile.objects.filter(referral_code=referral_code).exists():
                 referral_code = f"REF{i+1:04d}-{counter:02d}"
                 counter += 1
-            
+
             # Create customer profile
             CustomerProfile.objects.create(
                 user=user,
@@ -579,6 +628,22 @@ class Command(BaseCommand):
         )
         bins_needing_collection = SmartBin.objects.filter(fill_level__gte=80).count()
 
+        # Calculate average dimensions and volume
+        avg_volume = (
+            SmartBin.objects.aggregate(avg_volume=models.Avg("volume_liters"))[
+                "avg_volume"
+            ]
+            or 0
+        )
+        avg_width = (
+            SmartBin.objects.aggregate(avg_width=models.Avg("width_cm"))["avg_width"]
+            or 0
+        )
+        avg_height = (
+            SmartBin.objects.aggregate(avg_height=models.Avg("height_cm"))["avg_height"]
+            or 0
+        )
+
         self.stdout.write("\n" + "=" * 60)
         self.stdout.write("🎯 WASTE MANAGEMENT SYSTEM SUMMARY")
         self.stdout.write("=" * 60)
@@ -590,6 +655,10 @@ class Command(BaseCommand):
         self.stdout.write(f"  Bins assigned to users: {bins_assigned_to_users}")
         self.stdout.write(f"  Average fill level: {avg_fill:.1f}%")
         self.stdout.write(f"  Bins needing collection: {bins_needing_collection}")
+        self.stdout.write(f"  Average volume: {avg_volume:.1f}L")
+        self.stdout.write(
+            f"  Average dimensions: {avg_width:.1f}cm × {avg_height:.1f}cm"
+        )
 
         self.stdout.write(f"\n📡 SENSORS:")
         self.stdout.write(f"  Total sensors: {total_sensors}")
@@ -615,7 +684,11 @@ class Command(BaseCommand):
                 if bin.sensor
                 else " (No sensor)"
             )
-            self.stdout.write(f"  {bin.bin_number}: {bin.name}{sensor_info}{user_info}")
+            dimensions_info = f" - {bin.get_dimensions_display()}"
+            volume_info = f" ({bin.volume_liters}L)"
+            self.stdout.write(
+                f"  {bin.bin_number}: {bin.name}{sensor_info}{user_info}{dimensions_info}{volume_info}"
+            )
 
         self.stdout.write("\n" + "=" * 60)
         self.stdout.write("✅ System setup completed successfully!")

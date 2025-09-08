@@ -113,7 +113,7 @@
         <div class="content">
             <div class="greeting">Hello {{ user_name }}!</div>
             
-            <div class="confirmation-badge">✓ Booking Confirmed</div>
+            <div class="confirmation-badge">✓ Collection Request Confirmed</div>
             
             <div class="message">
                 {{ message }}
@@ -125,7 +125,7 @@
                     <div class="provider-avatar">
                         {{ provider.company_name|first|upper|default:"P" }}
                     </div>
-                    <h3 style="margin: 0 0 15px 0; color: #1976D2;">Your Service Provider</h3>
+                    <h3 style="margin: 0 0 15px 0; color: #1976D2;">Your Waste Collection Provider</h3>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Company:</span>
@@ -154,20 +154,20 @@
             
             {% if request %}
             <div class="provider-info">
-                <h3 style="margin-top: 0; color: #1976D2;">Booking Summary</h3>
+                <h3 style="margin-top: 0; color: #1976D2;">Collection Request Summary</h3>
                 <div class="detail-row">
                     <span class="detail-label">Reference:</span>
                     <span class="detail-value">{{ request.tracking_number|default:"#REF" }}</span>
                 </div>
                 {% if request.pickup_location %}
                 <div class="detail-row">
-                    <span class="detail-label">Pickup:</span>
+                    <span class="detail-label">Collection From:</span>
                     <span class="detail-value">{{ request.pickup_location.address|default:"TBD" }}</span>
                 </div>
                 {% endif %}
                 {% if request.delivery_location %}
                 <div class="detail-row">
-                    <span class="detail-label">Delivery:</span>
+                    <span class="detail-label">Disposal To:</span>
                     <span class="detail-value">{{ request.delivery_location.address|default:"TBD" }}</span>
                 </div>
                 {% endif %}
@@ -181,12 +181,12 @@
             {% endif %}
             
             {% if action_url %}
-            <a href="{{ action_url }}" class="cta-button">{{ action_text|default:"View Booking Details" }}</a>
+            <a href="{{ action_url }}" class="cta-button">{{ action_text|default:"View Collection Details" }}</a>
             {% endif %}
         </div>
         
         <div class="footer">
-            <p>Need help? Contact our support team at <a href="mailto:support@wasgo.com">support@wasgo.com</a></p>
+            <p>Need help with your waste collection? Contact our support team at <a href="mailto:support@wasgo.com">support@wasgo.com</a></p>
             <p>&copy; {{ current_year }} {{ app_name }}. All rights reserved.</p>
         </div>
     </div>

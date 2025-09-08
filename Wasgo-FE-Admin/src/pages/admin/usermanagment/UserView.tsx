@@ -137,6 +137,7 @@ export interface UserAccount {
     autoSave?: boolean;
     analytics?: boolean;
   };
+  suspension_reason?: string;
 }
 
 const defaultUser: UserAccount = {
@@ -193,6 +194,16 @@ const UserView: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // User management state
+  const [selectedUser, setSelectedUser] = useState<UserAccount | null>(null);
+  const [showSuspendModal, setShowSuspendModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showActivateModal, setShowActivateModal] = useState(false);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [suspensionReason, setSuspensionReason] = useState('');
+  const [deactivationReason, setDeactivationReason] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -405,6 +416,194 @@ const UserView: React.FC = () => {
         [field]: value
       }
     });
+  };
+
+  // User Management Functions
+  const handleSuspend = () => {
+    setSelectedUser(user);
+    setShowSuspendModal(true);
+    setSuspensionReason(user.suspension_reason || '');
+  };
+
+  const handleConfirmSuspend = async () => {
+    if (!selectedUser) return;
+    
+    try {
+      setActionLoading(true);
+      const newStatus = selectedUser.account_status === 'suspended' ? 'active' : 'suspended';
+      
+      await axiosInstance.patch(`/users/${selectedUser.id}/`, {
+        account_status: newStatus,
+        suspension_reason: suspensionReason,
+      });
+
+      // Update local state
+      const updatedUser = {
+        ...selectedUser,
+        account_status: newStatus,
+        suspension_reason: suspensionReason,
+      };
+      setUser(updatedUser);
+      setEditedUser(updatedUser);
+
+      setShowSuspendModal(false);
+      setSuspensionReason('');
+      setSelectedUser(null);
+      
+      showNotification({
+        title: 'Success',
+        message: `User ${newStatus === 'suspended' ? 'suspended' : 'reactivated'} successfully`,
+        color: 'green',
+      });
+    } catch (err) {
+      setError('Failed to update user status. Please try again.');
+      console.error('Error updating user status:', err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDelete = () => {
+    setSelectedUser(user);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedUser) return;
+    
+    try {
+      setActionLoading(true);
+      await axiosInstance.delete(`/users/${selectedUser.id}/`);
+      
+      setShowDeleteModal(false);
+      setSelectedUser(null);
+      
+      showNotification({
+        title: 'Success',
+        message: 'User deleted successfully',
+        color: 'green',
+      });
+      
+      // Navigate back to users list
+      navigate('/admin/users');
+    } catch (err) {
+      setError('Failed to delete user. Please try again.');
+      console.error('Error deleting user:', err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleVerifyUser = async () => {
+    try {
+      setActionLoading(true);
+      await axiosInstance.patch(`/users/${user.id}/`, {
+        account_status: 'active',
+      });
+
+      // Update local state
+      const updatedUser = {
+        ...user,
+        account_status: 'active',
+      };
+      setUser(updatedUser);
+      setEditedUser(updatedUser);
+      
+      showNotification({
+        title: 'Success',
+        message: 'User verified successfully',
+        color: 'green',
+      });
+    } catch (err) {
+      setError('Failed to verify user. Please try again.');
+      console.error('Error verifying user:', err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleActivateUser = () => {
+    setSelectedUser(user);
+    setShowActivateModal(true);
+  };
+
+  const handleConfirmActivate = async () => {
+    if (!selectedUser) return;
+    
+    try {
+      setActionLoading(true);
+      await axiosInstance.patch(`/users/${selectedUser.id}/activate/`, {
+        is_active: true,
+        account_status: 'active',
+      });
+
+      // Update local state
+      const updatedUser = {
+        ...selectedUser,
+        is_active: true,
+        account_status: 'active',
+      };
+      setUser(updatedUser);
+      setEditedUser(updatedUser);
+
+      setShowActivateModal(false);
+      setSelectedUser(null);
+      
+      showNotification({
+        title: 'Success',
+        message: 'User activated successfully',
+        color: 'green',
+      });
+    } catch (err) {
+      setError('Failed to activate user. Please try again.');
+      console.error('Error activating user:', err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDisableUser = () => {
+    setSelectedUser(user);
+    setShowDeactivateModal(true);
+    setDeactivationReason('');
+  };
+
+  const handleConfirmDeactivate = async () => {
+    if (!selectedUser) return;
+    
+    try {
+      setActionLoading(true);
+      await axiosInstance.patch(`/users/${selectedUser.id}/deactivate`, {
+        is_active: false,
+        account_status: 'inactive',
+        suspension_reason: deactivationReason,
+      });
+
+      // Update local state
+      const updatedUser = {
+        ...selectedUser,
+        is_active: false,
+        account_status: 'inactive',
+        suspension_reason: deactivationReason,
+      };
+      setUser(updatedUser);
+      setEditedUser(updatedUser);
+
+      setShowDeactivateModal(false);
+      setDeactivationReason('');
+      setSelectedUser(null);
+      
+      showNotification({
+        title: 'Success',
+        message: 'User deactivated successfully',
+        color: 'yellow',
+      });
+    } catch (err) {
+      setError('Failed to deactivate user. Please try again.');
+      console.error('Error deactivating user:', err);
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const formatDate = (dateString: string): string => {
@@ -632,10 +831,22 @@ const UserView: React.FC = () => {
             {/* Action Buttons */}
             {!isEditing && (
               <>
+                {user.account_status === 'pending' && (
+                  <button
+                    onClick={handleVerifyUser}
+                    disabled={actionLoading}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center disabled:opacity-50"
+                    title="Verify User"
+                  >
+                    <UserCheck className="w-4 h-4 mr-2" />
+                    Verify
+                  </button>
+                )}
                 {!user.is_active && (
                   <button
-                    // onClick={handleActivateUser} // TODO: Move logic to subcomponent or refactor
-                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center"
+                    onClick={handleActivateUser}
+                    disabled={actionLoading}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center disabled:opacity-50"
                     title="Activate User"
                   >
                     <Power className="w-4 h-4 mr-2" />
@@ -644,8 +855,9 @@ const UserView: React.FC = () => {
                 )}
                 {user.is_active && (
                   <button
-                    // onClick={handleDisableUser} // TODO: Move logic to subcomponent or refactor
-                    className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 flex items-center"
+                    onClick={handleDisableUser}
+                    disabled={actionLoading}
+                    className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 flex items-center disabled:opacity-50"
                     title="Disable User"
                   >
                     <Ban className="w-4 h-4 mr-2" />
@@ -653,8 +865,27 @@ const UserView: React.FC = () => {
                   </button>
                 )}
                 <button
-                  // onClick={handleDeleteUser} // TODO: Move logic to subcomponent or refactor
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 flex items-center"
+                  onClick={handleSuspend}
+                  disabled={actionLoading}
+                  className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 flex items-center disabled:opacity-50"
+                  title={user.account_status === 'suspended' ? 'Reactivate User' : 'Suspend User'}
+                >
+                  {user.account_status === 'suspended' ? (
+                    <>
+                      <UserCheck className="w-4 h-4 mr-2" />
+                      Reactivate
+                    </>
+                  ) : (
+                    <>
+                      <Ban className="w-4 h-4 mr-2" />
+                      Suspend
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={actionLoading}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 flex items-center disabled:opacity-50"
                   title="Delete User"
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
@@ -662,7 +893,8 @@ const UserView: React.FC = () => {
                 </button>
                 <button
                   onClick={handleEdit}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center"
+                  disabled={actionLoading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center disabled:opacity-50"
                   title="Edit User"
                 >
                   <Edit2 className="w-4 h-4 mr-2" />
@@ -731,8 +963,246 @@ const UserView: React.FC = () => {
 
       {/* Tab Content */}
       {renderTabContent()}
+
+      {/* Suspend/Reactivate Modal */}
+      {showSuspendModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-700">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+              {selectedUser.account_status === 'suspended' ? 'Reactivate User Account' : 'Suspend User Account'}
+            </h3>
+
+            <div className="mb-6">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                {selectedUser.account_status === 'suspended'
+                  ? 'Are you sure you want to reactivate this user account?'
+                  : 'Are you sure you want to suspend this user account? Please provide a reason:'}
+              </p>
+
+              {selectedUser.account_status !== 'suspended' && (
+                <textarea
+                  className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl dark:bg-gray-700 dark:text-white resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  rows={3}
+                  value={suspensionReason}
+                  onChange={(e) => setSuspensionReason(e.target.value)}
+                  placeholder="Enter reason for suspension..."
+                />
+              )}
+
+              <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                <p className="font-semibold text-gray-900 dark:text-white mb-2">User Details:</p>
+                <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                  <p>
+                    {selectedUser.first_name} {selectedUser.last_name} ({selectedUser.id})
+                  </p>
+                  <p>{selectedUser.email}</p>
+                  <p className="capitalize">{selectedUser.user_type}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                onClick={() => {
+                  setShowSuspendModal(false);
+                  setSelectedUser(null);
+                  setSuspensionReason('');
+                }}
+                disabled={actionLoading}
+              >
+                Cancel
+              </button>
+              <button
+                className={`flex-1 px-4 py-2.5 rounded-xl text-white text-sm font-medium transition-colors ${
+                  selectedUser.account_status === 'suspended' ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700'
+                }`}
+                onClick={handleConfirmSuspend}
+                disabled={actionLoading || (selectedUser.account_status !== 'suspended' && !suspensionReason.trim())}
+              >
+                {actionLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    {selectedUser.account_status === 'suspended' ? 'Reactivating...' : 'Suspending...'}
+                  </>
+                ) : (
+                  selectedUser.account_status === 'suspended' ? 'Reactivate' : 'Suspend'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Modal */}
+      {showDeleteModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-700">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Delete User Account</h3>
+
+            <div className="mb-6">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Are you sure you want to permanently delete this user account? This action cannot be undone.
+              </p>
+
+              <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800">
+                <p className="font-semibold text-red-900 dark:text-red-400 mb-2">User Details:</p>
+                <div className="space-y-1 text-sm text-red-700 dark:text-red-300">
+                  <p>
+                    {selectedUser.first_name} {selectedUser.last_name} ({selectedUser.id})
+                  </p>
+                  <p>{selectedUser.email}</p>
+                  <p className="capitalize">{selectedUser.user_type}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setSelectedUser(null);
+                }}
+                disabled={actionLoading}
+              >
+                Cancel
+              </button>
+              <button 
+                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 rounded-xl text-white text-sm font-medium transition-colors disabled:opacity-50" 
+                onClick={handleConfirmDelete}
+                disabled={actionLoading}
+              >
+                {actionLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Deleting...
+                  </>
+                  ) : (
+                    'Delete Permanently'
+                  )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Activate Modal */}
+      {showActivateModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-700">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Activate User Account</h3>
+
+            <div className="mb-6">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Are you sure you want to activate this user account? The user will be able to access the system again.
+              </p>
+
+              <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
+                <p className="font-semibold text-green-900 dark:text-green-400 mb-2">User Details:</p>
+                <div className="space-y-1 text-sm text-green-700 dark:text-green-300">
+                  <p>
+                    {selectedUser.first_name} {selectedUser.last_name} ({selectedUser.id})
+                  </p>
+                  <p>{selectedUser.email}</p>
+                  <p className="capitalize">{selectedUser.user_type}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                onClick={() => {
+                  setShowActivateModal(false);
+                  setSelectedUser(null);
+                }}
+                disabled={actionLoading}
+              >
+                Cancel
+              </button>
+              <button
+                className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 rounded-xl text-white text-sm font-medium transition-colors disabled:opacity-50"
+                onClick={handleConfirmActivate}
+                disabled={actionLoading}
+              >
+                {actionLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Activating...
+                  </>
+                ) : (
+                  'Activate User'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Deactivate Modal */}
+      {showDeactivateModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-700">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Deactivate User Account</h3>
+
+            <div className="mb-6">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Are you sure you want to deactivate this user account? Please provide a reason for deactivation:
+              </p>
+
+              <textarea
+                className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl dark:bg-gray-700 dark:text-white resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                rows={3}
+                value={deactivationReason}
+                onChange={(e) => setDeactivationReason(e.target.value)}
+                placeholder="Enter reason for deactivation..."
+              />
+
+              <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-800">
+                <p className="font-semibold text-yellow-900 dark:text-yellow-400 mb-2">User Details:</p>
+                <div className="space-y-1 text-sm text-yellow-700 dark:text-yellow-300">
+                  <p>
+                    {selectedUser.first_name} {selectedUser.last_name} ({selectedUser.id})
+                  </p>
+                  <p>{selectedUser.email}</p>
+                  <p className="capitalize">{selectedUser.user_type}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                onClick={() => {
+                  setShowDeactivateModal(false);
+                  setSelectedUser(null);
+                  setDeactivationReason('');
+                }}
+                disabled={actionLoading}
+              >
+                Cancel
+              </button>
+              <button
+                className="flex-1 px-4 py-2.5 bg-yellow-600 hover:bg-yellow-700 rounded-xl text-white text-sm font-medium transition-colors disabled:opacity-50"
+                onClick={handleConfirmDeactivate}
+                disabled={actionLoading || !deactivationReason.trim()}
+              >
+                {actionLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Deactivating...
+                  </>
+                ) : (
+                  'Deactivate User'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default UserView; 
+export default UserView;

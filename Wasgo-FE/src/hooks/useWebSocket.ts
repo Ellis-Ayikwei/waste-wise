@@ -1,281 +1,174 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
-import websocketService, { WebSocketEvent, WebSocketEventHandler } from '../services/websocketService';
+import { useEffect, useState, useCallback } from 'react';
+import websocketService, { 
+    WebSocketMessage, 
+    NotificationData, 
+    ServiceRequestUpdate, 
+    BinStatusUpdate, 
+    SensorAlert,
+    ChatMessage,
+    ChatTyping,
+    ChatRead,
+    ChatRoomUpdate,
+    ChatAttachment
+} from '../services/websocketService';
 
-interface UseWebSocketOptions {
-  autoConnect?: boolean;
-  onConnect?: () => void;
-  onDisconnect?: () => void;
-  onError?: (error: any) => void;
+export interface UseWebSocketOptions {
+    onNotification?: (data: NotificationData) => void;
+    onServiceRequestUpdate?: (data: ServiceRequestUpdate) => void;
+    onBinStatusUpdate?: (data: BinStatusUpdate) => void;
+    onSensorAlert?: (data: SensorAlert) => void;
+    onSystemMessage?: (data: any) => void;
+    onChatMessage?: (data: ChatMessage) => void;
+    onChatTyping?: (data: ChatTyping) => void;
+    onChatRead?: (data: ChatRead) => void;
+    onChatRoomUpdate?: (data: ChatRoomUpdate) => void;
+    onConnectionStatusChange?: (status: 'connected' | 'disconnected' | 'connecting') => void;
 }
 
-interface UseWebSocketReturn {
-  isConnected: boolean;
-  connect: () => Promise<void>;
-  disconnect: () => void;
-  subscribe: (eventType: string, handler: WebSocketEventHandler) => void;
-  unsubscribe: (eventType: string, handler: WebSocketEventHandler) => void;
-  emit: (eventType: string, data: any) => void;
-  joinRoom: (roomName: string) => void;
-  leaveRoom: (roomName: string) => void;
-  connectionStatus: {
-    connected: boolean;
-    reconnectAttempts: number;
-    maxReconnectAttempts: number;
-  };
+export interface UseWebSocketReturn {
+    connectionStatus: 'connected' | 'disconnected' | 'connecting';
+    sendMessage: (type: string, data: any) => void;
+    isConnected: boolean;
+    reconnect: () => void;
+    // Chat methods
+    sendChatMessage: (roomId: string, message: string, messageType?: 'text' | 'image' | 'file', replyTo?: string, attachments?: ChatAttachment[]) => void;
+    sendTypingIndicator: (roomId: string, isTyping: boolean) => void;
+    markMessageAsRead: (roomId: string, messageId: string) => void;
+    joinChatRoom: (roomId: string) => void;
+    leaveChatRoom: (roomId: string) => void;
 }
 
 export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketReturn => {
-  const {
-    autoConnect = true,
-    onConnect,
-    onDisconnect,
-    onError
-  } = options;
+    const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting'>(
+        websocketService.getConnectionStatus()
+    );
 
-  const [isConnected, setIsConnected] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState({
-    connected: false,
-    reconnectAttempts: 0,
-    maxReconnectAttempts: 5
-  });
+    const {
+        onNotification,
+        onServiceRequestUpdate,
+        onBinStatusUpdate,
+        onSensorAlert,
+        onSystemMessage,
+        onChatMessage,
+        onChatTyping,
+        onChatRead,
+        onChatRoomUpdate,
+        onConnectionStatusChange
+    } = options;
 
-  const eventHandlersRef = useRef<Map<string, WebSocketEventHandler[]>>(new Map());
-
-  // Connect to WebSocket
-  const connect = useCallback(async () => {
-    try {
-      await websocketService.connect();
-      setIsConnected(true);
-      setConnectionStatus(websocketService.getConnectionStatus());
-      onConnect?.();
-    } catch (error) {
-      console.error('Failed to connect to WebSocket:', error);
-      onError?.(error);
-    }
-  }, [onConnect, onError]);
-
-  // Disconnect from WebSocket
-  const disconnect = useCallback(() => {
-    websocketService.disconnect();
-    setIsConnected(false);
-    setConnectionStatus(websocketService.getConnectionStatus());
-    onDisconnect?.();
-  }, [onDisconnect]);
-
-  // Subscribe to events
-  const subscribe = useCallback((eventType: string, handler: WebSocketEventHandler) => {
-    // Store handler reference for cleanup
-    if (!eventHandlersRef.current.has(eventType)) {
-      eventHandlersRef.current.set(eventType, []);
-    }
-    eventHandlersRef.current.get(eventType)!.push(handler);
-
-    // Subscribe to WebSocket service
-    websocketService.subscribe(eventType, handler);
-  }, []);
-
-  // Unsubscribe from events
-  const unsubscribe = useCallback((eventType: string, handler: WebSocketEventHandler) => {
-    // Remove handler reference
-    const handlers = eventHandlersRef.current.get(eventType);
-    if (handlers) {
-      const index = handlers.indexOf(handler);
-      if (index > -1) {
-        handlers.splice(index, 1);
-      }
-    }
-
-    // Unsubscribe from WebSocket service
-    websocketService.unsubscribe(eventType, handler);
-  }, []);
-
-  // Emit event
-  const emit = useCallback((eventType: string, data: any) => {
-    websocketService.emit(eventType, data);
-  }, []);
-
-  // Join room
-  const joinRoom = useCallback((roomName: string) => {
-    websocketService.joinRoom(roomName);
-  }, []);
-
-  // Leave room
-  const leaveRoom = useCallback((roomName: string) => {
-    websocketService.leaveRoom(roomName);
-  }, []);
-
-  // Update connection status periodically
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const status = websocketService.getConnectionStatus();
-      setConnectionStatus(status);
-      setIsConnected(status.connected);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Auto-connect on mount
-  useEffect(() => {
-    if (autoConnect) {
-      connect();
-    }
-
-    return () => {
-      // Cleanup event handlers on unmount
-      eventHandlersRef.current.forEach((handlers, eventType) => {
-        handlers.forEach(handler => {
-          websocketService.unsubscribe(eventType, handler);
+    // Handle connection status changes
+    useEffect(() => {
+        const unsubscribe = websocketService.onConnectionStatusChange((status) => {
+            setConnectionStatus(status);
+            onConnectionStatusChange?.(status);
         });
-      });
-      eventHandlersRef.current.clear();
+
+        return unsubscribe;
+    }, [onConnectionStatusChange]);
+
+    // Subscribe to message types
+    useEffect(() => {
+        if (onNotification) {
+            websocketService.subscribe('notification', onNotification);
+        }
+        if (onServiceRequestUpdate) {
+            websocketService.subscribe('service_request_update', onServiceRequestUpdate);
+        }
+        if (onBinStatusUpdate) {
+            websocketService.subscribe('bin_status_update', onBinStatusUpdate);
+        }
+        if (onSensorAlert) {
+            websocketService.subscribe('sensor_alert', onSensorAlert);
+        }
+        if (onSystemMessage) {
+            websocketService.subscribe('system_message', onSystemMessage);
+        }
+        if (onChatMessage) {
+            websocketService.subscribe('chat_message', onChatMessage);
+        }
+        if (onChatTyping) {
+            websocketService.subscribe('chat_typing', onChatTyping);
+        }
+        if (onChatRead) {
+            websocketService.subscribe('chat_read', onChatRead);
+        }
+        if (onChatRoomUpdate) {
+            websocketService.subscribe('chat_room_update', onChatRoomUpdate);
+        }
+
+        // Cleanup subscriptions
+        return () => {
+            if (onNotification) {
+                websocketService.unsubscribe('notification');
+            }
+            if (onServiceRequestUpdate) {
+                websocketService.unsubscribe('service_request_update');
+            }
+            if (onBinStatusUpdate) {
+                websocketService.unsubscribe('bin_status_update');
+            }
+            if (onSensorAlert) {
+                websocketService.unsubscribe('sensor_alert');
+            }
+            if (onSystemMessage) {
+                websocketService.unsubscribe('system_message');
+            }
+            if (onChatMessage) {
+                websocketService.unsubscribe('chat_message');
+            }
+            if (onChatTyping) {
+                websocketService.unsubscribe('chat_typing');
+            }
+            if (onChatRead) {
+                websocketService.unsubscribe('chat_read');
+            }
+            if (onChatRoomUpdate) {
+                websocketService.unsubscribe('chat_room_update');
+            }
+        };
+    }, [onNotification, onServiceRequestUpdate, onBinStatusUpdate, onSensorAlert, onSystemMessage, onChatMessage, onChatTyping, onChatRead, onChatRoomUpdate]);
+
+    const sendMessage = useCallback((type: string, data: any) => {
+        websocketService.sendMessage(type, data);
+    }, []);
+
+    const reconnect = useCallback(() => {
+        websocketService.reconnect();
+    }, []);
+
+    // Chat methods
+    const sendChatMessage = useCallback((roomId: string, message: string, messageType: 'text' | 'image' | 'file' = 'text', replyTo?: string, attachments?: ChatAttachment[]) => {
+        websocketService.sendChatMessage(roomId, message, messageType, replyTo, attachments);
+    }, []);
+
+    const sendTypingIndicator = useCallback((roomId: string, isTyping: boolean) => {
+        websocketService.sendTypingIndicator(roomId, isTyping);
+    }, []);
+
+    const markMessageAsRead = useCallback((roomId: string, messageId: string) => {
+        websocketService.markMessageAsRead(roomId, messageId);
+    }, []);
+
+    const joinChatRoom = useCallback((roomId: string) => {
+        websocketService.joinChatRoom(roomId);
+    }, []);
+
+    const leaveChatRoom = useCallback((roomId: string) => {
+        websocketService.leaveChatRoom(roomId);
+    }, []);
+
+    return {
+        connectionStatus,
+        sendMessage,
+        isConnected: connectionStatus === 'connected',
+        reconnect,
+        // Chat methods
+        sendChatMessage,
+        sendTypingIndicator,
+        markMessageAsRead,
+        joinChatRoom,
+        leaveChatRoom
     };
-  }, [autoConnect, connect]);
-
-  return {
-    isConnected,
-    connect,
-    disconnect,
-    subscribe,
-    unsubscribe,
-    emit,
-    joinRoom,
-    leaveRoom,
-    connectionStatus
-  };
 };
 
-// Specialized hooks for different event types
-export const useSmartBinWebSocket = (binId?: string) => {
-  const [binEvents, setBinEvents] = useState<WebSocketEvent[]>([]);
-  const { subscribe, unsubscribe, joinRoom, leaveRoom } = useWebSocket();
-
-  const handleBinEvent = useCallback((event: WebSocketEvent) => {
-    setBinEvents(prev => [event, ...prev.slice(0, 49)]); // Keep last 50 events
-  }, []);
-
-  useEffect(() => {
-    if (binId) {
-      // Subscribe to smart bin events
-      subscribe('bin:fill_level_update', handleBinEvent);
-      subscribe('bin:alert_triggered', handleBinEvent);
-      subscribe('bin:status_change', handleBinEvent);
-      subscribe('bin:sensor_data', handleBinEvent);
-
-      // Join bin room
-      joinRoom(`bin_${binId}`);
-
-      return () => {
-        // Unsubscribe from events
-        unsubscribe('bin:fill_level_update', handleBinEvent);
-        unsubscribe('bin:alert_triggered', handleBinEvent);
-        unsubscribe('bin:status_change', handleBinEvent);
-        unsubscribe('bin:sensor_data', handleBinEvent);
-
-        // Leave room
-        leaveRoom(`bin_${binId}`);
-      };
-    }
-  }, [binId, subscribe, unsubscribe, joinRoom, leaveRoom, handleBinEvent]);
-
-  return { binEvents };
-};
-
-export const useJobWebSocket = (jobId?: string) => {
-  const [jobEvents, setJobEvents] = useState<WebSocketEvent[]>([]);
-  const { subscribe, unsubscribe, joinRoom, leaveRoom } = useWebSocket();
-
-  const handleJobEvent = useCallback((event: WebSocketEvent) => {
-    setJobEvents(prev => [event, ...prev.slice(0, 49)]); // Keep last 50 events
-  }, []);
-
-  useEffect(() => {
-    if (jobId) {
-      // Subscribe to job events
-      subscribe('job:new_request', handleJobEvent);
-      subscribe('job:status_update', handleJobEvent);
-      subscribe('job:assigned', handleJobEvent);
-      subscribe('job:completed', handleJobEvent);
-
-      // Join job room
-      joinRoom(`job_${jobId}`);
-
-      return () => {
-        // Unsubscribe from events
-        unsubscribe('job:new_request', handleJobEvent);
-        unsubscribe('job:status_update', handleJobEvent);
-        unsubscribe('job:assigned', handleJobEvent);
-        unsubscribe('job:completed', handleJobEvent);
-
-        // Leave room
-        leaveRoom(`job_${jobId}`);
-      };
-    }
-  }, [jobId, subscribe, unsubscribe, joinRoom, leaveRoom, handleJobEvent]);
-
-  return { jobEvents };
-};
-
-export const useUserWebSocket = (userId?: string) => {
-  const [userEvents, setUserEvents] = useState<WebSocketEvent[]>([]);
-  const { subscribe, unsubscribe, joinRoom, leaveRoom } = useWebSocket();
-
-  const handleUserEvent = useCallback((event: WebSocketEvent) => {
-    setUserEvents(prev => [event, ...prev.slice(0, 49)]); // Keep last 50 events
-  }, []);
-
-  useEffect(() => {
-    if (userId) {
-      // Subscribe to user events
-      subscribe('system:notification', handleUserEvent);
-      subscribe('system:achievement', handleUserEvent);
-      subscribe('system:performance_update', handleUserEvent);
-
-      // Join user room
-      joinRoom(`user_${userId}`);
-
-      return () => {
-        // Unsubscribe from events
-        unsubscribe('system:notification', handleUserEvent);
-        unsubscribe('system:achievement', handleUserEvent);
-        unsubscribe('system:performance_update', handleUserEvent);
-
-        // Leave room
-        leaveRoom(`user_${userId}`);
-      };
-    }
-  }, [userId, subscribe, unsubscribe, joinRoom, leaveRoom, handleUserEvent]);
-
-  return { userEvents };
-};
-
-export const useDashboardWebSocket = () => {
-  const [dashboardEvents, setDashboardEvents] = useState<WebSocketEvent[]>([]);
-  const { subscribe, unsubscribe } = useWebSocket();
-
-  const handleDashboardEvent = useCallback((event: WebSocketEvent) => {
-    setDashboardEvents(prev => [event, ...prev.slice(0, 99)]); // Keep last 100 events
-  }, []);
-
-  useEffect(() => {
-    // Subscribe to all dashboard-related events
-    subscribe('bin:alert_triggered', handleDashboardEvent);
-    subscribe('job:new_request', handleDashboardEvent);
-    subscribe('job:status_update', handleDashboardEvent);
-    subscribe('system:notification', handleDashboardEvent);
-    subscribe('system:achievement', handleDashboardEvent);
-    subscribe('system:performance_update', handleDashboardEvent);
-
-    return () => {
-      // Unsubscribe from events
-      unsubscribe('bin:alert_triggered', handleDashboardEvent);
-      unsubscribe('job:new_request', handleDashboardEvent);
-      unsubscribe('job:status_update', handleDashboardEvent);
-      unsubscribe('system:notification', handleDashboardEvent);
-      unsubscribe('system:achievement', handleDashboardEvent);
-      unsubscribe('system:performance_update', handleDashboardEvent);
-    };
-  }, [subscribe, unsubscribe, handleDashboardEvent]);
-
-  return { dashboardEvents };
-};
+export default useWebSocket;

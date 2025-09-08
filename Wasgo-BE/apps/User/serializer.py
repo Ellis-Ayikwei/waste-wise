@@ -229,6 +229,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
             "bins",
             "customer_profile",
             "provider_profile",
+            "is_active",
         )
         read_only_fields = (
             "rating",

@@ -275,25 +275,25 @@ class ServiceRequestSerializer(serializers.ModelSerializer):
 
         return locations
 
-    def create(self, validated_data):
-        """Handle smart_bin_id during creation"""
-        smart_bin_id = validated_data.pop("smart_bin_id", None)
+    # def create(self, validated_data):
+    #     """Handle smart_bin_id during creation"""
+    #     smart_bin_id = validated_data.pop("smart_bin_id", None)
 
-        # Create the service request
-        service_request = super().create(validated_data)
+    #     # Create the service request
+    #     service_request = super().create(validated_data)
 
-        # Set the smart_bin if provided
-        if smart_bin_id:
-            from apps.WasteBin.models import SmartBin
+    #     # Set the smart_bin if provided
+    #     if smart_bin_id:
+    #         from apps.WasteBin.models import SmartBin
 
-            try:
-                smart_bin = SmartBin.objects.get(id=smart_bin_id)
-                service_request.smart_bin = smart_bin
-                service_request.save()
-            except SmartBin.DoesNotExist:
-                pass  # Silently ignore if bin doesn't exist
+    #         try:
+    #             smart_bin = SmartBin.objects.get(id=smart_bin_id)
+    #             service_request.smart_bin = smart_bin
+    #             service_request.save()
+    #         except SmartBin.DoesNotExist:
+    #             pass  # Silently ignore if bin doesn't exist
 
-        return service_request
+    #     return service_request
 
     def get_citizen_reports(self, obj):
         """Get citizen reports related to this service request"""
@@ -302,6 +302,8 @@ class ServiceRequestSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Create a new service request"""
+
+        print(" creating data with offer")
         # Handle user assignment
         user_id = validated_data.pop("user_id", None)
         if user_id:
@@ -360,11 +362,16 @@ class ServiceRequestDetailSerializer(ServiceRequestSerializer):
     """Detailed serializer with additional information"""
 
     offered_providers = ServiceProviderSerializer(many=True, read_only=True)
+    accepted_providers = ServiceProviderSerializer(many=True, read_only=True)
+    requested_to_be_offered = ServiceProviderSerializer(many=True, read_only=True)
 
     class Meta(ServiceRequestSerializer.Meta):
         fields = ServiceRequestSerializer.Meta.fields + [
             "timeline_events",
             "offered_providers",
+            "accepted_providers",
+            "declined_providers",
+            "requested_to_be_offered",
         ]
 
 
@@ -397,6 +404,7 @@ class ServiceRequestListSerializer(ServiceRequestSerializer):
             "smart_bin",
             "smart_bin_id",
             "offered_providers",
+            "final_price",
         ]
         read_only_fields = fields
 
@@ -520,6 +528,7 @@ class ServiceRequestCreateSerializer(serializers.ModelSerializer):
             validated_data["estimated_price"] = (
                 service_request.calculate_estimated_price()
             )
+            validated_data["offered_price"] = service_request.calculate_offered_price()
 
         # Create service request
         service_request = ServiceRequest.objects.create(**validated_data)

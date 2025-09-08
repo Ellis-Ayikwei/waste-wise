@@ -71,6 +71,10 @@ class ServiceRequestTimelineService:
             "completed": f"Service completed for {service_request.request_id}",
             "cancelled": f"Service cancelled for {service_request.request_id}",
             "system_notification": f"System notification for {service_request.request_id}",
+            "payment_completed": f"Payment completed for {service_request.request_id}",
+            "payment_processed": f"Payment processed for {service_request.request_id}",
+            "payment_failed": f"Payment failed for {service_request.request_id}",
+            "payment_refunded": f"Payment refunded for {service_request.request_id}",
         }
 
         return descriptions.get(
@@ -90,13 +94,6 @@ class ServiceRequestService:
             # Create the service request
             service_request = ServiceRequest.objects.create(user=user, **service_data)
 
-            # Create timeline event
-            ServiceRequestTimelineService.create_timeline_event(
-                service_request=service_request,
-                event_type="created",
-                user=user,
-            )
-
             # Create related items if provided
             if items_data:
                 from apps.RequestItems.models import RequestItem
@@ -113,7 +110,17 @@ class ServiceRequestService:
                     stop_data["service_request"] = service_request
                     JourneyStop.objects.create(**stop_data)
 
-            return service_request
+        # Create timeline event outside atomic block
+        try:
+            ServiceRequestTimelineService.create_timeline_event(
+                service_request=service_request,
+                event_type="created",
+                user=user,
+            )
+        except Exception as e:
+            logger.error(f"Error creating timeline event: {str(e)}")
+
+        return service_request
 
     @staticmethod
     def offer_to_provider(
@@ -125,7 +132,8 @@ class ServiceRequestService:
                 provider, offered_price, expires_at, **offer_details
             )
 
-            # Create timeline event
+        # Create timeline event outside atomic block
+        try:
             ServiceRequestTimelineService.create_timeline_event(
                 service_request=service_request,
                 event_type="offer_sent",
@@ -136,15 +144,22 @@ class ServiceRequestService:
                     "offered_price": str(offered_price),
                 },
             )
+        except Exception as e:
+            logger.error(f"Error creating timeline event: {str(e)}")
 
-            return service_request
+        return service_request
 
     @staticmethod
     def accept_offer(service_request, provider):
         """Accept an offer from a provider"""
         with transaction.atomic():
             if service_request.accept_offer():
-                # Create timeline event
+                return True
+            return False
+
+        # Create timeline event outside atomic block if offer was accepted
+        if service_request.status == "accepted":
+            try:
                 ServiceRequestTimelineService.create_timeline_event(
                     service_request=service_request,
                     event_type="offer_accepted",
@@ -155,15 +170,22 @@ class ServiceRequestService:
                         "accepted_price": str(service_request.final_price),
                     },
                 )
-                return True
-            return False
+            except Exception as e:
+                logger.error(f"Error creating timeline event: {str(e)}")
+
+        return service_request.status == "accepted"
 
     @staticmethod
     def reject_offer(service_request, provider, reason=""):
         """Reject an offer from a provider"""
         with transaction.atomic():
             if service_request.reject_offer(reason):
-                # Create timeline event
+                return True
+            return False
+
+        # Create timeline event outside atomic block if offer was rejected
+        if service_request.status == "rejected":
+            try:
                 ServiceRequestTimelineService.create_timeline_event(
                     service_request=service_request,
                     event_type="offer_rejected",
@@ -171,8 +193,10 @@ class ServiceRequestService:
                     description=f"Provider {provider.business_name} rejected the offer: {reason}",
                     metadata={"provider_id": provider.id, "reason": reason},
                 )
-                return True
-            return False
+            except Exception as e:
+                logger.error(f"Error creating timeline event: {str(e)}")
+
+        return service_request.status == "rejected"
 
     @staticmethod
     def assign_provider(service_request, provider, price=None):
@@ -180,7 +204,8 @@ class ServiceRequestService:
         with transaction.atomic():
             service_request.assign_provider(provider, price)
 
-            # Create timeline event
+        # Create timeline event outside atomic block
+        try:
             ServiceRequestTimelineService.create_timeline_event(
                 service_request=service_request,
                 event_type="assigned",
@@ -191,8 +216,10 @@ class ServiceRequestService:
                     "assigned_price": str(price) if price else None,
                 },
             )
+        except Exception as e:
+            logger.error(f"Error creating timeline event: {str(e)}")
 
-            return service_request
+        return service_request
 
     @staticmethod
     def start_service(service_request):
@@ -200,7 +227,8 @@ class ServiceRequestService:
         with transaction.atomic():
             service_request.start_service()
 
-            # Create timeline event
+        # Create timeline event outside atomic block
+        try:
             ServiceRequestTimelineService.create_timeline_event(
                 service_request=service_request,
                 event_type="started",
@@ -211,8 +239,10 @@ class ServiceRequestService:
                 ),
                 description="Service started",
             )
+        except Exception as e:
+            logger.error(f"Error creating timeline event: {str(e)}")
 
-            return service_request
+        return service_request
 
     @staticmethod
     def complete_service(service_request):
@@ -220,7 +250,8 @@ class ServiceRequestService:
         with transaction.atomic():
             service_request.complete_service()
 
-            # Create timeline event
+        # Create timeline event outside atomic block
+        try:
             ServiceRequestTimelineService.create_timeline_event(
                 service_request=service_request,
                 event_type="completed",
@@ -231,8 +262,10 @@ class ServiceRequestService:
                 ),
                 description="Service completed",
             )
+        except Exception as e:
+            logger.error(f"Error creating timeline event: {str(e)}")
 
-            return service_request
+        return service_request
 
     @staticmethod
     def cancel_service(service_request, reason=""):
@@ -241,7 +274,9 @@ class ServiceRequestService:
         with transaction.atomic():
             service_request.cancel_service(reason)
             print("cancelling service service done")
-            # Create timeline event
+
+        # Create timeline event outside atomic block
+        try:
             ServiceRequestTimelineService.create_timeline_event(
                 service_request=service_request,
                 event_type="cancelled",
@@ -249,18 +284,22 @@ class ServiceRequestService:
                 description=f"Service cancelled: {reason}",
                 metadata={"reason": reason},
             )
+        except Exception as e:
+            logger.error(f"Error creating timeline event: {str(e)}")
 
-            return service_request
+        return service_request
 
     @staticmethod
-    def update_status(service_request, new_status, user=None):
+    def update_status(service_request, new_status, user=None, notes=""):
         """Update service request status with timeline event"""
         with transaction.atomic():
             old_status = service_request.status
-            service_request.update_status(new_status)
+            print("old status", old_status)
+            service_request.update_status(new_status, notes)
 
-            # Create timeline event for status change
-            if old_status != new_status:
+        # Create timeline event for status change outside atomic block
+        if old_status != new_status:
+            try:
                 ServiceRequestTimelineService.create_timeline_event(
                     service_request=service_request,
                     event_type="system_notification",
@@ -268,8 +307,10 @@ class ServiceRequestService:
                     description=f"Status changed from {old_status} to {new_status}",
                     metadata={"old_status": old_status, "new_status": new_status},
                 )
+            except Exception as e:
+                logger.error(f"Error creating timeline event: {str(e)}")
 
-            return service_request
+        return service_request
 
 
 class ServiceRequestPricingService:

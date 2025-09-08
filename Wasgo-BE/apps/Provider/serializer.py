@@ -3,7 +3,12 @@ from rest_framework.exceptions import APIException
 from rest_framework import status
 from .models import (
     ServiceProvider,
+    PickupRoute,
+    RouteStop,
+    RouteOptimization,
 )
+from django.utils import timezone
+from django.contrib.gis.geos import Point
 
 from apps.User.serializer import UserSerializer
 from apps.User.models import User
@@ -52,6 +57,7 @@ class ServiceProviderSerializer(serializers.ModelSerializer):
             "postcode",
             "country",
             "base_location",
+            "base_location_address",
             "service_area",
             "max_service_radius_km",
             "waste_license_number",
@@ -114,11 +120,43 @@ class ServiceProviderSerializer(serializers.ModelSerializer):
         # Make a copy to avoid modifying the original data
         data = data.copy() if hasattr(data, "copy") else dict(data)
 
-        # Add any custom preprocessing here if needed
+        # Handle base_location coordinates conversion
+        if "base_location_coordinates" in data and data["base_location_coordinates"]:
+            coords = data["base_location_coordinates"]
+            if isinstance(coords, dict) and "lat" in coords and "lng" in coords:
+                # Convert frontend format {lat, lng} to GeoDjango Point
+                try:
+                    point = Point(coords["lng"], coords["lat"], srid=4326)
+                    data["base_location"] = point
+                    # Remove the frontend-specific field
+                    del data["base_location_coordinates"]
+                except Exception as e:
+                    logger.error(f"Error converting coordinates to Point: {str(e)}")
+                    raise serializers.ValidationError(
+                        {"base_location_coordinates": "Invalid coordinates format"}
+                    )
+
+        # Handle base_location.coordinates format (GeoJSON style)
+        if "base_location" in data and isinstance(data["base_location"], dict):
+            base_loc = data["base_location"]
+            if "coordinates" in base_loc and isinstance(base_loc["coordinates"], list):
+                try:
+                    # GeoJSON format: [lng, lat]
+                    lng, lat = base_loc["coordinates"][0], base_loc["coordinates"][1]
+                    point = Point(lng, lat, srid=4326)
+                    data["base_location"] = point
+                except Exception as e:
+                    logger.error(
+                        f"Error converting GeoJSON coordinates to Point: {str(e)}"
+                    )
+                    raise serializers.ValidationError(
+                        {"base_location": "Invalid coordinates format"}
+                    )
+
         return super().to_internal_value(data)
 
     def to_representation(self, instance):
-        """Custom representation to handle ManyToMany fields properly"""
+        """Custom representation to handle ManyToMany fields and GIS fields properly"""
         data = super().to_representation(instance)
 
         # Handle ManyToMany fields properly for output
@@ -138,6 +176,27 @@ class ServiceProviderSerializer(serializers.ModelSerializer):
         except Exception:
             # Fallback: return empty list if there's an error
             data["waste_categories"] = []
+
+        # Handle base_location field for frontend compatibility
+        try:
+            if hasattr(instance, "base_location") and instance.base_location:
+                # Convert Point to coordinates array [lng, lat] for frontend
+                data["base_location"] = {
+                    "type": "Point",
+                    "coordinates": [instance.base_location.x, instance.base_location.y],
+                }
+                # Also provide a more frontend-friendly format
+                data["base_location_coordinates"] = {
+                    "lat": instance.base_location.y,
+                    "lng": instance.base_location.x,
+                }
+            else:
+                data["base_location"] = None
+                data["base_location_coordinates"] = None
+        except Exception as e:
+            logger.error(f"Error serializing base_location: {str(e)}")
+            data["base_location"] = None
+            data["base_location_coordinates"] = None
 
         return data
 
@@ -407,11 +466,81 @@ class ProviderRegistrationSerializer(serializers.Serializer):
         return super().to_representation(instance)
 
 
+class RouteStopSerializer(serializers.ModelSerializer):
+    """Serializer for RouteStop model"""
+
+    route = serializers.PrimaryKeyRelatedField(read_only=True)
+    service_request_details = serializers.SerializerMethodField()
+    is_delayed = serializers.BooleanField(read_only=True)
+    stop_efficiency = serializers.FloatField(read_only=True)
+
+    class Meta:
+        model = RouteStop
+        fields = [
+            "id",
+            "route",
+            "service_request",
+            "service_request_details",
+            "stop_order",
+            "estimated_arrival_time",
+            "actual_arrival_time",
+            "actual_departure_time",
+            "stop_duration_minutes",
+            "status",
+            "waste_collected_kg",
+            "revenue_generated",
+            "stop_instructions",
+            "customer_notes",
+            "driver_notes",
+            "is_on_time",
+            "customer_satisfaction",
+            "is_delayed",
+            "stop_efficiency",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["stop_duration_minutes", "is_delayed", "stop_efficiency"]
+
+    def get_service_request_details(self, obj):
+        """Get service request details"""
+        if obj.service_request:
+            # Serialize pickup_location (GeoDjango Point) safely
+            pickup_location = None
+            try:
+                point = getattr(obj.service_request, "pickup_location", None)
+                if point is not None:
+                    # x = lon, y = lat
+                    pickup_location = {"lat": point.y, "lng": point.x}
+            except Exception:
+                pickup_location = None
+
+            return {
+                "id": obj.service_request.id,
+                "title": obj.service_request.title,
+                "service_type": obj.service_request.service_type,
+                "pickup_address": obj.service_request.pickup_address,
+                "pickup_location": pickup_location,
+                "estimated_weight_kg": obj.service_request.estimated_weight_kg,
+                "estimated_price": obj.service_request.estimated_price,
+                "status": obj.service_request.status,
+                "offered_price": obj.service_request.offered_price,
+                "offer_response": obj.service_request.offer_response,
+                "offer_expires_at": obj.service_request.offer_expires_at,
+                "offer_responded_at": obj.service_request.offer_responded_at,
+                "provider_notes": obj.service_request.provider_notes,
+                "driver": obj.service_request.driver,
+                "driver_id": obj.service_request.driver_id,
+                "assigned_at": obj.service_request.assigned_at,
+                "auto_assigned": obj.service_request.auto_assigned,
+            }
+        return None
+
+
 class PickupRouteSerializer(serializers.ModelSerializer):
     """Serializer for PickupRoute model"""
-    
+
     provider = serializers.PrimaryKeyRelatedField(read_only=True)
-    provider_details = ServiceProviderSerializer(source='provider', read_only=True)
+    provider_details = ServiceProviderSerializer(source="provider", read_only=True)
     assigned_driver_details = serializers.SerializerMethodField()
     total_stops = serializers.IntegerField(read_only=True)
     completed_stops = serializers.IntegerField(read_only=True)
@@ -419,104 +548,120 @@ class PickupRouteSerializer(serializers.ModelSerializer):
     is_overdue = serializers.BooleanField(read_only=True)
     is_efficient = serializers.BooleanField(read_only=True)
     profit_margin = serializers.FloatField(read_only=True)
-    
+    stops = RouteStopSerializer(many=True, read_only=True)
+
     class Meta:
-        model = 'Provider.PickupRoute'
+        model = PickupRoute
         fields = [
-            'id', 'provider', 'provider_details', 'route_name', 'route_description',
-            'route_type', 'route_status', 'start_location', 'end_location', 'waypoints',
-            'route_distance_km', 'route_duration_minutes', 'estimated_fuel_cost',
-            'scheduled_date', 'scheduled_start_time', 'scheduled_end_time',
-            'actual_start_time', 'actual_end_time', 'vehicle_type', 'assigned_driver',
-            'assigned_driver_details', 'is_active', 'is_recurring', 'recurrence_pattern',
-            'route_instructions', 'safety_notes', 'customer_notes', 'total_stops',
-            'completed_stops', 'total_waste_collected', 'route_efficiency_score',
-            'total_revenue', 'total_cost', 'tags', 'priority', 'completion_percentage',
-            'is_overdue', 'is_efficient', 'profit_margin', 'created_at', 'updated_at'
+            "id",
+            "provider",
+            "provider_details",
+            "route_name",
+            "route_description",
+            "route_type",
+            "route_status",
+            "start_location",
+            "end_location",
+            "waypoints",
+            "route_distance_km",
+            "route_duration_minutes",
+            "estimated_fuel_cost",
+            "scheduled_date",
+            "scheduled_start_time",
+            "scheduled_end_time",
+            "actual_start_time",
+            "actual_end_time",
+            "vehicle_type",
+            "assigned_driver",
+            "assigned_driver_details",
+            "is_active",
+            "is_recurring",
+            "recurrence_pattern",
+            "route_instructions",
+            "safety_notes",
+            "customer_notes",
+            "total_stops",
+            "completed_stops",
+            "total_waste_collected",
+            "route_efficiency_score",
+            "total_revenue",
+            "total_cost",
+            "tags",
+            "priority",
+            "completion_percentage",
+            "is_overdue",
+            "is_efficient",
+            "profit_margin",
+            "created_at",
+            "updated_at",
+            "stops",
         ]
         read_only_fields = [
-            'total_stops', 'completed_stops', 'total_waste_collected',
-            'route_efficiency_score', 'total_revenue', 'total_cost'
+            "total_stops",
+            "completed_stops",
+            "total_waste_collected",
+            "route_efficiency_score",
+            "total_revenue",
+            "total_cost",
         ]
-    
+
     def get_assigned_driver_details(self, obj):
         """Get driver details if assigned"""
         if obj.assigned_driver:
             return {
-                'id': obj.assigned_driver.id,
-                'name': f"{obj.assigned_driver.first_name} {obj.assigned_driver.last_name}",
-                'phone': obj.assigned_driver.phone,
-                'license_number': obj.assigned_driver.license_number
+                "id": obj.assigned_driver.id,
+                "name": f"{obj.assigned_driver.first_name} {obj.assigned_driver.last_name}",
+                "phone": obj.assigned_driver.phone,
+                "license_number": obj.assigned_driver.license_number,
             }
         return None
-    
+
     def validate(self, data):
         """Validate route data"""
-        if 'scheduled_date' in data and data['scheduled_date'] < timezone.now().date():
+        if "scheduled_date" in data and data["scheduled_date"] < timezone.now().date():
             raise serializers.ValidationError("Scheduled date cannot be in the past")
-        
-        if ('scheduled_start_time' in data and 'scheduled_end_time' in data and
-            data['scheduled_start_time'] >= data['scheduled_end_time']):
+
+        if (
+            "scheduled_start_time" in data
+            and "scheduled_end_time" in data
+            and data["scheduled_start_time"] >= data["scheduled_end_time"]
+        ):
             raise serializers.ValidationError("Start time must be before end time")
-        
+
         return data
-
-
-class RouteStopSerializer(serializers.ModelSerializer):
-    """Serializer for RouteStop model"""
-    
-    route = serializers.PrimaryKeyRelatedField(read_only=True)
-    service_request_details = serializers.SerializerMethodField()
-    is_delayed = serializers.BooleanField(read_only=True)
-    stop_efficiency = serializers.FloatField(read_only=True)
-    
-    class Meta:
-        model = 'Provider.RouteStop'
-        fields = [
-            'id', 'route', 'service_request', 'service_request_details', 'stop_order',
-            'estimated_arrival_time', 'actual_arrival_time', 'actual_departure_time',
-            'stop_duration_minutes', 'status', 'waste_collected_kg', 'revenue_generated',
-            'stop_instructions', 'customer_notes', 'driver_notes', 'is_on_time',
-            'customer_satisfaction', 'is_delayed', 'stop_efficiency', 'created_at', 'updated_at'
-        ]
-        read_only_fields = ['stop_duration_minutes', 'is_delayed', 'stop_efficiency']
-    
-    def get_service_request_details(self, obj):
-        """Get service request details"""
-        if obj.service_request:
-            return {
-                'id': obj.service_request.id,
-                'title': obj.service_request.title,
-                'service_type': obj.service_request.service_type,
-                'pickup_address': obj.service_request.pickup_address,
-                'estimated_weight_kg': obj.service_request.estimated_weight_kg,
-                'estimated_price': obj.service_request.estimated_price,
-                'status': obj.service_request.status
-            }
-        return None
 
 
 class RouteOptimizationSerializer(serializers.ModelSerializer):
     """Serializer for RouteOptimization model"""
-    
+
     route = serializers.PrimaryKeyRelatedField(read_only=True)
     applied_by_details = serializers.SerializerMethodField()
-    
+
     class Meta:
-        model = 'Provider.RouteOptimization'
+        model = RouteOptimization
         fields = [
-            'id', 'route', 'optimization_type', 'suggested_changes',
-            'estimated_improvement', 'is_applied', 'applied_at', 'applied_by',
-            'applied_by_details', 'actual_improvement', 'notes', 'created_at', 'updated_at'
+            "id",
+            "route",
+            "optimization_type",
+            "suggested_changes",
+            "estimated_improvement",
+            "is_applied",
+            "applied_at",
+            "applied_by",
+            "applied_by_details",
+            "actual_improvement",
+            "notes",
+            "created_at",
+            "updated_at",
         ]
-        read_only_fields = ['is_applied', 'applied_at', 'actual_improvement']
-    
+        read_only_fields = ["is_applied", "applied_at", "actual_improvement"]
+
     def get_applied_by_details(self, obj):
         """Get user details who applied the optimization"""
         if obj.applied_by:
             return {
-                'id': obj.applied_by.id,
-                'name': f"{obj.applied_by.first_name} {obj.applied_by.last_name}",
-                'email': obj.applied_by.email
+                "id": obj.applied_by.id,
+                "name": f"{obj.applied_by.first_name} {obj.applied_by.last_name}",
+                "email": obj.applied_by.email,
             }
         return None

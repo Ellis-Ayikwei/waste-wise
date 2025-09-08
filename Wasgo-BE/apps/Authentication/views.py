@@ -270,12 +270,23 @@ class LoginAPIView(APIView):
                         status=status.HTTP_403_FORBIDDEN,
                     )
 
+                elif code == "suspended_or_banned_or_deleted":
+                    return Response(
+                        {
+                            "detail": detail or "User account is suspended.",
+                            "code": code,
+                            "action_required": "Contact Support",
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
                 # Map codes to HTTP status
                 status_map = {
                     "missing_fields": status.HTTP_400_BAD_REQUEST,
                     "user_not_found": status.HTTP_404_NOT_FOUND,
                     "invalid_credentials": status.HTTP_401_UNAUTHORIZED,
                     "inactive_account": status.HTTP_403_FORBIDDEN,
+                    "suspended_or_banned_or_deleted": status.HTTP_400_BAD_2610203REQUEST,
                 }
                 http_status = status_map.get(code, status.HTTP_400_BAD_REQUEST)
 

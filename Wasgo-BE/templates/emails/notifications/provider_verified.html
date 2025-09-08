@@ -94,7 +94,7 @@
             <div class="verification-badge">
                 <div style="font-size: 48px; margin-bottom: 10px;">✓</div>
                 <div style="font-size: 20px; font-weight: 600;">Account Verified</div>
-                <div style="font-size: 14px; margin-top: 5px; opacity: 0.9;">You're now a trusted Wasgo provider</div>
+                <div style="font-size: 14px; margin-top: 5px; opacity: 0.9;">You're now a trusted Wasgo waste collection provider</div>
             </div>
             
             <div class="message">
@@ -102,20 +102,20 @@
             </div>
             
             <div class="benefits">
-                <h3>As a verified provider, you can now:</h3>
+                <h3>As a verified waste collection provider, you can now:</h3>
                 <ul>
-                    <li>✅ Bid on available jobs in your area</li>
-                    <li>✅ Build your reputation with customer ratings</li>
+                    <li>✅ Bid on available waste collection jobs in your area</li>
+                    <li>✅ Build your reputation with client ratings</li>
                     <li>✅ Access our provider dashboard and tools</li>
-                    <li>✅ Receive direct job assignments</li>
+                    <li>✅ Receive direct waste collection assignments</li>
                     <li>✅ Get paid securely through our platform</li>
-                    <li>✅ Join our network of trusted professionals</li>
+                    <li>✅ Join our network of trusted waste management professionals</li>
                 </ul>
             </div>
             
             {% if provider %}
             <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: left;">
-                <h3 style="margin-top: 0; color: #FF9800;">Your Provider Profile</h3>
+                <h3 style="margin-top: 0; color: #FF9800;">Your Waste Collection Provider Profile</h3>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                     <span style="font-weight: 600;">Company:</span>
                     <span>{{ provider.company_name }}</span>
@@ -134,19 +134,19 @@
             {% endif %}
             
             {% if action_url %}
-            <a href="{{ action_url }}" class="cta-button">{{ action_text|default:"Go to Provider Dashboard" }}</a>
+            <a href="{{ action_url }}" class="cta-button">{{ action_text|default:"Go to Waste Collection Dashboard" }}</a>
             {% endif %}
             
             <div style="background-color: #e8f5e8; padding: 15px; border-radius: 8px; margin-top: 20px;">
                 <p style="margin: 0; font-size: 14px; color: #2e7d32;">
                     <strong>Ready to start earning?</strong><br>
-                    Check out available jobs in your area and start building your Wasgo reputation today!
+                    Check out available waste collection jobs in your area and start building your Wasgo reputation today!
                 </p>
             </div>
         </div>
         
         <div class="footer">
-            <p>Need help getting started? Contact our provider support at <a href="mailto:providers@wasgo.com">providers@wasgo.com</a></p>
+            <p>Need help getting started? Contact our waste collection provider support at <a href="mailto:providers@wasgo.com">providers@wasgo.com</a></p>
             <p>&copy; {{ current_year }} {{ app_name }}. All rights reserved.</p>
         </div>
     </div>

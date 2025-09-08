@@ -1,5 +1,5 @@
 import { lazy, useEffect, useState } from 'react';
-import EnhancedAdminDashboard from '../pages/admin/EnhancedAdminDashboard';
+import EnhancedAdminDashboard from '../pages/admin/Dashboard';
 import SmartBinManagement from '../pages/admin/SmartBins/SmartBinManagement';
 import AnalyticsReporting from '../pages/admin/AnalyticsReporting';
 // import Homepage from '../pages/website-preauth/Homepage';

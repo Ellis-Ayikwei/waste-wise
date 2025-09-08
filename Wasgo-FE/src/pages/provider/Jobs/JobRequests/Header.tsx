@@ -36,7 +36,7 @@ const Header: React.FC<HeaderProps> = ({ stats, onRefresh }) => {
                             </div>
                         </div>
                         <div className="flex items-center justify-center lg:justify-end space-x-2 sm:space-x-3">
-                            <Link to="/provider/pickup-routes">
+                            {/* <Link to="/provider/pickup-routes">
                                 <motion.button 
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
@@ -45,7 +45,7 @@ const Header: React.FC<HeaderProps> = ({ stats, onRefresh }) => {
                                     <span className="hidden sm:inline">My Pickup Route</span>
                                     <span className="sm:hidden">Route</span>
                                 </motion.button>
-                            </Link>
+                            </Link> */}
                             <motion.button 
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
@@ -54,13 +54,13 @@ const Header: React.FC<HeaderProps> = ({ stats, onRefresh }) => {
                             >
                                 <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />
                             </motion.button>
-                            <motion.button 
+                            {/* <motion.button 
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 className="p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transition-all duration-300"
                             >
                                 <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
-                            </motion.button>
+                            </motion.button> */}
                         </div>
                     </motion.div>
                 </div>

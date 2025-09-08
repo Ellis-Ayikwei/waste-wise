@@ -5,7 +5,7 @@ Hello {{ user_name }}!
 
 {{ title|default:"NOTIFICATION" }}
 
-{{ message|default:"You have a new notification from Wasgo." }}
+{{ message|default:"You have a new notification from Wasgo Waste Management." }}
 
 {% if notification_data %}
 DETAILS
@@ -18,10 +18,10 @@ DETAILS
 View details: {{ action_url }}
 {% endif %}
 
-This is an automated notification from your Wasgo account. 
+This is an automated notification from your Wasgo Waste Management account. 
 You can manage your notification preferences in your account settings.
 
-Need help? Contact our support team at support@wasgo.com
+Need help with your waste management account? Contact our support team at support@wasgo.com
 
 ---
 This is an automated message, please do not reply to this email.

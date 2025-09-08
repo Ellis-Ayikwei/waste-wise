@@ -48,45 +48,45 @@
   </head>
   <body>
     <div class="header">
-      <h1>Booking Confirmation</h1>
+      <h1>Waste Collection Confirmation</h1>
     </div>
 
     <div class="content">
       <p>Dear {{ customer_name }},</p>
 
       <p>
-        Thank you for choosing Wasgo for your journey. Your booking has been
+        Thank you for choosing Wasgo for your waste collection needs. Your collection request has been
         confirmed!
       </p>
 
-      <div class="tracking-number">Tracking Number: {{ tracking_number }}</div>
+      <div class="tracking-number">Collection Reference: {{ tracking_number }}</div>
 
       <div class="details">
-        <h2>Booking Details:</h2>
+        <h2>Collection Details:</h2>
 
-        <div class="details-item"><strong>Price:</strong> £{{ price }}</div>
+        <div class="details-item"><strong>Cost:</strong> GHS {{ price }}</div>
 
         {% if pickup_location %}
         <div class="details-item">
-          <strong>Pickup Location:</strong> {{ pickup_location }}
+          <strong>Collection Location:</strong> {{ pickup_location }}
         </div>
         {% endif %} {% if dropoff_location %}
         <div class="details-item">
-          <strong>Dropoff Location:</strong> {{ dropoff_location }}
+          <strong>Disposal Location:</strong> {{ dropoff_location }}
         </div>
         {% endif %}
 
         <div class="details-item">
-          <strong>Staff Required:</strong> {{ staff_count }}
+          <strong>Collection Team:</strong> {{ staff_count }}
         </div>
       </div>
 
       <p>
-        You can track your booking status using your tracking number:
+        You can track your collection status using your reference number:
         <strong>{{ tracking_number }}</strong>
       </p>
 
-      <p>If you have any questions, please don't hesitate to contact us:</p>
+      <p>If you have any questions about your waste collection, please don't hesitate to contact us:</p>
       <ul>
         <li>Email: {{ contact_email }}</li>
         <li>Phone: {{ contact_phone }}</li>
@@ -98,7 +98,7 @@
         This is an automated message, please do not reply directly to this
         email.
       </p>
-      <p>&copy; 2024 Wasgo. All rights reserved.</p>
+      <p>&copy; 2024 Wasgo Waste Management. All rights reserved.</p>
     </div>
   </body>
 </html>

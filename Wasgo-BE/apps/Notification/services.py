@@ -48,6 +48,26 @@ class NotificationService:
             "email_template": "provider_assigned",
             "default_channels": ["in_app", "email"],
         },
+        "request_update": {
+            "subject": "ServiceRequest Status Updated",
+            "email_template": "request_update",
+            "default_channels": ["in_app", "email"],
+        },
+        "service_assignment": {
+            "subject": "Service Assignment",
+            "email_template": "service_assignment",
+            "default_channels": ["in_app", "email"],
+        },
+        "status_update": {
+            "subject": "Status Update",
+            "email_template": "status_update",
+            "default_channels": ["in_app", "email"],
+        },
+        "system": {
+            "subject": "System Notification",
+            "email_template": "system",
+            "default_channels": ["in_app", "email"],
+        },
         "job_started": {
             "subject": "Your ServiceRequest Has Started",
             "email_template": "job_started",
@@ -61,6 +81,11 @@ class NotificationService:
         "job_completed": {
             "subject": "ServiceRequest Completed Successfully",
             "email_template": "job_completed",
+            "default_channels": ["in_app", "email", "push"],
+        },
+        "job_cancelled": {
+            "subject": "ServiceRequest Cancelled",
+            "email_template": "job_cancelled",
             "default_channels": ["in_app", "email", "push"],
         },
         # Account/Verification Related
@@ -80,9 +105,24 @@ class NotificationService:
             "email_template": "payment_confirmed",
             "default_channels": ["in_app", "email", "push"],
         },
+        "payment_completed": {
+            "subject": "Payment Completed",
+            "email_template": "payment_completed",
+            "default_channels": ["in_app", "email", "push"],
+        },
+        "payment_processed": {
+            "subject": "Payment Processed",
+            "email_template": "payment_processed",
+            "default_channels": ["in_app", "email", "push"],
+        },
         "payment_failed": {
             "subject": "Payment Failed",
             "email_template": "payment_failed",
+            "default_channels": ["in_app", "email", "push"],
+        },
+        "payment_refunded": {
+            "subject": "Payment Refunded",
+            "email_template": "payment_refunded",
             "default_channels": ["in_app", "email", "push"],
         },
         "deposit_received": {
@@ -317,13 +357,21 @@ class NotificationService:
             "booking_cancelled": f"Your booking has been cancelled. If this was unexpected, please contact support.",
             "provider_accepted": f"A provider has accepted your job and will be in touch shortly.",
             "provider_assigned": f"We've assigned a provider to your job. They'll contact you with details.",
+            "request_update": f"Your service request status has been updated. Check your dashboard for details.",
+            "service_assignment": f"You have been assigned a new service request. Please check your dashboard.",
+            "status_update": f"Your service request status has been updated. Check your dashboard for details.",
+            "system": f"This is a system notification. Please check your dashboard for details.",
             "job_started": f"Your job has started! You can track progress in your dashboard.",
             "job_in_transit": f"Your items are now in transit. You'll be notified when they arrive.",
             "job_completed": f"Your job has been completed successfully. Please rate your experience.",
+            "job_cancelled": f"Your job has been cancelled. If this was unexpected, please contact support.",
             "account_verified": f"Congratulations! Your account has been verified and is now fully active.",
             "provider_verified": f"Your provider account has been verified. You can now start accepting jobs.",
             "payment_confirmed": f"Your payment has been processed successfully.",
+            "payment_completed": f"Your payment has been completed successfully.",
+            "payment_processed": f"Your payment has been processed successfully.",
             "payment_failed": f"We couldn't process your payment. Please update your payment method.",
+            "payment_refunded": f"Your payment has been refunded. Please check your account for the refund.",
             "deposit_received": f"We've received your deposit. Your booking is now confirmed.",
             "bid_received": f"You've received a new bid on your job. Check it out and decide!",
             "bid_accepted": f"Congratulations! Your bid has been accepted. Time to get to work!",
@@ -450,8 +498,6 @@ class NotificationService:
         cls, user: User, job_obj, old_status, new_status, **kwargs
     ):
         """Notify user about job status changes."""
-        notification_type = f"job_{new_status}"
-
         # Map status to notification types
         status_mapping = {
             "started": "job_started",

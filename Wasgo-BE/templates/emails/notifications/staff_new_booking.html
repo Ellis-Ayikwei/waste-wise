@@ -185,7 +185,7 @@
                     <img src="https://wasgo.sfo3.cdn.digitaloceanspaces.com/email%20images%20/wasgotextdark.png" alt="Wasgo" />
                 </div>
                 <h1>{{ title }}</h1>
-                <div class="staff-badge">STAFF NOTIFICATION</div>
+                <div class="staff-badge">WASTE MANAGEMENT STAFF</div>
             </div>
         </div>
         
@@ -203,7 +203,7 @@
             
             {% if request %}
             <div class="booking-details">
-                <h3 style="margin-top: 0; color: #6366F1;">Booking Summary</h3>
+                <h3 style="margin-top: 0; color: #6366F1;">Waste Collection Request Summary</h3>
                 <div class="detail-row">
                     <span class="detail-label">Reference:</span>
                     <span class="detail-value">{{ request.tracking_number|default:"#REF" }}</span>
@@ -214,13 +214,13 @@
                 </div>
                 {% if request.pickup_location %}
                 <div class="detail-row">
-                    <span class="detail-label">From:</span>
+                    <span class="detail-label">Collection From:</span>
                     <span class="detail-value">{{ request.pickup_location.address|truncatechars:40|default:"TBD" }}</span>
                 </div>
                 {% endif %}
                 {% if request.delivery_location %}
                 <div class="detail-row">
-                    <span class="detail-label">To:</span>
+                    <span class="detail-label">Disposal To:</span>
                     <span class="detail-value">{{ request.delivery_location.address|truncatechars:40|default:"TBD" }}</span>
                 </div>
                 {% endif %}
@@ -232,17 +232,17 @@
                 {% endif %}
                 {% if request.estimated_price %}
                 <div class="detail-row">
-                    <span class="detail-label">Est. Value:</span>
-                    <span class="detail-value">£{{ request.estimated_price }}</span>
+                    <span class="detail-label">Est. Cost:</span>
+                    <span class="detail-value">GHS {{ request.estimated_price }}</span>
                 </div>
                 {% endif %}
             </div>
 
             {% if request.user %}
             <div class="customer-summary">
-                <h3 style="margin-top: 0; color: #0ea5e9;">Customer Summary</h3>
+                <h3 style="margin-top: 0; color: #0ea5e9;">Client Summary</h3>
                 <div class="detail-row">
-                    <span class="detail-label">Customer:</span>
+                    <span class="detail-label">Client:</span>
                     <span class="detail-value">{{ request.user.first_name }} {{ request.user.last_name }}</span>
                 </div>
                 <div class="detail-row">
@@ -262,10 +262,11 @@
             <div class="staff-tasks">
                 <h3>Your Tasks</h3>
                 <ul>
-                    <li>Monitor booking progress and provider responses</li>
-                    <li>Ensure customer receives timely updates</li>
-                    <li>Escalate to supervisor if issues arise</li>
-                    <li>Follow up on customer satisfaction after completion</li>
+                    <li>Monitor waste collection request progress and provider responses</li>
+                    <li>Ensure client receives timely updates on collection status</li>
+                    <li>Escalate to supervisor if issues arise with waste handling</li>
+                    <li>Follow up on client satisfaction after waste collection completion</li>
+                    <li>Verify proper waste categorization and disposal compliance</li>
                 </ul>
             </div>
 
@@ -282,15 +283,15 @@
                 {% if staff_dashboard_url %}
                 <a href="{{ staff_dashboard_url }}" class="cta-button">View Dashboard</a>
                 {% endif %}
-                {% if booking_details_url %}
-                <a href="{{ booking_details_url }}" class="cta-button secondary">View Booking</a>
+                {% if request_details_url %}
+                <a href="{{ request_details_url }}" class="cta-button secondary">View Request</a>
                 {% endif %}
             </div>
         </div>
         
         <div class="footer">
-            <p>Staff Support: <a href="mailto:staff@wasgo.com">staff@wasgo.com</a> | Help Desk: <a href="tel:+44123456789">+44 123 456 789</a></p>
-            <p>&copy; {{ current_year }} {{ app_name }} Staff Portal. All rights reserved.</p>
+            <p>Waste Management Staff Support: <a href="mailto:staff@wasgo.com">staff@wasgo.com</a> | Help Desk: <a href="tel:+233123456789">+233 123 456 789</a></p>
+            <p>&copy; {{ current_year }} {{ app_name }} Waste Management Staff Portal. All rights reserved.</p>
         </div>
     </div>
 </body>

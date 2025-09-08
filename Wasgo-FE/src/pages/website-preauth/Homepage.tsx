@@ -456,7 +456,7 @@ const Homepage: React.FC = () => {
                                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                     <Link 
                                         to="/service-request" 
-                                        className="group relative inline-flex items-center justify-center gap-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-8 py-4 rounded-full font-semibold text-lg shadow-2xl hover:shadow-green-500/25 transition-all duration-300 overflow-hidden"
+                                        className="group relative inline-flex w-full md:w-auto items-center justify-center gap-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-8 py-2 rounded-full font-semibold text-lg shadow-2xl hover:shadow-green-500/25 transition-all duration-300 overflow-hidden"
                                     >
                                         <span className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity"></span>
                                         <FontAwesomeIcon icon={faTruck} className="text-xl" />
@@ -468,7 +468,7 @@ const Homepage: React.FC = () => {
                                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                     <Link 
                                         to="/how-it-works" 
-                                        className="group inline-flex items-center justify-center gap-3 bg-white/10 backdrop-blur-md text-white px-8 py-4 rounded-full font-semibold text-lg border-2 border-white/30 hover:bg-white/20 hover:border-white/50 transition-all duration-300"
+                                        className="group inline-flex items-center  w-full md:w-auto justify-center gap-3 bg-white/10 backdrop-blur-md text-white px-8 py-2 rounded-full font-semibold text-lg border-2 border-white/30 hover:bg-white/20 hover:border-white/50 transition-all duration-300"
                                     >
                                         <FontAwesomeIcon icon={faLeaf} />
                                         <span>Learn More</span>

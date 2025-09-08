@@ -17,6 +17,8 @@ interface OfferedProvider {
 
 interface Props {
     providers: OfferedProvider[];
+    accepted_providers: OfferedProvider[];
+    rejected_providers: OfferedProvider[];
     offeredPrice?: string | null;
     offerExpiresAt?: string | null;
     onViewProviderDetails: (providerUserId: string) => void;
@@ -24,7 +26,7 @@ interface Props {
     onRejectOffer: (providerId: string) => void;
 }
 
-const OfferedProvidersList: React.FC<Props> = ({ providers, offeredPrice, offerExpiresAt, onViewProviderDetails, onAcceptOffer, onRejectOffer }) => {
+const OfferedProvidersList: React.FC<Props> = ({ providers, accepted_providers, rejected_providers, offeredPrice, offerExpiresAt, onViewProviderDetails, onAcceptOffer, onRejectOffer }) => {
     if (!providers || providers.length === 0) {
         return (
             <div className="text-center py-8">
@@ -36,7 +38,13 @@ const OfferedProvidersList: React.FC<Props> = ({ providers, offeredPrice, offerE
 
     return (
         <div className="space-y-4">
-            {providers.map(p => (
+            {providers.map(p => {
+            const hasAccepted = accepted_providers?.find(pr => pr.id === p.id )
+            const hasRejected = rejected_providers?.find(pr => pr.id === p.id)
+            console.log("has accepted", hasAccepted)
+            console.log("has rejected", hasRejected)
+        
+            return(
                 <div key={p.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
                     <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -85,13 +93,12 @@ const OfferedProvidersList: React.FC<Props> = ({ providers, offeredPrice, offerE
                             </div>
                         </div>
                         <div className="flex flex-col space-y-2 ml-4">
-                            <button onClick={() => onViewProviderDetails(p.user.id)} className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors">View Details</button>
-                            <button onClick={() => onAcceptOffer(p.id)} className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors">Accept</button>
-                            <button onClick={() => onRejectOffer(p.id)} className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors">Reject</button>
+                            { !hasAccepted && <button onClick={() => onAcceptOffer(p.id)} className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors">Accept</button>}
+                           { !hasRejected &&  <button onClick={() => onRejectOffer(p.id)} className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors">Reject</button>}
                         </div>
                     </div>
                 </div>
-            ))}
+            )})}
         </div>
     );
 };

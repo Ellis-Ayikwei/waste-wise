@@ -114,7 +114,7 @@
                 <div style="font-size: 48px; margin-bottom: 10px;">✓</div>
                 <div>Payment Successful</div>
                 {% if amount %}
-                <div class="payment-amount">£{{ amount }}</div>
+                <div class="payment-amount">GHS {{ amount }}</div>
                 {% endif %}
             </div>
             
@@ -131,7 +131,7 @@
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Amount:</span>
-                    <span class="detail-value">£{{ payment.amount }}</span>
+                    <span class="detail-value">GHS {{ payment.amount }}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Payment Method:</span>
@@ -147,7 +147,7 @@
                 </div>
                 {% if payment.request %}
                 <div class="detail-row">
-                    <span class="detail-label">Booking Reference:</span>
+                    <span class="detail-label">Collection Request Reference:</span>
                     <span class="detail-value">{{ payment.request.tracking_number|default:"#REF" }}</span>
                 </div>
                 {% endif %}
@@ -161,13 +161,13 @@
             <div style="background-color: #e8f5e8; padding: 15px; border-radius: 8px; margin-top: 20px;">
                 <p style="margin: 0; font-size: 14px; color: #2e7d32;">
                     <strong>What's next?</strong><br>
-                    Your booking is now being processed and you'll receive updates as your service progresses.
+                    Your waste collection request is now being processed and you'll receive updates as your collection progresses.
                 </p>
             </div>
         </div>
         
         <div class="footer">
-            <p>Need help? Contact our support team at <a href="mailto:support@wasgo.com">support@wasgo.com</a></p>
+            <p>Need help with your waste collection payment? Contact our support team at <a href="mailto:support@wasgo.com">support@wasgo.com</a></p>
             <p>&copy; {{ current_year }} {{ app_name }}. All rights reserved.</p>
         </div>
     </div>

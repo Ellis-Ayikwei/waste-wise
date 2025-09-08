@@ -363,37 +363,7 @@ const EnhancedAdminDashboard: React.FC = () => {
             </div>
 
             {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Revenue Chart */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Revenue Trends</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <ReactApexChart
-                            options={revenueChartOptions}
-                            series={[{ name: 'Revenue', data: [12000, 15000, 18000, 22000, 25000, 28000, 32000, 35000, 38000, 42000, 45000, 48000] }]}
-                            type="area"
-                            height={350}
-                        />
-                    </CardContent>
-                </Card>
-
-                {/* Job Status Chart */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Job Status Distribution</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <ReactApexChart
-                            options={jobStatusChartOptions}
-                            series={[data?.completedJobs || 0, data?.activeJobs || 0, 12, 3]}
-                            type="donut"
-                            height={300}
-                        />
-                    </CardContent>
-                </Card>
-            </div>
+           
 
             {/* Smart Bin Management */}
             <Card>
@@ -475,34 +445,7 @@ const EnhancedAdminDashboard: React.FC = () => {
             {/* Real-time Activity and Compliance */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Real-time Activity */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Real-time Activity</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            {activityDataFinal.length > 0 ? activityDataFinal.map((activity) => (
-                                <div key={activity.id} className="flex items-start space-x-3 p-3 border rounded-lg">
-                                    <div className={`w-2 h-2 rounded-full mt-2 ${getPriorityColor(activity.priority)}`} />
-                                    <div className="flex-1">
-                                        <p className="text-sm font-medium">{activity.message}</p>
-                                        <div className="flex justify-between items-center mt-1">
-                                            <span className="text-xs text-gray-500">{activity.timestamp}</span>
-                                            <Badge variant="outline" size="sm">
-                                                {activity.type}
-                                            </Badge>
-                                        </div>
-                                    </div>
-                                </div>
-                            )) : (
-                                <div className="text-center py-8">
-                                    <IconActivity className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                                    <p className="text-gray-600 dark:text-gray-400">No activity data available</p>
-                                </div>
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
+             
 
                 {/* Compliance Alerts */}
                 <Card>

@@ -91,7 +91,7 @@
             <div class="greeting">Hello {{ user_name }}!</div>
             
             <div class="message">
-                {{ message|default:"You have a new notification from Wasgo." }}
+                {{ message|default:"You have a new notification from Wasgo Waste Management." }}
             </div>
             
             {% if notification_data %}
@@ -112,14 +112,14 @@
             
             <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 20px;">
                 <p style="margin: 0; font-size: 14px; color: #6c757d;">
-                    This is an automated notification from your Wasgo account. 
+                    This is an automated notification from your Wasgo Waste Management account. 
                     You can manage your notification preferences in your account settings.
                 </p>
             </div>
         </div>
         
         <div class="footer">
-            <p>Need help? Contact our support team at <a href="mailto:support@wasgo.com">support@wasgo.com</a></p>
+            <p>Need help with your waste management account? Contact our support team at <a href="mailto:support@wasgo.com">support@wasgo.com</a></p>
             <p>&copy; {{ current_year }} {{ app_name }}. All rights reserved.</p>
         </div>
     </div>

@@ -18,6 +18,9 @@ import AssignedProviderCard from './AssignedProviderCard';
 import OfferedProvidersList from './OfferedProvidersList';
 import AcceptedOffersList from './AcceptedOffersList';
 import RejectedOffersList from './RejectedOffersList';
+import RequestedProvidersList from './RequestedProvidersList';
+import OfferJobModal from './OfferJobModal';
+import axiosInstance from '../../../../../services/axiosInstance';
 
 interface ServiceRequest {
     id: string;
@@ -46,6 +49,11 @@ interface ServiceRequest {
         last_name: string;
     };
     offered_providers?: OfferedProvider[];
+    requested_providers?: OfferedProvider[];
+    requested_to_be_offered?: OfferedProvider[];
+    accepted_providers?: OfferedProvider[];
+    declined_providers?: OfferedProvider[];
+    declined_provider?: OfferedProvider[];
 }
 
 interface OfferedProvider {
@@ -127,6 +135,8 @@ const ProviderInfoTab: React.FC<ProviderInfoTabProps> = ({
     onAssignJobToProvider
 }) => {
     const [activeTab, setActiveTab] = useState('assigned');
+    const [showOfferModal, setShowOfferModal] = useState(false);
+    const [selectedProviderForOffer, setSelectedProviderForOffer] = useState<OfferedProvider | null>(null);
 
     // Use real data from API instead of mock data
     const offeredProviders = serviceRequest.offered_providers || [];
@@ -145,15 +155,21 @@ const ProviderInfoTab: React.FC<ProviderInfoTabProps> = ({
             icon: IconSend
         },
         {
+            id: 'requested to be offered',
+            name: 'Requested to be Offered',
+            count: serviceRequest.requested_to_be_offered?.length || 0,
+            icon: IconSend
+        },
+        {
             id: 'accepted',
             name: 'Accepted Offers',
-            count: 0, // Will be updated when we have offer status data
+            count: serviceRequest.accepted_providers?.length || 0,
             icon: IconCheck
         },
         {
             id: 'rejected',
             name: 'Rejected Offers',
-            count: 0, // Will be updated when we have offer status data
+            count: (serviceRequest.declined_providers?.length || 0) + (serviceRequest.declined_provider ? 1 : 0),
             icon: IconX
         }
     ];
@@ -183,6 +199,50 @@ const ProviderInfoTab: React.FC<ProviderInfoTabProps> = ({
                 return 'text-red-600';
             default:
                 return 'text-gray-600';
+        }
+    };
+
+    const handleOfferJob = (providerId: string) => {
+        const provider = serviceRequest.requested_to_be_offered?.find(p => p.id === providerId);
+        if (provider) {
+            setSelectedProviderForOffer(provider);
+            setShowOfferModal(true);
+        }
+    };
+
+    const handleOfferJobSubmit = async (providerId: string, offerData: any) => {
+        try {
+            // Here you would call your API to offer the job
+            console.log('Offering job to provider:', providerId, offerData);
+            
+            // For now, we'll just close the modal
+            // In a real implementation, you would:
+            // 1. Call the API to create the offer
+            // 2. Update the local state or refetch data
+            // 3. Show a success message
+            
+            setShowOfferModal(false);
+            setSelectedProviderForOffer(null);
+        } catch (error) {
+            console.error('Error offering job:', error);
+            // Handle error (show notification, etc.)
+        }
+    };
+
+    const handleCloseOfferModal = () => {
+        setShowOfferModal(false);
+        setSelectedProviderForOffer(null);
+    };
+
+    const handleGetAutoPricing = async (providerId: string, serviceRequestId: string): Promise<number> => {
+        try {
+            // Call the backend API to auto calculate the offered price
+            const response = await axiosInstance.post(`/service-requests/${serviceRequestId}/auto_calculate_offered_price/`);
+            
+            return response.data.offered_price;
+        } catch (error) {
+            console.error('Error getting auto pricing:', error);
+            throw new Error('Failed to calculate auto pricing');
         }
     };
 
@@ -230,6 +290,8 @@ const ProviderInfoTab: React.FC<ProviderInfoTabProps> = ({
                         </h3>
                         <OfferedProvidersList
                             providers={offeredProviders as any}
+                            accepted_providers={serviceRequest.accepted_providers || []}
+                            rejected_providers={serviceRequest.declined_providers || []}
                             offeredPrice={serviceRequest.offered_price ?? null}
                             offerExpiresAt={serviceRequest.offer_expires_at ?? null}
                             onViewProviderDetails={onViewProviderDetails}
@@ -246,10 +308,33 @@ const ProviderInfoTab: React.FC<ProviderInfoTabProps> = ({
                             <span>Accepted Offers</span>
                         </h3>
                         <AcceptedOffersList
-                            providers={[]}
+                            providers={serviceRequest.accepted_providers || []}
                             offeredPrice={serviceRequest.offered_price ?? null}
                             onViewProviderDetails={onViewProviderDetails}
                             onAssignJobToProvider={(providerId) => onAssignJobToProvider(providerId, serviceRequest.id)}
+                        />
+                    </div>
+                )}
+
+                {activeTab === 'requested to be offered' && (
+                    <div>
+                        <h3 className="text-lg font-semibold mb-4 flex items-center space-x-2">
+                            <IconSend className="w-5 h-5 text-purple-600" />
+                            <span>Requested to be Offered</span>
+                        </h3>
+                        <RequestedProvidersList
+                            job={serviceRequest}
+                            providers={serviceRequest.requested_to_be_offered || []}
+                            onViewProviderDetails={onViewProviderDetails}
+                            onApproveRequest={(providerId) => {
+                                // Handle approve request logic
+                                console.log('Approve request for provider:', providerId);
+                            }}
+                            onRejectRequest={(providerId) => {
+                                // Handle reject request logic
+                                console.log('Reject request for provider:', providerId);
+                            }}
+                            onOfferJob={handleOfferJob}
                         />
                     </div>
                 )}
@@ -261,13 +346,24 @@ const ProviderInfoTab: React.FC<ProviderInfoTabProps> = ({
                             <span>Rejected Offers</span>
                         </h3>
                         <RejectedOffersList
-                            providers={[]}
+                            providers={Array.isArray(serviceRequest.declined_provider) ? serviceRequest.declined_provider as any : []}
                             offeredPrice={serviceRequest.offered_price ?? null}
                             onViewProviderDetails={onViewProviderDetails}
                         />
                     </div>
                 )}
             </div>
+
+            {/* Offer Job Modal */}
+            <OfferJobModal
+                isOpen={showOfferModal}
+                onClose={handleCloseOfferModal}
+                provider={selectedProviderForOffer}
+                serviceRequestId={serviceRequest.id}
+                onOfferJob={handleOfferJobSubmit}
+                onGetAutoPricing={handleGetAutoPricing}
+                job={serviceRequest}
+            />
         </div>
     );
 };

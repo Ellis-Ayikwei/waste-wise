@@ -684,6 +684,8 @@ class UserManagementViewSet(viewsets.ModelViewSet):
         """
         instance = self.get_object()
 
+        print("the user change data", request.data)
+
         # Define sensitive fields that only admins can update
         sensitive_fields = [
             "user_type",
@@ -1173,7 +1175,7 @@ class UserManagementViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=True,
-        methods=["post"],
+        methods=["post", "patch"],
         permission_classes=[IsAdminUser | IsSuperAdminUser],
     )
     def activate(self, request, pk=None):
@@ -1183,6 +1185,7 @@ class UserManagementViewSet(viewsets.ModelViewSet):
         """
         user = self.get_object()
         user.account_status = "active"
+        user.is_active = True
         user.save()
 
         logger.info(f"User {user.id} activated by admin {request.user.id}")
@@ -1190,7 +1193,7 @@ class UserManagementViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=True,
-        methods=["post"],
+        methods=["post", "patch"],
         permission_classes=[IsAdminUser | IsSuperAdminUser],
     )
     def deactivate(self, request, pk=None):
@@ -1200,6 +1203,7 @@ class UserManagementViewSet(viewsets.ModelViewSet):
         """
         user = self.get_object()
         user.account_status = "inactive"
+        user.is_active = False
         user.save()
 
         logger.info(f"User {user.id} deactivated by admin {request.user.id}")

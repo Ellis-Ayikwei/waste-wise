@@ -1,4 +1,4 @@
-{{ app_name|default:"Wasgo" }} - STAFF NOTIFICATION
+{{ app_name|default:"Wasgo" }} - WASTE MANAGEMENT STAFF
 ==============================================
 
 Hello {{ user_name }}!
@@ -12,19 +12,19 @@ PRIORITY: {{ priority|upper }}
 {% endif %}
 
 {% if request %}
-BOOKING SUMMARY
----------------
+WASTE COLLECTION REQUEST SUMMARY
+----------------------------------
 Reference: {{ request.tracking_number|default:"#REF" }}
 Time Created: {{ request.created_at|date:"d M Y H:i" }}
-{% if request.pickup_location %}From: {{ request.pickup_location.address|truncatechars:50|default:"TBD" }}{% endif %}
-{% if request.delivery_location %}To: {{ request.delivery_location.address|truncatechars:50|default:"TBD" }}{% endif %}
-{% if request.preferred_date %}Preferred Date: {{ request.preferred_date|date:"d M Y" }}{% endif %}
-{% if request.estimated_price %}Est. Value: £{{ request.estimated_price }}{% endif %}
+{% if request.pickup_location %}Collection From: {{ request.pickup_location.address|truncatechars:50|default:"TBD" }}{% endif %}
+{% if request.delivery_location %}Disposal To: {{ request.delivery_location.address|truncatechars:50|default:"TBD" }}{% endif %}
+{% if request.preferred_date %}Preferred Collection Date: {{ request.preferred_date|date:"d M Y" }}{% endif %}
+{% if request.estimated_price %}Est. Cost: GHS {{ request.estimated_price }}{% endif %}
 
 {% if request.user %}
-CUSTOMER SUMMARY
-----------------
-Customer: {{ request.user.first_name }} {{ request.user.last_name }}
+CLIENT SUMMARY
+---------------
+Client: {{ request.user.first_name }} {{ request.user.last_name }}
 Contact: {{ request.user.email }}
 {% if request.user.phone_number %}Phone: {{ request.user.phone_number }}{% endif %}
 {% endif %}
@@ -32,26 +32,27 @@ Contact: {{ request.user.email }}
 
 YOUR TASKS
 ----------
-• Monitor booking progress and provider responses
-• Ensure customer receives timely updates
-• Escalate to supervisor if issues arise
-• Follow up on customer satisfaction after completion
+• Monitor waste collection request progress and provider responses
+• Ensure client receives timely updates on collection status
+• Escalate to supervisor if issues arise with waste handling
+• Follow up on client satisfaction after waste collection completion
+• Verify proper waste categorization and disposal compliance
 
 {% if staff_dashboard_url %}
 Staff Dashboard: {{ staff_dashboard_url }}
 {% endif %}
-{% if booking_details_url %}
-View Booking: {{ booking_details_url }}
+{% if request_details_url %}
+View Request: {{ request_details_url }}
 {% endif %}
 
 {% if notification_preferences_url %}
 Customize notifications: {{ notification_preferences_url }}
 {% endif %}
 
-Staff Support: staff@wasgo.com
-Help Desk: +44 123 456 789
+Waste Management Staff Support: staff@wasgo.com
+Help Desk: +233 123 456 789
 
 ---
-This is an automated staff notification, please do not reply to this email.
+This is an automated waste management staff notification, please do not reply to this email.
 
-© {{ current_year }} {{ app_name|default:"Wasgo" }} Staff Portal. All rights reserved.
+© {{ current_year }} {{ app_name|default:"Wasgo" }} Waste Management Staff Portal. All rights reserved.
