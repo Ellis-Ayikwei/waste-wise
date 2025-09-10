@@ -5,6 +5,8 @@ import { setPageTitle } from '../../../../store/themeConfigSlice';
 import useSwr from 'swr';
 import fetcher from '../../../../services/fetcher';
 import ErrorBoundary from '../../../../components/ErrorBoundary';
+import { useWebSocket } from '../../../../hooks/useWebSocket';
+import WebSocketStatus from '../../../../components/WebSocketStatus';
 import {
     BinHeader,
     BinStats,
@@ -114,13 +116,75 @@ const BinDetail: React.FC = () => {
     const [showEditModal, setShowEditModal] = useState(false);
 
     // Fetch bin data
-    const { data: binData, isLoading, mutate } = useSwr<SmartBinData>(`waste/bins/${id}/`, fetcher);
+    const { data: binData, isLoading, mutate } = useSwr<SmartBinData>(`waste/bins/${id}/`, fetcher 
+    );
     
-    // Fetch sensor readings
-    const { data: readingsData } = useSwr<SensorReading[]>(`waste/bins/${id}/readings/`, fetcher);
+    // Fetch sensor readings with auto-refresh every 15 seconds
+    const { data: readingsData, mutate: mutateReadings } = useSwr<SensorReading[]>(
+        `waste/bins/${id}/readings/`, 
+        fetcher,
+    );
     
-    // Fetch alerts
-    const { data: alertsData } = useSwr<BinAlert[]>(`waste/bins/${id}/alerts/`, fetcher);
+    // Fetch alerts with auto-refresh every 20 seconds
+    const { data: alertsData, mutate: mutateAlerts } = useSwr<BinAlert[]>(
+        `waste/bins/${id}/alerts/`, 
+        fetcher,
+        { refreshInterval: 20000 } // Auto-refresh every 20 seconds
+    );
+
+    // WebSocket for real-time notifications and data updates
+    const { isConnected } = useWebSocket({
+        onBinStatusUpdate: (data) => {
+            // Check if this update is for the current bin
+            if (data.bin_id === id || data.bin_id === binData?.properties?.bin_id) {
+                // Update bin data directly from WebSocket
+                updateBinDataFromWebSocket(data);
+            }
+        },
+        onSensorAlert: (data) => {
+            // Check if this alert is for the current bin
+            if (data.bin_id === id || data.bin_id === binData?.properties?.bin_id) {
+                // Update bin data with sensor alert info
+                updateBinDataFromWebSocket(data);
+                // Also refresh alerts data
+                mutateAlerts();
+            }
+        },
+        onNotification: (data) => {
+            // If notification contains bin data, update it
+            if (data.bin_id === id || data.bin_id === binData?.properties?.bin_id) {
+                updateBinDataFromWebSocket(data);
+            }
+        }
+    });
+
+    // Helper function to update bin data from WebSocket
+    const updateBinDataFromWebSocket = (wsData: any) => {
+        mutate((currentData) => {
+            if (!currentData) {
+                return currentData;
+            }
+            
+            return {
+                ...currentData,
+                properties: {
+                    ...currentData.properties,
+                    // Update fields that might come from WebSocket
+                    fill_level: wsData.fill_level ?? currentData.properties.fill_level,
+                    needs_collection: wsData.needs_collection ?? currentData.properties.needs_collection,
+                    needs_maintenance: wsData.needs_maintenance ?? currentData.properties.needs_maintenance,
+                    status: wsData.status ?? currentData.properties.status,
+                    is_online: wsData.is_online ?? currentData.properties.is_online,
+                    battery_level: wsData.battery_level ?? currentData.properties.battery_level,
+                    signal_strength: wsData.signal_strength ?? currentData.properties.signal_strength,
+                    temperature: wsData.temperature ?? currentData.properties.temperature,
+                    humidity: wsData.humidity ?? currentData.properties.humidity,
+                    last_reading_at: wsData.last_reading_at ?? currentData.properties.last_reading_at,
+                    updated_at: new Date().toISOString()
+                }
+            };
+        }, false); // Don't revalidate, we're updating cache directly
+    };
 
     useEffect(() => {
         if (binData) {

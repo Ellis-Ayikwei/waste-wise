@@ -240,8 +240,13 @@ const EnhancedAdminDashboard: React.FC = () => {
         request.status === 'completed'
     ).length;
     const totalRevenue = serviceRequestsDataFinal
-        .filter((request: any) => request.status === 'completed' && request.final_price)
-        .reduce((sum: number, request: any) => sum + (request.final_price || 0), 0);
+        ?.filter((request: any) => request.status === 'completed' && request.final_price !== null && request.final_price !== undefined)
+        ?.reduce((sum: number, request: any) => {
+            const price = parseFloat(request.final_price);
+            return sum + (isNaN(price) ? 0 : price);
+        }, 0) || 0;
+
+    console.log("the total revenue", totalRevenue);
     const onlineBins = binDataFinal.filter(bin => bin.is_online).length;
     const highFillBins = binDataFinal.filter(bin => bin.fill_level > 80).length;
 
@@ -324,7 +329,7 @@ const EnhancedAdminDashboard: React.FC = () => {
                 <StatCard
                     icon={faDollarSign}
                     title="Total Revenue"
-                    value={`${Ghc(totalRevenue.toLocaleString())}`}
+                    value={`${Ghc(totalRevenue || 0)}`}
                     color="indigo"
                     delay={0.4}
                 />

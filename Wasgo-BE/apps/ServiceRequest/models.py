@@ -1305,6 +1305,33 @@ def send_service_request_update(sender, instance, created, **kwargs):
         try:
             channel_layer = get_channel_layer()
 
+            # Ensure all values are JSON serializable
+            service_type_display = "Service"
+            try:
+                service_type_display = str(instance.get_service_type_display())
+            except (AttributeError, TypeError):
+                service_type_display = "Service"
+
+            status_display = "Updated"
+            try:
+                status_display = str(instance.get_status_display())
+            except (AttributeError, TypeError):
+                status_display = "Updated"
+
+            provider_name = None
+            if instance.assigned_provider:
+                try:
+                    provider_name = str(instance.assigned_provider.business_name)
+                except (AttributeError, TypeError):
+                    provider_name = None
+
+            pickup_location_address = None
+            if instance.pickup_location:
+                try:
+                    pickup_location_address = str(instance.pickup_location.address)
+                except (AttributeError, TypeError):
+                    pickup_location_address = None
+
             # Send update to customer
             async_to_sync(channel_layer.group_send)(
                 f"user_{instance.user.id}",
@@ -1312,15 +1339,11 @@ def send_service_request_update(sender, instance, created, **kwargs):
                     "type": "service_request_update",
                     "data": {
                         "request_id": str(instance.id),
-                        "status": instance.status,
-                        "service_type": instance.service_type,
-                        "message": f"Your {instance.get_service_type_display()} status changed to {instance.get_status_display()}",
+                        "status": str(instance.status),
+                        "service_type": str(instance.service_type),
+                        "message": f"Your {service_type_display} status changed to {status_display}",
                         "timestamp": instance.updated_at.isoformat(),
-                        "provider_name": (
-                            instance.assigned_provider.business_name
-                            if instance.assigned_provider
-                            else None
-                        ),
+                        "provider_name": provider_name,
                         "estimated_price": (
                             str(instance.estimated_price)
                             if instance.estimated_price
@@ -1331,11 +1354,7 @@ def send_service_request_update(sender, instance, created, **kwargs):
                             if instance.service_date
                             else None
                         ),
-                        "pickup_location": (
-                            instance.pickup_location.address
-                            if instance.pickup_location
-                            else None
-                        ),
+                        "pickup_location": pickup_location_address,
                     },
                 },
             )
@@ -1344,23 +1363,24 @@ def send_service_request_update(sender, instance, created, **kwargs):
             if instance.assigned_provider and hasattr(
                 instance.assigned_provider, "user"
             ):
+                customer_name = "Unknown"
+                try:
+                    customer_name = str(instance.user.username or instance.user.email)
+                except (AttributeError, TypeError):
+                    customer_name = "Unknown"
+
                 async_to_sync(channel_layer.group_send)(
                     f"user_{instance.assigned_provider.user.id}",
                     {
                         "type": "service_request_update",
                         "data": {
                             "request_id": str(instance.id),
-                            "status": instance.status,
-                            "customer_name": instance.user.username
-                            or instance.user.email,
-                            "service_type": instance.service_type,
-                            "message": f"Service request {instance.id} status updated to {instance.get_status_display()}",
+                            "status": str(instance.status),
+                            "customer_name": customer_name,
+                            "service_type": str(instance.service_type),
+                            "message": f"Service request {instance.id} status updated to {status_display}",
                             "timestamp": instance.updated_at.isoformat(),
-                            "pickup_location": (
-                                instance.pickup_location.address
-                                if instance.pickup_location
-                                else None
-                            ),
+                            "pickup_location": pickup_location_address,
                             "estimated_price": (
                                 str(instance.estimated_price)
                                 if instance.estimated_price

@@ -14,6 +14,7 @@ export interface NotificationData {
     severity: 'info' | 'success' | 'warning' | 'error';
     actionUrl?: string;
     actionText?: string;
+    bin_id?: string; // Optional bin ID for bin-related notifications
 }
 
 export interface ServiceRequestUpdate {
@@ -27,21 +28,21 @@ export interface ServiceRequestUpdate {
 }
 
 export interface BinStatusUpdate {
-    binId: string;
+    bin_id: string;
     status: string;
-    fillLevel: number;
-    needsCollection: boolean;
-    needsMaintenance: boolean;
+    fill_level: number;
+    needs_collection: boolean;
+    needs_maintenance: boolean;
     location?: string;
 }
 
 export interface SensorAlert {
-    sensorId: string;
-    alertType: string;
+    sensor_id: string;
+    alert_type: string;
     severity: 'low' | 'medium' | 'high' | 'critical';
     message: string;
     timestamp: string;
-    binId?: string;
+    bin_id?: string;
     location?: string;
 }
 
@@ -106,6 +107,7 @@ class WebSocketService {
     private isConnecting = false;
     private messageHandlers: Map<string, (data: any) => void> = new Map();
     private connectionStatusHandlers: ((status: 'connected' | 'disconnected' | 'connecting') => void)[] = [];
+
 
     constructor() {
         this.connect();
@@ -222,8 +224,6 @@ class WebSocketService {
     }
 
     private handleMessage(message: WebSocketMessage) {
-        console.log('Received Admin WebSocket message:', message);
-
         // Handle different message types
         switch (message.type) {
             case 'notification':
@@ -301,14 +301,14 @@ class WebSocketService {
     }
 
     private handleBinStatusUpdate(data: BinStatusUpdate) {
-        let message = `Bin ${data.binId} status updated`;
+        let message = `Bin ${data.bin_id} status updated`;
         let severity: 'info' | 'success' | 'warning' | 'error' = 'info';
 
-        if (data.needsCollection) {
-            message = `Bin ${data.binId} needs collection (${data.fillLevel}% full)`;
+        if (data.needs_collection) {
+            message = `Bin ${data.bin_id} needs collection (${data.fill_level}% full)`;
             severity = 'warning';
-        } else if (data.needsMaintenance) {
-            message = `Bin ${data.binId} needs maintenance`;
+        } else if (data.needs_maintenance) {
+            message = `Bin ${data.bin_id} needs maintenance`;
             severity = 'error';
         }
 
@@ -316,11 +316,11 @@ class WebSocketService {
             message += ` at ${data.location}`;
         }
 
-        showNotification({
-            message,
-            type: severity,
-            showHide: true
-        });
+        // showNotification({
+        //     message,
+        //     type: severity,
+        //     showHide: true
+        // });
     }
 
     private handleSensorAlert(data: SensorAlert) {
@@ -342,11 +342,12 @@ class WebSocketService {
         }
 
         const locationInfo = data.location ? ` at ${data.location}` : '';
-        showNotification({
-            message: `Sensor Alert${locationInfo}: ${data.message}`,
-            type: severity,
-            showHide: true
-        });
+        const binInfo = data.bin_id ? ` (Bin: ${data.bin_id})` : '';
+        // showNotification({
+        //     message: `Sensor Alert${binInfo}${locationInfo}: ${data.message}`,
+        //     type: severity,
+        //     showHide: true
+        // });
     }
 
     private handleAdminAlert(data: AdminAlert) {
@@ -367,11 +368,11 @@ class WebSocketService {
                 break;
         }
 
-        showNotification({
-            message: `${data.title}: ${data.message}`,
-            type: severity,
-            showHide: true
-        });
+        // showNotification({
+        //     message: `${data.title}: ${data.message}`,
+        //     type: severity,
+        //     showHide: true
+        // });
     }
 
     private handleChatMessage(data: ChatMessage) {

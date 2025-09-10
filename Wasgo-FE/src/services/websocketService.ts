@@ -244,11 +244,11 @@ class WebSocketService {
             severity = 'error';
         }
 
-        showNotification({
-            message,
-            type: severity,
-            showHide: true
-        });
+        // showNotification({
+        //     message,
+        //     type: severity,
+        //     showHide: true
+        // });
     }
 
     private handleSensorAlert(data: SensorAlert) {

@@ -177,9 +177,9 @@ class GeneralWebSocketConsumer(AsyncWebsocketConsumer):
     async def handle_chat_message(self, data):
         """Handle chat message"""
         message_data = data.get("data", {})
-        room_id = message_data.get("roomId")
+        room_id = message_data.get("room_id")
         message = message_data.get("message")
-        message_type = message_data.get("messageType", "text")
+        message_type = message_data.get("message_type", "text")
 
         if not room_id or not message:
             await self.send_error("Room ID and message are required")
@@ -188,14 +188,14 @@ class GeneralWebSocketConsumer(AsyncWebsocketConsumer):
         # Create chat message data
         chat_data = {
             "id": f"msg_{self.user.id}_{int(time.time() * 1000)}",
-            "roomId": room_id,
-            "senderId": str(self.user.id),
-            "senderName": self.user.username or self.user.email,
-            "senderType": "customer",
+            "room_id": room_id,
+            "sender_id": str(self.user.id),
+            "sender_name": self.user.username or self.user.email,
+            "sender_type": "customer",
             "message": message,
-            "messageType": message_type,
+            "message_type": message_type,
             "timestamp": timezone.now().isoformat(),
-            "isRead": False,
+            "is_read": False,
         }
 
         # Send to room group
@@ -207,18 +207,18 @@ class GeneralWebSocketConsumer(AsyncWebsocketConsumer):
     async def handle_chat_typing(self, data):
         """Handle typing indicator"""
         message_data = data.get("data", {})
-        room_id = message_data.get("roomId")
-        is_typing = message_data.get("isTyping", False)
+        room_id = message_data.get("room_id")
+        is_typing = message_data.get("is_typing", False)
 
         if not room_id:
             return
 
         typing_data = {
-            "roomId": room_id,
-            "userId": str(self.user.id),
-            "userName": self.user.username or self.user.email,
-            "userType": "customer",
-            "isTyping": is_typing,
+            "room_id": room_id,
+            "user_id": str(self.user.id),
+            "user_name": self.user.username or self.user.email,
+            "user_type": "customer",
+            "is_typing": is_typing,
         }
 
         # Send to room group (excluding sender)
@@ -235,16 +235,16 @@ class GeneralWebSocketConsumer(AsyncWebsocketConsumer):
     async def handle_chat_read(self, data):
         """Handle read receipt"""
         message_data = data.get("data", {})
-        room_id = message_data.get("roomId")
-        message_id = message_data.get("messageId")
+        room_id = message_data.get("room_id")
+        message_id = message_data.get("message_id")
 
         if not room_id or not message_id:
             return
 
         read_data = {
-            "roomId": room_id,
-            "userId": str(self.user.id),
-            "messageId": message_id,
+            "room_id": room_id,
+            "user_id": str(self.user.id),
+            "message_id": message_id,
             "timestamp": timezone.now().isoformat(),
         }
 
@@ -257,27 +257,27 @@ class GeneralWebSocketConsumer(AsyncWebsocketConsumer):
     async def handle_join_room(self, data):
         """Handle joining a chat room"""
         message_data = data.get("data", {})
-        room_id = message_data.get("roomId")
+        room_id = message_data.get("room_id")
 
         if room_id:
             room_group = f"chat_room_{room_id}"
             await self.channel_layer.group_add(room_group, self.channel_name)
 
             await self.send(
-                text_data=json.dumps({"type": "room_joined", "roomId": room_id})
+                text_data=json.dumps({"type": "room_joined", "room_id": room_id})
             )
 
     async def handle_leave_room(self, data):
         """Handle leaving a chat room"""
         message_data = data.get("data", {})
-        room_id = message_data.get("roomId")
+        room_id = message_data.get("room_id")
 
         if room_id:
             room_group = f"chat_room_{room_id}"
             await self.channel_layer.group_discard(room_group, self.channel_name)
 
             await self.send(
-                text_data=json.dumps({"type": "room_left", "roomId": room_id})
+                text_data=json.dumps({"type": "room_left", "room_id": room_id})
             )
 
     # Event handlers for group messages
@@ -415,6 +415,25 @@ class GeneralWebSocketConsumer(AsyncWebsocketConsumer):
                     "data": event["data"],
                     "timestamp": event.get("timestamp"),
                     "priority": event.get("priority", "critical"),
+                }
+            )
+        )
+
+    async def sensor_update(self, event):
+        """Handle sensor reading updates"""
+        print(
+            f"\033[92m📡 [WebSocket] Sending sensor_update to user_{self.user.id}\033[0m"
+        )
+        print(f"\033[96m   Bin: {event['data'].get('bin_number', 'N/A')}\033[0m")
+        print(
+            f"\033[96m   Fill Level: {event['data'].get('fill_level', 'N/A')}%\033[0m"
+        )
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "sensor_update",
+                    "data": event["data"],
+                    "timestamp": event.get("timestamp"),
                 }
             )
         )
@@ -712,6 +731,25 @@ class AdminWebSocketConsumer(AsyncWebsocketConsumer):
             )
         )
 
+    async def sensor_update(self, event):
+        """Handle sensor reading updates for admin"""
+        print(
+            f"\033[92m📡 [Admin WebSocket] Sending sensor_update to admin_{self.user.id}\033[0m"
+        )
+        print(f"\033[96m   Bin: {event['data'].get('bin_number', 'N/A')}\033[0m")
+        print(
+            f"\033[96m   Fill Level: {event['data'].get('fill_level', 'N/A')}%\033[0m"
+        )
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "sensor_update",
+                    "data": event["data"],
+                    "timestamp": event.get("timestamp"),
+                }
+            )
+        )
+
     async def send_error(self, error_message):
         """Send error message to client"""
         await self.send(
@@ -752,9 +790,9 @@ class AdminWebSocketConsumer(AsyncWebsocketConsumer):
     async def handle_chat_message(self, data):
         """Handle chat message for admin"""
         message_data = data.get("data", {})
-        room_id = message_data.get("roomId")
+        room_id = message_data.get("room_id")
         message = message_data.get("message")
-        message_type = message_data.get("messageType", "text")
+        message_type = message_data.get("message_type", "text")
 
         if not room_id or not message:
             await self.send_error("Room ID and message are required")
@@ -763,14 +801,14 @@ class AdminWebSocketConsumer(AsyncWebsocketConsumer):
         # Create chat message data for admin
         chat_data = {
             "id": f"msg_{self.user.id}_{int(time.time() * 1000)}",
-            "roomId": room_id,
-            "senderId": str(self.user.id),
-            "senderName": self.user.username or self.user.email,
-            "senderType": "admin",
+            "room_id": room_id,
+            "sender_id": str(self.user.id),
+            "sender_name": self.user.username or self.user.email,
+            "sender_type": "admin",
             "message": message,
-            "messageType": message_type,
+            "message_type": message_type,
             "timestamp": timezone.now().isoformat(),
-            "isRead": False,
+            "is_read": False,
         }
 
         # Send to room group
@@ -782,18 +820,18 @@ class AdminWebSocketConsumer(AsyncWebsocketConsumer):
     async def handle_chat_typing(self, data):
         """Handle typing indicator for admin"""
         message_data = data.get("data", {})
-        room_id = message_data.get("roomId")
-        is_typing = message_data.get("isTyping", False)
+        room_id = message_data.get("room_id")
+        is_typing = message_data.get("is_typing", False)
 
         if not room_id:
             return
 
         typing_data = {
-            "roomId": room_id,
-            "userId": str(self.user.id),
-            "userName": self.user.username or self.user.email,
-            "userType": "admin",
-            "isTyping": is_typing,
+            "room_id": room_id,
+            "user_id": str(self.user.id),
+            "user_name": self.user.username or self.user.email,
+            "user_type": "admin",
+            "is_typing": is_typing,
         }
 
         room_group = f"chat_room_{room_id}"
@@ -809,16 +847,16 @@ class AdminWebSocketConsumer(AsyncWebsocketConsumer):
     async def handle_chat_read(self, data):
         """Handle read receipt for admin"""
         message_data = data.get("data", {})
-        room_id = message_data.get("roomId")
-        message_id = message_data.get("messageId")
+        room_id = message_data.get("room_id")
+        message_id = message_data.get("message_id")
 
         if not room_id or not message_id:
             return
 
         read_data = {
-            "roomId": room_id,
-            "userId": str(self.user.id),
-            "messageId": message_id,
+            "room_id": room_id,
+            "user_id": str(self.user.id),
+            "message_id": message_id,
             "timestamp": timezone.now().isoformat(),
         }
 
@@ -830,27 +868,27 @@ class AdminWebSocketConsumer(AsyncWebsocketConsumer):
     async def handle_join_room(self, data):
         """Handle joining a chat room for admin"""
         message_data = data.get("data", {})
-        room_id = message_data.get("roomId")
+        room_id = message_data.get("room_id")
 
         if room_id:
             room_group = f"chat_room_{room_id}"
             await self.channel_layer.group_add(room_group, self.channel_name)
 
             await self.send(
-                text_data=json.dumps({"type": "room_joined", "roomId": room_id})
+                text_data=json.dumps({"type": "room_joined", "room_id": room_id})
             )
 
     async def handle_leave_room(self, data):
         """Handle leaving a chat room for admin"""
         message_data = data.get("data", {})
-        room_id = message_data.get("roomId")
+        room_id = message_data.get("room_id")
 
         if room_id:
             room_group = f"chat_room_{room_id}"
             await self.channel_layer.group_discard(room_group, self.channel_name)
 
             await self.send(
-                text_data=json.dumps({"type": "room_left", "roomId": room_id})
+                text_data=json.dumps({"type": "room_left", "room_id": room_id})
             )
 
     @database_sync_to_async

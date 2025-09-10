@@ -7,6 +7,7 @@ import {
     IconTrash
 } from '@tabler/icons-react';
 import { Button } from '../../../../../components/ui/Button';
+import WebSocketStatus from '../../../../../components/WebSocketStatus';
 
 interface BinHeaderProps {
     binName: string;
@@ -38,6 +39,7 @@ const BinHeader: React.FC<BinHeaderProps> = ({
                 </div>
             </div>
             <div className="flex items-center gap-3">
+                <WebSocketStatus showText={false} />
                 <Button variant="outline" onClick={onRefresh}>
                     <IconRefresh className="w-4 h-4 mr-2" />
                     Refresh
