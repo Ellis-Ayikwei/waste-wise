@@ -1,0 +1,262 @@
+@startuml Wasgo_Waste_Management_System_Use_Case_Diagram
+!theme vibrant
+skinparam packageStyle rect
+skinparam backgroundColor #F5F5F5
+skinparam actorBackgroundColor #E8F5E9
+skinparam usecaseBackgroundColor #FFFFFF
+skinparam arrowColor #4CAF50
+skinparam actorBorderColor #2E7D32
+skinparam usecaseBorderColor #388E3C
+
+title **Wasgo Smart Waste Management System - Use Case Diagram**\n<size:14>IoT-Powered Waste Collection & Management Platform for Ghana</size>\n
+
+' ============ ACTORS ============
+' Primary Actors
+actor "Citizen/User" as User #LightGreen
+actor "Waste Collector/Driver" as Driver #LightBlue
+actor "Admin/Supervisor" as Admin #Orange
+actor "Service Provider" as Provider #Yellow
+actor "Guest Visitor" as Guest #LightGray
+
+' Secondary Actors
+actor "IoT Smart Bin" as SmartBin #Cyan
+actor "Payment Gateway" as Payment #Pink
+actor "SMS/Email Service" as Notification #Lavender
+actor "GPS System" as GPS #LightCoral
+
+' ============ SYSTEM BOUNDARY ============
+rectangle "**Wasgo Waste Management System**" {
+  
+  ' ========== PUBLIC WEBSITE USE CASES ==========
+  package "Public Website Features" #E8F5E9 {
+    usecase "View Homepage\n& Services" as UC_Homepage
+    usecase "Browse Service\nCatalog" as UC_Services
+    usecase "View Interactive\nBin Map" as UC_BinMap
+    usecase "Report Waste\nIssue" as UC_ReportIssue
+    usecase "Check Collection\nSchedule" as UC_Schedule
+    usecase "Read Educational\nBlog" as UC_Blog
+    usecase "Contact Support" as UC_Contact
+    usecase "View Company\nInformation" as UC_About
+  }
+  
+  ' ========== AUTHENTICATION USE CASES ==========
+  package "Authentication & Registration" #FFF3E0 {
+    usecase "Register Account" as UC_Register
+    usecase "Login to System" as UC_Login
+    usecase "Verify OTP" as UC_OTP
+    usecase "Reset Password" as UC_ResetPwd
+    usecase "Manage Profile" as UC_Profile
+  }
+  
+  ' ========== USER/CITIZEN USE CASES ==========
+  package "Citizen Services" #E3F2FD {
+    usecase "Request Waste\nCollection" as UC_RequestCollection
+    usecase "Schedule Pickup" as UC_SchedulePickup
+    usecase "Track Collection\nStatus" as UC_TrackStatus
+    usecase "Make Payment" as UC_MakePayment
+    usecase "View Service\nHistory" as UC_History
+    usecase "Submit Feedback" as UC_Feedback
+    usecase "Join Recycling\nProgram" as UC_Recycling
+    usecase "Calculate Carbon\nFootprint" as UC_Carbon
+    usecase "Upload Waste\nPhotos" as UC_UploadPhoto
+    usecase "Receive\nNotifications" as UC_Notifications
+  }
+  
+  ' ========== IOT & SMART BIN USE CASES ==========
+  package "IoT Smart Bin Management" #E0F2F1 {
+    usecase "Monitor Fill\nLevel" as UC_MonitorFill
+    usecase "Send Sensor\nData" as UC_SendData
+    usecase "Trigger Overflow\nAlert" as UC_OverflowAlert
+    usecase "Track Bin\nLocation" as UC_TrackBin
+    usecase "Monitor Battery\nStatus" as UC_Battery
+    usecase "Detect\nVandalism" as UC_Vandalism
+    usecase "Measure Weight\n& Temperature" as UC_Measure
+  }
+  
+  ' ========== DRIVER/COLLECTOR USE CASES ==========
+  package "Waste Collection Operations" #F3E5F5 {
+    usecase "View Assigned\nRoute" as UC_ViewRoute
+    usecase "Navigate to\nBins" as UC_Navigate
+    usecase "Update Collection\nStatus" as UC_UpdateStatus
+    usecase "Scan Bin\nQR Code" as UC_ScanQR
+    usecase "Report Collection\nIssues" as UC_ReportCollectionIssue
+    usecase "View Daily\nTasks" as UC_DailyTasks
+    usecase "Submit Collection\nReport" as UC_CollectionReport
+  }
+  
+  ' ========== ADMIN USE CASES ==========
+  package "Administration & Management" #FFE0B2 {
+    usecase "Manage Smart\nBins" as UC_ManageBins
+    usecase "Optimize Collection\nRoutes" as UC_OptimizeRoutes
+    usecase "View Analytics\nDashboard" as UC_Analytics
+    usecase "Manage Users\n& Roles" as UC_ManageUsers
+    usecase "Generate Reports" as UC_GenerateReports
+    usecase "Handle Citizen\nReports" as UC_HandleReports
+    usecase "Configure Pricing" as UC_Pricing
+    usecase "Monitor System\nHealth" as UC_SystemHealth
+    usecase "Manage Service\nProviders" as UC_ManageProviders
+    usecase "Track Vehicle\nFleet" as UC_TrackFleet
+    usecase "View Heat Maps" as UC_HeatMaps
+    usecase "Export Data" as UC_ExportData
+  }
+  
+  ' ========== SERVICE PROVIDER USE CASES ==========
+  package "Service Provider Operations" #FFEBEE {
+    usecase "Accept Service\nRequests" as UC_AcceptRequest
+    usecase "Bid on\nJobs" as UC_BidJobs
+    usecase "Update Service\nStatus" as UC_ServiceStatus
+    usecase "Manage Vehicle\nFleet" as UC_ManageFleet
+    usecase "View Performance\nMetrics" as UC_Performance
+    usecase "Submit\nInvoices" as UC_Invoice
+    usecase "View Job\nHistory" as UC_JobHistory
+  }
+  
+  ' ========== MOBILE APP SPECIFIC ==========
+  package "Mobile Application" #F0F4C3 {
+    usecase "Use Offline\nMode" as UC_Offline
+    usecase "Enable Push\nNotifications" as UC_Push
+    usecase "Use Camera for\nReporting" as UC_Camera
+    usecase "Share Location" as UC_ShareLocation
+  }
+}
+
+' ============ RELATIONSHIPS ============
+
+' Guest/Public Access
+Guest --> UC_Homepage
+Guest --> UC_Services
+Guest --> UC_BinMap
+Guest --> UC_Schedule
+Guest --> UC_Blog
+Guest --> UC_About
+Guest --> UC_Contact
+Guest --> UC_Register
+
+' User/Citizen Relationships
+User --> UC_Login
+User --> UC_Register
+User --> UC_Profile
+User --> UC_RequestCollection
+User --> UC_SchedulePickup
+User --> UC_TrackStatus
+User --> UC_MakePayment
+User --> UC_History
+User --> UC_Feedback
+User --> UC_ReportIssue
+User --> UC_Recycling
+User --> UC_Carbon
+User --> UC_UploadPhoto
+User --> UC_Notifications
+User --> UC_BinMap
+User --> UC_Schedule
+
+' Driver/Collector Relationships
+Driver --> UC_Login
+Driver --> UC_ViewRoute
+Driver --> UC_Navigate
+Driver --> UC_UpdateStatus
+Driver --> UC_ScanQR
+Driver --> UC_ReportCollectionIssue
+Driver --> UC_DailyTasks
+Driver --> UC_CollectionReport
+Driver --> UC_Profile
+
+' Admin/Supervisor Relationships
+Admin --> UC_Login
+Admin --> UC_ManageBins
+Admin --> UC_OptimizeRoutes
+Admin --> UC_Analytics
+Admin --> UC_ManageUsers
+Admin --> UC_GenerateReports
+Admin --> UC_HandleReports
+Admin --> UC_Pricing
+Admin --> UC_SystemHealth
+Admin --> UC_ManageProviders
+Admin --> UC_TrackFleet
+Admin --> UC_HeatMaps
+Admin --> UC_ExportData
+
+' Service Provider Relationships
+Provider --> UC_Login
+Provider --> UC_Register
+Provider --> UC_AcceptRequest
+Provider --> UC_BidJobs
+Provider --> UC_ServiceStatus
+Provider --> UC_ManageFleet
+Provider --> UC_Performance
+Provider --> UC_Invoice
+Provider --> UC_JobHistory
+Provider --> UC_Profile
+
+' IoT Smart Bin Relationships
+SmartBin --> UC_MonitorFill
+SmartBin --> UC_SendData
+SmartBin --> UC_OverflowAlert
+SmartBin --> UC_TrackBin
+SmartBin --> UC_Battery
+SmartBin --> UC_Vandalism
+SmartBin --> UC_Measure
+
+' System Actor Relationships
+UC_MakePayment --> Payment
+UC_Notifications --> Notification
+UC_OTP --> Notification
+UC_ResetPwd --> Notification
+UC_Navigate --> GPS
+UC_TrackBin --> GPS
+UC_ShareLocation --> GPS
+UC_OptimizeRoutes --> GPS
+
+' Mobile App Specific
+User --> UC_Offline
+User --> UC_Push
+User --> UC_Camera
+User --> UC_ShareLocation
+Driver --> UC_Push
+Driver --> UC_Camera
+Driver --> UC_ShareLocation
+
+' Include Relationships (dashed arrows)
+UC_RequestCollection ..> UC_MakePayment : <<include>>
+UC_SchedulePickup ..> UC_MakePayment : <<include>>
+UC_Register ..> UC_OTP : <<include>>
+UC_ReportIssue ..> UC_UploadPhoto : <<include>>
+UC_ManageBins ..> UC_MonitorFill : <<include>>
+UC_OptimizeRoutes ..> UC_TrackBin : <<include>>
+UC_AcceptRequest ..> UC_Notifications : <<include>>
+
+' Extend Relationships (dashed arrows)
+UC_Login <.. UC_ResetPwd : <<extend>>
+UC_RequestCollection <.. UC_SchedulePickup : <<extend>>
+UC_ManageBins <.. UC_OverflowAlert : <<extend>>
+UC_Analytics <.. UC_HeatMaps : <<extend>>
+UC_ReportIssue <.. UC_Camera : <<extend>>
+
+note right of SmartBin
+  **IoT Sensors:**
+  • Ultrasonic Fill Sensor
+  • Weight Load Cell
+  • Temperature Sensor
+  • GPS Module
+  • Accelerometer
+  • Battery Monitor
+  • 4G/LoRaWAN Module
+end note
+
+note left of Admin
+  **Admin Roles:**
+  • System Administrator
+  • Operations Supervisor
+  • Route Manager
+  • Support Staff
+end note
+
+note bottom of User
+  **User Types:**
+  • Residential Customers
+  • Commercial Clients
+  • Industrial Clients
+  • Community Groups
+end note
+
+@enduml
