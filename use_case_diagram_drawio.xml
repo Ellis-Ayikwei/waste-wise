@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="2000" dy="1100" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+    
+    <!-- System Boundary -->
+    <mxCell id="system-boundary" value="Wasgo Smart Waste Management System" style="swimlane;fillColor=#F5F5F5;strokeColor=#666666;fontStyle=1;fontSize=16;startSize=40;" vertex="1" parent="1">
+      <mxGeometry x="200" y="40" width="1200" height="1100" as="geometry" />
+    </mxCell>
+    
+    <!-- Public Website Features Package -->
+    <mxCell id="public-package" value="Public Website Features" style="swimlane;fillColor=#E8F5E9;strokeColor=#4CAF50;fontStyle=1;fontSize=12;startSize=25;" vertex="1" parent="system-boundary">
+      <mxGeometry x="20" y="60" width="280" height="320" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-homepage" value="View Homepage &amp; Services" style="ellipse;whiteSpace=wrap;html=1;fillColor=#C8E6C9;" vertex="1" parent="public-package">
+      <mxGeometry x="20" y="40" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-services" value="Browse Service Catalog" style="ellipse;whiteSpace=wrap;html=1;fillColor=#C8E6C9;" vertex="1" parent="public-package">
+      <mxGeometry x="20" y="90" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-binmap" value="View Interactive Bin Map" style="ellipse;whiteSpace=wrap;html=1;fillColor=#C8E6C9;" vertex="1" parent="public-package">
+      <mxGeometry x="20" y="140" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-report" value="Report Waste Issue" style="ellipse;whiteSpace=wrap;html=1;fillColor=#C8E6C9;" vertex="1" parent="public-package">
+      <mxGeometry x="20" y="190" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-schedule" value="Check Collection Schedule" style="ellipse;whiteSpace=wrap;html=1;fillColor=#C8E6C9;" vertex="1" parent="public-package">
+      <mxGeometry x="20" y="240" width="240" height="40" as="geometry" />
+    </mxCell>
+    
+    <!-- Authentication Package -->
+    <mxCell id="auth-package" value="Authentication &amp; Registration" style="swimlane;fillColor=#FFF3E0;strokeColor=#FF9800;fontStyle=1;fontSize=12;startSize=25;" vertex="1" parent="system-boundary">
+      <mxGeometry x="320" y="60" width="280" height="220" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-register" value="Register Account" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFE0B2;" vertex="1" parent="auth-package">
+      <mxGeometry x="20" y="40" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-login" value="Login to System" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFE0B2;" vertex="1" parent="auth-package">
+      <mxGeometry x="20" y="90" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-otp" value="Verify OTP" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFE0B2;" vertex="1" parent="auth-package">
+      <mxGeometry x="20" y="140" width="240" height="40" as="geometry" />
+    </mxCell>
+    
+    <!-- Citizen Services Package -->
+    <mxCell id="citizen-package" value="Citizen Services" style="swimlane;fillColor=#E3F2FD;strokeColor=#2196F3;fontStyle=1;fontSize=12;startSize=25;" vertex="1" parent="system-boundary">
+      <mxGeometry x="620" y="60" width="280" height="370" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-request" value="Request Waste Collection" style="ellipse;whiteSpace=wrap;html=1;fillColor=#BBDEFB;" vertex="1" parent="citizen-package">
+      <mxGeometry x="20" y="40" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-pickup" value="Schedule Pickup" style="ellipse;whiteSpace=wrap;html=1;fillColor=#BBDEFB;" vertex="1" parent="citizen-package">
+      <mxGeometry x="20" y="90" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-track" value="Track Collection Status" style="ellipse;whiteSpace=wrap;html=1;fillColor=#BBDEFB;" vertex="1" parent="citizen-package">
+      <mxGeometry x="20" y="140" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-payment" value="Make Payment" style="ellipse;whiteSpace=wrap;html=1;fillColor=#BBDEFB;" vertex="1" parent="citizen-package">
+      <mxGeometry x="20" y="190" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-history" value="View Service History" style="ellipse;whiteSpace=wrap;html=1;fillColor=#BBDEFB;" vertex="1" parent="citizen-package">
+      <mxGeometry x="20" y="240" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-feedback" value="Submit Feedback" style="ellipse;whiteSpace=wrap;html=1;fillColor=#BBDEFB;" vertex="1" parent="citizen-package">
+      <mxGeometry x="20" y="290" width="240" height="40" as="geometry" />
+    </mxCell>
+    
+    <!-- IoT Smart Bin Management Package -->
+    <mxCell id="iot-package" value="IoT Smart Bin Management" style="swimlane;fillColor=#E0F2F1;strokeColor=#009688;fontStyle=1;fontSize=12;startSize=25;" vertex="1" parent="system-boundary">
+      <mxGeometry x="920" y="60" width="260" height="320" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-monitor" value="Monitor Fill Level" style="ellipse;whiteSpace=wrap;html=1;fillColor=#B2DFDB;" vertex="1" parent="iot-package">
+      <mxGeometry x="10" y="40" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-senddata" value="Send Sensor Data" style="ellipse;whiteSpace=wrap;html=1;fillColor=#B2DFDB;" vertex="1" parent="iot-package">
+      <mxGeometry x="10" y="90" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-alert" value="Trigger Overflow Alert" style="ellipse;whiteSpace=wrap;html=1;fillColor=#B2DFDB;" vertex="1" parent="iot-package">
+      <mxGeometry x="10" y="140" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-trackbin" value="Track Bin Location" style="ellipse;whiteSpace=wrap;html=1;fillColor=#B2DFDB;" vertex="1" parent="iot-package">
+      <mxGeometry x="10" y="190" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-battery" value="Monitor Battery Status" style="ellipse;whiteSpace=wrap;html=1;fillColor=#B2DFDB;" vertex="1" parent="iot-package">
+      <mxGeometry x="10" y="240" width="240" height="40" as="geometry" />
+    </mxCell>
+    
+    <!-- Collection Operations Package -->
+    <mxCell id="collection-package" value="Waste Collection Operations" style="swimlane;fillColor=#F3E5F5;strokeColor=#9C27B0;fontStyle=1;fontSize=12;startSize=25;" vertex="1" parent="system-boundary">
+      <mxGeometry x="20" y="450" width="280" height="320" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-viewroute" value="View Assigned Route" style="ellipse;whiteSpace=wrap;html=1;fillColor=#E1BEE7;" vertex="1" parent="collection-package">
+      <mxGeometry x="20" y="40" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-navigate" value="Navigate to Bins" style="ellipse;whiteSpace=wrap;html=1;fillColor=#E1BEE7;" vertex="1" parent="collection-package">
+      <mxGeometry x="20" y="90" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-update" value="Update Collection Status" style="ellipse;whiteSpace=wrap;html=1;fillColor=#E1BEE7;" vertex="1" parent="collection-package">
+      <mxGeometry x="20" y="140" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-scan" value="Scan Bin QR Code" style="ellipse;whiteSpace=wrap;html=1;fillColor=#E1BEE7;" vertex="1" parent="collection-package">
+      <mxGeometry x="20" y="190" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-reportissue" value="Report Collection Issues" style="ellipse;whiteSpace=wrap;html=1;fillColor=#E1BEE7;" vertex="1" parent="collection-package">
+      <mxGeometry x="20" y="240" width="240" height="40" as="geometry" />
+    </mxCell>
+    
+    <!-- Admin Management Package -->
+    <mxCell id="admin-package" value="Administration &amp; Management" style="swimlane;fillColor=#FFE0B2;strokeColor=#FF6F00;fontStyle=1;fontSize=12;startSize=25;" vertex="1" parent="system-boundary">
+      <mxGeometry x="320" y="450" width="560" height="320" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-managebins" value="Manage Smart Bins" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFCC80;" vertex="1" parent="admin-package">
+      <mxGeometry x="20" y="40" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-optimize" value="Optimize Collection Routes" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFCC80;" vertex="1" parent="admin-package">
+      <mxGeometry x="280" y="40" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-analytics" value="View Analytics Dashboard" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFCC80;" vertex="1" parent="admin-package">
+      <mxGeometry x="20" y="90" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-users" value="Manage Users &amp; Roles" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFCC80;" vertex="1" parent="admin-package">
+      <mxGeometry x="280" y="90" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-reports" value="Generate Reports" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFCC80;" vertex="1" parent="admin-package">
+      <mxGeometry x="20" y="140" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-handlereports" value="Handle Citizen Reports" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFCC80;" vertex="1" parent="admin-package">
+      <mxGeometry x="280" y="140" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-pricing" value="Configure Pricing" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFCC80;" vertex="1" parent="admin-package">
+      <mxGeometry x="20" y="190" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-health" value="Monitor System Health" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFCC80;" vertex="1" parent="admin-package">
+      <mxGeometry x="280" y="190" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-providers" value="Manage Service Providers" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFCC80;" vertex="1" parent="admin-package">
+      <mxGeometry x="20" y="240" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-fleet" value="Track Vehicle Fleet" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFCC80;" vertex="1" parent="admin-package">
+      <mxGeometry x="280" y="240" width="240" height="40" as="geometry" />
+    </mxCell>
+    
+    <!-- Service Provider Package -->
+    <mxCell id="provider-package" value="Service Provider Operations" style="swimlane;fillColor=#FFEBEE;strokeColor=#D32F2F;fontStyle=1;fontSize=12;startSize=25;" vertex="1" parent="system-boundary">
+      <mxGeometry x="900" y="450" width="280" height="320" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-accept" value="Accept Service Requests" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFCDD2;" vertex="1" parent="provider-package">
+      <mxGeometry x="20" y="40" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-bid" value="Bid on Jobs" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFCDD2;" vertex="1" parent="provider-package">
+      <mxGeometry x="20" y="90" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-servicestatus" value="Update Service Status" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFCDD2;" vertex="1" parent="provider-package">
+      <mxGeometry x="20" y="140" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-managefleet" value="Manage Vehicle Fleet" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFCDD2;" vertex="1" parent="provider-package">
+      <mxGeometry x="20" y="190" width="240" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-performance" value="View Performance Metrics" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFCDD2;" vertex="1" parent="provider-package">
+      <mxGeometry x="20" y="240" width="240" height="40" as="geometry" />
+    </mxCell>
+    
+    <!-- Actors -->
+    <mxCell id="actor-guest" value="Guest Visitor" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=#E0E0E0;" vertex="1" parent="1">
+      <mxGeometry x="40" y="100" width="30" height="60" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="actor-user" value="Citizen/User" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=#C8E6C9;" vertex="1" parent="1">
+      <mxGeometry x="40" y="250" width="30" height="60" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="actor-driver" value="Waste Collector" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=#BBDEFB;" vertex="1" parent="1">
+      <mxGeometry x="40" y="450" width="30" height="60" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="actor-admin" value="Admin/Supervisor" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=#FFCC80;" vertex="1" parent="1">
+      <mxGeometry x="40" y="650" width="30" height="60" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="actor-provider" value="Service Provider" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=#FFCDD2;" vertex="1" parent="1">
+      <mxGeometry x="40" y="850" width="30" height="60" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="actor-iot" value="IoT Smart Bin" style="shape=rectangle;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=#B2DFDB;strokeColor=#00897B;" vertex="1" parent="1">
+      <mxGeometry x="1500" y="200" width="60" height="40" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="actor-payment" value="Payment Gateway" style="shape=rectangle;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=#FCE4EC;strokeColor=#C2185B;" vertex="1" parent="1">
+      <mxGeometry x="1500" y="350" width="60" height="40" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="actor-notification" value="SMS/Email Service" style="shape=rectangle;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=#E1BEE7;strokeColor=#7B1FA2;" vertex="1" parent="1">
+      <mxGeometry x="1500" y="450" width="60" height="40" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="actor-gps" value="GPS System" style="shape=rectangle;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=#FFECB3;strokeColor=#F57C00;" vertex="1" parent="1">
+      <mxGeometry x="1500" y="550" width="60" height="40" as="geometry" />
+    </mxCell>
+    
+    <!-- Relationships -->
+    <!-- Guest relationships -->
+    <mxCell id="rel-guest-1" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="actor-guest" target="uc-homepage">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-guest-2" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="actor-guest" target="uc-services">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-guest-3" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="actor-guest" target="uc-binmap">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-guest-4" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="actor-guest" target="uc-register">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    
+    <!-- User relationships -->
+    <mxCell id="rel-user-1" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="actor-user" target="uc-login">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-user-2" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="actor-user" target="uc-request">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-user-3" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="actor-user" target="uc-pickup">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-user-4" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="actor-user" target="uc-track">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-user-5" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="actor-user" target="uc-payment">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-user-6" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="actor-user" target="uc-report">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    
+    <!-- Driver relationships -->
+    <mxCell id="rel-driver-1" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="actor-driver" target="uc-viewroute">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-driver-2" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="actor-driver" target="uc-navigate">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-driver-3" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="actor-driver" target="uc-update">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-driver-4" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="actor-driver" target="uc-scan">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    
+    <!-- Admin relationships -->
+    <mxCell id="rel-admin-1" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="actor-admin" target="uc-managebins">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-admin-2" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="actor-admin" target="uc-optimize">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-admin-3" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="actor-admin" target="uc-analytics">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-admin-4" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="actor-admin" target="uc-users">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    
+    <!-- Provider relationships -->
+    <mxCell id="rel-provider-1" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="actor-provider" target="uc-accept">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-provider-2" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="actor-provider" target="uc-bid">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-provider-3" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="actor-provider" target="uc-servicestatus">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    
+    <!-- IoT relationships -->
+    <mxCell id="rel-iot-1" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="actor-iot" target="uc-monitor">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-iot-2" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="actor-iot" target="uc-senddata">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-iot-3" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="actor-iot" target="uc-alert">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    
+    <!-- System actor relationships -->
+    <mxCell id="rel-payment-1" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="uc-payment" target="actor-payment">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-notification-1" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="uc-otp" target="actor-notification">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-gps-1" style="endArrow=none;html=1;strokeWidth=2;" edge="1" parent="1" source="uc-navigate" target="actor-gps">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    
+    <!-- Include relationships -->
+    <mxCell id="include-1" style="endArrow=open;dashed=1;html=1;dashPattern=1 1;strokeWidth=2;endFill=0;" edge="1" parent="1" source="uc-request" target="uc-payment">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="include-label-1" value="&lt;&lt;include&gt;&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="include-1">
+      <mxGeometry x="-0.1" y="1" relative="1" as="geometry">
+        <mxPoint as="offset" />
+      </mxGeometry>
+    </mxCell>
+    
+    <mxCell id="include-2" style="endArrow=open;dashed=1;html=1;dashPattern=1 1;strokeWidth=2;endFill=0;" edge="1" parent="1" source="uc-register" target="uc-otp">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="include-label-2" value="&lt;&lt;include&gt;&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="include-2">
+      <mxGeometry x="-0.1" y="1" relative="1" as="geometry">
+        <mxPoint as="offset" />
+      </mxGeometry>
+    </mxCell>
+    
+  </root>
+</mxGraphModel>
