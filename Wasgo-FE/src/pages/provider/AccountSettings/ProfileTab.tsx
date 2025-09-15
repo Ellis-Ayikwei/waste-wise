@@ -25,9 +25,6 @@ import AddressAutocomplete from '../../../components/AddressAutocomplete';
 interface ProfileTabProps {
     profile: ProviderProfile | null;
     isEditing: boolean;
-    isSaving: boolean;
-    onEdit: () => void;
-    onSave: () => void;
     onProfileChange: (field: keyof ProviderProfile, value: any) => void;
     onImageUpload: (file: File) => void;
 }
@@ -35,9 +32,6 @@ interface ProfileTabProps {
 const ProfileTab: React.FC<ProfileTabProps> = ({
     profile,
     isEditing,
-    isSaving,
-    onEdit,
-    onSave,
     onProfileChange,
     onImageUpload
 }) => {
@@ -95,28 +89,6 @@ const ProfileTab: React.FC<ProfileTabProps> = ({
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-semibold text-gray-900">Business Profile</h2>
-                    <button
-                        onClick={isEditing ? onSave : onEdit}
-                        disabled={isSaving}
-                        className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-                    >
-                        {isSaving ? (
-                            <>
-                                <Loader2 className="mr-2 w-4 h-4 animate-spin" />
-                                Saving...
-                            </>
-                        ) : isEditing ? (
-                            <>
-                                <Save className="mr-2 w-4 h-4" />
-                                Save Changes
-                            </>
-                        ) : (
-                            <>
-                                <Edit className="mr-2 w-4 h-4" />
-                                Edit Profile
-                            </>
-                        )}
-                    </button>
                 </div>
 
                 {/* Profile Overview */}

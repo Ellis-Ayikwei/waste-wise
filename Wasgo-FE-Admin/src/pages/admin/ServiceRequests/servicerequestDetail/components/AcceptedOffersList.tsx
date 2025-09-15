@@ -14,11 +14,17 @@ interface AcceptedProvider {
 interface Props {
     providers: AcceptedProvider[];
     offeredPrice?: string | null;
+    serviceRequest?: {
+        assigned_provider?: {
+            id: string;
+        };
+        status?: string;
+    };
     onViewProviderDetails: (providerUserId: string) => void;
     onAssignJobToProvider: (providerId: string) => void;
 }
 
-const AcceptedOffersList: React.FC<Props> = ({ providers, offeredPrice, onViewProviderDetails, onAssignJobToProvider }) => {
+const AcceptedOffersList: React.FC<Props> = ({ providers, offeredPrice, serviceRequest, onViewProviderDetails, onAssignJobToProvider }) => {
     if (!providers || providers.length === 0) {
         return (
             <div className="text-center py-8">
@@ -71,7 +77,13 @@ const AcceptedOffersList: React.FC<Props> = ({ providers, offeredPrice, onViewPr
                         </div>
                         <div className="flex flex-col space-y-2 ml-4">
                             <button onClick={() => onViewProviderDetails(p.user.id)} className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors">View Details</button>
-                            <button onClick={() => onAssignJobToProvider(p.id)} className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors font-medium">Assign Job</button>
+                            {serviceRequest?.assigned_provider ? (
+                                <span className="px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded font-medium text-center">
+                                    {serviceRequest.assigned_provider.id === p.id ? 'ASSIGNED' : 'Job Assigned'}
+                                </span>
+                            ) : (
+                                <button onClick={() => onAssignJobToProvider(p.id)} className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors font-medium">Assign Job</button>
+                            )}
                         </div>
                     </div>
                 </div>

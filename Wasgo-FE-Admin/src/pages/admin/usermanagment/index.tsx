@@ -85,12 +85,16 @@ const UserManagement: React.FC = () => {
             setError(null);
         }
         if (swrUsers) {
-            setUsers(swrUsers);
+            setUsers(Array.isArray(swrUsers) ? swrUsers : []);
+        } else {
+            setUsers([]);
         }
     }, [swrUsers, swrError, swrLoading]);
 
     // Filter users based on active filter
     const getFilteredUsers = () => {
+        if (!Array.isArray(users)) return [];
+        
         if (activeFilter === 'all') return users;
         
         if (activeFilter === 'customer') {
@@ -435,28 +439,28 @@ const UserManagement: React.FC = () => {
                 <StatCard
                     icon={faUsers}
                     title="Total Users"
-                    value={users.length}
+                    value={Array.isArray(users) ? users.length : 0}
                     color="blue"
                     delay={0.1}
                 />
                 <StatCard
                     icon={faCheck}
                     title="Active Users"
-                    value={users.filter((u) => u.account_status === 'active').length}
+                    value={Array.isArray(users) ? users.filter((u) => u.account_status === 'active').length : 0}
                     color="green"
                     delay={0.2}
                 />
                 <StatCard
                     icon={faBuilding}
                     title="Providers"
-                    value={users.filter((u) => u.user_type === 'provider').length}
+                    value={Array.isArray(users) ? users.filter((u) => u.user_type === 'provider').length : 0}
                     color="purple"
                     delay={0.3}
                 />
                 <StatCard
                     icon={faExclamationTriangle}
                     title="Pending Review"
-                    value={users.filter((u) => u.account_status === 'pending').length}
+                    value={Array.isArray(users) ? users.filter((u) => u.account_status === 'pending').length : 0}
                     color="yellow"
                     delay={0.4}
                 />

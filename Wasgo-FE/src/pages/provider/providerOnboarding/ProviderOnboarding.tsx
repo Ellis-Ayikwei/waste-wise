@@ -39,6 +39,7 @@ import {
     Globe,
     Eye,
     EyeOff,
+    Settings,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Navbar from '../../../components/homepage/Navbar';
@@ -47,7 +48,7 @@ import showNotification from '../../../utilities/showNotifcation';
 import { ProviderRegisterUser } from '../../../store/authSlice';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '../../../store';
-import geocodingService, { AddressOption } from '../../../services/geocodingService';
+import geocodingService from '../../../services/geocodingService';
 
 // Import components
 import YourDetailsSection from './components/YourDetailsSection';
@@ -64,18 +65,20 @@ interface OnboardingFormValues {
     business_name: string;
     business_type: string;
     postcode: string;
-    selected_address: string;
     address_line_1: string;
     address_line_2: string;
     city: string;
     country: string;
-            has_non_ghana_address: boolean;
-        has_separate_business_address: boolean;
-        non_ghana_address_line_1: string;
-        non_ghana_address_line_2: string;
-        non_ghana_city: string;
-        non_ghana_postal_code: string;
-        non_ghana_country: string;
+    latitude: number | null;
+    longitude: number | null;
+    address_search: string;
+    has_non_ghana_address: boolean;
+    has_separate_business_address: boolean;
+    non_ghana_address_line_1: string;
+    non_ghana_address_line_2: string;
+    non_ghana_city: string;
+    non_ghana_postal_code: string;
+    non_ghana_country: string;
     business_address_line_1: string;
     business_address_line_2: string;
     business_city: string;
@@ -95,16 +98,11 @@ interface OnboardingFormValues {
 const ProviderOnboarding: React.FC = () => {
     const navigate = useNavigate();
     const [isScrolled, setIsScrolled] = useState(false);
-    const [addressOptions, setAddressOptions] = useState<AddressOption[]>([]);
     const [isCheckingEmail, setIsCheckingEmail] = useState(false);
     const [emailError, setEmailError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [registering, setRegistering] = useState(false);
-    const [isSearchingAddresses, setIsSearchingAddresses] = useState(false);
-    const [addressError, setAddressError] = useState<string | null>(null);
-    const [showManualEntry, setShowManualEntry] = useState(false);
-    const [selectedAddress, setSelectedAddress] = useState<AddressOption | null>(null);
     const [showProviderExistsModal, setShowProviderExistsModal] = useState(false);
     const [existingProviderEmail, setExistingProviderEmail] = useState('');
     const dispatch = useDispatch<AppDispatch>();
@@ -130,75 +128,28 @@ const ProviderOnboarding: React.FC = () => {
 
     const wasteManagementServices = [
         {
-            id: 'smart_waste_collection',
-            label: 'Smart Waste Collection',
+            id: 'waste_collection',
+            label: 'Waste Collection',
             icon: Trash2,
-            description: 'IoT-enabled waste collection with real-time monitoring for Ghana',
-            subcategories: [
-                { value: 'Smart bin monitoring', label: 'Smart bin monitoring and maintenance' },
-                { value: 'Residential collection', label: 'Residential waste collection' },
-                { value: 'Commercial waste management', label: 'Commercial waste management' },
-                { value: 'On-demand pickup', label: 'On-demand waste pickup services' },
-                { value: 'Bulk waste collection', label: 'Bulk waste collection and disposal' },
-                { value: 'Market waste collection', label: 'Market and trading center waste collection' },
-            ]
+            description: 'General waste collection and disposal services'
         },
         {
-            id: 'recycling_services',
-            label: 'Recycling & Recovery',
+            id: 'recycling_service',
+            label: 'Recycling Service',
             icon: Recycle,
-            description: 'Specialized recycling and material recovery services for Ghana',
-            subcategories: [
-                { value: 'General recycling', label: 'General recycling services' },
-                { value: 'E-waste recycling', label: 'Electronic waste recycling' },
-                { value: 'Plastic recovery', label: 'Plastic waste recovery and processing' },
-                { value: 'Paper recycling', label: 'Paper and cardboard recycling' },
-                { value: 'Metal recycling', label: 'Metal waste recycling' },
-                { value: 'Glass recycling', label: 'Glass waste recycling' },
-                { value: 'Textile recycling', label: 'Textile and fabric waste recycling' },
-            ]
+            description: 'Recycling and waste processing services'
         },
         {
-            id: 'specialized_waste',
-            label: 'Specialized Waste Management',
-            icon: Shield,
-            description: 'Handling of specialized and hazardous waste materials in Ghana',
-            subcategories: [
-                { value: 'Medical waste', label: 'Medical and healthcare waste' },
-                { value: 'Construction waste', label: 'Construction and demolition waste' },
-                { value: 'Hazardous waste', label: 'Hazardous waste disposal' },
-                { value: 'Industrial waste', label: 'Industrial waste management' },
-                { value: 'Chemical waste', label: 'Chemical waste disposal' },
-                { value: 'Mining waste', label: 'Mining and quarry waste management' },
-            ]
+            id: 'bin_maintenance',
+            label: 'Bin Maintenance',
+            icon: Settings,
+            description: 'Smart bin maintenance and repair services'
         },
         {
-            id: 'organic_composting',
-            label: 'Organic Waste & Composting',
-            icon: Leaf,
-            description: 'Organic waste processing and composting services for Ghana',
-            subcategories: [
-                { value: 'Organic waste collection', label: 'Organic waste collection' },
-                { value: 'Composting services', label: 'Composting and soil production' },
-                { value: 'Food waste management', label: 'Food waste management' },
-                { value: 'Garden waste collection', label: 'Garden and yard waste collection' },
-                { value: 'Agricultural waste', label: 'Agricultural waste processing' },
-                { value: 'Cocoa waste management', label: 'Cocoa and farming waste management' },
-            ]
-        },
-        {
-            id: 'education_consulting',
-            label: 'Education & Consulting',
+            id: 'general_service',
+            label: 'General Service',
             icon: Globe,
-            description: 'Waste management education and consulting services for Ghana',
-            subcategories: [
-                { value: 'Community education', label: 'Community waste education programs' },
-                { value: 'Corporate training', label: 'Corporate waste management training' },
-                { value: 'Waste audits', label: 'Waste audits and assessments' },
-                { value: 'Sustainability consulting', label: 'Sustainability consulting' },
-                { value: 'Policy development', label: 'Waste policy development' },
-                { value: 'School programs', label: 'School and educational institution programs' },
-            ]
+            description: 'General waste management and support services'
         }
     ];
 
@@ -258,14 +209,14 @@ const ProviderOnboarding: React.FC = () => {
         last_name: Yup.string().required('Last name is required'),
         business_name: Yup.string().required('Business name is required'),
         business_type: Yup.string().required('Please select a business type'),
-        postcode: Yup.string().required('Postal code is required'),
-        selected_address: Yup.string().when('has_non_ghana_address', {
-            is: false,
-            then: (schema) => schema.required('Please select an address') as Yup.StringSchema,
-        }),
+        postcode: Yup.string().optional(),
         address_line_1: Yup.string().required('Address line 1 is required'),
+        address_line_2: Yup.string().optional(),
         city: Yup.string().required('City is required'),
         country: Yup.string().required('Country is required'),
+        latitude: Yup.number().nullable().optional(),
+        longitude: Yup.number().nullable().optional(),
+        address_search: Yup.string().optional(),
         email: Yup.string().email('Invalid email address').required('Email is required'),
         password: Yup.string()
             .required('Password is required')
@@ -283,91 +234,21 @@ const ProviderOnboarding: React.FC = () => {
         number_of_vehicles: Yup.string().required('Please select number of vehicles'),
         work_types: Yup.array().min(1, 'Please select at least one waste management service'),
         vat_registered: Yup.string().required('Please select VAT registration status'),
+        // Optional fields for non-Ghana addresses
+        has_non_ghana_address: Yup.boolean().optional(),
+        has_separate_business_address: Yup.boolean().optional(),
+        non_ghana_address_line_1: Yup.string().optional(),
+        non_ghana_address_line_2: Yup.string().optional(),
+        non_ghana_city: Yup.string().optional(),
+        non_ghana_postal_code: Yup.string().optional(),
+        non_ghana_country: Yup.string().optional(),
+        business_address_line_1: Yup.string().optional(),
+        business_address_line_2: Yup.string().optional(),
+        business_city: Yup.string().optional(),
+        business_postcode: Yup.string().optional(),
+        business_country: Yup.string().optional(),
     });
 
-    // Address lookup functionality using geocoding service
-
-
-
-    const handlePostcodeSearch = async (postcode: string) => {
-        if (!postcode.trim()) {
-            setAddressOptions([]);
-            setAddressError(null);
-            setShowManualEntry(false);
-            setSelectedAddress(null);
-            return;
-        }
-
-        const formattedPostcode = geocodingService.formatPostcode(postcode);
-        console.log(`🔍 Searching addresses for postal code: ${formattedPostcode}`);
-
-        setIsSearchingAddresses(true);
-        setAddressError(null);
-        setShowManualEntry(false);
-        setSelectedAddress(null);
-
-        try {
-            // Use geocoding service for comprehensive validation and address fetching
-            const result = await geocodingService.validateAndSearchPostcodeComprehensive(formattedPostcode);
-            console.log('🏠 Comprehensive Address Search Result:', result);
-
-            if (result.error) {
-                setAddressError(result.error);
-                setAddressOptions([]);
-                setShowManualEntry(true); // Show manual entry option
-            } else if (result.addresses && result.addresses.length > 0) {
-                // Store full AddressOption objects
-                setAddressOptions(result.addresses);
-                setAddressError(null);
-                setShowManualEntry(false);
-                console.log(`✅ Found ${result.addresses.length} comprehensive addresses for postal code: ${formattedPostcode}`);
-            } else {
-                setAddressOptions([]);
-                setAddressError('No addresses found for this postal code. You can enter your address manually.');
-                setShowManualEntry(true); // Show manual entry option
-                console.log(`⚠️ No addresses found for postal code: ${formattedPostcode}`);
-            }
-        } catch (error: any) {
-            console.error('Error searching postal code:', error);
-            setAddressOptions([]);
-            setAddressError('Error loading addresses. You can enter your address manually.');
-            setShowManualEntry(true); // Show manual entry option
-        } finally {
-            setIsSearchingAddresses(false);
-        }
-    };
-
-    // Handle address selection from dropdown
-    const handleAddressSelection = (addressIndex: number, setFieldValue: any) => {
-        const selectedAddr = addressOptions[addressIndex];
-        if (selectedAddr) {
-            setSelectedAddress(selectedAddr);
-            setShowManualEntry(false);
-            
-            // Auto-fill the form fields with selected address data
-            setFieldValue('address_line_1', selectedAddr.line1);
-            setFieldValue('address_line_2', selectedAddr.line2 || '');
-            setFieldValue('city', selectedAddr.city);
-            setFieldValue('country', selectedAddr.county || 'Ghana');
-            setFieldValue('selected_address', selectedAddr.displayText);
-            
-            console.log('🏠 Address selected and auto-filled:', selectedAddr);
-            console.log('🏠 Auto-filled form values:', {
-                address_line_1: selectedAddr.line1,
-                address_line_2: selectedAddr.line2 || '',
-                city: selectedAddr.city,
-                country: selectedAddr.county || 'Ghana',
-                selected_address: selectedAddr.displayText
-            });
-        }
-    };
-
-    // Handle manual entry toggle
-    const toggleManualEntry = () => {
-        setShowManualEntry(!showManualEntry);
-        setSelectedAddress(null);
-        setAddressOptions([]);
-    };
 
 
 
@@ -468,7 +349,7 @@ const ProviderOnboarding: React.FC = () => {
                                 <div></div> {/* Spacer */}
                             </div>
                             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                                Join WasteWise Ghana as a Service Provider
+                                Join Wasgo Ghana as a Service Provider
                             </h1>
                             <p className="text-lg text-gray-600 mb-6">
                                 Partner with Ghana's leading smart waste management platform and help build a cleaner, sustainable future for our nation
@@ -517,18 +398,20 @@ const ProviderOnboarding: React.FC = () => {
                                         </div>
                                         <p className="text-xs text-gray-500 mt-2">Complete this form, then verify your account</p>
                                     </div>
-                                    <Formik
+                                    <Formik<OnboardingFormValues>
                                         initialValues={{
                                             first_name: '',
                                             last_name: '',
                                             business_name: '',
                                             business_type: '',
                                             postcode: '',
-                                            selected_address: '',
                                             address_line_1: '',
                                             address_line_2: '',
                                             city: '',
                                             country: '',
+                                            latitude: null,
+                                            longitude: null,
+                                            address_search: '',
                                             has_non_ghana_address: false,
                                             has_separate_business_address: false,
                                             non_ghana_address_line_1: '',
@@ -580,14 +463,6 @@ const ProviderOnboarding: React.FC = () => {
                                                 <HomeAddressSection
                                                     values={values}
                                                     setFieldValue={setFieldValue}
-                                                    addressOptions={addressOptions}
-                                                    isSearchingAddresses={isSearchingAddresses}
-                                                    addressError={addressError}
-                                                    showManualEntry={showManualEntry}
-                                                    selectedAddress={selectedAddress}
-                                                    handlePostcodeSearch={handlePostcodeSearch}
-                                                    handleAddressSelection={handleAddressSelection}
-                                                    toggleManualEntry={toggleManualEntry}
                                                 />
 
                                                                                                 {/* Contact Details Section */}

@@ -18,7 +18,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
   int _currentPage = 0;
   final List<OnboardingPage> _pages = [
     OnboardingPage(
-      title: 'Welcome to WasteWise',
+      title: 'Welcome to Wasgo',
       subtitle: 'Smart waste management for a cleaner future',
       description: 'Join thousands of users who are making a difference in waste management and environmental conservation.',
       icon: Icons.recycling,

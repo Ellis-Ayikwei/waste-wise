@@ -1,4 +1,4 @@
-# 🚀 WasteWise Backend Integration TODO List
+# 🚀 Wasgo Backend Integration TODO List
 
 ## 📋 **Project Overview**
 Integrate the existing Django backend with the React frontend, focusing on real-time IoT sensor data from smart bins, WebSocket connections, and real-time dashboard updates.

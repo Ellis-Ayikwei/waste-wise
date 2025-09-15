@@ -243,7 +243,7 @@ class ProviderRegistrationSerializer(serializers.Serializer):
         max_length=255, required=False, allow_blank=True
     )
     city = serializers.CharField(max_length=100, required=True)
-    postcode = serializers.CharField(max_length=20, required=True)
+    postcode = serializers.CharField(max_length=20, required=False, allow_blank=True)
     country = serializers.CharField(max_length=100, required=True)
 
     # Business address fields (optional)
@@ -264,27 +264,31 @@ class ProviderRegistrationSerializer(serializers.Serializer):
         max_length=100, required=False, allow_blank=True
     )
 
-    # Non-UK address fields (optional)
-    has_non_uk_address = serializers.BooleanField(required=True)
-    non_uk_address_line_1 = serializers.CharField(
+    # Non-Ghana address fields (optional)
+    has_non_ghana_address = serializers.BooleanField(required=True)
+    non_ghana_address_line_1 = serializers.CharField(
         max_length=255, required=False, allow_blank=True
     )
-    non_uk_address_line_2 = serializers.CharField(
+    non_ghana_address_line_2 = serializers.CharField(
         max_length=255, required=False, allow_blank=True
     )
-    non_uk_city = serializers.CharField(
+    non_ghana_city = serializers.CharField(
         max_length=100, required=False, allow_blank=True
     )
-    non_uk_postal_code = serializers.CharField(
+    non_ghana_postal_code = serializers.CharField(
         max_length=20, required=False, allow_blank=True
     )
-    non_uk_country = serializers.CharField(
+    non_ghana_country = serializers.CharField(
         max_length=100, required=False, allow_blank=True
     )
 
     # Additional fields
     accepted_privacy_policy = serializers.BooleanField(required=True)
     selected_address = serializers.CharField(required=False, allow_blank=True)
+    address_search = serializers.CharField(required=False, allow_blank=True)
+    latitude = serializers.FloatField(required=False, allow_null=True)
+    longitude = serializers.FloatField(required=False, allow_null=True)
+    account_type = serializers.CharField(required=False, allow_blank=True)
 
     def validate(self, attrs):
         """Validate the registration data"""
@@ -310,18 +314,18 @@ class ProviderRegistrationSerializer(serializers.Serializer):
                         f"{field.replace('_', ' ').title()} is required when separate business address is selected"
                     )
 
-        # Validate non-UK address fields if has_non_uk_address is True
-        if attrs.get("has_non_uk_address"):
-            required_non_uk_fields = [
-                "non_uk_address_line_1",
-                "non_uk_city",
-                "non_uk_postal_code",
-                "non_uk_country",
+        # Validate non-Ghana address fields if has_non_ghana_address is True
+        if attrs.get("has_non_ghana_address"):
+            required_non_ghana_fields = [
+                "non_ghana_address_line_1",
+                "non_ghana_city",
+                "non_ghana_postal_code",
+                "non_ghana_country",
             ]
-            for field in required_non_uk_fields:
+            for field in required_non_ghana_fields:
                 if not attrs.get(field):
                     raise serializers.ValidationError(
-                        f"{field.replace('_', ' ').title()} is required when non-UK address is selected"
+                        f"{field.replace('_', ' ').title()} is required when non-Ghana address is selected"
                     )
 
         # Validate privacy policy acceptance
@@ -350,11 +354,48 @@ class ProviderRegistrationSerializer(serializers.Serializer):
                 "user": user,
                 "business_name": validated_data["business_name"],
                 "business_type": validated_data["business_type"],
-                "vat_registered": validated_data["vat_registered"].lower() == "yes",
+                # "vat_registered": validated_data["vat_registered"].lower() == "yes",
                 "vehicle_count": self._parse_vehicle_count(
                     validated_data["number_of_vehicles"]
                 ),
             }
+
+            # Add address fields
+            provider_data.update(
+                {
+                    "address_line1": validated_data.get("address_line_1", ""),
+                    "address_line2": validated_data.get("address_line_2", ""),
+                    "city": validated_data.get("city", ""),
+                    "postcode": validated_data.get("postcode", ""),
+                    "country": validated_data.get("country", ""),
+                }
+            )
+
+            # Add base_location if latitude and longitude are provided
+            if validated_data.get("latitude") and validated_data.get("longitude"):
+                try:
+                    from django.contrib.gis.geos import Point
+
+                    base_location = Point(
+                        validated_data["longitude"],
+                        validated_data["latitude"],
+                        srid=4326,
+                    )
+                    provider_data["base_location"] = base_location
+                except Exception as e:
+                    logger.error(f"Error creating base_location Point: {str(e)}")
+                    # If Point creation fails, we'll need to handle this
+                    # For now, let's create a default location in Accra
+                    from django.contrib.gis.geos import Point
+
+                    provider_data["base_location"] = Point(
+                        -0.1733501, 5.6221003, srid=4326
+                    )
+            else:
+                # Default location in Accra if no coordinates provided
+                from django.contrib.gis.geos import Point
+
+                provider_data["base_location"] = Point(-0.1733501, 5.6221003, srid=4326)
 
             provider = ServiceProvider.objects.create(**provider_data)
 
@@ -395,6 +436,20 @@ class ProviderRegistrationSerializer(serializers.Serializer):
 
             # Map frontend work types to service names
             service_mapping = {
+                # Waste Management Services
+                "Commercial waste management": "Commercial Waste Management",
+                "On-demand pickup": "On-Demand Pickup",
+                "Metal recycling": "Metal Recycling",
+                "Medical waste": "Medical Waste Management",
+                "Food waste management": "Food Waste Management",
+                "Policy development": "Waste Policy Development",
+                "Residential waste collection": "Residential Waste Collection",
+                "Industrial waste management": "Industrial Waste Management",
+                "Hazardous waste disposal": "Hazardous Waste Disposal",
+                "Electronic waste recycling": "Electronic Waste Recycling",
+                "Construction waste management": "Construction Waste Management",
+                "Organic waste composting": "Organic Waste Composting",
+                # Legacy removal services (keeping for backward compatibility)
                 "Home removals": "Home Removals",
                 "International removals": "International Removals",
                 "Office removals": "Office Removals",
@@ -417,7 +472,7 @@ class ProviderRegistrationSerializer(serializers.Serializer):
                 try:
                     service = Services.objects.get(name__icontains=service_name)
                     services_to_add.append(service)
-                except Services.DoesNotExist:
+                except Exception:
                     # If service doesn't exist, try to find a default category or skip
                     try:
                         # Try to get a default service category
@@ -454,6 +509,12 @@ class ProviderRegistrationSerializer(serializers.Serializer):
             logger.warning("Services app not available, skipping work types processing")
         except Exception as e:
             logger.error(f"Error processing work types: {str(e)}")
+
+    def update(self, instance, validated_data):
+        """Update method - not used for registration but required by abstract class"""
+        raise NotImplementedError(
+            "ProviderRegistrationSerializer does not support updates"
+        )
 
     def to_representation(self, instance):
         """Return serialized data"""

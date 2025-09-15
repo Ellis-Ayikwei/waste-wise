@@ -4,11 +4,13 @@ import { Bell, Settings, MessageSquare, AlertTriangle, CheckCircle } from 'lucid
 
 interface NotificationsTabProps {
     preferences: any;
+    isEditing: boolean;
     onNotificationToggle: (key: string) => void;
 }
 
 const NotificationsTab: React.FC<NotificationsTabProps> = ({
     preferences,
+    isEditing,
     onNotificationToggle
 }) => {
     // Provider-specific notification preferences
@@ -90,9 +92,10 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({
                             </div>
                             <button
                                 onClick={() => onNotificationToggle(pref.key)}
+                                disabled={!isEditing}
                                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                                     pref.enabled ? 'bg-green-600' : 'bg-gray-200'
-                                }`}
+                                } disabled:opacity-50 disabled:cursor-not-allowed`}
                             >
                                 <span
                                     className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${

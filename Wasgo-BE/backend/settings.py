@@ -64,7 +64,7 @@ INSTALLED_APPS = [
     "apps.Notification",
     "apps.Payment",
     "apps.Provider",
-    "apps.ServiceRequest",
+    "apps.ServiceRequest.apps.ServiceRequestConfig",
     "apps.User",
     "apps.Vehicle",
     "apps.Driver",
@@ -296,20 +296,14 @@ CORS_ALLOW_HEADERS = [
     "x-refresh-token",
 ]
 
-# settings.py
-# CHANNEL_LAYERS = {
-#     "default": {
-#         "BACKEND": "channels_redis.core.RedisChannelLayer",
-#         "CONFIG": {
-#             "hosts": [("redis://127.0.0.1:6379/0")],  # Redis URL format
-#         },
-#     },
-# }
-
-# Temporary in-memory channel layer for testing (not suitable for production)
+# Channels layer: use Redis so multiple processes (e.g., MQTT listener) can send WS events
+REDIS_URL = os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [REDIS_URL],
+        },
     },
 }
 
@@ -356,7 +350,7 @@ EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
 
 # --- SendGrid Email Configuration ----
 # Use SendGrid Web API instead of SMTP for better reliability
-EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
+# EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@Wasgo.com")
 SENDGRID_TRACK_CLICKS_PLAIN = False

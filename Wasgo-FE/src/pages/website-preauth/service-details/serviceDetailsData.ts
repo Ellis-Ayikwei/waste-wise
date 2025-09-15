@@ -1,4 +1,4 @@
-// Service details data for WasteWise waste management services
+// Service details data for Wasgo waste management services
 import {
     IconTruck,
     IconBuilding,

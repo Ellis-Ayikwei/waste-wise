@@ -13,12 +13,14 @@ import { BusinessPreferences, WasteCategory } from './types';
 
 interface BusinessPreferencesTabProps {
     preferences: BusinessPreferences;
+    isEditing: boolean;
     onPreferencesChange: (field: keyof BusinessPreferences, value: any) => void;
     onNotificationToggle: (key: string) => void;
 }
 
 const BusinessPreferencesTab: React.FC<BusinessPreferencesTabProps> = ({
     preferences,
+    isEditing,
     onPreferencesChange,
     onNotificationToggle
 }) => {
@@ -30,16 +32,10 @@ const BusinessPreferencesTab: React.FC<BusinessPreferencesTabProps> = ({
     ];
 
     const wasteCategories = [
-        { id: 'general', name: 'General Trash Collection', description: 'Mixed household waste' },
-        { id: 'plastic', name: 'Plastic-only Collection', description: 'Plastic waste materials' },
-        { id: 'metal', name: 'Scrap Metal Collection', description: 'Metal waste and scrap' },
-        { id: 'ewaste', name: 'E-Waste Collection', description: 'Electronic waste' },
-        { id: 'organic', name: 'Organic Waste Collection', description: 'Food and garden waste' },
-        { id: 'hazardous', name: 'Hazardous Waste', description: 'Dangerous materials' },
-        { id: 'paper', name: 'Paper & Cardboard', description: 'Paper products' },
-        { id: 'glass', name: 'Glass Collection', description: 'Glass materials' },
-        { id: 'construction', name: 'Construction Debris', description: 'Building waste' },
-        { id: 'textile', name: 'Textile & Clothing', description: 'Fabric waste' }
+        { id: 'waste_collection', name: 'Waste Collection', description: 'General waste collection and disposal services' },
+        { id: 'recycling_service', name: 'Recycling Service', description: 'Recycling and waste processing services' },
+        { id: 'bin_maintenance', name: 'Bin Maintenance', description: 'Smart bin maintenance and repair services' },
+        { id: 'general_service', name: 'General Service', description: 'General waste management and support services' }
     ];
 
     return (
@@ -67,7 +63,8 @@ const BusinessPreferencesTab: React.FC<BusinessPreferencesTabProps> = ({
                                 ...preferences.serviceHours, 
                                 start: e.target.value 
                             })}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            disabled={!isEditing}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-50"
                         />
                     </div>
 
@@ -82,7 +79,8 @@ const BusinessPreferencesTab: React.FC<BusinessPreferencesTabProps> = ({
                                 ...preferences.serviceHours, 
                                 end: e.target.value 
                             })}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            disabled={!isEditing}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-50"
                         />
                     </div>
 
@@ -94,7 +92,8 @@ const BusinessPreferencesTab: React.FC<BusinessPreferencesTabProps> = ({
                                     id="emergencyCollection"
                                     checked={preferences.emergencyCollection}
                                     onChange={(e) => onPreferencesChange('emergencyCollection', e.target.checked)}
-                                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                                    disabled={!isEditing}
+                                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded disabled:opacity-50"
                                 />
                                 <label htmlFor="emergencyCollection" className="ml-2 block text-sm text-gray-900">
                                     Emergency Collection Available
@@ -107,7 +106,8 @@ const BusinessPreferencesTab: React.FC<BusinessPreferencesTabProps> = ({
                                     id="weekendCollection"
                                     checked={preferences.weekendCollection}
                                     onChange={(e) => onPreferencesChange('weekendCollection', e.target.checked)}
-                                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                                    disabled={!isEditing}
+                                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded disabled:opacity-50"
                                 />
                                 <label htmlFor="weekendCollection" className="ml-2 block text-sm text-gray-900">
                                     Weekend Collection Available
@@ -136,7 +136,8 @@ const BusinessPreferencesTab: React.FC<BusinessPreferencesTabProps> = ({
                             max="100"
                             value={preferences.maxDistanceKm || 10}
                             onChange={(e) => onPreferencesChange('maxDistanceKm', parseInt(e.target.value))}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            disabled={!isEditing}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-50"
                         />
                         <p className="text-xs text-gray-500 mt-1">Maximum distance you're willing to travel for jobs</p>
                     </div>
@@ -151,7 +152,8 @@ const BusinessPreferencesTab: React.FC<BusinessPreferencesTabProps> = ({
                             step="0.01"
                             value={preferences.minJobValue || 10}
                             onChange={(e) => onPreferencesChange('minJobValue', parseFloat(e.target.value))}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            disabled={!isEditing}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-50"
                         />
                         <p className="text-xs text-gray-500 mt-1">Minimum job value you'll accept</p>
                     </div>
@@ -171,7 +173,17 @@ const BusinessPreferencesTab: React.FC<BusinessPreferencesTabProps> = ({
                             <input
                                 type="checkbox"
                                 id={method.id}
-                                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded mt-1"
+                                checked={preferences.collectionMethods?.includes(method.id) || false}
+                                onChange={(e) => {
+                                    const currentMethods = preferences.collectionMethods || [];
+                                    if (e.target.checked) {
+                                        onPreferencesChange('collectionMethods', [...currentMethods, method.id]);
+                                    } else {
+                                        onPreferencesChange('collectionMethods', currentMethods.filter(id => id !== method.id));
+                                    }
+                                }}
+                                disabled={!isEditing}
+                                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded mt-1 disabled:opacity-50"
                             />
                             <div className="ml-3">
                                 <label htmlFor={method.id} className="block text-sm font-medium text-gray-900">
@@ -197,7 +209,17 @@ const BusinessPreferencesTab: React.FC<BusinessPreferencesTabProps> = ({
                             <input
                                 type="checkbox"
                                 id={category.id}
-                                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded mt-1"
+                                checked={preferences.wasteCategories?.includes(category.id) || false}
+                                onChange={(e) => {
+                                    const currentCategories = preferences.wasteCategories || [];
+                                    if (e.target.checked) {
+                                        onPreferencesChange('wasteCategories', [...currentCategories, category.id]);
+                                    } else {
+                                        onPreferencesChange('wasteCategories', currentCategories.filter(id => id !== category.id));
+                                    }
+                                }}
+                                disabled={!isEditing}
+                                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded mt-1 disabled:opacity-50"
                             />
                             <div className="ml-3">
                                 <label htmlFor={category.id} className="block text-sm font-medium text-gray-900">

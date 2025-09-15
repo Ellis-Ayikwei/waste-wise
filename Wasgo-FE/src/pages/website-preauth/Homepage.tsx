@@ -792,7 +792,7 @@ const Homepage: React.FC = () => {
                                 Join Our Network of Waste Management Providers
                             </h2>
                             <p className="text-xl text-green-50 mb-8 leading-relaxed">
-                                Are you a waste management company in Ghana? Partner with WasteWise to expand your reach, 
+                                Are you a waste management company in Ghana? Partner with Wasgo to expand your reach, 
                                 connect with more customers, and contribute to a cleaner environment across Ghana.
                             </p>
                             

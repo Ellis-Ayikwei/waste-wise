@@ -143,7 +143,7 @@ const Blog: React.FC = () => {
                         <div className="inline-block p-3 bg-white/10 rounded-full mb-6">
                             <FontAwesomeIcon icon={faNewspaper} className="text-3xl" />
                         </div>
-                        <h1 className="text-4xl md:text-5xl font-bold mb-6">WasteWise Blog</h1>
+                        <h1 className="text-4xl md:text-5xl font-bold mb-6">Wasgo Blog</h1>
                         <p className="text-xl text-white/90 mb-8">Expert insights on waste management, recycling, and sustainability in Ghana</p>
 
                         {/* Search Bar */}

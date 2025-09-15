@@ -200,6 +200,12 @@ class ServiceRequest(Basemodel):
         related_name="requested_offer_service_requests",
         help_text="Providers who requested to be offered this service",
     )
+    offered_providers = models.ManyToManyField(
+        ServiceProvider,
+        blank=True,
+        related_name="offered_service_requests",
+        help_text="Providers who were offered this service",
+    )
 
     offer_response = models.CharField(
         max_length=20,

@@ -1,7 +1,7 @@
 from django.apps import AppConfig
 
 
-class ServicerequestConfig(AppConfig):
+class ServiceRequestConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.ServiceRequest"
     verbose_name = "Service ServiceRequest Management"

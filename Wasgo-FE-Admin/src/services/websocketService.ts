@@ -28,12 +28,24 @@ export interface ServiceRequestUpdate {
 }
 
 export interface BinStatusUpdate {
-    bin_id: string;
-    status: string;
+    id: string;
+    bin_number: string;
+    bin_name: string;
     fill_level: number;
-    needs_collection: boolean;
-    needs_maintenance: boolean;
-    location?: string;
+    fill_status: string;
+    weight_kg: number;
+    temperature: number;
+    humidity: number;
+    battery_level: number;
+    signal_strength: number;
+    is_online: boolean;
+    status: string;
+    last_reading_at: string;
+    location: {
+        lat: number;
+        lng: number;
+        address: string;
+    };
 }
 
 export interface SensorAlert {
@@ -107,10 +119,12 @@ class WebSocketService {
     private isConnecting = false;
     private messageHandlers: Map<string, (data: any) => void> = new Map();
     private connectionStatusHandlers: ((status: 'connected' | 'disconnected' | 'connecting') => void)[] = [];
+    private lastMessageTime: number = 0;
 
 
     constructor() {
         this.connect();
+        this.setupPageVisibilityHandlers();
     }
 
     private connect() {
@@ -149,19 +163,15 @@ class WebSocketService {
                        sessionStorage.getItem('token') || "";
             }
 
-            console.log('token.....', token);
-
             // Append token as query param if available
             const wsUrl = token
                 ? `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}`
                 : baseUrl;
 
-            console.log('wsUrl.....', wsUrl);
-
             this.socket = new WebSocket(wsUrl);
 
             this.socket.onopen = () => {
-                console.log('Admin WebSocket connected');
+                console.log('✅ Admin WebSocket connected successfully');
                 this.isConnecting = false;
                 this.reconnectAttempts = 0;
                 this.notifyConnectionStatus('connected');
@@ -171,9 +181,9 @@ class WebSocketService {
             };
 
             this.socket.onmessage = (event) => {
-                console.log('Received Admin WebSocket message:', event.data);
                 try {
                     const message: WebSocketMessage = JSON.parse(event.data);
+                    // console.log("Parsed message:", message);
                     this.handleMessage(message);
                 } catch (error) {
                     console.error('Error parsing WebSocket message:', error);
@@ -181,7 +191,6 @@ class WebSocketService {
             };
 
             this.socket.onclose = (event) => {
-                console.log('Admin WebSocket disconnected:', event.code, event.reason);
                 this.isConnecting = false;
                 this.notifyConnectionStatus('disconnected');
                 
@@ -216,7 +225,6 @@ class WebSocketService {
 
     private scheduleReconnect() {
         this.reconnectAttempts++;
-        console.log(`Attempting to reconnect admin WebSocket (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
         
         setTimeout(() => {
             this.connect();
@@ -233,6 +241,7 @@ class WebSocketService {
                 this.handleServiceRequestUpdate(message.data as ServiceRequestUpdate);
                 break;
             case 'bin_status_update':
+                console.log('✅ Received bin_status_update message:', message.data);
                 this.handleBinStatusUpdate(message.data as BinStatusUpdate);
                 break;
             case 'sensor_alert':
@@ -301,20 +310,28 @@ class WebSocketService {
     }
 
     private handleBinStatusUpdate(data: BinStatusUpdate) {
-        let message = `Bin ${data.bin_id} status updated`;
+        console.log(`Received Admin WebSocket message for bin update:`, data);
+        
+        let message = `Bin ${data.bin_number} (${data.bin_name}) status updated`;
         let severity: 'info' | 'success' | 'warning' | 'error' = 'info';
 
-        if (data.needs_collection) {
-            message = `Bin ${data.bin_id} needs collection (${data.fill_level}% full)`;
+        // Check if bin needs collection (fill level >= 80%)
+        const needsCollection = data.fill_level >= 80;
+        const needsMaintenance = data.status === 'maintenance_required' || data.battery_level < 20;
+
+        if (needsCollection) {
+            message = `Bin ${data.bin_number} needs collection (${data.fill_level}% full)`;
             severity = 'warning';
-        } else if (data.needs_maintenance) {
-            message = `Bin ${data.bin_id} needs maintenance`;
+        } else if (needsMaintenance) {
+            message = `Bin ${data.bin_number} needs maintenance`;
             severity = 'error';
         }
 
-        if (data.location) {
-            message += ` at ${data.location}`;
+        if (data.location?.address) {
+            message += ` at ${data.location.address}`;
         }
+
+        console.log(`Bin update processed: ${message} (${severity})`);
 
         // showNotification({
         //     message,
@@ -437,6 +454,27 @@ class WebSocketService {
             type: 'info',
             showHide: true
         });
+    }
+
+    private setupPageVisibilityHandlers() {
+        // Handle page visibility changes to maintain WebSocket connection
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                this.checkConnectionHealth();
+            }
+        });
+
+        // Handle page focus/blur events
+        window.addEventListener('focus', () => {
+            this.checkConnectionHealth();
+        });
+    }
+
+
+    private checkConnectionHealth() {
+        if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+            this.reconnect();
+        }
     }
 
     private notifyConnectionStatus(status: 'connected' | 'disconnected' | 'connecting') {

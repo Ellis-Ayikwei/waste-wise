@@ -81,7 +81,9 @@ const AccountSettings = () => {
             end: '17:00'
         },
         emergencyCollection: false,
-        weekendCollection: false
+        weekendCollection: false,
+        collectionMethods: [],
+        wasteCategories: []
     });
 
     const [security, setSecurity] = useState<SecurityInfo>({
@@ -102,7 +104,7 @@ const AccountSettings = () => {
         { id: 'preferences', name: 'Business Preferences', icon: Calendar },
         { id: 'security', name: 'Security', icon: Shield },
         { id: 'notifications', name: 'Notifications', icon: Bell },
-        { id: 'billing', name: 'Billing & Earnings', icon: CreditCard },
+        // { id: 'billing', name: 'Billing & Earnings', icon: CreditCard },
         { id: 'delete', name: 'Delete Account', icon: Trash2 }
     ];
 
@@ -122,7 +124,9 @@ const AccountSettings = () => {
                     end: providerProfile.service_hours_end || '17:00'
                 },
                 emergencyCollection: providerProfile.emergency_collection_available || false,
-                weekendCollection: providerProfile.weekend_collection_available || false
+                weekendCollection: providerProfile.weekend_collection_available || false,
+                collectionMethods: providerProfile.collection_methods || [],
+                wasteCategories: providerProfile.waste_types_handled || []
             }));
             // Initialize security data
             setSecurity(prev => ({
@@ -180,6 +184,81 @@ const AccountSettings = () => {
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const handleSaveBusinessPreferences = async () => {
+        if (!authUser || !providerProfile) return;
+
+        try {
+            setIsSaving(true);
+            const response = await axiosInstance.patch(`/providers/${providerProfile.id}/`, {
+                auto_accept_jobs: businessPreferences.autoAcceptJobs,
+                max_distance_km: businessPreferences.maxDistanceKm,
+                min_job_value: businessPreferences.minJobValue,
+                notification_enabled: businessPreferences.notificationEnabled,
+                service_hours_start: businessPreferences.serviceHours.start,
+                service_hours_end: businessPreferences.serviceHours.end,
+                emergency_collection_available: businessPreferences.emergencyCollection,
+                weekend_collection_available: businessPreferences.weekendCollection,
+                collection_methods: businessPreferences.collectionMethods,
+                waste_types_handled: businessPreferences.wasteCategories
+            });
+
+            if (response.status === 200) {
+                await refreshProfile();
+            }
+        } catch (error) {
+            console.error('Error saving business preferences:', error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleSaveAll = async () => {
+        if (!authUser) return;
+
+        try {
+            setIsSaving(true);
+            
+            // Save profile data
+            if (profile) {
+                await handleSaveProfile();
+            }
+            
+            // Save business preferences
+            await handleSaveBusinessPreferences();
+            
+            // Note: Security and notification changes are handled separately
+            // as they might require different API endpoints
+            
+            setIsEditing(false);
+        } catch (error) {
+            console.error('Error saving all changes:', error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleCancel = () => {
+        // Reset all form data to original values
+        if (providerProfile) {
+            setProfile(providerProfile);
+            setBusinessPreferences({
+                autoAcceptJobs: providerProfile.auto_accept_jobs || false,
+                maxDistanceKm: providerProfile.max_distance_km || 10,
+                minJobValue: Number(providerProfile.min_job_value) || 10,
+                notificationEnabled: providerProfile.notification_enabled || true,
+                serviceHours: {
+                    start: providerProfile.service_hours_start || '08:00',
+                    end: providerProfile.service_hours_end || '17:00'
+                },
+                emergencyCollection: providerProfile.emergency_collection_available || false,
+                weekendCollection: providerProfile.weekend_collection_available || false,
+                collectionMethods: providerProfile.collection_methods || [],
+                wasteCategories: providerProfile.waste_categories?.map(cat => cat.code || cat.id) || []
+            });
+        }
+        setIsEditing(false);
     };
 
     const handlePasswordChange = async () => {
@@ -369,7 +448,13 @@ const AccountSettings = () => {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Header />
+            <Header 
+                isEditing={isEditing}
+                isSaving={isSaving}
+                onEdit={() => setIsEditing(true)}
+                onSave={handleSaveAll}
+                onCancel={handleCancel}
+            />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -389,9 +474,6 @@ const AccountSettings = () => {
                             <ProfileTab
                                 profile={profile}
                                 isEditing={isEditing}
-                                isSaving={isSaving}
-                                onEdit={() => setIsEditing(true)}
-                                onSave={handleSaveProfile}
                                 onProfileChange={handleProfileChange}
                                 onImageUpload={handleImageUpload}
                             />
@@ -401,6 +483,7 @@ const AccountSettings = () => {
                         {activeTab === 'preferences' && (
                             <BusinessPreferencesTab
                                 preferences={businessPreferences}
+                                isEditing={isEditing}
                                 onPreferencesChange={handlePreferencesChange}
                                 onNotificationToggle={handleNotificationToggle}
                             />
@@ -428,6 +511,7 @@ const AccountSettings = () => {
                         {activeTab === 'notifications' && (
                             <NotificationsTab
                                 preferences={businessPreferences}
+                                isEditing={isEditing}
                                 onNotificationToggle={handleNotificationToggle}
                             />
                         )}

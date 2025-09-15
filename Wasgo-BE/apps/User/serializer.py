@@ -298,9 +298,10 @@ class UserDetailSerializer(serializers.ModelSerializer):
     def get_provider_profile(self, obj):
         """Get provider profile if user is a provider"""
         if obj.user_type == "provider":
+            print("trying to get provider profile for user", obj.user_type)
             try:
                 from apps.Provider.models import ServiceProvider
-                from apps.Provider.serializers import ServiceProviderSerializer
+                from apps.Provider.serializer import ServiceProviderSerializer
 
                 provider_profile = ServiceProvider.objects.filter(user=obj).first()
                 if provider_profile:

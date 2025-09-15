@@ -7,10 +7,6 @@ interface WorkTypeCategory {
     label: string;
     icon: any;
     description: string;
-    subcategories: Array<{
-        value: string;
-        label: string;
-    }>;
 }
 
 interface AdditionalInfoSectionProps {
@@ -68,33 +64,28 @@ const AdditionalInfoSection: React.FC<AdditionalInfoSectionProps> = ({
                                 <div className="flex items-center mb-3">
                                     <category.icon className="w-5 h-5 text-green-600 mr-2" />
                                     <h4 className="font-medium text-gray-900">{category.label}</h4>
-                                    <span className="ml-2 text-sm text-gray-500">({category.subcategories.length} services)</span>
                                 </div>
                                 <p className="text-sm text-gray-600 mb-3">{category.description}</p>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                    {category.subcategories.map((subcategory) => (
-                                        <label key={subcategory.value} className="flex items-center">
-                                            <Field
-                                                type="checkbox"
-                                                name="work_types"
-                                                value={subcategory.value}
-                                                className="sr-only"
-                                            />
-                                            <div
-                                                className={`w-full py-2 px-3 border rounded-md cursor-pointer transition-all flex items-center text-sm ${
-                                                    values.work_types.includes(subcategory.value)
-                                                        ? 'border-green-600 bg-green-50 text-green-600'
-                                                        : 'border-gray-300 hover:border-gray-400'
-                                                }`}
-                                            >
-                                                <span>{subcategory.label}</span>
-                                                {values.work_types.includes(subcategory.value) && (
-                                                    <Check className="ml-auto w-4 h-4" />
-                                                )}
-                                            </div>
-                                        </label>
-                                    ))}
-                                </div>
+                                <label className="flex items-center">
+                                    <Field
+                                        type="checkbox"
+                                        name="work_types"
+                                        value={category.id}
+                                        className="sr-only"
+                                    />
+                                    <div
+                                        className={`w-full py-3 px-4 border rounded-md cursor-pointer transition-all flex items-center text-sm ${
+                                            values.work_types.includes(category.id)
+                                                ? 'border-green-600 bg-green-50 text-green-600'
+                                                : 'border-gray-300 hover:border-gray-400'
+                                        }`}
+                                    >
+                                        <span className="font-medium">{category.label}</span>
+                                        {values.work_types.includes(category.id) && (
+                                            <Check className="ml-auto w-4 h-4" />
+                                        )}
+                                    </div>
+                                </label>
                             </div>
                         ))}
                     </div>

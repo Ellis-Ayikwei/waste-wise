@@ -1,32 +1,16 @@
 import React from 'react';
 import { Field, ErrorMessage } from 'formik';
 import { Home, AlertCircle, Building } from 'lucide-react';
-import { AddressOption } from '../../../../services/geocodingService';
+import AddressAutocomplete from '../../../../components/AddressAutocomplete';
 
 interface HomeAddressSectionProps {
     values: any;
     setFieldValue: any;
-    addressOptions: AddressOption[];
-    isSearchingAddresses: boolean;
-    addressError: string | null;
-    showManualEntry: boolean;
-    selectedAddress: AddressOption | null;
-    handlePostcodeSearch: (postcode: string) => void;
-    handleAddressSelection: (addressIndex: number, setFieldValue: any) => void;
-    toggleManualEntry: () => void;
 }
 
 const HomeAddressSection: React.FC<HomeAddressSectionProps> = ({
     values,
-    setFieldValue,
-    addressOptions,
-    isSearchingAddresses,
-    addressError,
-    showManualEntry,
-    selectedAddress,
-    handlePostcodeSearch,
-    handleAddressSelection,
-    toggleManualEntry
+    setFieldValue
 }) => {
     return (
         <div>
@@ -35,158 +19,84 @@ const HomeAddressSection: React.FC<HomeAddressSectionProps> = ({
                 Home Address
             </h2>
             <div className="space-y-6">
+                {/* Address Autocomplete */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Search Address
+                    </label>
+                    <AddressAutocomplete
+                        placeholder="Enter your address, city, or postcode..."
+                        onAddressSelect={(address) => {
+                            // Auto-fill form fields when address is selected
+                            setFieldValue('address_line_1', address.components.address_line1 || '');
+                            setFieldValue('address_line_2', '');
+                            setFieldValue('city', address.components.city || '');
+                            setFieldValue('country', address.components.country || '');
+                            setFieldValue('postcode', address.components.postcode || '');
+                            setFieldValue('latitude', address.coordinates.lat);
+                            setFieldValue('longitude', address.coordinates.lng);
+                        }}
+                        onAddressChange={(value) => {
+                            setFieldValue('address_search', value);
+                        }}
+                        value={values.address_search || ''}
+                        showDetails={true}
+                    />
+                </div>
+
+                {/* Manual Address Fields - Always show for additional details */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Search Postal Code
+                            Address Line 1
                         </label>
-                        <div className="flex gap-2">
-                            <Field
-                                name="postcode"
-                                type="text"
-                                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                placeholder="GA-123-4567"
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                    setFieldValue('postcode', e.target.value);
-                                    if (e.target.value.length > 5) {
-                                        handlePostcodeSearch(e.target.value);
-                                    }
-                                }}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => handlePostcodeSearch(values.postcode)}
-                                disabled={isSearchingAddresses}
-                                className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${
-                                    isSearchingAddresses 
-                                        ? 'bg-gray-400 text-gray-700 cursor-not-allowed' 
-                                        : 'bg-blue-600 text-white hover:bg-blue-700'
-                                }`}
-                            >
-                                {isSearchingAddresses ? (
-                                    <>
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                        <span>Searching...</span>
-                                    </>
-                                ) : (
-                                    <span>Search</span>
-                                )}
-                            </button>
-                        </div>
-                        <ErrorMessage name="postcode" component="p" className="text-red-500 text-sm mt-1" />
-                        {addressError && <p className="text-sm text-red-500 mt-1">{addressError}</p>}
+                        <Field
+                            name="address_line_1"
+                            type="text"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="e.g. 123 High Street"
+                        />
+                        <ErrorMessage name="address_line_1" component="p" className="text-red-500 text-sm mt-1" />
                     </div>
 
-                    {/* Address Selection */}
-                    {addressOptions.length > 0 && !values.has_non_ghana_address && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Select Address ({values.postcode})
-                            </label>
-                            <select
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                onChange={(e) => {
-                                    if (e.target.value) {
-                                        const index = parseInt(e.target.value);
-                                        handleAddressSelection(index, setFieldValue);
-                                    }
-                                }}
-                                value=""
-                            >
-                                <option value="">Select an address...</option>
-                                {addressOptions.map((address, index) => (
-                                    <option key={index} value={index}>
-                                        {address.displayText}
-                                    </option>
-                                ))}
-                            </select>
-                            <button
-                                type="button"
-                                onClick={toggleManualEntry}
-                                className="mt-2 text-blue-600 hover:text-blue-800 text-sm underline"
-                            >
-                                Enter address manually
-                            </button>
-                        </div>
-                    )}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Address Line 2
+                        </label>
+                        <Field
+                            name="address_line_2"
+                            type="text"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="e.g. Flat 2, Building name"
+                        />
+                    </div>
 
-                    {/* Manual Entry Section - Only show when no addresses found */}
-                    {addressError && !addressOptions.length && !values.has_non_ghana_address && (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium text-yellow-800">
-                                    Manual Address Entry
-                                </span>
-                            </div>
-                            <p className="text-sm text-yellow-700 mb-3">
-                                {addressError || 'No addresses found for this postal code. Please enter your address manually.'}
-                            </p>
-                            <button
-                                type="button"
-                                onClick={toggleManualEntry}
-                                className="text-sm bg-yellow-100 text-yellow-800 px-3 py-2 rounded hover:bg-yellow-200 transition-colors flex items-center gap-2"
-                            >
-                                Enter Address Manually
-                            </button>
-                        </div>
-                    )}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            City
+                        </label>
+                        <Field
+                            name="city"
+                            type="text"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="e.g. Accra"
+                        />
+                        <ErrorMessage name="city" component="p" className="text-red-500 text-sm mt-1" />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Country
+                        </label>
+                        <Field
+                            name="country"
+                            type="text"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="e.g. Ghana"
+                        />
+                        <ErrorMessage name="country" component="p" className="text-red-500 text-sm mt-1" />
+                    </div>
                 </div>
-
-                {/* Address Fields - Show when address is selected or manual entry is enabled */}
-                {(selectedAddress || showManualEntry) && !values.has_non_ghana_address && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Address Line 1
-                            </label>
-                            <Field
-                                name="address_line_1"
-                                type="text"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                placeholder="e.g. 123 High Street"
-                            />
-                            <ErrorMessage name="address_line_1" component="p" className="text-red-500 text-sm mt-1" />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Address Line 2
-                            </label>
-                            <Field
-                                name="address_line_2"
-                                type="text"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                placeholder="e.g. Flat 2, Building name"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                City
-                            </label>
-                            <Field
-                                name="city"
-                                type="text"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                placeholder="e.g. Accra"
-                            />
-                            <ErrorMessage name="city" component="p" className="text-red-500 text-sm mt-1" />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Country
-                            </label>
-                            <Field
-                                name="country"
-                                type="text"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                placeholder="e.g. Ghana"
-                            />
-                            <ErrorMessage name="country" component="p" className="text-red-500 text-sm mt-1" />
-                        </div>
-                    </div>
-                )}
 
                 <div className="space-y-3">
                     <label className="flex items-center">

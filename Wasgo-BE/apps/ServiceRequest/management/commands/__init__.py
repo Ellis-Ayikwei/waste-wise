@@ -1,1 +1,1 @@
-# Management commands for ServiceRequest app
+# Management commands

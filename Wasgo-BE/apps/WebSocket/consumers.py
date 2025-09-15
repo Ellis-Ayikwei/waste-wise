@@ -611,6 +611,10 @@ class AdminWebSocketConsumer(AsyncWebsocketConsumer):
 
     async def bin_status_update(self, event):
         """Handle bin status update for admin"""
+        # print(f"\033[92m📡 [Admin WebSocket] Sending bin_status_update to admin_{self.user.id}\033[0m")
+        # print(f"\033[96m   Bin: {event['data'].get('bin_number', 'N/A')}\033[0m")
+        # print(f"\033[96m   Fill Level: {event['data'].get('fill_level', 'N/A')}%\033[0m")
+        # print(f"\033[96m   Full event: {event}\033[0m")
         await self.send(
             text_data=json.dumps({"type": "bin_status_update", "data": event["data"]})
         )
@@ -736,10 +740,12 @@ class AdminWebSocketConsumer(AsyncWebsocketConsumer):
         print(
             f"\033[92m📡 [Admin WebSocket] Sending sensor_update to admin_{self.user.id}\033[0m"
         )
+        print(f"\033[96m   Event type: {event.get('type', 'N/A')}\033[0m")
         print(f"\033[96m   Bin: {event['data'].get('bin_number', 'N/A')}\033[0m")
         print(
             f"\033[96m   Fill Level: {event['data'].get('fill_level', 'N/A')}%\033[0m"
         )
+        print(f"\033[96m   Full event: {event}\033[0m")
         await self.send(
             text_data=json.dumps(
                 {

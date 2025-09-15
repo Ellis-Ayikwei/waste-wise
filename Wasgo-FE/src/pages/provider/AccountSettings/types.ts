@@ -116,6 +116,8 @@ export interface BusinessPreferences {
     };
     emergencyCollection: boolean;
     weekendCollection: boolean;
+    collectionMethods: string[];
+    wasteCategories: string[];
 }
 
 export interface SecurityInfo {

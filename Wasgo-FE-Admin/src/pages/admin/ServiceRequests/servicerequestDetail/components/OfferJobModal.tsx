@@ -26,7 +26,8 @@ interface Provider {
 interface OfferJobModalProps {
     isOpen: boolean;
     onClose: () => void;
-    provider: Provider | null;
+    provider?: Provider | null;
+    providers?: Provider[];
     serviceRequestId: string;
     onOfferJob: (providerId: string, offerData: OfferData) => void;
     onGetAutoPricing?: (providerId: string, serviceRequestId: string) => Promise<number>;
@@ -37,12 +38,14 @@ interface OfferData {
     offered_price: number;
     expires_at: string;
     notes?: string;
+    auto_pricing?: boolean;
 }
 
 const OfferJobModal: React.FC<OfferJobModalProps> = ({
     isOpen,
     onClose,
     provider,
+    providers = [],
     serviceRequestId,
     onOfferJob,
     onGetAutoPricing
@@ -54,11 +57,17 @@ const OfferJobModal: React.FC<OfferJobModalProps> = ({
     const [useAutoPricing, setUseAutoPricing] = useState(false);
     const [isLoadingPricing, setIsLoadingPricing] = useState(false);
     const [autoPricingError, setAutoPricingError] = useState<string | null>(null);
+    const [selectedProviderId, setSelectedProviderId] = useState('');
+    
+    // Determine if we're in single provider mode or multi-provider mode
+    const isSingleProviderMode = provider !== undefined;
+    const availableProviders = isSingleProviderMode ? [provider] : providers;
+    const selectedProvider = isSingleProviderMode ? provider : providers.find(p => p.id === selectedProviderId);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
-        if (!provider || !offeredPrice || !expiresAt) {
+        if (!selectedProvider || !offeredPrice || !expiresAt) {
             return;
         }
 
@@ -68,15 +77,17 @@ const OfferJobModal: React.FC<OfferJobModalProps> = ({
             const offerData: OfferData = {
                 offered_price: parseFloat(offeredPrice),
                 expires_at: expiresAt,
-                notes: notes.trim() || undefined
+                notes: notes.trim() || undefined,
+                auto_pricing: useAutoPricing
             };
 
-            await onOfferJob(provider.id, offerData);
+            await onOfferJob(selectedProvider.id, offerData);
             
             // Reset form
             setOfferedPrice('');
             setExpiresAt('');
             setNotes('');
+            setSelectedProviderId('');
             onClose();
         } catch (error) {
             console.error('Error offering job:', error);
@@ -90,6 +101,7 @@ const OfferJobModal: React.FC<OfferJobModalProps> = ({
             setOfferedPrice('');
             setExpiresAt('');
             setNotes('');
+            setSelectedProviderId('');
             setUseAutoPricing(false);
             setAutoPricingError(null);
             onClose();
@@ -100,10 +112,10 @@ const OfferJobModal: React.FC<OfferJobModalProps> = ({
         setUseAutoPricing(checked);
         setAutoPricingError(null);
 
-        if (checked && provider && onGetAutoPricing) {
+        if (checked && selectedProvider && onGetAutoPricing) {
             setIsLoadingPricing(true);
             try {
-                const autoPrice = await onGetAutoPricing(provider.id, serviceRequestId);
+                const autoPrice = await onGetAutoPricing(selectedProvider.id, serviceRequestId);
                 setOfferedPrice(autoPrice.toString());
             } catch (error) {
                 console.error('Error getting auto pricing:', error);
@@ -117,7 +129,7 @@ const OfferJobModal: React.FC<OfferJobModalProps> = ({
         }
     };
 
-    if (!isOpen || !provider) {
+    if (!isOpen || (!provider && providers.length === 0)) {
         return null;
     }
 
@@ -144,42 +156,66 @@ const OfferJobModal: React.FC<OfferJobModalProps> = ({
                         </button>
                     </div>
 
+                    {/* Provider Selection (only show if multiple providers) */}
+                    {!isSingleProviderMode && (
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Select Provider *
+                            </label>
+                            <select
+                                value={selectedProviderId}
+                                onChange={(e) => setSelectedProviderId(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                required
+                            >
+                                <option value="">Choose a provider...</option>
+                                {providers.map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.business_name} (Rating: {p.average_rating}, Jobs: {p.completed_bookings_count})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
                     {/* Provider Info */}
-                    <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                        <h4 className="font-medium text-gray-900 mb-3">Provider Details</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <div className="flex items-center space-x-2">
-                                    <IconUser className="w-4 h-4 text-gray-400" />
-                                    <span className="text-sm font-medium">{provider.business_name}</span>
+                    {selectedProvider && (
+                        <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                            <h4 className="font-medium text-gray-900 mb-3">Provider Details</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <div className="flex items-center space-x-2">
+                                        <IconUser className="w-4 h-4 text-gray-400" />
+                                        <span className="text-sm font-medium">{selectedProvider.business_name}</span>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <IconMail className="w-4 h-4 text-gray-400" />
+                                        <span className="text-sm text-gray-600">{selectedProvider.user.email}</span>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <IconPhone className="w-4 h-4 text-gray-400" />
+                                        <span className="text-sm text-gray-600">{selectedProvider.user.phone_number}</span>
+                                    </div>
                                 </div>
-                                <div className="flex items-center space-x-2">
-                                    <IconMail className="w-4 h-4 text-gray-400" />
-                                    <span className="text-sm text-gray-600">{provider.user.email}</span>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <IconPhone className="w-4 h-4 text-gray-400" />
-                                    <span className="text-sm text-gray-600">{provider.user.phone_number}</span>
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex items-center space-x-2">
-                                    <IconStar className="w-4 h-4 text-gray-400" />
-                                    <span className="text-sm text-gray-600">
-                                        {provider.average_rating} ({provider.completed_bookings_count} jobs)
-                                    </span>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <span className="text-sm text-gray-600">Status:</span>
-                                    <span className={`text-sm font-medium ${
-                                        provider.verification_status === 'verified' ? 'text-green-600' : 'text-yellow-600'
-                                    }`}>
-                                        {provider.verification_status}
-                                    </span>
+                                <div className="space-y-2">
+                                    <div className="flex items-center space-x-2">
+                                        <IconStar className="w-4 h-4 text-gray-400" />
+                                        <span className="text-sm text-gray-600">
+                                            {selectedProvider.average_rating} ({selectedProvider.completed_bookings_count} jobs)
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-sm text-gray-600">Status:</span>
+                                        <span className={`text-sm font-medium ${
+                                            selectedProvider.verification_status === 'verified' ? 'text-green-600' : 'text-yellow-600'
+                                        }`}>
+                                            {selectedProvider.verification_status}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Offer Form */}
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -280,7 +316,7 @@ const OfferJobModal: React.FC<OfferJobModalProps> = ({
                             </button>
                             <button
                                 type="submit"
-                                disabled={isSubmitting || !offeredPrice || !expiresAt}
+                                disabled={isSubmitting || !offeredPrice || !expiresAt || !selectedProvider}
                                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md disabled:opacity-50 flex items-center space-x-2"
                             >
                                 {isSubmitting ? (

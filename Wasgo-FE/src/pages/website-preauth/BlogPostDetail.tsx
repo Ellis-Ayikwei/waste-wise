@@ -51,7 +51,7 @@ const BlogPostDetail: React.FC = () => {
                         <p>With over 60% of Ghana's population expected to live in urban areas by 2030, cities are grappling with increasing volumes of waste. Traditional collection methods often prove inadequate, leading to overflowing bins, missed collections, and environmental health concerns.</p>
                         
                         <h2>Enter Smart IoT Technology</h2>
-                        <p>WasteWise's smart bin technology represents a paradigm shift in waste management. These intelligent containers are equipped with sensors that monitor fill levels, temperature, and even detect different types of waste materials.</p>
+                        <p>Wasgo's smart bin technology represents a paradigm shift in waste management. These intelligent containers are equipped with sensors that monitor fill levels, temperature, and even detect different types of waste materials.</p>
                         
                         <h2>Real-Time Monitoring and Optimization</h2>
                         <p>IoT sensors provide real-time data on waste levels, enabling collection teams to optimize routes and schedules. This means bins are emptied before they overflow, reducing odors, pest problems, and environmental contamination.</p>

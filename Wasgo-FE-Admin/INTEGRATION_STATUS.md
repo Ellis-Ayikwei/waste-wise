@@ -1,8 +1,8 @@
-# WasteWise Admin Dashboard - Backend Integration Status
+# Wasgo Admin Dashboard - Backend Integration Status
 
 ## 🎯 **Integration Overview**
 
-The WasteWise Admin Dashboard has been **comprehensively integrated** with the Django backend. This document provides a detailed status of all integration points and their current state.
+The Wasgo Admin Dashboard has been **comprehensively integrated** with the Django backend. This document provides a detailed status of all integration points and their current state.
 
 ## ✅ **Integration Status: COMPLETE**
 
@@ -230,7 +230,7 @@ The WasteWise Admin Dashboard has been **comprehensively integrated** with the D
 ## 🔧 **Setup Instructions**
 
 ### **1. Environment Configuration**
-Create `.env` file in `WasteWise-Admin/`:
+Create `.env` file in `Wasgo-Admin/`:
 ```bash
 VITE_API_URL=http://localhost:8000/Wasgo/api/v1/
 VITE_AUTH_URL=http://localhost:8000/Wasgo/api/v1/auth/
@@ -239,7 +239,7 @@ VITE_WS_URL=ws://localhost:8000/ws/
 
 ### **2. Install Dependencies**
 ```bash
-cd WasteWise-Admin
+cd Wasgo-Admin
 npm install --legacy-peer-deps
 ```
 
@@ -334,7 +334,7 @@ import IntegrationStatus from './components/IntegrationStatus';
 
 ## 🏆 **Integration Achievement**
 
-The WasteWise Admin Dashboard is now **fully integrated** with the Django backend, providing:
+The Wasgo Admin Dashboard is now **fully integrated** with the Django backend, providing:
 
 - ✅ **100% API Endpoint Coverage**
 - ✅ **Real-time WebSocket Communication**

@@ -28,6 +28,7 @@ from .views import (
     ListTrustedDevicesView,
     RevokeTrustedDeviceView,
     RevokeAllTrustedDevicesView,
+    RegisterFromRequestAPIView,
 )
 
 
@@ -39,6 +40,11 @@ urlpatterns = [
     path("", include(router.urls)),
     # Authentication endpoints
     path("register/", RegisterAPIView.as_view(), name="register"),
+    path(
+        "register/from_request/",
+        RegisterFromRequestAPIView.as_view(),
+        name="register_from_request",
+    ),
     path(
         "register/provider/",
         RegisterProviderAPIView.as_view(),

@@ -34,6 +34,7 @@ from .serializer import (
     PasswordRecoverySerializer,
     PasswordResetConfirmSerializer,
     RegisterSerializer,
+    RegisterFromRequestSerializer,
     SendOTPSerializer,
     VerifyOTPSerializer,
     ResendOTPSerializer,
@@ -70,6 +71,171 @@ class UserViewSet(viewsets.ModelViewSet):
     def me(self, request):
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
+
+
+class RegisterFromRequestAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        print("request.data", request.data)
+
+        try:
+            serializer = RegisterFromRequestSerializer(data=request.data)
+            if serializer.is_valid():
+                user = serializer.save()
+
+                # Check if this is an existing user
+                if (
+                    hasattr(serializer, "_has_existing_user")
+                    and serializer._has_existing_user
+                ):
+                    return Response(
+                        {
+                            "message": "User with this email address already exists",
+                            "error_code": "EMAIL_ALREADY_EXISTS",
+                            "user_id": str(user.id),
+                            "email": user.email,
+                            "existing_user": True,
+                        },
+                        status=status.HTTP_200_OK,
+                    )
+
+                # Generate and send OTP for email verification using custom OTP utility
+                otp_result = send_otp_utility(user, "signup", user.email)
+
+                if otp_result["success"]:
+                    return Response(
+                        {
+                            "message": "User created successfully. Please check your email for verification code.",
+                            "email": otp_result.get("masked_email"),
+                            "user_id": str(user.id),
+                            "otp_sent": True,
+                            "validity_minutes": otp_result.get("validity_minutes"),
+                            "success": True,
+                        },
+                        status=status.HTTP_201_CREATED,
+                    )
+                else:
+                    # Handle different OTP send failure types with appropriate status codes
+                    if otp_result.get("status_code") == 429:
+                        return Response(
+                            {
+                                "message": "User created but rate limit exceeded for verification email. Please wait before requesting a new OTP.",
+                                "user_id": str(user.id),
+                                "otp_sent": False,
+                                "error_code": otp_result.get(
+                                    "error_code", "OTP_RATE_LIMIT"
+                                ),
+                            },
+                            status=status.HTTP_201_CREATED,
+                        )
+                    elif otp_result.get("status_code") == 503:
+                        return Response(
+                            {
+                                "message": "User created but email service is temporarily unavailable. Please request a new OTP later.",
+                                "user_id": str(user.id),
+                                "otp_sent": False,
+                                "error_code": otp_result.get(
+                                    "error_code", "EMAIL_SERVICE_UNAVAILABLE"
+                                ),
+                            },
+                            status=status.HTTP_201_CREATED,
+                        )
+                    else:
+                        return Response(
+                            {
+                                "message": "User created but failed to send verification email. Please request a new OTP.",
+                                "user_id": str(user.id),
+                                "otp_sent": False,
+                                "error_code": otp_result.get(
+                                    "error_code", "OTP_SEND_FAILED"
+                                ),
+                            },
+                            status=status.HTTP_201_CREATED,
+                        )
+            else:
+                # Log validation errors for debugging
+                logger.error(f"Validation errors: {serializer.errors}")
+                print(f"Validation errors: {serializer.errors}")
+
+                # Return structured validation errors
+                return Response(
+                    {
+                        "message": "Registration failed due to validation errors.",
+                        "error_code": "VALIDATION_ERROR",
+                        "errors": serializer.errors,
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        except Exception as e:
+            logger.error(f"User registration error: {str(e)}")
+
+            # Import custom exceptions
+            from apps.Authentication.serializer import (
+                EmailAlreadyExistsException,
+                PhoneNumberAlreadyExistsException,
+            )
+
+            # Handle specific conflict exceptions - return existing user ID
+            if isinstance(e, EmailAlreadyExistsException):
+                # Find the existing user by email
+                from apps.User.models import User
+
+                try:
+                    existing_user = User.objects.get(email=request.data.get("email"))
+                    return Response(
+                        {
+                            "message": "User with this email address already exists",
+                            "error_code": "EMAIL_ALREADY_EXISTS",
+                            "user_id": str(existing_user.id),
+                            "email": existing_user.email,
+                            "existing_user": True,
+                        },
+                        status=status.HTTP_200_OK,
+                    )
+                except User.DoesNotExist:
+                    return Response(
+                        {
+                            "message": "User with this email address already exists, but user not found",
+                            "error_code": "EMAIL_ALREADY_EXISTS",
+                        },
+                        status=status.HTTP_409_CONFLICT,
+                    )
+            elif isinstance(e, PhoneNumberAlreadyExistsException):
+                # Find the existing user by phone number
+                from apps.User.models import User
+
+                try:
+                    existing_user = User.objects.get(
+                        phone_number=request.data.get("phone_number")
+                    )
+                    return Response(
+                        {
+                            "message": "User with this phone number already exists",
+                            "error_code": "PHONE_NUMBER_ALREADY_EXISTS",
+                            "user_id": str(existing_user.id),
+                            "phone_number": existing_user.phone_number,
+                            "existing_user": True,
+                        },
+                        status=status.HTTP_200_OK,
+                    )
+                except User.DoesNotExist:
+                    return Response(
+                        {
+                            "message": "User with this phone number already exists, but user not found",
+                            "error_code": "PHONE_NUMBER_ALREADY_EXISTS",
+                        },
+                        status=status.HTTP_409_CONFLICT,
+                    )
+            else:
+                return Response(
+                    {
+                        "message": "Registration failed due to a server error. Please try again later.",
+                        "error_code": "INTERNAL_SERVER_ERROR",
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
 
 
 class RegisterAPIView(APIView):

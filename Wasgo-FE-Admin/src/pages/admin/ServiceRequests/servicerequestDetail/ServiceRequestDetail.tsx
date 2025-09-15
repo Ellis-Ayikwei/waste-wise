@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import OfferJobModal from './components/OfferJobModal';
 import { 
     IconArrowLeft, 
     IconEye, 
@@ -255,7 +256,6 @@ const ServiceRequestDetail: React.FC = () => {
     const [showAssignModal, setShowAssignModal] = useState(false);
     const [showStatusModal, setShowStatusModal] = useState(false);
     const [selectedProvider, setSelectedProvider] = useState('');
-    const [offeredPrice, setOfferedPrice] = useState('');
     const [newStatus, setNewStatus] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -275,27 +275,40 @@ const ServiceRequestDetail: React.FC = () => {
     const providers = providersData || [];
     const isLoading = !serviceRequestData && !serviceRequestError;
 
-    const handleOfferToProvider = async () => {
-        if (!serviceRequest || !selectedProvider || !offeredPrice) {
-            toast.error('Please fill in all required fields');
+    const handleOfferToProvider = async (providerId: string, offerData: any) => {
+        if (!serviceRequest) {
+            toast.error('Service request not found');
             return;
         }
 
         try {
             await axiosInstance.post(`/service-requests/${serviceRequest.id}/offer_to_provider/`, {
-                provider_id: selectedProvider,
-                offered_price: parseFloat(offeredPrice),
-                expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours from now
+                provider_id: providerId,
+                offered_price: offerData.offered_price,
+                expires_at: offerData.expires_at,
+                auto_pricing: offerData.auto_pricing || false,
+                notes: offerData.notes
             });
             
             toast.success('Offer sent to provider successfully');
             setShowOfferModal(false);
-            setSelectedProvider('');
-            setOfferedPrice('');
             mutateServiceRequest();
-        } catch (error) {
-            toast.error('Failed to send offer to provider');
+        } catch (error: any) {
             console.error('Error offering to provider:', error);
+            toast.error(error.response?.data?.message || 'Failed to send offer to provider');
+            throw error; // Re-throw so the modal can handle it
+        }
+    };
+
+    const getAutoPricing = async (providerId: string, serviceRequestId: string): Promise<number> => {
+        try {
+            const response = await axiosInstance.post(`/service-requests/${serviceRequestId}/auto_calculate_offered_price/`, {
+                provider_id: providerId
+            });
+            return response.data.offered_price;
+        } catch (error) {
+            console.error('Error getting auto pricing:', error);
+            throw new Error('Failed to get auto pricing');
         }
     };
 
@@ -318,6 +331,26 @@ const ServiceRequestDetail: React.FC = () => {
         } catch (error) {
             toast.error('Failed to assign provider');
             console.error('Error assigning provider:', error);
+        }
+    };
+
+    const handleAssignJobToProvider = async (providerId: string) => {
+        if (!serviceRequest) {
+            toast.error('Service request not found');
+            return;
+        }
+
+        try {
+            await axiosInstance.post(`/service-requests/${serviceRequest.id}/assign_provider/`, {
+                provider_id: providerId,
+                price: serviceRequest.offered_price || serviceRequest.estimated_price
+            });
+            
+            toast.success('Job assigned to provider successfully');
+            mutateServiceRequest();
+        } catch (error: any) {
+            console.error('Error assigning job to provider:', error);
+            toast.error(error.response?.data?.message || 'Failed to assign job to provider');
         }
     };
 
@@ -572,7 +605,7 @@ const ServiceRequestDetail: React.FC = () => {
                                 onAcceptOffer={handleAcceptOffer}
                                 onRejectOffer={handleRejectOffer}
                                 onViewProviderDetails={() => {}}
-                                onAssignJobToProvider={() => {}}
+                                onAssignJobToProvider={handleAssignJobToProvider}
                             />
                         )}
 
@@ -855,58 +888,15 @@ const ServiceRequestDetail: React.FC = () => {
                 </div>
 
                 {/* Offer to Provider Modal */}
-                {showOfferModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                        <div className="bg-white rounded-xl p-6 w-full max-w-md">
-                            <h3 className="text-lg font-semibold mb-4">Offer to Provider</h3>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Provider
-                                    </label>
-                                    <select
-                                        value={selectedProvider}
-                                        onChange={(e) => setSelectedProvider(e.target.value)}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    >
-                                        <option value="">Select a provider</option>
-                                        {providers.map((provider: Provider) => (
-                                            <option key={provider.id} value={provider.id}>
-                                                {provider.business_name} (Rating: {provider.average_rating})
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Offered Price
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={offeredPrice}
-                                        onChange={(e) => setOfferedPrice(e.target.value)}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        placeholder="Enter offered price"
-                                    />
-                                </div>
-                            </div>
-                            <div className="flex justify-end space-x-3 mt-6">
-                                <button
-                                    onClick={() => setShowOfferModal(false)}
-                                    className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleOfferToProvider}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                >
-                                    Send Offer
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                <OfferJobModal
+                    isOpen={showOfferModal}
+                    onClose={() => setShowOfferModal(false)}
+                    providers={providers}
+                    serviceRequestId={serviceRequest?.id || ''}
+                    onOfferJob={handleOfferToProvider}
+                    onGetAutoPricing={getAutoPricing}
+                    job={serviceRequest}
+                />
 
                 {/* Assign Provider Modal */}
                 {showAssignModal && (

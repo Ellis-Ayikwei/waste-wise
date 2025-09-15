@@ -121,7 +121,7 @@ interface ProviderInfoTabProps {
     onAcceptOffer: (offerId: string) => void;
     onRejectOffer: (offerId: string) => void;
     onViewProviderDetails: (providerId: string) => void;
-    onAssignJobToProvider: (providerId: string, offerId: string) => void;
+    onAssignJobToProvider: (providerId: string) => void;
 }
 
 const ProviderInfoTab: React.FC<ProviderInfoTabProps> = ({
@@ -310,8 +310,9 @@ const ProviderInfoTab: React.FC<ProviderInfoTabProps> = ({
                         <AcceptedOffersList
                             providers={serviceRequest.accepted_providers || []}
                             offeredPrice={serviceRequest.offered_price ?? null}
+                            serviceRequest={serviceRequest}
                             onViewProviderDetails={onViewProviderDetails}
-                            onAssignJobToProvider={(providerId) => onAssignJobToProvider(providerId, serviceRequest.id)}
+                            onAssignJobToProvider={onAssignJobToProvider}
                         />
                     </div>
                 )}

@@ -43,6 +43,7 @@ import UserSecurity from './UserView/UserSecurity';
 import UserPermissions from './UserView/UserPermissions';
 import UserNotifications from './UserView/UserNotifications';
 import UserActivity from './UserView/UserActivity';
+import { mutate } from 'swr';
 
 interface Address {
   id: string;
@@ -73,6 +74,79 @@ interface SecurityEvent {
 
 type AccountStatus = 'active' | 'pending' | 'suspended' | 'inactive';
 
+interface ProviderProfile {
+  id: string;
+  business_type: string;
+  business_name: string;
+  registration_number: string;
+  vat_number: string;
+  phone: string;
+  email: string;
+  website: string;
+  address_line1: string;
+  address_line2: string;
+  city: string;
+  county: string;
+  postcode: string;
+  country: string;
+  base_location: {
+    type: string;
+    coordinates: [number, number];
+  };
+  base_location_address: string;
+  service_area: any;
+  max_service_radius_km: number;
+  waste_license_number: string;
+  waste_license_expiry: string | null;
+  environmental_permit_number: string;
+  environmental_permit_expiry: string | null;
+  waste_types_handled: string[];
+  waste_categories: string[];
+  collection_methods: string[];
+  vehicle_fleet_size: number;
+  daily_collection_capacity_kg: number | null;
+  has_compaction_equipment: boolean;
+  has_recycling_facilities: boolean;
+  service_hours_start: string | null;
+  service_hours_end: string | null;
+  emergency_collection_available: boolean;
+  weekend_collection_available: boolean;
+  public_liability_insurance: boolean;
+  public_liability_amount: number | null;
+  employers_liability_insurance: boolean;
+  employers_liability_amount: number | null;
+  vehicle_insurance: boolean;
+  vehicle_insurance_amount: number | null;
+  verification_status: string;
+  verified_at: string | null;
+  verified_by: string | null;
+  verification_notes: string;
+  is_active: boolean;
+  is_available: boolean;
+  rating: string;
+  total_jobs_completed: number;
+  total_weight_collected_kg: string;
+  total_recycled_kg: string;
+  collection_efficiency_rating: string;
+  average_response_time_minutes: number;
+  completion_rate: string;
+  commission_rate: string;
+  balance: string;
+  total_earnings: string;
+  auto_accept_jobs: boolean;
+  max_distance_km: number;
+  min_job_value: string;
+  notification_enabled: boolean;
+  vehicle_count: number;
+  last_active: string | null;
+  average_rating: number;
+  completed_bookings_count: number;
+  base_location_coordinates: {
+    lat: number;
+    lng: number;
+  };
+}
+
 export interface UserAccount {
   id: string;
   email: string;
@@ -82,9 +156,9 @@ export interface UserAccount {
   user_type: 'customer' | 'provider' | 'admin';
   account_status: AccountStatus;
   date_joined: string;
-  last_active: string;
-  profile_picture?: string;
-  rating: number;
+  last_active: string | null;
+  profile_picture?: string | null;
+  rating: string;
   stripe_customer_id?: string;
   notification_preferences: {
     email: boolean;
@@ -94,13 +168,9 @@ export interface UserAccount {
   };
   device_tokens: string[];
   user_addresses?: Address;
-  // Provider specific fields
-  business_name?: string;
-  business_address?: string;
-  vat_number?: string;
-  company_registration_number?: string;
-  number_of_vehicles?: number;
-  number_of_completed_bookings: number;
+  // Provider specific fields - now nested in provider_profile
+  provider_profile?: ProviderProfile;
+  customer_profile?: any;
   // Additional fields
   is_staff: boolean;
   is_superuser: boolean;
@@ -108,6 +178,8 @@ export interface UserAccount {
   groups: string[];
   user_permissions: string[];
   roles: string[];
+  user_activities: UserActivity[];
+  bins: any[];
   activities?: UserActivity[];
   two_factor_enabled: boolean;
   two_factor_method: '2fa_app' | 'sms' | 'email' | null;
@@ -149,8 +221,9 @@ const defaultUser: UserAccount = {
   user_type: 'customer',
   account_status: 'active',
   date_joined: '',
-  last_active: '',
-  rating: 0,
+  last_active: null,
+  profile_picture: null,
+  rating: '0.00',
   notification_preferences: {
     email: false,
     sms: false,
@@ -158,7 +231,8 @@ const defaultUser: UserAccount = {
     marketing: false
   },
   device_tokens: [],
-  number_of_completed_bookings: 0,
+  user_activities: [],
+  bins: [],
   is_staff: false,
   is_superuser: false,
   is_active: true,
@@ -287,13 +361,15 @@ const UserView: React.FC = () => {
         } : undefined,
         two_factor_enabled: editedUser.two_factor_enabled,
         two_factor_method: editedUser.two_factor_method,
-        // Only include provider fields if user type is provider
-        ...(editedUser.user_type === 'provider' && {
-          business_name: editedUser.business_name,
-          business_address: editedUser.business_address,
-          vat_number: editedUser.vat_number,
-          company_registration_number: editedUser.company_registration_number,
-          number_of_vehicles: editedUser.number_of_vehicles
+        // Include only specific provider_profile fields if user type is provider
+        ...(editedUser.user_type === 'provider' && editedUser.provider_profile && {
+          
+            business_name: editedUser.provider_profile.business_name,
+            address_line1: editedUser.provider_profile.address_line1,
+            vat_number: editedUser.provider_profile.vat_number,
+            registration_number: editedUser.provider_profile.registration_number,
+            vehicle_count: editedUser.provider_profile.vehicle_count
+       
         })
       };
 
@@ -307,15 +383,16 @@ const UserView: React.FC = () => {
           user_permissions: response.data.user_permissions || [],
           roles: response.data.roles || []
         };
-        setUser(savedUser);
-        setEditedUser(savedUser);
+        // setUser(savedUser);
+        //setEditedUser(savedUser);
+        mutate(`/users/${id}/`); 
         setIsEditing(false);
         setValidationErrors({});
         setError(null);
       }
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Failed to update user details. Please try again.';
-      setError(errorMessage);
+      // setError(errorMessage);
       console.error('Error updating user details:', err);
     } finally {
       setSaving(false);
@@ -344,16 +421,16 @@ const UserView: React.FC = () => {
       errors.phone_number = 'Phone number is required';
     }
     
-    // Provider-specific validation
-    if (userData.user_type === 'provider') {
-      if (!userData.business_name) {
-        errors.business_name = 'Business name is required for providers';
+    // Provider-specific validation - check nested provider_profile
+    if (userData.user_type === 'provider' && userData.provider_profile) {
+      if (!userData.provider_profile.business_name) {
+        errors['provider_profile.business_name'] = 'Business name is required for providers';
       }
-      if (!userData.vat_number) {
-        errors.vat_number = 'VAT number is required for providers';
+      if (!userData.provider_profile.vat_number) {
+        errors['provider_profile.vat_number'] = 'VAT number is required for providers';
       }
-      if (!userData.business_address) {
-        errors.business_address = 'Business address is required for providers';
+      if (!userData.provider_profile.address_line1) {
+        errors['provider_profile.address_line1'] = 'Business address is required for providers';
       }
     }
     
@@ -366,15 +443,28 @@ const UserView: React.FC = () => {
     
     if (field.includes('.')) {
       const [parent, child] = field.split('.');
-      const parentValue = editedUser[parent as keyof UserAccount];
-      if (parentValue && typeof parentValue === 'object') {
+      
+      if (parent === 'provider_profile') {
+        // Handle provider_profile nested fields
         setEditedUser({
           ...editedUser,
-          [parent]: {
-            ...parentValue,
+          provider_profile: {
+            ...editedUser.provider_profile!,
             [child]: value
           }
         });
+      } else {
+        // Handle other nested fields
+        const parentValue = editedUser[parent as keyof UserAccount];
+        if (parentValue && typeof parentValue === 'object') {
+          setEditedUser({
+            ...editedUser,
+            [parent]: {
+              ...parentValue,
+              [child]: value
+            }
+          });
+        }
       }
     } else {
       // Special handling for user_type changes
@@ -382,12 +472,8 @@ const UserView: React.FC = () => {
         setEditedUser({
           ...editedUser,
           [field]: value,
-          // Reset provider-specific fields when changing from provider to other types
-          business_name: value === 'provider' ? editedUser.business_name : undefined,
-          business_address: value === 'provider' ? editedUser.business_address : undefined,
-          vat_number: value === 'provider' ? editedUser.vat_number : undefined,
-          company_registration_number: value === 'provider' ? editedUser.company_registration_number : undefined,
-          number_of_vehicles: value === 'provider' ? editedUser.number_of_vehicles : undefined
+          // Reset provider profile when changing from provider to other types
+          provider_profile: value === 'provider' ? editedUser.provider_profile : undefined
         });
       } else {
         setEditedUser({
@@ -440,7 +526,7 @@ const UserView: React.FC = () => {
       // Update local state
       const updatedUser = {
         ...selectedUser,
-        account_status: newStatus,
+        account_status: newStatus as AccountStatus,
         suspension_reason: suspensionReason,
       };
       setUser(updatedUser);
@@ -504,7 +590,7 @@ const UserView: React.FC = () => {
       // Update local state
       const updatedUser = {
         ...user,
-        account_status: 'active',
+        account_status: 'active' as AccountStatus,
       };
       setUser(updatedUser);
       setEditedUser(updatedUser);
@@ -541,7 +627,7 @@ const UserView: React.FC = () => {
       const updatedUser = {
         ...selectedUser,
         is_active: true,
-        account_status: 'active',
+        account_status: 'active' as AccountStatus,
       };
       setUser(updatedUser);
       setEditedUser(updatedUser);
@@ -583,7 +669,7 @@ const UserView: React.FC = () => {
       const updatedUser = {
         ...selectedUser,
         is_active: false,
-        account_status: 'inactive',
+        account_status: 'inactive' as AccountStatus,
         suspension_reason: deactivationReason,
       };
       setUser(updatedUser);
@@ -689,8 +775,74 @@ const UserView: React.FC = () => {
     );
   };
 
-  const handleOverviewSave = (updatedUser: UserAccount) => {
-    setEditedUser(updatedUser);
+  // Convert from nested structure to flat structure for child components
+  const convertToFlatUser = (user: UserAccount): any => {
+    return {
+      ...user,
+      // Flatten provider_profile fields to top level for backward compatibility
+      business_name: user.provider_profile?.business_name || '',
+      business_address: user.provider_profile?.address_line1 || '',
+      vat_number: user.provider_profile?.vat_number || '',
+      company_registration_number: user.provider_profile?.registration_number || '',
+      number_of_vehicles: user.provider_profile?.vehicle_count || 0,
+      number_of_completed_bookings: user.provider_profile?.completed_bookings_count || 0,
+      rating: parseFloat(user.rating) || 0,
+      last_active: user.last_active || '',
+      groups: user.groups || [],
+      user_permissions: user.user_permissions || [],
+      roles: user.roles || [],
+      activities: user.user_activities || [],
+      device_tokens: user.device_tokens || [],
+      is_staff: user.is_staff || false,
+      is_superuser: user.is_superuser || false,
+      two_factor_enabled: user.two_factor_enabled || false,
+      two_factor_method: user.two_factor_method || null,
+      // Add missing properties that child components expect
+      notification_preferences: user.notification_preferences || {
+        email: false,
+        sms: false,
+        push: false,
+        marketing: false
+      },
+      user_addresses: user.user_addresses,
+      bins: user.bins || [],
+    };
+  };
+
+  // Convert from flat structure back to nested structure
+  const convertFromFlatUser = (flatUser: any): UserAccount => {
+    return {
+      ...user,
+      ...flatUser,
+      rating: flatUser.rating?.toString() || '0.00',
+      last_active: flatUser.last_active || null,
+      groups: flatUser.groups || [],
+      user_permissions: flatUser.user_permissions || [],
+      roles: flatUser.roles || [],
+      user_activities: flatUser.activities || [],
+      device_tokens: flatUser.device_tokens || [],
+      is_staff: flatUser.is_staff || false,
+      is_superuser: flatUser.is_superuser || false,
+      two_factor_enabled: flatUser.two_factor_enabled || false,
+      two_factor_method: flatUser.two_factor_method || null,
+      // Update provider_profile if it exists
+      ...(flatUser.business_name && {
+        provider_profile: {
+          ...user.provider_profile,
+          business_name: flatUser.business_name,
+          address_line1: flatUser.business_address,
+          vat_number: flatUser.vat_number,
+          registration_number: flatUser.company_registration_number,
+          vehicle_count: flatUser.number_of_vehicles,
+          completed_bookings_count: flatUser.number_of_completed_bookings,
+        }
+      })
+    };
+  };
+
+  const handleOverviewSave = (updatedUser: any) => {
+    const convertedUser = convertFromFlatUser(updatedUser);
+    setEditedUser(convertedUser);
     handleSave();
   };
 
@@ -731,8 +883,15 @@ const UserView: React.FC = () => {
       case 'overview':
         return (
           <UserOverview
-            user={isEditing ? editedUser : user}
-            setUser={isEditing ? setEditedUser : setUser}
+            user={convertToFlatUser(isEditing ? editedUser : user)}
+            setUser={(updatedUser: any) => {
+              const convertedUser = convertFromFlatUser(updatedUser);
+              if (isEditing) {
+                setEditedUser(convertedUser);
+              } else {
+                setUser(convertedUser);
+              }
+            }}
             isEditing={isEditing}
             setIsEditing={setIsEditing}
             onSave={handleOverviewSave}
@@ -742,36 +901,43 @@ const UserView: React.FC = () => {
       case 'security':
         return (
           <UserSecurity
-            user={user as UserAccount}
+            user={convertToFlatUser(user)}
             isEditing={isEditing}
-            onSave={handleSecuritySave}
+            onSave={(updatedUser: any) => {
+              const convertedUser = convertFromFlatUser(updatedUser);
+              handleSecuritySave(convertedUser);
+            }}
             onCancel={handleSecurityCancel}
           />
         );
       case 'permissions':
         return (
           <UserPermissions
-            user={user}
+            user={convertToFlatUser(user)}
             isEditing={isEditing}
-            onSave={handlePermissionsSave}
+            onSave={(updatedUser: any) => {
+              const convertedUser = convertFromFlatUser(updatedUser);
+              handlePermissionsSave(convertedUser);
+            }}
             onCancel={handlePermissionsCancel}
           />
         );
       case 'notifications':
         return (
           <UserNotifications
-            user={user}
+            user={convertToFlatUser(user)}
             isEditing={isEditing}
-            onSave={handleNotificationsSave}
+            onSave={(updatedUser: any) => {
+              const convertedUser = convertFromFlatUser(updatedUser);
+              handleNotificationsSave(convertedUser);
+            }}
             onCancel={handleNotificationsCancel}
           />
         );
       case 'activity':
         return (
           <UserActivity
-            user={user}
-            renderActivityIcon={renderActivityIcon}
-            formatDate={formatDate}
+            user={convertToFlatUser(user)}
           />
         );
       default:

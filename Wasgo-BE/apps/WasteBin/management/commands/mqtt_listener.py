@@ -1,22 +1,31 @@
 import os
+import sys
 import time
+
 import signal
 import logging
 import json
+import django
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.db import transaction
 import paho.mqtt.client as mqtt
-from apps.WasteBin.models import SmartBin, Sensor, SensorReading
+from apps.WasteBin.models import SmartBin, Sensor, SensorReading, build_bin_status_data
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
+# Django is already configured when running as management command
 
 
 LOG = logging.getLogger("mqtt-listener")
 LOG.setLevel(logging.INFO)
 
-MQTT_HOST = os.getenv("MQTT_HOST", "broker.hivemq.com")
+# MQTT_HOST = os.getenv("MQTT_HOST", "broker.hivemq.com")
+MQTT_HOST = os.getenv("MQTT_HOST", "mqtt-dashboard.com")
 MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
 MQTT_KEEPALIVE = int(os.getenv("MQTT_KEEPALIVE", "60"))
 MQTT_TOPIC = os.getenv("MQTT_TOPIC", "wasgo/sensors/readings")
+# MQTT_TOPIC = os.getenv("MQTT_TOPIC", "axioiii/gps/out")
 
 _should_stop = False
 
@@ -31,6 +40,7 @@ def on_connect(client, userdata, flags, rc, properties=None, *args):
 
 
 def on_disconnect(client, userdata, rc, properties=None, *args):
+
     LOG.warning(f"Disconnected rc={rc}")
 
 
@@ -57,6 +67,7 @@ def process_sensor_reading(topic, payload):
     try:
         # Parse JSON payload
         data = json.loads(payload)
+        # print(f"the data is {data}")
 
         # Extract sensor information
         sensor_id = data.get("sensor_id")
@@ -70,19 +81,38 @@ def process_sensor_reading(topic, payload):
             return
 
         # Find the sensor and bin
+        # For testing, use the first available sensor and bin
         try:
-            sensor = Sensor.objects.get(sensor_number=sensor_id)
-            bin_obj = SmartBin.objects.get(bin_number=bin_id)
-        except Sensor.DoesNotExist:
+            sensor = Sensor.objects.first()
+            if not sensor:
+                print(f"\033[93m[MQTT] No sensors found in database\033[0m", flush=True)
+                return
             print(
-                f"\033[93m[MQTT] Sensor {sensor_id} not found in database\033[0m",
+                f"\033[92m[MQTT] Using sensor: {sensor.id}\033[0m",
                 flush=True,
             )
+        except Exception as e:
+            print(f"\033[93m[MQTT] Error getting sensor: {e}\033[0m", flush=True)
             return
-        except SmartBin.DoesNotExist:
+
+        try:
+            # Try to find bin by bin_number first, then by ID
+            bin_obj = SmartBin.objects.filter(id=bin_id).first()
+            if not bin_obj:
+                bin_obj = SmartBin.objects.first()
+                print(
+                    f"\033[92m[MQTT] Using bin: {bin_obj.id} ({bin_obj.name}) - Number: {bin_obj.bin_number}\033[0m",
+                    flush=True,
+                )
+            if not bin_obj:
+                print(f"\033[93m[MQTT] No bins found in database\033[0m", flush=True)
+                return
             print(
-                f"\033[93m[MQTT] Bin {bin_id} not found in database\033[0m", flush=True
+                f"\033[92m[MQTT] Using bin: {bin_obj.id} ({bin_obj.name}) - Number: {bin_obj.bin_number}\033[0m",
+                flush=True,
             )
+        except Exception as e:
+            print(f"\033[93m[MQTT] Error getting bin: {e}\033[0m", flush=True)
             return
 
         # Create sensor reading
@@ -131,6 +161,7 @@ def process_sensor_reading(topic, payload):
             elif bin_obj.status == "full" and fill_level < 80:
                 bin_obj.status = "active"
 
+            # Save the bin updates
             bin_obj.save()
 
             # Update sensor status
@@ -138,73 +169,73 @@ def process_sensor_reading(topic, payload):
             sensor.signal_strength = data.get("signal_strength", 100)
             sensor.save()
 
+            # Send WebSocket update directly via Channels (Redis-backed)
+            try:
+                channel_layer = get_channel_layer()
+
+                bin_type_name = None
+                if bin_obj.bin_type:
+                    try:
+                        bin_type_name = str(bin_obj.bin_type.name)
+                    except (AttributeError, TypeError):
+                        bin_type_name = None
+
+                bin_data = build_bin_status_data(bin_obj, bin_type_name)
+
+                # Send to bin owner group if assigned
+                if bin_obj.user:
+                    async_to_sync(channel_layer.group_send)(
+                        f"user_{bin_obj.user.id}",
+                        {"type": "bin_status_update", "data": bin_data},
+                    )
+
+                # Always send to admin groups
+                async_to_sync(channel_layer.group_send)(
+                    "admin_dashboard",
+                    {"type": "bin_status_update", "data": bin_data},
+                )
+                async_to_sync(channel_layer.group_send)(
+                    "admin_notifications",
+                    {"type": "bin_status_update", "data": bin_data},
+                )
+
+                # Optional alert push when very full
+                try:
+                    if int(bin_obj.fill_level) >= 90 and bin_obj.user:
+                        async_to_sync(channel_layer.group_send)(
+                            f"user_{bin_obj.user.id}",
+                            {
+                                "type": "sensor_alert",
+                                "data": {
+                                    "bin_id": str(bin_obj.id),
+                                    "bin_number": str(bin_obj.bin_number),
+                                    "bin_name": str(bin_obj.name),
+                                    "alert_type": "full",
+                                    "fill_level": int(bin_obj.fill_level),
+                                    "message": f"🚨 URGENT: Bin {bin_obj.bin_number} is {bin_obj.fill_level}% full and needs immediate collection!",
+                                    "priority": "high",
+                                    "location": str(bin_obj.address),
+                                    "timestamp": bin_obj.updated_at.isoformat(),
+                                },
+                            },
+                        )
+                except Exception:
+                    pass
+
+            except Exception as e:
+                LOG.error(f"Error sending WebSocket update via Channels: {e}")
+
             print(
                 f"\033[96m[MQTT] ✅ Updated {bin_obj.name} ({bin_obj.bin_number}) - Fill: {fill_level}%, Weight: {data.get('weight_kg', 0)}kg, Temp: {data.get('temperature', 'N/A')}°C\033[0m",
                 flush=True,
             )
 
-            # Broadcast update via WebSocket
-            broadcast_sensor_update(bin_obj, reading)
+        # WebSocket update sent directly via model method
 
     except json.JSONDecodeError:
         print(f"\033[91m[MQTT] Invalid JSON payload: {payload}\033[0m", flush=True)
     except Exception as e:
         print(f"\033[91m[MQTT] Error processing sensor reading: {e}\033[0m", flush=True)
-
-
-def broadcast_sensor_update(bin_obj, reading):
-    """Broadcast sensor update via WebSocket"""
-    try:
-        from channels.layers import get_channel_layer
-        from asgiref.sync import async_to_sync
-
-        channel_layer = get_channel_layer()
-        if not channel_layer:
-            return
-
-        # Prepare update data
-        update_data = {
-            "type": "sensor_update",
-            "data": {
-                "bin_id": str(bin_obj.id),
-                "bin_number": bin_obj.bin_number,
-                "bin_name": bin_obj.name,
-                "fill_level": reading.fill_level,
-                "fill_status": bin_obj.fill_status,
-                "weight_kg": reading.weight_kg,
-                "temperature": reading.temperature,
-                "humidity": reading.humidity,
-                "battery_level": reading.battery_level,
-                "signal_strength": reading.signal_strength,
-                "is_online": bin_obj.current_online_status,
-                "status": bin_obj.status,
-                "last_reading_at": reading.timestamp.isoformat(),
-                "location": {
-                    "lat": bin_obj.location.y,
-                    "lng": bin_obj.location.x,
-                    "address": bin_obj.address,
-                },
-            },
-            "timestamp": reading.timestamp.isoformat(),
-        }
-
-        # Send to admin groups
-        async_to_sync(channel_layer.group_send)("admin_dashboard", update_data)
-        async_to_sync(channel_layer.group_send)("admin_notifications", update_data)
-
-        # Send to bin owner if exists
-        if bin_obj.user:
-            async_to_sync(channel_layer.group_send)(
-                f"user_{bin_obj.user.id}", update_data
-            )
-
-        print(
-            f"\033[94m[MQTT] 📡 Broadcasted sensor update for {bin_obj.bin_number}\033[0m",
-            flush=True,
-        )
-
-    except Exception as e:
-        print(f"\033[91m[MQTT] Error broadcasting update: {e}\033[0m", flush=True)
 
 
 def build_client():
@@ -226,13 +257,27 @@ class Command(BaseCommand):
 
         def handle_sig(signum, frame):
             nonlocal client
+            global _should_stop
             LOG.info("Stopping MQTT listener...")
             _should_stop = True
             try:
-                client.disconnect()
-            except Exception:
-                pass
+                # Properly shutdown MQTT connection
+                try:
+                    client.loop_stop()
+                    client.disconnect()
+                    LOG.info("MQTT connection closed")
+                except Exception as e:
+                    LOG.warning(f"Error closing MQTT connection: {e}")
+            except Exception as e:
+                LOG.error(f"Error during MQTT shutdown: {e}")
+            finally:
+                LOG.info("MQTT listener shutdown complete")
+                # Force exit immediately
+                import os
 
+                os._exit(0)
+
+        # Setup signal handlers
         signal.signal(signal.SIGINT, handle_sig)
         signal.signal(signal.SIGTERM, handle_sig)
 
@@ -241,8 +286,38 @@ class Command(BaseCommand):
 
         try:
             LOG.info(f"Connecting to MQTT broker: {MQTT_HOST}:{MQTT_PORT}")
-            client.connect(MQTT_HOST, MQTT_PORT, keepalive=MQTT_KEEPALIVE)
-            client.loop_start()
+
+            # Connect with retry logic
+            max_retries = 5
+            retry_count = 0
+            connected = False
+
+            while retry_count < max_retries and not connected and not _should_stop:
+                try:
+                    result = client.connect(
+                        MQTT_HOST, MQTT_PORT, keepalive=MQTT_KEEPALIVE
+                    )
+                    if result == 0:
+                        connected = True
+                        LOG.info("MQTT connected successfully")
+                        client.loop_start()
+                    else:
+                        LOG.warning(f"MQTT connection failed with code: {result}")
+                        retry_count += 1
+                        if retry_count < max_retries:
+                            LOG.info(
+                                f"Retrying connection in 5 seconds... ({retry_count}/{max_retries})"
+                            )
+                            time.sleep(5)
+                except Exception as e:
+                    LOG.error(f"Connection attempt {retry_count + 1} failed: {e}")
+                    retry_count += 1
+                    if retry_count < max_retries:
+                        time.sleep(5)
+
+            if not connected:
+                LOG.error("Failed to connect to MQTT broker after all retries")
+                return
 
             LOG.info("MQTT listener started. Press Ctrl+C to stop.")
             while not _should_stop:
@@ -252,8 +327,20 @@ class Command(BaseCommand):
             LOG.error(f"Connect error: {e}")
         finally:
             try:
-                client.loop_stop()
-                client.disconnect()
-            except Exception:
-                pass
-            LOG.info("MQTT listener stopped.")
+                # Complete shutdown sequence
+                LOG.info("Initiating complete MQTT shutdown...")
+                if client.is_connected():
+                    client.loop_stop()
+                    client.disconnect()
+                    LOG.info("MQTT connection terminated")
+                else:
+                    LOG.info("MQTT connection already terminated")
+
+                # Force cleanup
+                client = None
+                LOG.info("MQTT client cleaned up")
+
+            except Exception as e:
+                LOG.error(f"Error during final cleanup: {e}")
+            finally:
+                LOG.info("MQTT listener completely stopped.")

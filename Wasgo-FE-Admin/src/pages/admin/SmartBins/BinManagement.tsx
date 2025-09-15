@@ -26,12 +26,15 @@ import Input from '../../../components/ui/Input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/Select';
 import StatCard from '../../../components/ui/statCard';
 import DraggableDataTable from '../../../components/ui/DraggableDataTable';
+import ConfirmDialog, { confirmDialog } from '../../../components/ui/ConfirmDialog';
 import { setPageTitle } from '../../../store/themeConfigSlice';
 import useSwr from 'swr';
 import fetcher from '../../../services/fetcher';
 import AssignUserModal from './BinDetail/components/AssignUserModal';
 import AddBinModal from './AddBinModal';
 import DateTimeUtil from '../../../utilities/dateTimeUtil';
+import axiosInstance from '../../../services/axiosInstance';
+import { showNotification } from '../../../utilities/showNotifcation';
 
 // Interface for bin data
 interface SmartBinData {
@@ -72,7 +75,8 @@ const BinManagement: React.FC = () => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [showAssignUserModal, setShowAssignUserModal] = useState(false);
     const [binToAssignUser, setBinToAssignUser] = useState<string | null>(null);
-
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [binToDelete, setBinToDelete] = useState<string | null>(null);
     // Fetch bin data
     const { data: binData, isLoading, mutate } = useSwr<SmartBinData[]>('waste/bins/', fetcher);
 
@@ -115,6 +119,38 @@ const BinManagement: React.FC = () => {
         ? Math.round(binDataFinal.reduce((sum, bin) => sum + bin.fill_level, 0) / binDataFinal.length)
         : 0;
 
+
+    const handleDeleteBin = async () => {
+        if (!binToDelete) return;
+        const confirmed = await confirmDialog({
+            title: 'Delete Bin',
+            body: 'Are you sure you want to delete this bin? This action cannot be undone.',
+            finalQuestion: 'Are you sure you want to delete this bin? This action cannot be undone.',
+            confirmText: 'Delete Bin',
+            cancelText: 'Cancel',
+            type: 'warning'
+        });
+        if (!confirmed) return;
+        
+        try {
+            await axiosInstance.delete(`/waste/bins/${binToDelete}/`);
+           
+            setBinToDelete(null);
+            mutate();
+            showNotification({
+                message: 'Bin deleted successfully',
+                type: 'success',
+                showHide: true
+            });
+        } catch (error) {
+            console.error('Error deleting bin:', error);
+            showNotification({
+                message: 'Failed to delete bin. Please try again.',
+                type: 'error',
+                showHide: true
+            });
+        }
+    }
     // Table columns configuration
     const columns = [
         {
@@ -122,7 +158,15 @@ const BinManagement: React.FC = () => {
             title: 'Bin ID',
             sortable: true,
             render: (bin: SmartBinData) => (
-                <span className="font-mono text-sm">{bin.bin_number}</span>
+                <span className="font-mono text-sm">{bin.bin_id || bin.id}</span>
+            )
+        },	
+        {
+            accessor: 'bin_number',
+            title: 'Bin Number',
+            sortable: true,
+            render: (bin: SmartBinData) => (
+                <span className="font-mono text-sm">{bin.bin_number || bin.id}</span>
             )
         },
         {
@@ -257,7 +301,7 @@ const BinManagement: React.FC = () => {
                     <Button size="sm" variant="outline" title="Edit Bin">
                         <IconEdit className="w-3 h-3" />
                     </Button>
-                    <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" title="Delete Bin">
+                    <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" title="Delete Bin" onClick={() => {setShowDeleteModal(true); setBinToDelete(bin.id)}}>
                         <IconTrash className="w-3 h-3" />
                     </Button>
                 </div>
@@ -337,7 +381,7 @@ const BinManagement: React.FC = () => {
             </div>
 
             {/* Filters and Search */}
-            <Card>
+            {/* <Card>
                 <CardHeader>
                     <CardTitle>Filters & Search</CardTitle>
                 </CardHeader>
@@ -369,7 +413,7 @@ const BinManagement: React.FC = () => {
                         </div>
                     </div>
                 </CardContent>
-            </Card>
+            </Card> */}
 
             {/* Data Table */}
             <Card>
@@ -411,6 +455,18 @@ const BinManagement: React.FC = () => {
                 isOpen={showAddModal}
                 onClose={() => setShowAddModal(false)}
                 onSuccess={() => mutate()}
+            />
+
+            {/* Delete Bin ConfirmDialog */}
+            <ConfirmDialog
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={handleDeleteBin}
+                title="Delete Bin"
+                message="Are you sure you want to delete this bin? This action cannot be undone."
+                confirmText="Delete Bin"
+                cancelText="Cancel"
+                type="danger"
             />
         </div>
     );

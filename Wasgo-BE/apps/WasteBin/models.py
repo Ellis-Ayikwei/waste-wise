@@ -73,6 +73,123 @@ class SmartBin(Basemodel):
         ("overflow", "Overflow (>100%)"),
     ]
 
+    # Flag to track if this update came from sensor data (property, not database field)
+    _sensor_data_updated = False
+
+    @property
+    def sensor_data_updated(self):
+        """Get the sensor data updated flag"""
+        return getattr(self, "_sensor_data_updated", False)
+
+    @sensor_data_updated.setter
+    def sensor_data_updated(self, value):
+        """Set the sensor data updated flag"""
+        self._sensor_data_updated = bool(value)
+
+    def send_websocket_update(self):
+        """Send real-time WebSocket update for this bin"""
+        print(f"🔔 [Model] Sending WebSocket update for bin {self.bin_number}")
+        try:
+            from channels.layers import get_channel_layer
+            from asgiref.sync import async_to_sync
+
+            channel_layer = get_channel_layer()
+
+            # Ensure all values are JSON serializable
+            bin_type_name = None
+            if self.bin_type:
+                try:
+                    bin_type_name = str(self.bin_type.name)
+                except (AttributeError, TypeError):
+                    bin_type_name = None
+
+            # Build standardized data object
+            bin_data = build_bin_status_data(self, bin_type_name)
+
+            # Only send updates if bin has an assigned user
+            if self.user:
+                print(f"the user id is {self.user.id}")
+
+                # Send update to bin owner
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{self.user.id}",
+                    {
+                        "type": "bin_status_update",
+                        "data": bin_data,
+                    },
+                )
+
+                # Also send to admin groups
+                async_to_sync(channel_layer.group_send)(
+                    "admin_dashboard",
+                    {
+                        "type": "bin_status_update",
+                        "data": bin_data,
+                    },
+                )
+
+                # Send to admin notifications group as well
+                async_to_sync(channel_layer.group_send)(
+                    "admin_notifications",
+                    {
+                        "type": "bin_status_update",
+                        "data": bin_data,
+                    },
+                )
+
+                # Send alert if bin is full
+                if self.fill_level >= 90:
+                    async_to_sync(channel_layer.group_send)(
+                        f"user_{self.user.id}",
+                        {
+                            "type": "sensor_alert",
+                            "data": {
+                                "bin_id": str(self.id),
+                                "bin_number": str(self.bin_number),
+                                "bin_name": str(self.name),
+                                "alert_type": "full",
+                                "fill_level": int(self.fill_level),
+                                "message": f"🚨 URGENT: Bin {self.bin_number} is {self.fill_level}% full and needs immediate collection!",
+                                "priority": "high",
+                                "location": str(self.address),
+                                "timestamp": self.updated_at.isoformat(),
+                            },
+                        },
+                    )
+            else:
+                print(
+                    f"Bin {self.bin_number} has no assigned user, skipping user notifications"
+                )
+
+                # Update message for public bins
+                bin_data["message"] = (
+                    f"Public bin {self.bin_number} is {self.fill_level}% full"
+                )
+
+                # Send to admin groups for bins without users
+                async_to_sync(channel_layer.group_send)(
+                    "admin_dashboard",
+                    {
+                        "type": "bin_status_update",
+                        "data": bin_data,
+                    },
+                )
+
+                # Send to admin notifications group as well
+                async_to_sync(channel_layer.group_send)(
+                    "admin_notifications",
+                    {
+                        "type": "bin_status_update",
+                        "data": bin_data,
+                    },
+                )
+
+        except Exception as e:
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error sending WebSocket update for SmartBin {self.id}: {e}")
+
     # Basic Information
     bin_number = models.CharField(
         max_length=50,
@@ -707,145 +824,122 @@ class BinAlert(Basemodel):
 
 
 # WebSocket Signal Receivers
-@receiver(post_save, sender=SmartBin)
-def send_bin_status_update(sender, instance, created, **kwargs):
-    """Send real-time update when bin status changes"""
-    if not created:  # Only on updates, not creation
-        try:
-            channel_layer = get_channel_layer()
+def build_bin_status_data(instance, bin_type_name=None):
+    """Build standardized bin status data for WebSocket messages"""
+    print("building instance data", instance)
+    # Pull supplemental fields from the latest sensor reading for this bin
+    latest_reading = None
+    try:
+        latest_reading = (
+            SensorReading.objects.filter(bin=instance).order_by("-timestamp").first()
+        )
+    except Exception:
+        latest_reading = None
 
-            # Ensure all values are JSON serializable
-            bin_type_name = None
-            if instance.bin_type:
-                try:
-                    bin_type_name = str(instance.bin_type.name)
-                except (AttributeError, TypeError):
-                    bin_type_name = None
+    battery_level = None
+    signal_strength = None
+    motion_detected = None
+    lid_open = None
 
-            # Only send updates if bin has an assigned user
-            if instance.user:
-                print(f"the user id is {instance.user.id}")
+    if latest_reading:
+        battery_level = (
+            float(latest_reading.battery_level)
+            if latest_reading.battery_level is not None
+            else None
+        )
+        signal_strength = (
+            float(latest_reading.signal_strength)
+            if latest_reading.signal_strength is not None
+            else None
+        )
+        motion_detected = bool(latest_reading.motion_detected)
+        lid_open = bool(latest_reading.lid_open)
 
-                # Send update to bin owner
-                async_to_sync(channel_layer.group_send)(
-                    f"user_{instance.user.id}",
-                    {
-                        "type": "bin_status_update",
-                        "data": {
-                            "bin_id": str(instance.id),
-                            "bin_number": str(instance.bin_number),
-                            "bin_name": str(instance.name),
-                            "fill_level": int(instance.fill_level),
-                            "status": str(instance.status),
-                            "is_online": bool(instance.is_online),
-                            "location": str(instance.address),
-                            "bin_type": bin_type_name,
-                            "message": f"Bin {instance.bin_number} is {instance.fill_level}% full",
-                            "timestamp": instance.updated_at.isoformat(),
-                            "needs_collection": bool(instance.fill_level >= 80),
-                        },
-                    },
-                )
-
-                # Send alert if bin is full
-                if instance.fill_level >= 90:
-                    async_to_sync(channel_layer.group_send)(
-                        f"user_{instance.user.id}",
-                        {
-                            "type": "sensor_alert",
-                            "data": {
-                                "bin_id": str(instance.id),
-                                "bin_number": str(instance.bin_number),
-                                "bin_name": str(instance.name),
-                                "alert_type": "full",
-                                "fill_level": int(instance.fill_level),
-                                "message": f"🚨 URGENT: Bin {instance.bin_number} is {instance.fill_level}% full and needs immediate collection!",
-                                "priority": "high",
-                                "location": str(instance.address),
-                                "timestamp": instance.updated_at.isoformat(),
-                            },
-                        },
-                    )
-            else:
-                print(
-                    f"Bin {instance.bin_number} has no assigned user, skipping user notifications"
-                )
-
-                # Send to admin groups for bins without users
-                async_to_sync(channel_layer.group_send)(
-                    "admin_dashboard",
-                    {
-                        "type": "bin_status_update",
-                        "data": {
-                            "bin_id": str(instance.id),
-                            "bin_number": str(instance.bin_number),
-                            "bin_name": str(instance.name),
-                            "fill_level": int(instance.fill_level),
-                            "status": str(instance.status),
-                            "is_online": bool(instance.is_online),
-                            "location": str(instance.address),
-                            "bin_type": bin_type_name,
-                            "message": f"Public bin {instance.bin_number} is {instance.fill_level}% full",
-                            "timestamp": instance.updated_at.isoformat(),
-                            "needs_collection": bool(instance.fill_level >= 80),
-                        },
-                    },
-                )
-
-        except Exception as e:
-            logger.error(
-                f"Error sending WebSocket update for SmartBin {instance.id}: {e}"
-            )
+    return {
+        "bin_id": str(instance.id),
+        "bin_number": str(instance.bin_number),
+        "bin_name": str(instance.name),
+        "fill_level": int(instance.fill_level),
+        "fill_status": str(instance.fill_status),
+        "status": str(instance.status),
+        "is_online": bool(instance.is_online),
+        "location": str(instance.address),
+        "bin_type": bin_type_name,
+        "message": f"Bin {instance.bin_number} is {instance.fill_level}% full",
+        "timestamp": instance.updated_at.isoformat(),
+        "needs_collection": bool(instance.fill_level >= 80),
+        # Additional sensor data
+        "weight_kg": (
+            float(instance.current_weight_kg) if instance.current_weight_kg else 0
+        ),
+        "temperature": (float(instance.temperature) if instance.temperature else None),
+        "humidity": (float(instance.humidity) if instance.humidity else None),
+        "last_reading_at": (
+            instance.last_reading_at.isoformat() if instance.last_reading_at else None
+        ),
+        # Supplemental telemetry pulled from latest reading
+        "battery_level": battery_level,
+        "signal_strength": signal_strength,
+        "motion_detected": motion_detected,
+        "lid_open": lid_open,
+    }
 
 
-@receiver(post_save, sender=BinAlert)
-def send_bin_alert_update(sender, instance, created, **kwargs):
-    """Send real-time alert when bin alert is created"""
-    if created:  # Only on creation
-        try:
-            channel_layer = get_channel_layer()
+# @receiver(post_save, sender=SmartBin)
+# def send_bin_status_update(sender, instance, created, **kwargs):
+#     """Send real-time update when bin status changes - DISABLED: Using direct method call instead"""
+#     # This signal is now disabled because we call send_websocket_update() directly from MQTT listener
+#     pass
 
-            # Send alert to bin owner if exists
-            if instance.bin.user:
-                async_to_sync(channel_layer.group_send)(
-                    f"user_{instance.bin.user.id}",
-                    {
-                        "type": "sensor_alert",
-                        "data": {
-                            "alert_id": str(instance.id),
-                            "bin_id": str(instance.bin.id),
-                            "bin_number": str(instance.bin.bin_number),
-                            "bin_name": str(instance.bin.name),
-                            "alert_type": str(instance.alert_type),
-                            "priority": str(instance.priority),
-                            "message": str(instance.message),
-                            "location": str(instance.bin.address),
-                            "timestamp": instance.created_at.isoformat(),
-                            "is_resolved": bool(instance.is_resolved),
-                        },
-                    },
-                )
-            else:
-                # Send to admin groups for bins without users
-                async_to_sync(channel_layer.group_send)(
-                    "admin_dashboard",
-                    {
-                        "type": "sensor_alert",
-                        "data": {
-                            "alert_id": str(instance.id),
-                            "bin_id": str(instance.bin.id),
-                            "bin_number": str(instance.bin.bin_number),
-                            "bin_name": str(instance.bin.name),
-                            "alert_type": str(instance.alert_type),
-                            "priority": str(instance.priority),
-                            "message": f"Public bin alert: {str(instance.message)}",
-                            "location": str(instance.bin.address),
-                            "timestamp": instance.created_at.isoformat(),
-                            "is_resolved": bool(instance.is_resolved),
-                        },
-                    },
-                )
-        except Exception as e:
-            logger.error(
-                f"Error sending WebSocket alert for BinAlert {instance.id}: {e}"
-            )
+
+# @receiver(post_save, sender=BinAlert)
+# def send_bin_alert_update(sender, instance, created, **kwargs):
+#     """Send real-time alert when bin alert is created"""
+#     if created:  # Only on creation
+#         try:
+#             channel_layer = get_channel_layer()
+
+#             # Send alert to bin owner if exists
+#             if instance.bin.user:
+#                 async_to_sync(channel_layer.group_send)(
+#                     f"user_{instance.bin.user.id}",
+#                     {
+#                         "type": "sensor_alert",
+#                         "data": {
+#                             "alert_id": str(instance.id),
+#                             "bin_id": str(instance.bin.id),
+#                             "bin_number": str(instance.bin.bin_number),
+#                             "bin_name": str(instance.bin.name),
+#                             "alert_type": str(instance.alert_type),
+#                             "priority": str(instance.priority),
+#                             "message": str(instance.message),
+#                             "location": str(instance.bin.address),
+#                             "timestamp": instance.created_at.isoformat(),
+#                             "is_resolved": bool(instance.is_resolved),
+#                         },
+#                     },
+#                 )
+#             else:
+#                 # Send to admin groups for bins without users
+#                 async_to_sync(channel_layer.group_send)(
+#                     "admin_dashboard",
+#                     {
+#                         "type": "sensor_alert",
+#                         "data": {
+#                             "alert_id": str(instance.id),
+#                             "bin_id": str(instance.bin.id),
+#                             "bin_number": str(instance.bin.bin_number),
+#                             "bin_name": str(instance.bin.name),
+#                             "alert_type": str(instance.alert_type),
+#                             "priority": str(instance.priority),
+#                             "message": f"Public bin alert: {str(instance.message)}",
+#                             "location": str(instance.bin.address),
+#                             "timestamp": instance.created_at.isoformat(),
+#                             "is_resolved": bool(instance.is_resolved),
+#                         },
+#                     },
+#                 )
+#         except Exception as e:
+#             logger.error(
+#                 f"Error sending WebSocket alert for BinAlert {instance.id}: {e}"
+#             )

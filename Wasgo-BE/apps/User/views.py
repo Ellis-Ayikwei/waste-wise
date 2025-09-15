@@ -378,6 +378,11 @@ class UserManagementViewSet(viewsets.ModelViewSet):
                     "registration_number",
                     "business_name",
                     "business_type",
+                    "website",
+                    "waste_license_number",
+                    "waste_license_expiry",
+                    "environmental_permit_number",
+                    "environmental_permit_expiry",
                 ]
                 for field in business_fields:
                     print(
@@ -389,6 +394,54 @@ class UserManagementViewSet(viewsets.ModelViewSet):
                         provider_update_fields[field] = request.data[field]
                         print(
                             f"DEBUG: {field} will be updated to: {request.data[field]}"
+                        )
+
+                # Handle base_location (GeoJSON Point)
+                if "base_location" in request.data:
+                    base_location_data = request.data["base_location"]
+                    print(
+                        f"DEBUG: Checking base_location - request: {base_location_data}"
+                    )
+
+                    if (
+                        isinstance(base_location_data, dict)
+                        and base_location_data.get("type") == "Point"
+                    ):
+                        coordinates = base_location_data.get("coordinates")
+                        if coordinates and len(coordinates) >= 2:
+                            from django.contrib.gis.geos import Point
+
+                            new_location = Point(
+                                coordinates[0], coordinates[1], srid=4326
+                            )
+
+                            # Check if location has changed
+                            if (
+                                not service_provider.base_location
+                                or not service_provider.base_location.equals(
+                                    new_location
+                                )
+                            ):
+                                provider_update_fields["base_location"] = new_location
+                                print(
+                                    f"DEBUG: base_location will be updated to: {new_location}"
+                                )
+
+                # Handle base_location_address
+                if "base_location_address" in request.data:
+                    base_location_address = request.data["base_location_address"]
+                    print(
+                        f"DEBUG: Checking base_location_address - request: {base_location_address}, current: {getattr(service_provider, 'base_location_address', None)}"
+                    )
+
+                    if base_location_address != getattr(
+                        service_provider, "base_location_address", None
+                    ):
+                        provider_update_fields["base_location_address"] = (
+                            base_location_address
+                        )
+                        print(
+                            f"DEBUG: base_location_address will be updated to: {base_location_address}"
                         )
 
                 # Update the ServiceProvider profile if there are changes
@@ -490,17 +543,25 @@ class UserManagementViewSet(viewsets.ModelViewSet):
         Admin-only update method that can modify any field including sensitive ones.
         This is separate from the regular update to maintain clear separation of concerns.
         """
+        from apps.Provider.models import ServiceProvider
+
         instance = self.get_object()
         partial = request.data.get("partial", True)
+        import json
+
+        print("the admin upd ate data", json.dumps(request.data, indent=4))
 
         # Check if user type is being changed to provider
         user_type_changed = False
         if "user_type" in request.data and request.data["user_type"] == "provider":
-            user_type_changed = True
+            users = User.objects.filter(id=instance.id)
+            if users.exists() and users.first().user_type != request.data["user_type"]:
+                user_type_changed = True
 
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+        service_providers = ServiceProvider.objects.filter(user=user)
 
         # If user type was changed to provider, create ServiceProvider profile
         if user_type_changed and user.user_type == "provider":
@@ -508,8 +569,12 @@ class UserManagementViewSet(viewsets.ModelViewSet):
                 from apps.Provider.models import ServiceProvider
                 from django.contrib.gis.geos import Point
 
+                service_providers = ServiceProvider.objects.filter(user=user)
+
                 # Check if ServiceProvider profile already exists
-                if not hasattr(user, "serviceprovider"):
+                if not service_providers.exists():
+                    print("no service provider profile found for user", user.id)
+
                     # Default location (Accra coordinates)
                     default_location = Point(-0.1869644, 5.5600149, srid=4326)
 
@@ -545,12 +610,16 @@ class UserManagementViewSet(viewsets.ModelViewSet):
                 )
 
         # If user is already a provider, update their ServiceProvider profile
-        elif user.user_type == "provider" and hasattr(user, "serviceprovider"):
+        elif user.user_type == "provider" and service_providers.exists():
             try:
-                from apps.Provider.models import ServiceProvider
 
                 # Get the existing ServiceProvider profile
-                service_provider = user.serviceprovider
+                service_providers = ServiceProvider.objects.filter(user=user)
+                if service_providers.exists():
+                    service_provider = service_providers.first()
+                else:
+                    print("no service provider profile found for user", user.id)
+                    return
 
                 # Fields that should update the ServiceProvider profile
                 provider_update_fields = {}

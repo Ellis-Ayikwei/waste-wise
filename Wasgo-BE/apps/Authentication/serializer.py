@@ -35,11 +35,134 @@ class PhoneNumberAlreadyExistsException(APIException):
 logger = logging.getLogger(__name__)
 
 
+class RegisterFromRequestSerializer(serializers.ModelSerializer):
+    """Serializer for registration from service requests - returns existing user ID if user exists"""
+
+    password = serializers.CharField(
+        write_only=True, required=True, validators=[validate_password]
+    )
+    password2 = serializers.CharField(write_only=True, required=False)
+    first_name = serializers.CharField(required=True)
+    last_name = serializers.CharField(required=True)
+    phone_number = serializers.CharField(required=True)
+
+    class Meta:
+        model = User
+        fields = (
+            "email",
+            "password",
+            "password2",
+            "first_name",
+            "last_name",
+            "phone_number",
+        )
+
+    def validate_email(self, value):
+        """Check if user with email already exists - return existing user info instead of error"""
+        if value and User.objects.filter(email__iexact=value).exists():
+            # Don't raise exception, just mark for special handling
+            self._existing_user_email = value
+        return value
+
+    def validate_phone_number(self, value):
+        """Check if user with phone number already exists - return existing user info instead of error"""
+        if value and User.objects.filter(phone_number=value).exists():
+            # Don't raise exception, just mark for special handling
+            self._existing_user_phone = value
+        return value
+
+    def is_valid(self, raise_exception=False):
+        """Override is_valid to handle existing users gracefully"""
+        # Call parent is_valid first
+        is_valid = super().is_valid()
+
+        # Check if validation failed due to unique constraint errors
+        if not is_valid and hasattr(self, "errors"):
+            # Check for email unique constraint error
+            if "email" in self.errors and self.errors["email"][0].code == "unique":
+                email = self.initial_data.get("email")
+                if email:
+                    try:
+                        self._existing_user = User.objects.get(email__iexact=email)
+                        self._has_existing_user = True
+                        # Clear the errors since we're treating this as valid
+                        self._errors = {}
+                        return True  # Treat as valid since we found existing user
+                    except User.DoesNotExist:
+                        pass
+            # Check for phone number unique constraint error
+            elif (
+                "phone_number" in self.errors
+                and self.errors["phone_number"][0].code == "unique"
+            ):
+                phone_number = self.initial_data.get("phone_number")
+                if phone_number:
+                    try:
+                        self._existing_user = User.objects.get(
+                            phone_number=phone_number
+                        )
+                        self._has_existing_user = True
+                        # Clear the errors since we're treating this as valid
+                        self._errors = {}
+                        return True  # Treat as valid since we found existing user
+                    except User.DoesNotExist:
+                        pass
+
+        return is_valid
+
+    def validate(self, attrs):
+        # Check if passwords match (only if password2 is provided)
+        password2 = attrs.get("password2")
+        if password2 and attrs.get("password") != password2:
+            raise serializers.ValidationError(
+                {"password": "Password fields didn't match."}
+            )
+
+        return attrs
+
+    def create(self, validated_data):
+        # If user already exists, don't create a new one
+        if hasattr(self, "_has_existing_user") and self._has_existing_user:
+            return self._existing_user
+
+        try:
+            # Remove confirmation field
+            validated_data.pop("password2", None)
+
+            # Create user with all provided fields
+            user = User.objects.create_user(
+                email=validated_data["email"].lower().strip(),
+                password=validated_data["password"],
+                first_name=validated_data.get("first_name", ""),
+                last_name=validated_data.get("last_name", ""),
+                phone_number=validated_data.get("phone_number", ""),
+            )
+
+            # Set user as inactive until email verification
+            user.is_active = False
+            user.save()
+
+            # Create UserVerification record
+            UserVerification.objects.create(
+                user=user,
+                verification_type="email",
+                is_verified=False,
+            )
+
+            return user
+
+        except IntegrityError as e:
+            logger.error(f"Integrity error during user creation: {str(e)}")
+            raise serializers.ValidationError(
+                {"detail": "User with this email or phone number already exists."}
+            )
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True, required=True, validators=[validate_password]
     )
-    password2 = serializers.CharField(write_only=True, required=True)
+    password2 = serializers.CharField(write_only=True, required=False)
     first_name = serializers.CharField(required=True)
     last_name = serializers.CharField(required=True)
     phone_number = serializers.CharField(required=True)

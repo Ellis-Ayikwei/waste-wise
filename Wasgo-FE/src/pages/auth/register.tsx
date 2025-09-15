@@ -98,7 +98,7 @@ const Register: React.FC = () => {
 
         } catch (error) {
             console.error('Registration error:', error);
-            setRegisterError(error || 'An error occurred during registration. Please try again.');
+            setRegisterError(typeof error === 'string' ? error : 'An error occurred during registration. Please try again.');
         } finally {
             setSubmitting(false);
         }
@@ -176,24 +176,7 @@ const Register: React.FC = () => {
                     >
                         {({ isSubmitting, errors, touched, values }) => (
                             <Form className="space-y-5">
-                                {/* Email Field */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                                    <div className="relative">
-                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <User className="text-gray-400" size={16} />
-                                        </div>
-                                        <Field
-                                            name="email"
-                                            type="email"
-                                            className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${
-                                                errors.email && touched.email ? 'border-red-500' : 'border-gray-300'
-                                            }`}
-                                            placeholder="Enter your email address"
-                                        />
-                                    </div>
-                                    <ErrorMessage name="email" component="p" className="text-red-500 text-sm mt-1" />
-                                </div>
+                                
 
                                 {/* First Name Field */}
                                 <div>
@@ -231,6 +214,25 @@ const Register: React.FC = () => {
                                         />
                                     </div>
                                     <ErrorMessage name="last_name" component="p" className="text-red-500 text-sm mt-1" />
+                                </div>
+
+                                {/* Email Field */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <User className="text-gray-400" size={16} />
+                                        </div>
+                                        <Field
+                                            name="email"
+                                            type="email"
+                                            className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${
+                                                errors.email && touched.email ? 'border-red-500' : 'border-gray-300'
+                                            }`}
+                                            placeholder="Enter your email address"
+                                        />
+                                    </div>
+                                    <ErrorMessage name="email" component="p" className="text-red-500 text-sm mt-1" />
                                 </div>
 
                                 {/* Phone Number Field */}
